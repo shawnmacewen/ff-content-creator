@@ -53,10 +53,32 @@ export async function POST(req: Request) {
 
     try {
       const token = await getAdvisorStreamAccessToken(config);
-      const payload = await searchAdvisorStreamArticles(config, token, { limit: 25, offset: 0 });
-      const normalized = mapAdvisorStreamSearchResults(payload);
+      const pageSize = 25;
+      const maxItems = 500;
+      const collected: any[] = [];
+      let offset = 0;
+      let totalItems = Number.MAX_SAFE_INTEGER;
+      let lastPayload: any = null;
+
+      while (offset < totalItems && collected.length < maxItems) {
+        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset });
+        lastPayload = payload;
+
+        const pageItems = mapAdvisorStreamSearchResults(payload);
+        collected.push(...pageItems);
+
+        const payloadTotal = Number((payload as any)?.data?.totalItems ?? (payload as any)?.totalItems ?? collected.length);
+        totalItems = Number.isFinite(payloadTotal) && payloadTotal > 0 ? payloadTotal : collected.length;
+
+        if (pageItems.length < pageSize) break;
+        offset += pageSize;
+      }
+
+      const normalized = collected;
 
       if (!normalized.length) {
+        const payload = lastPayload || {};
+
         const maybeErrors = (payload as any)?.errors;
         return NextResponse.json({
           ok: true,
