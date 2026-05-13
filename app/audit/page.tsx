@@ -90,11 +90,27 @@ export default function AuditPage() {
           </button>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {method === 'search'
-            ? 'Standard Search: use specific phrases/terms. Use quotes for exact phrases and optional exclusions with “but not”.'
-            : 'AI Analyze: describe what you want in natural language. AI will interpret the request and score matches.'}
-        </p>
+        <div className={`rounded-md border p-3 text-xs ${method === 'search' ? 'bg-muted/40 border-muted-foreground/20 text-muted-foreground' : 'bg-blue-500/10 border-blue-500/30 text-blue-100'}`}>
+          {method === 'search' ? (
+            <>
+              <div className="font-medium text-foreground mb-1">How Standard Search works</div>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Best for exact term/phrase matching in title and body text.</li>
+                <li>Use quotes for exact phrases (example: "standard mileage rate").</li>
+                <li>Use exclusions like <code>but not "2026"</code> to filter out matches.</li>
+              </ul>
+            </>
+          ) : (
+            <>
+              <div className="font-medium text-foreground mb-1">How AI Analyze works</div>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Best for natural-language requests and semantic review.</li>
+                <li>AI reads titles + body excerpts and returns scored matches with reasons.</li>
+                <li>Use this when your request is nuanced beyond simple keyword matching.</li>
+              </ul>
+            </>
+          )}
+        </div>
 
         <div className="flex gap-2 items-center">
           <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={method === 'search' ? 'e.g. "standard mileage rate" but not "2026"' : 'e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate'} />
