@@ -54,7 +54,13 @@ export function ContentCard({
                         : 'text-blue-500'
                   }
                 >
-                  {content.sourceSystem === 'advisorstream' ? 'Broadridge Forefield' : content.author}
+                  {content.publisher
+                    ? content.publisher === 'broadridge-forefield'
+                      ? 'Broadridge Forefield'
+                      : content.publisher === 'publisher-content'
+                        ? 'Publisher Content'
+                        : content.publisher
+                    : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>
                 <span className="inline-flex items-center gap-1">
