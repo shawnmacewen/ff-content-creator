@@ -22,12 +22,33 @@ const OutSchema = z.object({
 
 function fallbackAnalyze(rows: any[], prompt: string) {
   const parsed = parseSearchPrompt(prompt);
+
+  const stopwords = new Set(['the','and','for','with','that','this','from','into','about','what','when','where','which','would','could','should','have','has','had','are','was','were','your','their','them','they','then','than','also','just','like','find','show','list','content']);
+
+  let includeTerms = parsed.mustInclude || [];
+  let mode: 'all' | 'any' = (parsed.mode || 'all') as 'all' | 'any';
+
+  // Natural-language prompts often parse into one long include phrase that never literal-matches.
+  // Tokenize to resilient keyword matching in fallback mode.
+  if (includeTerms.length <= 1) {
+    const tokens = prompt
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length >= 4 && !stopwords.has(t));
+    const uniq = Array.from(new Set(tokens)).slice(0, 8);
+    if (uniq.length >= 2) {
+      includeTerms = uniq;
+      mode = 'any';
+    }
+  }
+
   const matches = rows
     .filter((r) => {
       const hay = `${r.title || ''}\n${r.body || ''}`.toLowerCase();
-      const includeOk = (parsed.mode || 'all') === 'any'
-        ? parsed.mustInclude.some((t) => hay.includes(t.toLowerCase()))
-        : parsed.mustInclude.every((t) => hay.includes(t.toLowerCase()));
+      const includeOk = mode === 'any'
+        ? includeTerms.some((t) => hay.includes(t.toLowerCase()))
+        : includeTerms.every((t) => hay.includes(t.toLowerCase()));
       const excludeOk = parsed.mustExclude.every((t) => !hay.includes(t.toLowerCase()));
       return includeOk && excludeOk;
     })
@@ -39,7 +60,7 @@ function fallbackAnalyze(rows: any[], prompt: string) {
     }));
 
   return {
-    summary: `Fallback analysis returned ${matches.length} matches.`,
+    summary: `Fallback analysis returned ${matches.length} matches (mode=${mode}, includeTerms=${includeTerms.length}).`,
     matches,
   };
 }
@@ -108,14 +129,14 @@ export async function POST(req: Request) {
       if (!matches.length) {
         parserUsed = 'fallback';
         const fb = fallbackAnalyze(rows, prompt);
-        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, scanned: rows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: 'ai-returned-zero-matches', scanned: rows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
       }
 
       return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, scanned: rows.length, chunkCount: chunks.length, summary: summaries.filter(Boolean).join(' | ').slice(0, 1000), total: matches.length, matches });
-    } catch {
+    } catch (err: any) {
       parserUsed = 'fallback';
       const fb = fallbackAnalyze(rows, prompt);
-      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, scanned: rows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: err?.message ? `ai-error:${String(err.message).slice(0, 120)}` : 'ai-error', scanned: rows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
     }
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'Analyze failed' }, { status: 500 });
