@@ -1,7 +1,7 @@
 import { streamText } from 'ai';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { env } from '@/lib/env';
+import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
 
 export async function POST(req: Request) {
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: 'Missing required fields: type and tone' }), { status: 400 });
   }
 
+  const env = getServerEnv();
   const supabase = getSupabaseServerClient();
   let sourceText = 'No source material provided. Create original content based on the user instructions.';
 
