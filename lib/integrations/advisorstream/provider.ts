@@ -126,10 +126,10 @@ export function mapAdvisorStreamSearchResults(
     .map((item: any) => {
       const externalId = item.id || item.uuid || item._id;
       const title = item.headline || item.title || item?.files?.title || item?.files?.[0]?.title;
-      const excerpt = item.summary || item.description || '';
-      const body = item.content || excerpt || '';
-      const tags = Array.isArray(item.tags) ? item.tags : [];
-      const categories = Array.isArray(item.categories) ? item.categories : [];
+      const excerpt = item.summary || item.description || item?.extraProps?.description || '';
+      const body = item.content || item?.extraProps?.content || excerpt || '';
+      const tags = Array.isArray(item.tags) ? item.tags : Array.isArray(item?.extraProps?.tags) ? item.extraProps.tags : [];
+      const categories = Array.isArray(item.categories) ? item.categories : Array.isArray(item?.extraProps?.categories) ? item.extraProps.categories : [];
 
       if (!externalId || !title) return null;
 

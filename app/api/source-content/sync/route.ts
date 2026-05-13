@@ -82,6 +82,7 @@ export async function POST(req: Request) {
               (payload as any)?.data?.results?.[0] ||
               (payload as any)?.data?.items?.[0] ||
               (payload as any)?.data?.articles?.[0] ||
+              (payload as any)?.data?.records?.[0] ||
               {}
             ),
           },
