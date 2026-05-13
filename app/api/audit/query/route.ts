@@ -57,15 +57,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: error.message, stage: 'query' }, { status: 500 });
     }
 
-    const mustInclude = structured.mustInclude || [];
-    const mustExclude = structured.mustExclude || [];
+    const includeTerms = structured.mustInclude || [];
+    const excludeTerms = structured.mustExclude || [];
 
     const rows = (data || []).filter((row: any) => {
       const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
       const includeOk = structured.mode === 'any'
-        ? mustInclude.some((t) => hay.includes(t.toLowerCase()))
-        : mustInclude.every((t) => hay.includes(t.toLowerCase()));
-      const excludeOk = mustExclude.every((t) => !hay.includes(t.toLowerCase()));
+        ? includeTerms.some((t) => hay.includes(t.toLowerCase()))
+        : includeTerms.every((t) => hay.includes(t.toLowerCase()));
+      const excludeOk = excludeTerms.every((t) => !hay.includes(t.toLowerCase()));
       return includeOk && excludeOk;
     });
 
@@ -75,8 +75,8 @@ export async function POST(req: Request) {
       publisher: row.publisher || null,
       sourceSystem: row.source_system || null,
       publishedAt: row.published_at || null,
-      snippet: makeSnippet(row.body || '', mustInclude),
-      score: mustInclude.length,
+      snippet: makeSnippet(row.body || '', includeTerms),
+      score: includeTerms.length,
     }));
 
     return NextResponse.json({ ok: true, parserUsed: 'deterministic', structured, total: matches.length, scanned: (data || []).length, matches });
