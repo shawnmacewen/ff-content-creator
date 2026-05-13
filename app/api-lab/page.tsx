@@ -7,6 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 
 const presets = [
   { label: 'Provider Metadata (GET)', method: 'GET', path: '/api/source-content/provider-metadata', body: '' },
+  { label: 'Provider Categories (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=categories', body: '' },
+  { label: 'Provider Subcategories (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=subcategories', body: '' },
+  { label: 'Provider Sources (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=sources', body: '' },
+  { label: 'Provider Tags (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=tags', body: '' },
+  { label: 'Provider Article by ID (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=article&articleId=', body: '' },
   { label: 'Provider Sync Dry Run (POST)', method: 'POST', path: '/api/source-content/sync', body: JSON.stringify({ mode: 'provider', dryRun: true }, null, 2) },
   { label: 'Provider Sync (POST)', method: 'POST', path: '/api/source-content/sync', body: JSON.stringify({ mode: 'provider', dryRun: false }, null, 2) },
   { label: 'Source Content Page 1 (GET)', method: 'GET', path: '/api/source-content?page=1&pageSize=20', body: '' },
