@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,11 +13,7 @@ import {
 } from '@/components/ui/select';
 import { LibraryGrid } from '@/components/library/library-grid';
 import { ContentEditor } from '@/components/library/content-editor';
-import {
-  getStoredContent,
-  saveContent,
-  deleteContent,
-} from '@/lib/storage/local-storage';
+import useSWR from 'swr';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent, ContentType, ContentStatus } from '@/lib/types/content';
 import { Search, Sparkles, X } from 'lucide-react';
@@ -25,7 +21,6 @@ import { toast } from 'sonner';
 
 export default function LibraryPage() {
   const router = useRouter();
-  const [content, setContent] = useState<GeneratedContent[]>([]);
   const [mounted, setMounted] = useState(false);
   
   // Filters
@@ -38,24 +33,26 @@ export default function LibraryPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<'view' | 'edit'>('view');
 
-  // Load content on mount
   useEffect(() => {
     setMounted(true);
-    setContent(getStoredContent());
   }, []);
 
-  // Filter content
-  const filteredContent = content.filter((item) => {
-    const matchesSearch =
-      !searchQuery ||
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = typeFilter === 'all' || item.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const qs = useMemo(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (typeFilter !== 'all') params.set('type', typeFilter);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    return params.toString();
+  }, [searchQuery, typeFilter, statusFilter]);
+
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
+  const { data, mutate } = useSWR<{ data: GeneratedContent[] }>(
+    mounted ? `/api/generated-content?${qs}` : null,
+    fetcher
+  );
+
+  const content = data?.data || [];
+  const filteredContent = content;
 
   const handleView = useCallback((item: GeneratedContent) => {
     setSelectedContent(item);
@@ -69,22 +66,44 @@ export default function LibraryPage() {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback((id: string) => {
-    deleteContent(id);
-    setContent(getStoredContent());
+  const handleDelete = useCallback(async (id: string) => {
+    const response = await fetch(`/api/generated-content/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      toast.error('Failed to delete content');
+      return;
+    }
+    await mutate();
     toast.success('Content deleted');
-  }, []);
+  }, [mutate]);
 
   const handleCopy = useCallback(async (contentText: string) => {
     await navigator.clipboard.writeText(contentText);
     toast.success('Content copied to clipboard');
   }, []);
 
-  const handleSave = useCallback((updatedContent: GeneratedContent) => {
-    saveContent(updatedContent);
-    setContent(getStoredContent());
+  const handleSave = useCallback(async (updatedContent: GeneratedContent) => {
+    const response = await fetch(`/api/generated-content/${updatedContent.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: updatedContent.title,
+        content: updatedContent.content,
+        status: updatedContent.status,
+        tone: updatedContent.tone,
+        prompt: updatedContent.prompt,
+        sourceContentIds: updatedContent.sourceContentIds,
+        versionNote: 'Edited in library',
+      }),
+    });
+
+    if (!response.ok) {
+      toast.error('Failed to update content');
+      return;
+    }
+
+    await mutate();
     toast.success('Content updated');
-  }, []);
+  }, [mutate]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
