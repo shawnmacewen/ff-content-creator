@@ -21,6 +21,7 @@ interface ApiResponse {
     availableTags: string[];
     availableTypes: string[];
     availableAuthors: string[];
+    availablePublishers: string[];
   };
 }
 
@@ -31,6 +32,7 @@ export default function SourceContentPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [selectedPublisher, setSelectedPublisher] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -52,10 +54,11 @@ export default function SourceContentPage() {
     if (debouncedQuery) params.set('q', debouncedQuery);
     if (selectedType && selectedType !== 'all') params.set('type', selectedType);
     if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
+    if (selectedPublisher && selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
     params.set('page', String(page));
     params.set('pageSize', '20');
     return `/api/source-content?${params.toString()}`;
-  }, [debouncedQuery, selectedType, selectedTag, page]);
+  }, [debouncedQuery, selectedType, selectedTag, selectedPublisher, page]);
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse>(apiUrl(), fetcher);
 
@@ -89,6 +92,7 @@ export default function SourceContentPage() {
     setSearchQuery('');
     setSelectedType('');
     setSelectedTag('');
+    setSelectedPublisher('');
     setPage(1);
   };
 
@@ -135,19 +139,11 @@ export default function SourceContentPage() {
 
     if (dryRun) {
       toast.success(`${mode} dry run: would process ${body?.wouldProcess ?? body?.processed ?? 0} rows`);
-      if ((body?.wouldProcess ?? body?.processed ?? 0) === 0 && body?.debug) {
-        console.warn('Provider debug:', body.debug);
-        toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
-      }
       setSyncingMode(null);
       return;
     }
 
     toast.success(`${mode} sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
-    if ((body?.processed ?? 0) === 0 && body?.debug) {
-      console.warn('Provider debug:', body.debug);
-      toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
-    }
     mutate();
     setSyncingMode(null);
   };
@@ -212,6 +208,9 @@ export default function SourceContentPage() {
         selectedTag={selectedTag}
         onTagChange={setSelectedTag}
         availableTags={data?.filters?.availableTags || []}
+        selectedPublisher={selectedPublisher}
+        onPublisherChange={setSelectedPublisher}
+        availablePublishers={data?.filters?.availablePublishers || []}
         onClearFilters={handleClearFilters}
       />
 

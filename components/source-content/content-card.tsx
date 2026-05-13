@@ -47,11 +47,13 @@ export function ContentCard({
                 <User className="h-3 w-3" />
                 <span
                   className={
-                    content.sourceSystem === 'advisorstream'
-                      ? 'text-blue-500'
-                      : content.sourceSystem === 'sample-seed'
-                        ? 'text-green-500'
-                        : 'text-blue-500'
+                    content.publisher === 'publisher-content'
+                      ? 'text-purple-500'
+                      : content.sourceSystem === 'advisorstream'
+                        ? 'text-blue-500'
+                        : content.sourceSystem === 'sample-seed'
+                          ? 'text-green-500'
+                          : 'text-blue-500'
                   }
                 >
                   {content.publisher

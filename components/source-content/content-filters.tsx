@@ -20,6 +20,9 @@ interface ContentFiltersProps {
   selectedTag: string;
   onTagChange: (tag: string) => void;
   availableTags: string[];
+  selectedPublisher: string;
+  onPublisherChange: (publisher: string) => void;
+  availablePublishers: string[];
   onClearFilters: () => void;
 }
 
@@ -32,9 +35,12 @@ export function ContentFilters({
   selectedTag,
   onTagChange,
   availableTags,
+  selectedPublisher,
+  onPublisherChange,
+  availablePublishers,
   onClearFilters,
 }: ContentFiltersProps) {
-  const hasActiveFilters = searchQuery || selectedType || selectedTag;
+  const hasActiveFilters = searchQuery || selectedType || selectedTag || selectedPublisher;
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -72,6 +78,20 @@ export function ContentFilters({
             {availableTags.map((tag) => (
               <SelectItem key={tag} value={tag}>
                 {tag}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedPublisher} onValueChange={onPublisherChange}>
+          <SelectTrigger className="w-[170px] bg-muted/50">
+            <SelectValue placeholder="All publishers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All publishers</SelectItem>
+            {availablePublishers.map((publisher) => (
+              <SelectItem key={publisher} value={publisher}>
+                {publisher}
               </SelectItem>
             ))}
           </SelectContent>

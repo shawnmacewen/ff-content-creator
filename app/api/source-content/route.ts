@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type') || undefined;
   const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
   const author = searchParams.get('author') || undefined;
+  const publisher = searchParams.get('publisher') || undefined;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
 
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
   if (query) dbQuery = dbQuery.or(`title.ilike.%${query}%,body.ilike.%${query}%`);
   if (type) dbQuery = dbQuery.eq('type', type);
   if (author) dbQuery = dbQuery.eq('author', author);
+  if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
   if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
 
   const { data, count, error } = await dbQuery.range(from, to);
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
 
   const availableTypes = Array.from(new Set(allRows.map((r) => r.type).filter(Boolean)));
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
+  const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher).filter(Boolean)));
   const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
 
   const mapped = (data || []).map((row: any) => ({
@@ -89,7 +92,7 @@ export async function GET(request: NextRequest) {
     page,
     pageSize,
     totalPages: Math.ceil((count || 0) / pageSize),
-    filters: { availableTags, availableTypes, availableAuthors },
+    filters: { availableTags, availableTypes, availableAuthors, availablePublishers },
     meta: { sourceCounts, lastSyncedAt },
   });
 }
