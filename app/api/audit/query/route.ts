@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,title,body,publisher,source_system,published_at,external_id,content_type,url,tags,excerpt')
+      .select('id,title,body,publisher,source_system,published_at,external_id,type,url,tags,excerpt')
       .order('published_at', { ascending: false, nullsFirst: false });
 
     if (structured.publisher) q = q.eq('publisher', structured.publisher);
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       title: row.title,
       publisher: row.publisher || null,
       sourceSystem: row.source_system || null,
-      type: row.content_type || 'article',
+      type: row.type || 'article',
       publishedAt: row.published_at || null,
       url: row.url || null,
       tags: Array.isArray(row.tags) ? row.tags : [],
