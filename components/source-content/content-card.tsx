@@ -45,7 +45,17 @@ export function ContentCard({
               </CardTitle>
               <CardDescription className="flex items-center gap-2 text-xs">
                 <User className="h-3 w-3" />
-                {content.author}
+                <span
+                  className={
+                    content.sourceSystem === 'advisorstream'
+                      ? 'text-purple-500'
+                      : content.sourceSystem === 'sample-seed'
+                        ? 'text-green-500'
+                        : 'text-blue-500'
+                  }
+                >
+                  {content.author}
+                </span>
                 <span className="text-muted-foreground">•</span>
                 {formatDistanceToNow(new Date(content.publishedAt), { addSuffix: true })}
               </CardDescription>
@@ -55,12 +65,7 @@ export function ContentCard({
             <Badge variant="secondary" className="shrink-0">
               {content.type}
             </Badge>
-            {content.sourceSystem === 'advisorstream' && (
-              <Badge className="shrink-0 bg-purple-600 hover:bg-purple-600 text-white">AdvisorStream</Badge>
-            )}
-            {content.sourceSystem === 'sample-seed' && (
-              <Badge className="shrink-0 bg-green-600 hover:bg-green-600 text-white">Sample</Badge>
-            )}
+
           </div>
         </div>
       </CardHeader>
