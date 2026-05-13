@@ -12,6 +12,7 @@ import {
   Mail,
   Share2,
   Bug,
+  SearchCheck,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -53,6 +54,11 @@ const mainNavItems = [
     title: 'API Lab',
     href: '/api-lab',
     icon: Bug,
+  },
+  {
+    title: 'Content Audit',
+    href: '/audit',
+    icon: SearchCheck,
   },
 ];
 
