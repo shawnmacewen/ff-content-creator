@@ -23,6 +23,7 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [method, setMethod] = useState<'search' | 'analyze'>('search');
+  const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string>('');
 
@@ -35,7 +36,7 @@ export default function AuditPage() {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, publisher, limit: 200 }),
+        body: JSON.stringify({ prompt, publisher, limit: 200, mode: matchMode }),
       });
       const body = await res.json();
       setResult(body);
@@ -94,6 +95,10 @@ export default function AuditPage() {
           <option value="broadridge-forefield">Broadridge Forefield</option>
           <option value="publisher-content">Publisher Content</option>
           <option value="sample">Sample</option>
+        </select>
+        <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
+          <option value="all">Match all include terms</option>
+          <option value="any">Match any include term</option>
         </select>
         <Button onClick={run} disabled={loading || !prompt.trim()}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
         <Button variant="outline" onClick={() => {

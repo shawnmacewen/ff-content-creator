@@ -4,10 +4,12 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { parseSearchPrompt } from '@/lib/audit/search-parser';
 
 const QuerySchema = z.object({
   mustInclude: z.array(z.string()).default([]),
   mustExclude: z.array(z.string()).default([]),
+  mode: z.enum(['all', 'any']).default('all'),
   publisher: z.string().optional(),
   limit: z.number().int().min(1).max(500).default(100),
 });
@@ -25,19 +27,12 @@ function makeSnippet(text: string, terms: string[]) {
 
 function fallbackParse(prompt: string) {
   const lower = prompt.toLowerCase();
-  const split = prompt.split(/\bbut not\b|\bwithout\b/i);
-  const mustInclude = split[0]
-    .split(/,| and /i)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 2);
-  const mustExclude = (split[1] || '')
-    .split(/,| and /i)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 2);
+  const parsed = parseSearchPrompt(prompt);
 
   return {
-    mustInclude: mustInclude.length ? mustInclude : [prompt.trim()],
-    mustExclude,
+    mustInclude: parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()],
+    mustExclude: parsed.mustExclude,
+    mode: parsed.mode,
     publisher: lower.includes('broadridge')
       ? 'broadridge-forefield'
       : lower.includes('publisher')
@@ -97,7 +92,9 @@ export async function POST(req: Request) {
 
     const rows = (data || []).filter((row: any) => {
       const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
-      const includeOk = mustInclude.every((t) => hay.includes(t.toLowerCase()));
+      const includeOk = (structured.mode || 'all') === 'any'
+        ? mustInclude.some((t) => hay.includes(t.toLowerCase()))
+        : mustInclude.every((t) => hay.includes(t.toLowerCase()));
       const excludeOk = mustExclude.every((t) => !hay.includes(t.toLowerCase()));
       return includeOk && excludeOk;
     });
