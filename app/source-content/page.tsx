@@ -38,8 +38,7 @@ export default function SourceContentPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [syncingMode, setSyncingMode] = useState<null | 'sample-seed' | 'provider' | 'provider-backfill'>(null);
-  const [lastBackfillAt, setLastBackfillAt] = useState<string | null>(null);
+  const [syncingMode, setSyncingMode] = useState<null | 'sample-seed' | 'provider'>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -117,9 +116,9 @@ export default function SourceContentPage() {
     setPage((p) => Math.min(data.totalPages || 1, p + 1));
   };
 
-  const runSync = async (mode: 'sample-seed' | 'provider' | 'provider-backfill', dryRun: boolean) => {
+  const runSync = async (mode: 'sample-seed' | 'provider', dryRun: boolean) => {
     setSyncingMode(mode);
-    toast.info(`${mode === 'provider' ? 'Provider' : mode === 'provider-backfill' ? 'Provider backfill' : 'Samples'} sync started...`);
+    toast.info(`${mode === 'provider' ? 'Provider' : 'Samples'} sync started...`);
 
     const response = await fetch('/api/source-content/sync', {
       method: 'POST',
@@ -145,9 +144,6 @@ export default function SourceContentPage() {
     }
 
     toast.success(`${mode} sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
-    if (mode === 'provider-backfill') {
-      setLastBackfillAt(new Date().toISOString());
-    }
     mutate();
     setSyncingMode(null);
   };
@@ -179,10 +175,7 @@ export default function SourceContentPage() {
               <Database className={`h-4 w-4 mr-2 ${syncingMode === 'provider' ? 'animate-pulse' : ''}`} />
               {syncingMode === 'provider' ? 'Syncing Provider...' : 'Sync Provider'}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => runSync('provider-backfill', false)} disabled={syncingMode !== null}>
-              <Database className={`h-4 w-4 mr-2 ${syncingMode === 'provider-backfill' ? 'animate-pulse' : ''}`} />
-              {syncingMode === 'provider-backfill' ? 'Backfilling...' : 'Backfill Provider'}
-            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -202,7 +195,6 @@ export default function SourceContentPage() {
           {data && (
             <div className="text-[10px] leading-tight text-muted-foreground/70">
               Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
-              {lastBackfillAt ? ` · Backfill completed: ${new Date(lastBackfillAt).toLocaleString()}` : ''}
             </div>
           )}
         </div>
