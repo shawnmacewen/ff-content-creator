@@ -106,9 +106,13 @@ export default function SourceContentPage() {
       body: JSON.stringify({ mode, dryRun }),
     });
 
-    const body = await response.json().catch(() => ({}));
+    const rawText = await response.text();
+    let body: any = {};
+    try { body = rawText ? JSON.parse(rawText) : {}; } catch { body = {}; }
+
     if (!response.ok) {
-      toast.error(body?.error || 'Sync failed');
+      const message = body?.error || rawText || `Sync failed (${response.status})`;
+      toast.error(message);
       return;
     }
 

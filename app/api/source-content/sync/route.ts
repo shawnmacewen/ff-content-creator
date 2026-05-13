@@ -45,32 +45,39 @@ export async function POST(req: Request) {
   } else if (mode === 'provider') {
     const config = getAdvisorStreamConfig();
     if (!validateAdvisorStreamConfig(config)) {
-      return NextResponse.json({
-        ok: false,
-        error: 'AdvisorStream env vars are not fully configured',
-      }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: 'AdvisorStream env vars are not fully configured' },
+        { status: 400 }
+      );
     }
 
-    const token = await getAdvisorStreamAccessToken(config);
-    const payload = await searchAdvisorStreamArticles(config, token, { limit: 25, offset: 0 });
-    const normalized = mapAdvisorStreamSearchResults(payload);
+    try {
+      const token = await getAdvisorStreamAccessToken(config);
+      const payload = await searchAdvisorStreamArticles(config, token, { limit: 25, offset: 0 });
+      const normalized = mapAdvisorStreamSearchResults(payload);
 
-    rows = normalized.map((item) => ({
-      external_id: item.externalId,
-      source_system: item.sourceSystem,
-      type: item.type,
-      title: item.title,
-      body: item.body,
-      author: item.author || null,
-      tags: item.tags || [],
-      published_at: item.publishedAt || null,
-      metadata: {
-        excerpt: item.excerpt || null,
-        url: item.url || null,
-        imageUrl: item.imageUrl || null,
-        ...item.metadata,
-      },
-    }));
+      rows = normalized.map((item) => ({
+        external_id: item.externalId,
+        source_system: item.sourceSystem,
+        type: item.type,
+        title: item.title,
+        body: item.body,
+        author: item.author || null,
+        tags: item.tags || [],
+        published_at: item.publishedAt || null,
+        metadata: {
+          excerpt: item.excerpt || null,
+          url: item.url || null,
+          imageUrl: item.imageUrl || null,
+          ...item.metadata,
+        },
+      }));
+    } catch (error: any) {
+      return NextResponse.json(
+        { ok: false, error: error?.message || 'Provider sync failed' },
+        { status: 502 }
+      );
+    }
   } else {
     return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
