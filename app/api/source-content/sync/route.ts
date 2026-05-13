@@ -23,23 +23,55 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
 }
 
 function coalesceEffectiveDate(input: any): string | null {
-  const v =
-    input?.effective_date ||
-    input?.Effective_date ||
-    input?.published_at ||
-    input?.publication_date ||
-    input?.data?.effective_date ||
-    input?.data?.Effective_date ||
-    input?.data?.published_at ||
-    input?.data?.publication_date ||
-    input?.article?.effective_date ||
-    input?.article?.Effective_date ||
-    input?.article?.published_at ||
-    input?.article?.publication_date;
+  const directCandidates = [
+    input?.effective_date,
+    input?.Effective_date,
+    input?.published_at,
+    input?.published_date,
+    input?.publication_date,
+    input?.publish_date,
+    input?.data?.effective_date,
+    input?.data?.Effective_date,
+    input?.data?.published_at,
+    input?.data?.published_date,
+    input?.data?.publication_date,
+    input?.data?.publish_date,
+    input?.article?.effective_date,
+    input?.article?.Effective_date,
+    input?.article?.published_at,
+    input?.article?.published_date,
+    input?.article?.publication_date,
+    input?.article?.publish_date,
+  ].filter(Boolean);
 
-  if (!v) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  for (const value of directCandidates) {
+    const d = new Date(value as string);
+    if (!Number.isNaN(d.getTime())) return d.toISOString();
+  }
+
+  const queue: any[] = [input];
+  while (queue.length) {
+    const node = queue.shift();
+    if (!node || typeof node !== 'object') continue;
+
+    for (const [key, val] of Object.entries(node)) {
+      if (val && typeof val === 'object') queue.push(val);
+      if (typeof val !== 'string') continue;
+
+      const normalizedKey = key.toLowerCase();
+      const looksLikeDateField =
+        normalizedKey.includes('effective') ||
+        normalizedKey.includes('publish') ||
+        normalizedKey.includes('publication');
+
+      if (!looksLikeDateField) continue;
+
+      const d = new Date(val);
+      if (!Number.isNaN(d.getTime())) return d.toISOString();
+    }
+  }
+
+  return null;
 }
 
 interface SyncRequestBody {
