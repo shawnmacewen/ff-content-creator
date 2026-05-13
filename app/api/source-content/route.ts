@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function normalizeBody(input: string): string {
+  const decoded = decodeHtmlEntities(input || '');
+  return decoded
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
@@ -29,7 +47,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const allRows = (await supabase.from('source_content').select('type,tags,author')).data || [];
+  const allRows = (await supabase.from('source_content').select('type,tags,author,source_system,updated_at')).data || [];
 
   const availableTypes = Array.from(new Set(allRows.map((r) => r.type).filter(Boolean)));
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
@@ -38,8 +56,8 @@ export async function GET(request: NextRequest) {
   const mapped = (data || []).map((row: any) => ({
     id: row.id,
     title: row.title,
-    body: row.body,
-    excerpt: row.metadata?.excerpt || row.body?.slice(0, 220) || '',
+    body: normalizeBody(row.body || ''),
+    excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
     type: row.type,
     tags: row.tags || [],
     publishedAt: row.published_at || row.created_at,
@@ -49,6 +67,17 @@ export async function GET(request: NextRequest) {
     sourceSystem: row.source_system || null,
   }));
 
+  const sourceCounts = allRows.reduce((acc: Record<string, number>, r: any) => {
+    const key = r.source_system || 'unknown';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const lastSyncedAt = allRows
+    .map((r: any) => r.updated_at)
+    .filter(Boolean)
+    .sort()
+    .pop() || null;
+
   return NextResponse.json({
     data: mapped,
     total: count || 0,
@@ -56,5 +85,6 @@ export async function GET(request: NextRequest) {
     pageSize,
     totalPages: Math.ceil((count || 0) / pageSize),
     filters: { availableTags, availableTypes, availableAuthors },
+    meta: { sourceCounts, lastSyncedAt },
   });
 }

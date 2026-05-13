@@ -41,7 +41,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
@@ -82,7 +82,7 @@ export function ContentDetail({
         <Separator className="my-4" />
 
         <ScrollArea className="h-[300px] pr-4">
-          <div className="prose prose-sm prose-invert max-w-none">
+          <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
             {content.body.split('\n\n').map((paragraph, index) => (
               <p key={index} className="text-sm text-foreground/90 mb-4">
                 {paragraph}
