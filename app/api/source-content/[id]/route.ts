@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSourceContentById } from '@/lib/api/source-content-mock';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const supabase = getSupabaseServerClient();
 
-  // Simulate API latency
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  const { data, error } = await supabase
+    .from('source_content')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  const content = getSourceContentById(id);
-
-  if (!content) {
-    return NextResponse.json(
-      { error: 'Source content not found' },
-      { status: 404 }
-    );
+  if (error || !data) {
+    return NextResponse.json({ error: 'Source content not found' }, { status: 404 });
   }
 
-  return NextResponse.json(content);
+  return NextResponse.json(data);
 }
