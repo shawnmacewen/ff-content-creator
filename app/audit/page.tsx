@@ -21,16 +21,25 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string>('');
 
   const run = async () => {
     setLoading(true);
+    setError('');
+    setSelectedIds(new Set());
     try {
       const res = await fetch('/api/audit/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, publisher, limit: 200 }),
       });
-      setResult(await res.json());
+      const body = await res.json();
+      setResult(body);
+      if (!res.ok || body?.ok === false) {
+        setError(body?.error || `Audit failed (${res.status})`);
+      }
+    } catch (e: any) {
+      setError(String(e?.message || e));
     } finally {
       setLoading(false);
     }
@@ -75,13 +84,26 @@ export default function AuditPage() {
         <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark Needs Update</Button>
       </div>
 
+      {loading && (
+        <div className="text-sm text-muted-foreground rounded border p-3">Running audit...</div>
+      )}
+
+      {error && (
+        <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
+      )}
+
       {result?.structured && (
-        <div className="text-xs text-muted-foreground rounded border p-3">
-          Parsed query: <code>{JSON.stringify(result.structured)}</code>
+        <div className="text-xs text-muted-foreground rounded border p-3 space-y-1">
+          <div>Parsed query: <code>{JSON.stringify(result.structured)}</code></div>
+          <div>Matches: <strong>{result?.total ?? result?.matches?.length ?? 0}</strong></div>
         </div>
       )}
 
       <div className="space-y-3">
+        {result && !loading && !error && (result?.matches?.length ?? 0) === 0 && (
+          <div className="text-sm text-muted-foreground rounded border p-3">No matches found for this query. Try broader wording or remove exclusions.</div>
+        )}
+
         {(result?.matches || []).map((m: Match) => (
           <div key={m.id} className="rounded border p-3 space-y-2">
             <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
