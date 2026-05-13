@@ -11,6 +11,7 @@ import {
   FileText,
   Mail,
   Share2,
+  Bug,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -47,6 +48,11 @@ const mainNavItems = [
     title: 'Content Library',
     href: '/library',
     icon: Library,
+  },
+  {
+    title: 'API Lab',
+    href: '/api-lab',
+    icon: Bug,
   },
 ];
 
