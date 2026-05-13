@@ -154,48 +154,47 @@ export default function SourceContentPage() {
             Browse existing content to use as inspiration for AI generation
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', true)}>
-            <Database className="h-4 w-4 mr-2" />
-            Dry Run Samples
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', false)}>
-            <Database className="h-4 w-4 mr-2" />
-            Sync Samples
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => runSync('provider', true)}>
-            <Database className="h-4 w-4 mr-2" />
-            Dry Run Provider
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => runSync('provider', false)}>
-            <Database className="h-4 w-4 mr-2" />
-            Sync Provider
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => mutate()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          {selectedIds.size > 0 && (
-            <Button onClick={handleGenerateWithSelected} className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Generate with {selectedIds.size} selected
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', true)}>
+              <Database className="h-4 w-4 mr-2" />
+              Dry Run Samples
             </Button>
+            <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', false)}>
+              <Database className="h-4 w-4 mr-2" />
+              Sync Samples
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => runSync('provider', true)}>
+              <Database className="h-4 w-4 mr-2" />
+              Dry Run Provider
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => runSync('provider', false)}>
+              <Database className="h-4 w-4 mr-2" />
+              Sync Provider
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => mutate()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            {selectedIds.size > 0 && (
+              <Button onClick={handleGenerateWithSelected} className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Generate with {selectedIds.size} selected
+              </Button>
+            )}
+          </div>
+          {data && (
+            <div className="text-[10px] leading-tight text-muted-foreground/70">
+              Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
+            </div>
           )}
         </div>
       </div>
-
-      {data && (
-        <div className="w-full text-right mt-[10px] mb-0">
-          <span className="inline-block text-[10px] leading-tight text-muted-foreground/70">
-            Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
-          </span>
-        </div>
-      )}
 
       <ContentFilters
         searchQuery={searchQuery}

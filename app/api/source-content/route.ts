@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
     type: row.type,
     tags: row.tags || [],
-    publishedAt: row.published_at || row.created_at,
+    publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
     url: row.metadata?.url || null,
     imageUrl: row.metadata?.imageUrl || null,

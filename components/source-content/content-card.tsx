@@ -57,7 +57,9 @@ export function ContentCard({
                   {content.sourceSystem === 'advisorstream' ? 'Broadridge Forefield' : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>
-                {formatDistanceToNow(new Date(content.publishedAt), { addSuffix: true })}
+                {content.publishedAt
+                  ? formatDistanceToNow(new Date(content.publishedAt), { addSuffix: true })
+                  : 'Published date unavailable'}
               </CardDescription>
             </div>
           </div>

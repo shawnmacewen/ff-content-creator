@@ -25,7 +25,7 @@ export async function GET(
     excerpt: data.metadata?.excerpt || data.body?.slice(0, 220) || '',
     type: data.type,
     tags: data.tags || [],
-    publishedAt: data.published_at || data.created_at,
+    publishedAt: data.published_at || null,
     author: data.source_system === 'sample-seed' ? 'Sample' : (data.author || 'Unknown'),
     url: data.metadata?.url || null,
     imageUrl: data.metadata?.imageUrl || null,

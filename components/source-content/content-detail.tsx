@@ -57,7 +57,7 @@ export function ContentDetail({
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {format(new Date(content.publishedAt), 'MMM d, yyyy')}
+                  {content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable'}
                 </span>
               </DialogDescription>
             </div>

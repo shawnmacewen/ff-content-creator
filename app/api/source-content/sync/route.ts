@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     try {
       const token = await getAdvisorStreamAccessToken(config);
       const pageSize = 25;
-      const maxItems = 500;
+      const maxItems = 50;
       const collected: any[] = [];
       let offset = 0;
       let totalItems = Number.MAX_SAFE_INTEGER;
