@@ -1,32 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { QuickActions } from '@/components/dashboard/quick-actions';
-import { getContentStats, getRecentContent } from '@/lib/storage/local-storage';
+import useSWR from 'swr';
 import type { GeneratedContent } from '@/lib/types/content';
 import { Sparkles } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    totalGenerated: 0,
-    generatedThisWeek: 0,
-    socialCount: 0,
-    emailCount: 0,
-    articleCount: 0,
-  });
-  const [recentContent, setRecentContent] = useState<GeneratedContent[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const contentStats = getContentStats();
-    setStats(contentStats);
-    setRecentContent(getRecentContent(5));
   }, []);
+
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
+  const { data } = useSWR<{ data: GeneratedContent[] }>(
+    mounted ? '/api/generated-content' : null,
+    fetcher
+  );
+
+  const content = data?.data || [];
+
+  const recentContent = useMemo(
+    () => [...content].sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime()).slice(0, 5),
+    [content]
+  );
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const generatedThisWeek = content.filter((c: any) => new Date(c.created_at || c.createdAt) >= weekAgo).length;
+    const socialCount = content.filter((c: any) => (c.type || '').startsWith('social-')).length;
+    const emailCount = content.filter((c: any) => (c.type || '').includes('email') || (c.type || '').includes('newsletter')).length;
+    const articleCount = content.filter((c: any) => c.type === 'article' || c.type === 'infographic-copy').length;
+
+    return {
+      totalGenerated: content.length,
+      generatedThisWeek,
+      socialCount,
+      emailCount,
+      articleCount,
+    };
+  }, [content]);
 
   if (!mounted) {
     return (
