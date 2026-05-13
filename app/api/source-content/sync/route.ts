@@ -231,15 +231,43 @@ export async function POST(req: Request) {
       for (const row of rows) {
         if ((!forceDetailDateRefresh && row.published_at) || !row.external_id) continue;
         const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, row.external_id);
-        const effective = coalesceEffectiveDate(detail, row.publisher);
-        if (effective) {
-          row.published_at = effective;
-          row.metadata = {
-            ...(row.metadata || {}),
-            detailFetched: true,
-            detailEffectiveDate: effective,
-          };
+        const detailData = detail?.article?.data || detail?.data || detail;
+        const detailSource = String(detailData?.source || '').trim().toLowerCase();
+
+        // Canonical publisher classification from detail source
+        row.publisher =
+          detailSource === 'broadridge advisor content'
+            ? 'broadridge-forefield'
+            : (row.publisher || 'publisher-content');
+
+        // Explicit date mapping for forefield -> effective_date, others -> publish_date first
+        let mappedDate: string | null = null;
+        if (row.publisher === 'broadridge-forefield') {
+          mappedDate = coalesceEffectiveDate({
+            effective_date: detailData?.effective_date,
+            Effective_date: detailData?.Effective_date,
+            data: detailData,
+          }, row.publisher);
+        } else {
+          mappedDate = coalesceEffectiveDate({
+            publish_date: detailData?.publish_date,
+            published_date: detailData?.published_date,
+            published_at: detailData?.published_at,
+            publication_date: detailData?.publication_date,
+            data: detailData,
+          }, row.publisher);
         }
+
+        if (mappedDate) {
+          row.published_at = mappedDate;
+        }
+
+        row.metadata = {
+          ...(row.metadata || {}),
+          detailFetched: true,
+          detailSource: detailData?.source || null,
+          detailMappedDate: row.published_at || null,
+        };
       }
     } catch (error: any) {
       return NextResponse.json(
