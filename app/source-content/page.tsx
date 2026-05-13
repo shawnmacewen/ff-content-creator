@@ -189,6 +189,12 @@ export default function SourceContentPage() {
         </div>
       </div>
 
+      {data && (
+        <div className="text-xs text-muted-foreground">
+          Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
+        </div>
+      )}
+
       <ContentFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -229,9 +235,6 @@ export default function SourceContentPage() {
 
       {data && !isLoading && (
         <>
-          <div className="text-xs text-muted-foreground">
-            Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
-          </div>
           <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
             <span>
               Showing {data.data.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
