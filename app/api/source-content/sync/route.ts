@@ -24,24 +24,24 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
 
 function coalesceEffectiveDate(input: any): string | null {
   const directCandidates = [
+    input?.publish_date,
+    input?.published_date,
+    input?.published_at,
+    input?.publication_date,
     input?.effective_date,
     input?.Effective_date,
-    input?.published_at,
-    input?.published_date,
-    input?.publication_date,
-    input?.publish_date,
+    input?.data?.publish_date,
+    input?.data?.published_date,
+    input?.data?.published_at,
+    input?.data?.publication_date,
     input?.data?.effective_date,
     input?.data?.Effective_date,
-    input?.data?.published_at,
-    input?.data?.published_date,
-    input?.data?.publication_date,
-    input?.data?.publish_date,
+    input?.article?.publish_date,
+    input?.article?.published_date,
+    input?.article?.published_at,
+    input?.article?.publication_date,
     input?.article?.effective_date,
     input?.article?.Effective_date,
-    input?.article?.published_at,
-    input?.article?.published_date,
-    input?.article?.publication_date,
-    input?.article?.publish_date,
   ].filter(Boolean);
 
   for (const value of directCandidates) {
