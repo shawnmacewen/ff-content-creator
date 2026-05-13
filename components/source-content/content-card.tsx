@@ -62,7 +62,11 @@ export function ContentCard({
                         : content.publisher === 'sample'
                           ? 'Sample'
                           : content.publisher
-                    : content.author}
+                    : content.sourceSystem === 'advisorstream'
+                      ? 'Broadridge Forefield'
+                      : content.sourceSystem === 'sample-seed'
+                        ? 'Sample'
+                        : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>
                 <span className="inline-flex items-center gap-1">
