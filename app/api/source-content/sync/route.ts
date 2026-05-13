@@ -97,7 +97,7 @@ function coalesceEffectiveDate(input: any, publisher?: string | null): string | 
 }
 
 interface SyncRequestBody {
-  mode?: 'sample-seed' | 'provider';
+  mode?: 'sample-seed' | 'provider' | 'provider-backfill';
   dryRun?: boolean;
   forceDetailDateRefresh?: boolean;
 }
@@ -300,6 +300,87 @@ export async function POST(req: Request) {
         { status: 502 }
       );
     }
+  } else if (mode === 'provider-backfill') {
+    const config = getAdvisorStreamConfig();
+    if (!validateAdvisorStreamConfig(config)) {
+      return NextResponse.json(
+        { ok: false, error: 'AdvisorStream env vars are not fully configured' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseServerClient();
+    const { data: backfillRows, error: backfillError } = await supabase
+      .from('source_content')
+      .select('id, external_id, source_system, publisher, published_at, metadata')
+      .eq('source_system', 'advisorstream')
+      .or('publisher.is.null,published_at.is.null')
+      .limit(200);
+
+    if (backfillError) {
+      return NextResponse.json({ ok: false, error: backfillError.message }, { status: 500 });
+    }
+
+    const token = await getAdvisorStreamAccessToken(config);
+    const targets = backfillRows || [];
+
+    for (const target of targets) {
+      const fallbackId =
+        target.external_id ||
+        (target as any)?.metadata?.raw?.articleId ||
+        (target as any)?.metadata?.raw?.uuid ||
+        null;
+
+      if (!fallbackId) {
+        detailFetchMiss += 1;
+        continue;
+      }
+
+      const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, fallbackId);
+      if (!detail) {
+        detailFetchMiss += 1;
+        continue;
+      }
+      detailFetchSuccess += 1;
+
+      const detailData = detail?.article?.data || detail?.data || detail;
+      const detailSource = String(detailData?.source || '').trim().toLowerCase();
+      const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
+
+      let mappedDate: string | null = null;
+      if (publisher === 'broadridge-forefield') {
+        mappedDate = coalesceEffectiveDate({
+          effective_date: detailData?.effective_date,
+          Effective_date: detailData?.Effective_date,
+          data: detailData,
+        }, publisher);
+      } else {
+        mappedDate = coalesceEffectiveDate({
+          publish_date: detailData?.publish_date,
+          published_date: detailData?.published_date,
+          published_at: detailData?.published_at,
+          publication_date: detailData?.publication_date,
+          data: detailData,
+        }, publisher);
+      }
+
+      if (mappedDate) detailDateMapped += 1;
+      detailPublisherMapped += 1;
+
+      rows.push({
+        id: target.id,
+        external_id: target.external_id,
+        source_system: 'advisorstream',
+        publisher,
+        published_at: mappedDate,
+        metadata: {
+          ...((target as any).metadata || {}),
+          detailFetched: true,
+          detailSource: detailData?.source || null,
+          detailMappedDate: mappedDate || null,
+        },
+      });
+    }
   } else {
     return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
@@ -313,6 +394,17 @@ export async function POST(req: Request) {
   let updated = 0;
 
   for (const row of rows) {
+    if (mode === 'provider-backfill' && row.id) {
+      const { id, ...patch } = row;
+      const { error } = await supabase
+        .from('source_content')
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      updated += 1;
+      continue;
+    }
+
     const { data: existing } = await supabase
       .from('source_content')
       .select('id')
