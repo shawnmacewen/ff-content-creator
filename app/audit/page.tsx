@@ -128,34 +128,43 @@ export default function AuditPage() {
 
         {method === 'search' ? (
           <div className="grid md:grid-cols-2 gap-2">
-            <Input value={includeTerms} onChange={(e) => setIncludeTerms(e.target.value)} placeholder='Include terms (e.g. "standard mileage rate", 2025)' />
-            <Input value={excludeTerms} onChange={(e) => setExcludeTerms(e.target.value)} placeholder='Exclude terms (e.g. 2026, old threshold)' />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Include terms</label>
+              <Input value={includeTerms} onChange={(e) => setIncludeTerms(e.target.value)} placeholder="" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Exclude terms</label>
+              <Input value={excludeTerms} onChange={(e) => setExcludeTerms(e.target.value)} placeholder="" />
+            </div>
           </div>
         ) : (
           <div className="flex gap-2 items-center">
             <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder='e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate' />
           </div>
         )}
-        <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
-          <option value="all">All publishers</option>
-          <option value="broadridge-forefield">Broadridge Forefield</option>
-          <option value="publisher-content">Publisher Content</option>
-          <option value="sample">Sample</option>
-        </select>
-        {method === 'search' && (
-          <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
-            <option value="all">Match all include terms</option>
-            <option value="any">Match any include term</option>
+        <div className="flex flex-wrap gap-2 items-center">
+          <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
+            <option value="all">All publishers</option>
+            <option value="broadridge-forefield">Broadridge Forefield</option>
+            <option value="publisher-content">Publisher Content</option>
+            <option value="sample">Sample</option>
           </select>
-        )}
-        {method === 'analyze' && (
-          <select className="border rounded px-2 bg-background text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
-            <option value="quick">AI Quick Scan</option>
-            <option value="deep">AI Deep Scan</option>
-          </select>
-        )}
-        <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
-        <Button variant="outline" onClick={() => {
+          {method === 'search' && (
+            <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
+              <option value="all">Match all include terms</option>
+              <option value="any">Match any include term</option>
+            </select>
+          )}
+          {method === 'analyze' && (
+            <select className="border rounded px-2 bg-background text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
+              <option value="quick">AI Quick Scan</option>
+              <option value="deep">AI Deep Scan</option>
+            </select>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 items-center pt-2">
+          <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
+          <Button variant="outline" onClick={() => {
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -163,6 +172,7 @@ export default function AuditPage() {
           URL.revokeObjectURL(url);
         }} disabled={!result?.matches?.length}>Export CSV</Button>
         <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark Needs Update</Button>
+        </div>
       </div>
 
       {loading && (
