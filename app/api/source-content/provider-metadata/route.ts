@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
         query: search || '401k',
         limit: Number.isFinite(limit) ? limit : 10,
         offset: 0,
+        includeSourceFilter: false,
       });
       return NextResponse.json({ ok: true, mode, search: search || '401k', payload });
     }

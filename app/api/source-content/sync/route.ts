@@ -9,6 +9,39 @@ import {
   validateAdvisorStreamConfig,
 } from '@/lib/integrations/advisorstream/provider';
 
+async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, articleId: string) {
+  const base = baseUrl.replace(/\/$/, '');
+  const response = await fetch(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/${encodeURIComponent(articleId)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+function coalesceEffectiveDate(input: any): string | null {
+  const v =
+    input?.effective_date ||
+    input?.Effective_date ||
+    input?.published_at ||
+    input?.publication_date ||
+    input?.data?.effective_date ||
+    input?.data?.Effective_date ||
+    input?.data?.published_at ||
+    input?.data?.publication_date ||
+    input?.article?.effective_date ||
+    input?.article?.Effective_date ||
+    input?.article?.published_at ||
+    input?.article?.publication_date;
+
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 interface SyncRequestBody {
   mode?: 'sample-seed' | 'provider';
   dryRun?: boolean;
@@ -61,7 +94,7 @@ export async function POST(req: Request) {
       let lastPayload: any = null;
 
       while (offset < totalItems && collected.length < maxItems) {
-        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset });
+        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: false });
         lastPayload = payload;
 
         const rawCount =
@@ -134,6 +167,21 @@ export async function POST(req: Request) {
           ...item.metadata,
         },
       }));
+
+      // Enrichment pass: fetch article details for missing published dates (effective_date)
+      for (const row of rows) {
+        if (row.published_at || !row.external_id) continue;
+        const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, row.external_id);
+        const effective = coalesceEffectiveDate(detail);
+        if (effective) {
+          row.published_at = effective;
+          row.metadata = {
+            ...(row.metadata || {}),
+            detailFetched: true,
+            detailEffectiveDate: effective,
+          };
+        }
+      }
     } catch (error: any) {
       return NextResponse.json(
         { ok: false, error: error?.message || 'Provider sync failed' },

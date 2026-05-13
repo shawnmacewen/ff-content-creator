@@ -62,13 +62,15 @@ export async function getAdvisorStreamAccessToken(config: AdvisorStreamConfig): 
 export async function searchAdvisorStreamArticles(
   config: AdvisorStreamConfig,
   token: string,
-  options?: { query?: string; limit?: number; offset?: number }
+  options?: { query?: string; limit?: number; offset?: number; includeSourceFilter?: boolean }
 ): Promise<AdvisorStreamSearchResponse> {
   const base = config.apiBaseUrl.replace(/\/$/, '');
   const url = new URL(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/search`);
 
   url.searchParams.set('is_active', 'true');
-  url.searchParams.set('filter', 'source_sort=Broadridge Advisor Content');
+  if (options?.includeSourceFilter !== false) {
+    url.searchParams.set('filter', 'source_sort=Broadridge Advisor Content');
+  }
   url.searchParams.set(
     'fields',
     'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps'
