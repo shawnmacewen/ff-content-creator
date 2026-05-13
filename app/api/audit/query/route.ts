@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     }
 
     let structured: z.infer<typeof QuerySchema>;
+    let parserUsed: 'ai' | 'fallback' = 'ai';
 
     try {
       const env = getServerEnv();
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
       });
       structured = parse.object;
     } catch {
+      parserUsed = 'fallback';
       structured = fallbackParse(prompt);
     }
 
@@ -110,7 +112,7 @@ export async function POST(req: Request) {
       score: mustInclude.length,
     }));
 
-    return NextResponse.json({ ok: true, structured, total: matches.length, scanned: (data || []).length, matches });
+    return NextResponse.json({ ok: true, parserUsed, structured, total: matches.length, scanned: (data || []).length, matches });
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error?.message || 'Unexpected audit query failure', stage: 'unknown' }, { status: 500 });
   }

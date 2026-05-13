@@ -95,7 +95,8 @@ export default function AuditPage() {
       {result?.structured && (
         <div className="text-xs text-muted-foreground rounded border p-3 space-y-1">
           <div>Parsed query: <code>{JSON.stringify(result.structured)}</code></div>
-          <div>Matches: <strong>{result?.total ?? result?.matches?.length ?? 0}</strong></div>
+          <div>Parser: <strong>{result?.parserUsed === 'fallback' ? 'Fallback (AI parse failed)' : 'AI parser'}</strong></div>
+          <div>Matches: <strong>{result?.total ?? result?.matches?.length ?? 0}</strong> · Scanned: <strong>{result?.scanned ?? 0}</strong></div>
         </div>
       )}
 
