@@ -99,11 +99,11 @@ export default function SourceContentPage() {
     setSelectedIds(new Set());
   };
 
-  const runSync = async (dryRun: boolean) => {
+  const runSync = async (mode: 'sample-seed' | 'provider', dryRun: boolean) => {
     const response = await fetch('/api/source-content/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'sample-seed', dryRun }),
+      body: JSON.stringify({ mode, dryRun }),
     });
 
     const body = await response.json().catch(() => ({}));
@@ -113,11 +113,11 @@ export default function SourceContentPage() {
     }
 
     if (dryRun) {
-      toast.success(`Dry run: would process ${body?.wouldProcess ?? 0} rows`);
+      toast.success(`${mode} dry run: would process ${body?.wouldProcess ?? 0} rows`);
       return;
     }
 
-    toast.success(`Sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
+    toast.success(`${mode} sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
     mutate();
   };
 
@@ -131,13 +131,21 @@ export default function SourceContentPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => runSync(true)}>
+          <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', true)}>
             <Database className="h-4 w-4 mr-2" />
-            Dry Run Sync
+            Dry Run Samples
           </Button>
-          <Button variant="outline" size="sm" onClick={() => runSync(false)}>
+          <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', false)}>
             <Database className="h-4 w-4 mr-2" />
             Sync Samples
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => runSync('provider', true)}>
+            <Database className="h-4 w-4 mr-2" />
+            Dry Run Provider
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => runSync('provider', false)}>
+            <Database className="h-4 w-4 mr-2" />
+            Sync Provider
           </Button>
           <Button
             variant="outline"
