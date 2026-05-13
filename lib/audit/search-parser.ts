@@ -17,23 +17,30 @@ export function parseSearchPrompt(prompt: string): ParsedSearchQuery {
   if (/\b(any of|match any|either)\b/i.test(text)) mode = 'any';
 
   const parts = text.split(/\bbut not\b|\bwithout\b|\bexclude\b/i);
-  const includeRaw = parts[0] || '';
+  let includeRaw = parts[0] || '';
   const excludeRaw = parts.slice(1).join(' ');
 
-  const includeTokens = includeRaw
+  // Natural-language helper: "mentions X" -> extract X
+  const mentionsMatch = includeRaw.match(/\b(mentions?|contains?|includes?|with)\b\s+(.+)$/i);
+  if (mentionsMatch?.[2]) includeRaw = mentionsMatch[2];
+
+  // Remove instructional lead-ins
+  includeRaw = includeRaw.replace(/^\s*(list|find|show|search|content|pieces|items|that)\s+/gi, ' ').trim();
+
+  const stopWords = new Set(['the','and','for','that','with','from','this','those','these','into','about','every','piece','content','items','item','list','find','show']);
+
+  const normalize = (s: string) => s
     .replace(/"[^"]+"/g, ' ')
     .split(/,|\band\b/i)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 2);
+    .map((x) => x.trim())
+    .filter((x) => x.length > 2)
+    .filter((x) => !stopWords.has(x.toLowerCase()));
 
-  const excludeTokens = excludeRaw
-    .replace(/"[^"]+"/g, ' ')
-    .split(/,|\band\b/i)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 2);
+  const includeTokens = normalize(includeRaw);
+  const excludeTokens = normalize(excludeRaw);
 
-  const mustInclude = Array.from(new Set([...quoted, ...includeTokens]));
-  const mustExclude = Array.from(new Set(extractQuoted(excludeRaw).concat(excludeTokens)));
+  const mustInclude = Array.from(new Set([...quoted, ...includeTokens])).filter(Boolean);
+  const mustExclude = Array.from(new Set(extractQuoted(excludeRaw).concat(excludeTokens))).filter(Boolean);
 
   return { mustInclude, mustExclude, mode };
 }

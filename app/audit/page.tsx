@@ -70,8 +70,7 @@ export default function AuditPage() {
         <p className="text-muted-foreground">Type what you want to find. AI will convert your request into DB search rules.</p>
       </div>
 
-      <div className="flex gap-2 items-center">
-        <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate" />
+      <div className="space-y-2">
         <div className="inline-flex items-center rounded-lg bg-muted p-1 text-xs">
           <button
             className={`px-3 py-1.5 rounded-md transition inline-flex items-center gap-1.5 ${method === 'search' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -89,6 +88,16 @@ export default function AuditPage() {
             <Sparkles className="h-3.5 w-3.5" />
             AI Analyze
           </button>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          {method === 'search'
+            ? 'Standard Search: use specific phrases/terms. Use quotes for exact phrases and optional exclusions with “but not”.'
+            : 'AI Analyze: describe what you want in natural language. AI will interpret the request and score matches.'}
+        </p>
+
+        <div className="flex gap-2 items-center">
+          <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={method === 'search' ? 'e.g. "standard mileage rate" but not "2026"' : 'e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate'} />
         </div>
         <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
           <option value="all">All publishers</option>

@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createOpenAI } from '@ai-sdk/openai';
-import { generateObject } from 'ai';
-import { z } from 'zod';
-import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
-
-const QuerySchema = z.object({
-  mustInclude: z.array(z.string()).default([]),
-  mustExclude: z.array(z.string()).default([]),
-  mode: z.enum(['all', 'any']).default('all'),
-  publisher: z.string().optional(),
-  limit: z.number().int().min(1).max(500).default(100),
-});
 
 function makeSnippet(text: string, terms: string[]) {
   if (!text) return '';
@@ -25,54 +13,27 @@ function makeSnippet(text: string, terms: string[]) {
   return text.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
-function fallbackParse(prompt: string) {
-  const lower = prompt.toLowerCase();
-  const parsed = parseSearchPrompt(prompt);
-
-  return {
-    mustInclude: parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()],
-    mustExclude: parsed.mustExclude,
-    mode: parsed.mode,
-    publisher: lower.includes('broadridge')
-      ? 'broadridge-forefield'
-      : lower.includes('publisher')
-        ? 'publisher-content'
-        : undefined,
-    limit: 100,
-  };
-}
-
 export async function POST(req: Request) {
   try {
-    const { prompt, publisher, limit } = (await req.json()) as {
+    const { prompt, publisher, limit, mode } = (await req.json()) as {
       prompt: string;
       publisher?: string;
       limit?: number;
+      mode?: 'all' | 'any';
     };
 
     if (!prompt?.trim()) {
       return NextResponse.json({ ok: false, error: 'Missing prompt', stage: 'input' }, { status: 400 });
     }
 
-    let structured: z.infer<typeof QuerySchema>;
-    let parserUsed: 'ai' | 'fallback' = 'ai';
-
-    try {
-      const env = getServerEnv();
-      const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-      const parse = await generateObject({
-        model: openai(env.OPENAI_MODEL),
-        schema: QuerySchema,
-        prompt: `Convert this audit request into literal search phrases. Request: ${prompt}\nReturn short exact phrases only.`,
-      });
-      structured = parse.object;
-    } catch {
-      parserUsed = 'fallback';
-      structured = fallbackParse(prompt);
-    }
-
-    if (publisher && publisher !== 'all') structured.publisher = publisher;
-    if (limit) structured.limit = Math.min(500, Math.max(1, limit));
+    const parsed = parseSearchPrompt(prompt);
+    const structured = {
+      mustInclude: parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()],
+      mustExclude: parsed.mustExclude,
+      mode: mode || parsed.mode || 'all',
+      publisher: publisher && publisher !== 'all' ? publisher : undefined,
+      limit: Math.min(500, Math.max(1, Number(limit) || 100)),
+    };
 
     const supabase = getSupabaseServerClient();
     let q = supabase
@@ -80,9 +41,9 @@ export async function POST(req: Request) {
       .select('id,title,body,publisher,source_system,published_at')
       .order('published_at', { ascending: false, nullsFirst: false });
 
-    if (structured.publisher && structured.publisher !== 'all') q = q.eq('publisher', structured.publisher);
+    if (structured.publisher) q = q.eq('publisher', structured.publisher);
 
-    const { data, error } = await q.limit(structured.limit || 100);
+    const { data, error } = await q.limit(structured.limit);
     if (error) {
       return NextResponse.json({ ok: false, error: error.message, stage: 'query' }, { status: 500 });
     }
@@ -92,7 +53,7 @@ export async function POST(req: Request) {
 
     const rows = (data || []).filter((row: any) => {
       const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
-      const includeOk = (structured.mode || 'all') === 'any'
+      const includeOk = structured.mode === 'any'
         ? mustInclude.some((t) => hay.includes(t.toLowerCase()))
         : mustInclude.every((t) => hay.includes(t.toLowerCase()));
       const excludeOk = mustExclude.every((t) => !hay.includes(t.toLowerCase()));
@@ -109,8 +70,8 @@ export async function POST(req: Request) {
       score: mustInclude.length,
     }));
 
-    return NextResponse.json({ ok: true, parserUsed, structured, total: matches.length, scanned: (data || []).length, matches });
+    return NextResponse.json({ ok: true, parserUsed: 'deterministic', structured, total: matches.length, scanned: (data || []).length, matches });
   } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error?.message || 'Unexpected audit query failure', stage: 'unknown' }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error?.message || 'Unexpected search failure', stage: 'unknown' }, { status: 500 });
   }
 }
