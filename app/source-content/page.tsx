@@ -174,10 +174,10 @@ export default function SourceContentPage() {
         onSearchChange={setSearchQuery}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
-        availableTypes={data?.filters.availableTypes || []}
+        availableTypes={data?.filters?.availableTypes || []}
         selectedTag={selectedTag}
         onTagChange={setSelectedTag}
-        availableTags={data?.filters.availableTags || []}
+        availableTags={data?.filters?.availableTags || []}
         onClearFilters={handleClearFilters}
       />
 
