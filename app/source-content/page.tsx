@@ -190,8 +190,8 @@ export default function SourceContentPage() {
       </div>
 
       {data && (
-        <div className="w-full -mt-3 -mb-1 text-right leading-none">
-          <span className="inline-block text-[10px] text-muted-foreground/70 px-0.5 py-0">
+        <div className="w-full text-right mt-[10px] mb-0">
+          <span className="inline-block text-[10px] leading-tight text-muted-foreground/70">
             Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
           </span>
         </div>
