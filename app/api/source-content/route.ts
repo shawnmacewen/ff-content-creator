@@ -53,11 +53,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const allRows = (await supabase.from('source_content').select('type,tags,author,source_system,updated_at')).data || [];
+  const allRows = (await supabase.from('source_content').select('type,tags,author,publisher,source_system,updated_at')).data || [];
 
   const availableTypes = Array.from(new Set(allRows.map((r) => r.type).filter(Boolean)));
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
-  const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher).filter(Boolean)));
+  const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher || (r.source_system === 'sample-seed' ? 'sample' : null)).filter(Boolean)));
   const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
 
   const mapped = (data || []).map((row: any) => ({
