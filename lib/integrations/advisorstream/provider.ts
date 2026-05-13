@@ -94,6 +94,21 @@ export async function searchAdvisorStreamArticles(
   return (await response.json()) as AdvisorStreamSearchResponse;
 }
 
+function stripXml(input: string): string {
+  return input
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toPlainText(input: unknown): string {
+  if (!input || typeof input !== 'string') return '';
+  const str = input.trim();
+  if (str.startsWith('<')) return stripXml(str);
+  return str;
+}
+
 function findArticleArray(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== 'object') return [];
@@ -126,8 +141,10 @@ export function mapAdvisorStreamSearchResults(
     .map((item: any) => {
       const externalId = item.id || item.uuid || item._id || item.articleId;
       const title = item.headline || item.title || item?.files?.title || item?.files?.[0]?.title;
-      const excerpt = item.summary || item.description || item?.extraProps?.description || item?.extra_properties?.description || '';
-      const body = item.content || item?.extraProps?.content || item?.extra_properties?.content || excerpt || '';
+      const excerptRaw = item.summary || item.description || item?.extraProps?.description || item?.extra_properties?.description || '';
+      const bodyRaw = item.content || item?.extraProps?.content || item?.extra_properties?.content || excerptRaw || '';
+      const excerpt = toPlainText(excerptRaw);
+      const body = toPlainText(bodyRaw) || excerpt;
       const tags = Array.isArray(item.tags)
         ? item.tags
         : Array.isArray(item?.extraProps?.tags)

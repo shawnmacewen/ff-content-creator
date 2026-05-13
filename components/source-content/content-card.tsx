@@ -51,9 +51,17 @@ export function ContentCard({
               </CardDescription>
             </div>
           </div>
-          <Badge variant="secondary" className="shrink-0">
-            {content.type}
-          </Badge>
+          <div className="flex flex-col gap-1 items-end">
+            <Badge variant="secondary" className="shrink-0">
+              {content.type}
+            </Badge>
+            {content.sourceSystem === 'advisorstream' && (
+              <Badge className="shrink-0 bg-purple-600 hover:bg-purple-600 text-white">AdvisorStream</Badge>
+            )}
+            {content.sourceSystem === 'sample-seed' && (
+              <Badge className="shrink-0 bg-green-600 hover:bg-green-600 text-white">Sample</Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -30,6 +30,7 @@ export interface SourceContent {
   author: string;
   url?: string;
   imageUrl?: string;
+  sourceSystem?: string;
 }
 
 // Version tracking for content

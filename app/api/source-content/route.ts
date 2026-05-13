@@ -43,9 +43,10 @@ export async function GET(request: NextRequest) {
     type: row.type,
     tags: row.tags || [],
     publishedAt: row.published_at || row.created_at,
-    author: row.author || 'Unknown',
+    author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
     url: row.metadata?.url || null,
     imageUrl: row.metadata?.imageUrl || null,
+    sourceSystem: row.source_system || null,
   }));
 
   return NextResponse.json({

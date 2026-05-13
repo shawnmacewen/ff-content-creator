@@ -26,8 +26,9 @@ export async function GET(
     type: data.type,
     tags: data.tags || [],
     publishedAt: data.published_at || data.created_at,
-    author: data.author || 'Unknown',
+    author: data.source_system === 'sample-seed' ? 'Sample' : (data.author || 'Unknown'),
     url: data.metadata?.url || null,
     imageUrl: data.metadata?.imageUrl || null,
+    sourceSystem: data.source_system || null,
   });
 }
