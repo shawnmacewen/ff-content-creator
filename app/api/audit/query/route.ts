@@ -23,56 +23,95 @@ function makeSnippet(text: string, terms: string[]) {
   return text.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
-export async function POST(req: Request) {
-  const { prompt, publisher, limit } = (await req.json()) as {
-    prompt: string;
-    publisher?: string;
-    limit?: number;
+function fallbackParse(prompt: string) {
+  const lower = prompt.toLowerCase();
+  const split = prompt.split(/\bbut not\b|\bwithout\b/i);
+  const mustInclude = split[0]
+    .split(/,| and /i)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 2);
+  const mustExclude = (split[1] || '')
+    .split(/,| and /i)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 2);
+
+  return {
+    mustInclude: mustInclude.length ? mustInclude : [prompt.trim()],
+    mustExclude,
+    publisher: lower.includes('broadridge')
+      ? 'broadridge-forefield'
+      : lower.includes('publisher')
+        ? 'publisher-content'
+        : undefined,
+    limit: 100,
   };
+}
 
-  if (!prompt?.trim()) {
-    return NextResponse.json({ ok: false, error: 'Missing prompt' }, { status: 400 });
+export async function POST(req: Request) {
+  try {
+    const { prompt, publisher, limit } = (await req.json()) as {
+      prompt: string;
+      publisher?: string;
+      limit?: number;
+    };
+
+    if (!prompt?.trim()) {
+      return NextResponse.json({ ok: false, error: 'Missing prompt', stage: 'input' }, { status: 400 });
+    }
+
+    let structured: z.infer<typeof QuerySchema>;
+
+    try {
+      const env = getServerEnv();
+      const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+      const parse = await generateObject({
+        model: openai(env.OPENAI_MODEL),
+        schema: QuerySchema,
+        prompt: `Convert this audit request into literal search phrases. Request: ${prompt}\nReturn short exact phrases only.`,
+      });
+      structured = parse.object;
+    } catch {
+      structured = fallbackParse(prompt);
+    }
+
+    if (publisher && publisher !== 'all') structured.publisher = publisher;
+    if (limit) structured.limit = Math.min(500, Math.max(1, limit));
+
+    const supabase = getSupabaseServerClient();
+    let q = supabase
+      .from('source_content')
+      .select('id,title,body,publisher,source_system,published_at')
+      .order('published_at', { ascending: false, nullsFirst: false });
+
+    if (structured.publisher && structured.publisher !== 'all') q = q.eq('publisher', structured.publisher);
+
+    const { data, error } = await q.limit(structured.limit || 100);
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message, stage: 'query' }, { status: 500 });
+    }
+
+    const mustInclude = structured.mustInclude || [];
+    const mustExclude = structured.mustExclude || [];
+
+    const rows = (data || []).filter((row: any) => {
+      const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
+      const includeOk = mustInclude.every((t) => hay.includes(t.toLowerCase()));
+      const excludeOk = mustExclude.every((t) => !hay.includes(t.toLowerCase()));
+      return includeOk && excludeOk;
+    });
+
+    const matches = rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      publisher: row.publisher || null,
+      sourceSystem: row.source_system || null,
+      publishedAt: row.published_at || null,
+      snippet: makeSnippet(row.body || '', mustInclude),
+      score: mustInclude.length,
+    }));
+
+    return NextResponse.json({ ok: true, structured, total: matches.length, scanned: (data || []).length, matches });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error?.message || 'Unexpected audit query failure', stage: 'unknown' }, { status: 500 });
   }
-
-  const env = getServerEnv();
-  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-
-  const parse = await generateObject({
-    model: openai(env.OPENAI_MODEL),
-    schema: QuerySchema,
-    prompt: `Convert this audit request into literal search phrases. Request: ${prompt}\nReturn short exact phrases only.`,
-  });
-
-  const structured = parse.object;
-  if (publisher && publisher !== 'all') structured.publisher = publisher;
-  if (limit) structured.limit = Math.min(500, Math.max(1, limit));
-
-  const supabase = getSupabaseServerClient();
-  let q = supabase.from('source_content').select('id,title,body,publisher,source_system,published_at').order('published_at', { ascending: false, nullsFirst: false });
-  if (structured.publisher && structured.publisher !== 'all') q = q.eq('publisher', structured.publisher);
-
-  const { data, error } = await q.limit(structured.limit || 100);
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-
-  const mustInclude = structured.mustInclude || [];
-  const mustExclude = structured.mustExclude || [];
-
-  const rows = (data || []).filter((row: any) => {
-    const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
-    const includeOk = mustInclude.every((t) => hay.includes(t.toLowerCase()));
-    const excludeOk = mustExclude.every((t) => !hay.includes(t.toLowerCase()));
-    return includeOk && excludeOk;
-  });
-
-  const matches = rows.map((row: any) => ({
-    id: row.id,
-    title: row.title,
-    publisher: row.publisher || null,
-    sourceSystem: row.source_system || null,
-    publishedAt: row.published_at || null,
-    snippet: makeSnippet(row.body || '', mustInclude),
-    score: mustInclude.length,
-  }));
-
-  return NextResponse.json({ ok: true, structured, total: matches.length, matches });
 }
