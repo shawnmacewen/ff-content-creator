@@ -110,11 +110,7 @@ export function GenerationPreview({
             )}
           </div>
         </div>
-        {!process.env.NEXT_PUBLIC_OPENAI_API_KEY && (
-          <div className="mt-3 p-2 bg-accent/10 border border-accent/20 rounded text-xs text-accent-foreground">
-            Demo Mode: Using sample content. Add <code className="bg-muted px-1 rounded">OPENAI_API_KEY</code> for live AI generation.
-          </div>
-        )}
+
       </CardHeader>
       <CardContent className="space-y-4">
         {isEditing ? (
