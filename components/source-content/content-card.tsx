@@ -59,7 +59,9 @@ export function ContentCard({
                       ? 'Broadridge Forefield'
                       : content.publisher === 'publisher-content'
                         ? 'Publisher Content'
-                        : content.publisher
+                        : content.publisher === 'sample'
+                          ? 'Sample'
+                          : content.publisher
                     : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>

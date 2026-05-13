@@ -57,7 +57,9 @@ export function ContentDetail({
                         ? 'Broadridge Forefield'
                         : content.publisher === 'publisher-content'
                           ? 'Publisher Content'
-                          : content.publisher
+                          : content.publisher === 'sample'
+                            ? 'Sample'
+                            : content.publisher
                       : content.author}
                   </span>
                 </span>
@@ -69,12 +71,6 @@ export function ContentDetail({
             </div>
             <div className="flex flex-col items-end gap-1">
               <Badge variant="secondary">{content.type}</Badge>
-              {content.sourceSystem === 'advisorstream' && (
-                <Badge className="bg-purple-600 hover:bg-purple-600 text-white">AdvisorStream</Badge>
-              )}
-              {content.sourceSystem === 'sample-seed' && (
-                <Badge className="bg-green-600 hover:bg-green-600 text-white">Sample</Badge>
-              )}
             </div>
           </div>
         </DialogHeader>

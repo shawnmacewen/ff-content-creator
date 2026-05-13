@@ -96,6 +96,7 @@ export async function POST(req: Request) {
     rows = source.map((item: any) => ({
       external_id: item.id,
       source_system: 'sample-seed',
+      publisher: 'sample',
       type: item.type || 'article',
       title: item.title || 'Untitled',
       body: item.body || item.summary || '',
