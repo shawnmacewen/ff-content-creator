@@ -64,13 +64,20 @@ export async function POST(req: Request) {
         const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset });
         lastPayload = payload;
 
+        const rawCount =
+          (payload as any)?.data?.size ??
+          (payload as any)?.data?.records?.length ??
+          (payload as any)?.results?.length ??
+          (payload as any)?.items?.length ??
+          0;
+
         const pageItems = mapAdvisorStreamSearchResults(payload);
         collected.push(...pageItems);
 
-        const payloadTotal = Number((payload as any)?.data?.totalItems ?? (payload as any)?.totalItems ?? collected.length);
-        totalItems = Number.isFinite(payloadTotal) && payloadTotal > 0 ? payloadTotal : collected.length;
+        const payloadTotal = Number((payload as any)?.data?.totalItems ?? (payload as any)?.totalItems ?? 0);
+        totalItems = Number.isFinite(payloadTotal) && payloadTotal > 0 ? payloadTotal : Math.max(totalItems, offset + rawCount);
 
-        if (pageItems.length < pageSize) break;
+        if (rawCount < pageSize) break;
         offset += pageSize;
       }
 
