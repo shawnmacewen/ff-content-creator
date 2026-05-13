@@ -7,8 +7,9 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Database } from 'lucide-react';
 import useSWR from 'swr';
+import { toast } from 'sonner';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -98,6 +99,28 @@ export default function SourceContentPage() {
     setSelectedIds(new Set());
   };
 
+  const runSync = async (dryRun: boolean) => {
+    const response = await fetch('/api/source-content/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'sample-seed', dryRun }),
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      toast.error(body?.error || 'Sync failed');
+      return;
+    }
+
+    if (dryRun) {
+      toast.success(`Dry run: would process ${body?.wouldProcess ?? 0} rows`);
+      return;
+    }
+
+    toast.success(`Sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
+    mutate();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -108,6 +131,14 @@ export default function SourceContentPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => runSync(true)}>
+            <Database className="h-4 w-4 mr-2" />
+            Dry Run Sync
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => runSync(false)}>
+            <Database className="h-4 w-4 mr-2" />
+            Sync Samples
+          </Button>
           <Button
             variant="outline"
             size="sm"
