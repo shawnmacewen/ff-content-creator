@@ -15,6 +15,7 @@ const presets = [
   { label: 'Search Articles + Contents (GET)', method: 'GET', path: '/api/source-content/provider-metadata?mode=search-contents&search=401k&limit=5', body: '' },
   { label: 'Provider Sync Dry Run (POST)', method: 'POST', path: '/api/source-content/sync', body: JSON.stringify({ mode: 'provider', dryRun: true }, null, 2) },
   { label: 'Provider Sync (POST)', method: 'POST', path: '/api/source-content/sync', body: JSON.stringify({ mode: 'provider', dryRun: false }, null, 2) },
+  { label: 'Provider Sync + Force Date Refresh (POST)', method: 'POST', path: '/api/source-content/sync', body: JSON.stringify({ mode: 'provider', dryRun: false, forceDetailDateRefresh: true }, null, 2) },
   { label: 'Source Content Page 1 (GET)', method: 'GET', path: '/api/source-content?page=1&pageSize=20', body: '' },
 ];
 

@@ -77,12 +77,14 @@ function coalesceEffectiveDate(input: any): string | null {
 interface SyncRequestBody {
   mode?: 'sample-seed' | 'provider';
   dryRun?: boolean;
+  forceDetailDateRefresh?: boolean;
 }
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as SyncRequestBody;
   const mode = body.mode || 'sample-seed';
   const dryRun = !!body.dryRun;
+  const forceDetailDateRefresh = !!body.forceDetailDateRefresh;
 
   let rows: any[] = [];
 
@@ -200,9 +202,10 @@ export async function POST(req: Request) {
         },
       }));
 
-      // Enrichment pass: fetch article details for missing published dates (effective_date)
+      // Enrichment pass: fetch article details for missing published dates,
+      // or force-refresh dates for all rows when requested.
       for (const row of rows) {
-        if (row.published_at || !row.external_id) continue;
+        if ((!forceDetailDateRefresh && row.published_at) || !row.external_id) continue;
         const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, row.external_id);
         const effective = coalesceEffectiveDate(detail);
         if (effective) {
