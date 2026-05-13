@@ -109,6 +109,33 @@ function toPlainText(input: unknown): string {
   return str;
 }
 
+function coalescePublishedAt(item: any): string | undefined {
+  const candidates = [
+    item.publication_date,
+    item.publishedAt,
+    item.published_at,
+    item.publishDate,
+    item.publish_date,
+    item.createdAt,
+    item.created_at,
+    item.updated_at,
+    item?.extra_properties?.publication_date,
+    item?.extra_properties?.published_at,
+    item?.extra_properties?.publish_date,
+    item?.extra_properties?.created_at,
+    item?.extraProps?.publication_date,
+    item?.extraProps?.published_at,
+    item?.extraProps?.publish_date,
+    item?.extraProps?.created_at,
+  ].filter(Boolean);
+
+  for (const value of candidates) {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d.toISOString();
+  }
+  return undefined;
+}
+
 function findArticleArray(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== 'object') return [];
@@ -162,6 +189,8 @@ export function mapAdvisorStreamSearchResults(
 
       if (!externalId || !title) return null;
 
+      const publishedAt = coalescePublishedAt(item);
+
       return {
         externalId,
         sourceSystem: 'advisorstream',
@@ -171,10 +200,13 @@ export function mapAdvisorStreamSearchResults(
         excerpt,
         author: item.source_name || item.source || item.author || 'AdvisorStream',
         tags: [...categories, ...tags],
-        publishedAt: item.publication_date || item.publishedAt || item.createdAt || item.updated_at,
+        publishedAt,
         url: item.articleUrl || item.article_url || item.url,
         imageUrl: item.imageUrl || item.image_url,
-        metadata: { raw: item },
+        metadata: {
+          raw: item,
+          publishedAtCandidate: publishedAt || null,
+        },
       } as NormalizedSourceItem;
     })
     .filter(Boolean) as NormalizedSourceItem[];
