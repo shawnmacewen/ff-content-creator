@@ -35,6 +35,7 @@ export default function SourceContentPage() {
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   // Debounce search query
   useEffect(() => {
@@ -50,9 +51,10 @@ export default function SourceContentPage() {
     if (debouncedQuery) params.set('q', debouncedQuery);
     if (selectedType && selectedType !== 'all') params.set('type', selectedType);
     if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
+    params.set('page', String(page));
     params.set('pageSize', '20');
     return `/api/source-content?${params.toString()}`;
-  }, [debouncedQuery, selectedType, selectedTag]);
+  }, [debouncedQuery, selectedType, selectedTag, page]);
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse>(apiUrl(), fetcher);
 
@@ -86,6 +88,7 @@ export default function SourceContentPage() {
     setSearchQuery('');
     setSelectedType('');
     setSelectedTag('');
+    setPage(1);
   };
 
   const handleSelectAll = () => {
@@ -97,6 +100,15 @@ export default function SourceContentPage() {
 
   const handleDeselectAll = () => {
     setSelectedIds(new Set());
+  };
+
+  const handlePrevPage = () => {
+    setPage((p) => Math.max(1, p - 1));
+  };
+
+  const handleNextPage = () => {
+    if (!data) return;
+    setPage((p) => Math.min(data.totalPages || 1, p + 1));
   };
 
   const runSync = async (mode: 'sample-seed' | 'provider', dryRun: boolean) => {
@@ -217,8 +229,18 @@ export default function SourceContentPage() {
 
       {data && !isLoading && (
         <>
-          <div className="text-sm text-muted-foreground">
-            Showing {data.data.length} of {data.total} results
+          <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
+            <span>
+              Showing {data.data.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
+            </span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (data.totalPages || 1)}>
+                Next
+              </Button>
+            </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {data.data.map((content) => (
