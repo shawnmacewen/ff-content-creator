@@ -14,6 +14,7 @@ import {
 import { LibraryGrid } from '@/components/library/library-grid';
 import { ContentEditor } from '@/components/library/content-editor';
 import useSWR from 'swr';
+import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent, ContentType, ContentStatus } from '@/lib/types/content';
 import { Search, Sparkles, X } from 'lucide-react';
@@ -51,7 +52,7 @@ export default function LibraryPage() {
     fetcher
   );
 
-  const content = data?.data || [];
+  const content = mapGeneratedContentRows(data?.data || []);
   const filteredContent = content;
 
   const handleView = useCallback((item: GeneratedContent) => {

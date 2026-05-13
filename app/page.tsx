@@ -7,6 +7,7 @@ import { StatsCards } from '@/components/dashboard/stats-cards';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import useSWR from 'swr';
+import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import type { GeneratedContent } from '@/lib/types/content';
 import { Sparkles } from 'lucide-react';
 
@@ -23,20 +24,20 @@ export default function DashboardPage() {
     fetcher
   );
 
-  const content = data?.data || [];
+  const content = mapGeneratedContentRows(data?.data || []);
 
   const recentContent = useMemo(
-    () => [...content].sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime()).slice(0, 5),
+    () => [...content].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5),
     [content]
   );
 
   const stats = useMemo(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const generatedThisWeek = content.filter((c: any) => new Date(c.created_at || c.createdAt) >= weekAgo).length;
-    const socialCount = content.filter((c: any) => (c.type || '').startsWith('social-')).length;
-    const emailCount = content.filter((c: any) => (c.type || '').includes('email') || (c.type || '').includes('newsletter')).length;
-    const articleCount = content.filter((c: any) => c.type === 'article' || c.type === 'infographic-copy').length;
+    const generatedThisWeek = content.filter((c) => new Date(c.createdAt) >= weekAgo).length;
+    const socialCount = content.filter((c) => (c.type || '').startsWith('social-')).length;
+    const emailCount = content.filter((c) => (c.type || '').includes('email') || (c.type || '').includes('newsletter')).length;
+    const articleCount = content.filter((c) => c.type === 'article' || c.type === 'infographic-copy').length;
 
     return {
       totalGenerated: content.length,
