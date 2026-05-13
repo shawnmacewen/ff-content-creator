@@ -1,40 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  searchSourceContent,
-  getAllTags,
-  getAllTypes,
-  getAllAuthors,
-} from '@/lib/api/source-content-mock';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  
+
   const query = searchParams.get('q') || '';
   const type = searchParams.get('type') || undefined;
-  const tags = searchParams.get('tags')?.split(',').filter(Boolean) || undefined;
+  const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
   const author = searchParams.get('author') || undefined;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
 
-  // Simulate API latency
-  await new Promise((resolve) => setTimeout(resolve, 200));
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
 
-  const allResults = searchSourceContent(query, { type, tags, author });
-  
-  // Pagination
-  const startIndex = (page - 1) * pageSize;
-  const paginatedResults = allResults.slice(startIndex, startIndex + pageSize);
+  const supabase = getSupabaseServerClient();
+
+  let dbQuery = supabase.from('source_content').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+
+  if (query) dbQuery = dbQuery.or(`title.ilike.%${query}%,body.ilike.%${query}%`);
+  if (type) dbQuery = dbQuery.eq('type', type);
+  if (author) dbQuery = dbQuery.eq('author', author);
+  if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
+
+  const { data, count, error } = await dbQuery.range(from, to);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const allRows = (await supabase.from('source_content').select('type,tags,author')).data || [];
+
+  const availableTypes = Array.from(new Set(allRows.map((r) => r.type).filter(Boolean)));
+  const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
+  const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
 
   return NextResponse.json({
-    data: paginatedResults,
-    total: allResults.length,
+    data: data || [],
+    total: count || 0,
     page,
     pageSize,
-    totalPages: Math.ceil(allResults.length / pageSize),
-    filters: {
-      availableTags: getAllTags(),
-      availableTypes: getAllTypes(),
-      availableAuthors: getAllAuthors(),
-    },
+    totalPages: Math.ceil((count || 0) / pageSize),
+    filters: { availableTags, availableTypes, availableAuthors },
   });
 }
