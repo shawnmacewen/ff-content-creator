@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Search, Sparkles } from 'lucide-react';
 
 type Match = {
   id: string;
@@ -70,9 +71,23 @@ export default function AuditPage() {
 
       <div className="flex gap-2 items-center">
         <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate" />
-        <div className="flex items-center gap-1 rounded border px-2 py-1 text-xs">
-          <button className={`px-2 py-1 rounded ${method==='search'?'bg-muted':''}`} onClick={() => setMethod('search')} type="button">Search</button>
-          <button className={`px-2 py-1 rounded ${method==='analyze'?'bg-muted':''}`} onClick={() => setMethod('analyze')} type="button">AI Analyze</button>
+        <div className="inline-flex items-center rounded-lg bg-muted p-1 text-xs">
+          <button
+            className={`px-3 py-1.5 rounded-md transition inline-flex items-center gap-1.5 ${method === 'search' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setMethod('search')}
+            type="button"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Standard Search
+          </button>
+          <button
+            className={`px-3 py-1.5 rounded-md transition inline-flex items-center gap-1.5 ${method === 'analyze' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setMethod('analyze')}
+            type="button"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Analyze
+          </button>
         </div>
         <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
           <option value="all">All publishers</option>
