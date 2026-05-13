@@ -7,7 +7,7 @@ import { ContentTypeSelector } from '@/components/generator/content-type-selecto
 import { SourceSelector } from '@/components/generator/source-selector';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
-import { saveContent, generateId } from '@/lib/storage/local-storage';
+import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
@@ -100,7 +100,7 @@ export default function GeneratePage() {
     handleGenerate();
   };
 
-  const handleSave = (status: ContentStatus) => {
+  const handleSave = async (status: ContentStatus) => {
     if (!contentType || !generatedContent) return;
 
     const content: GeneratedContent = {
@@ -124,9 +124,33 @@ export default function GeneratePage() {
       updatedAt: new Date().toISOString(),
     };
 
-    saveContent(content);
-    toast.success(`Content saved as ${status}`);
-    router.push('/library');
+    try {
+      const response = await fetch('/api/generated-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: content.type,
+          title: content.title,
+          content: content.content,
+          sourceContentIds: content.sourceContentIds,
+          prompt: content.prompt,
+          tone: content.tone,
+          status: content.status,
+          versionNote: 'Initial generation',
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to save content');
+      }
+
+      toast.success(`Content saved as ${status}`);
+      router.push('/library');
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to save content');
+    }
   };
 
   const canGenerate = contentType !== null;
