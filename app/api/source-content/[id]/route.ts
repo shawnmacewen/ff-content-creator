@@ -18,5 +18,16 @@ export async function GET(
     return NextResponse.json({ error: 'Source content not found' }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({
+    id: data.id,
+    title: data.title,
+    body: data.body,
+    excerpt: data.metadata?.excerpt || data.body?.slice(0, 220) || '',
+    type: data.type,
+    tags: data.tags || [],
+    publishedAt: data.published_at || data.created_at,
+    author: data.author || 'Unknown',
+    url: data.metadata?.url || null,
+    imageUrl: data.metadata?.imageUrl || null,
+  });
 }

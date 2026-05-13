@@ -35,8 +35,21 @@ export async function GET(request: NextRequest) {
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
   const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
 
+  const mapped = (data || []).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    excerpt: row.metadata?.excerpt || row.body?.slice(0, 220) || '',
+    type: row.type,
+    tags: row.tags || [],
+    publishedAt: row.published_at || row.created_at,
+    author: row.author || 'Unknown',
+    url: row.metadata?.url || null,
+    imageUrl: row.metadata?.imageUrl || null,
+  }));
+
   return NextResponse.json({
-    data: data || [],
+    data: mapped,
     total: count || 0,
     page,
     pageSize,
