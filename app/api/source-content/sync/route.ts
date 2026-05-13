@@ -56,6 +56,21 @@ export async function POST(req: Request) {
       const payload = await searchAdvisorStreamArticles(config, token, { limit: 25, offset: 0 });
       const normalized = mapAdvisorStreamSearchResults(payload);
 
+      if (!normalized.length) {
+        return NextResponse.json({
+          ok: true,
+          mode,
+          dryRun,
+          processed: 0,
+          inserted: 0,
+          updated: 0,
+          debug: {
+            payloadKeys: Object.keys(payload || {}),
+            sampleKeys: Object.keys((payload as any)?.results?.[0] || (payload as any)?.data?.[0] || (payload as any)?.items?.[0] || {}),
+          },
+        });
+      }
+
       rows = normalized.map((item) => ({
         external_id: item.externalId,
         source_system: item.sourceSystem,

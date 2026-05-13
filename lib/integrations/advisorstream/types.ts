@@ -9,10 +9,12 @@ export interface AdvisorStreamArticleSummary {
 }
 
 export interface AdvisorStreamSearchResponse {
-  total: number;
-  limit: number;
-  offset: number;
-  results: AdvisorStreamArticleSummary[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+  results?: AdvisorStreamArticleSummary[];
+  data?: AdvisorStreamArticleSummary[];
+  items?: AdvisorStreamArticleSummary[];
 }
 
 export interface NormalizedSourceItem {

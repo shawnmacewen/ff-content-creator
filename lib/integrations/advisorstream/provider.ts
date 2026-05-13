@@ -98,16 +98,33 @@ export async function searchAdvisorStreamArticles(
 export function mapAdvisorStreamSearchResults(
   payload: AdvisorStreamSearchResponse
 ): NormalizedSourceItem[] {
-  return (payload.results || []).map((item) => ({
-    externalId: item.id,
-    sourceSystem: 'advisorstream',
-    type: 'article',
-    title: item.headline,
-    body: item.summary || '',
-    excerpt: item.summary || '',
-    author: item.source_name || 'AdvisorStream',
-    tags: [...(item.categories || []), ...(item.tags || [])],
-    publishedAt: item.publication_date,
-    metadata: { raw: item },
-  }));
+  const list = payload.results || payload.data || payload.items || [];
+
+  return list
+    .map((item: any) => {
+      const externalId = item.id || item.uuid;
+      const title = item.headline || item.title || item?.files?.title;
+      const excerpt = item.summary || item.description || '';
+      const body = item.content || excerpt || '';
+      const tags = Array.isArray(item.tags) ? item.tags : [];
+      const categories = Array.isArray(item.categories) ? item.categories : [];
+
+      if (!externalId || !title) return null;
+
+      return {
+        externalId,
+        sourceSystem: 'advisorstream',
+        type: 'article',
+        title,
+        body,
+        excerpt,
+        author: item.source_name || item.source || item.author || 'AdvisorStream',
+        tags: [...categories, ...tags],
+        publishedAt: item.publication_date || item.publishedAt || item.createdAt,
+        url: item.articleUrl || item.url,
+        imageUrl: item.imageUrl || item.image_url,
+        metadata: { raw: item },
+      } as NormalizedSourceItem;
+    })
+    .filter(Boolean) as NormalizedSourceItem[];
 }
