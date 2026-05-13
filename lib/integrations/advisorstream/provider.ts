@@ -127,6 +127,12 @@ function coalescePublishedAt(item: any): string | undefined {
     item?.extraProps?.published_at,
     item?.extraProps?.publish_date,
     item?.extraProps?.created_at,
+    item?.effective_date,
+    item?.Effective_date,
+    item?.extra_properties?.effective_date,
+    item?.extra_properties?.Effective_date,
+    item?.extraProps?.effective_date,
+    item?.extraProps?.Effective_date,
   ].filter(Boolean);
 
   for (const value of candidates) {
