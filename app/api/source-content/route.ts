@@ -34,7 +34,11 @@ export async function GET(request: NextRequest) {
 
   const supabase = getSupabaseServerClient();
 
-  let dbQuery = supabase.from('source_content').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  let dbQuery = supabase
+    .from('source_content')
+    .select('*', { count: 'exact' })
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
 
   if (query) dbQuery = dbQuery.or(`title.ilike.%${query}%,body.ilike.%${query}%`);
   if (type) dbQuery = dbQuery.eq('type', type);

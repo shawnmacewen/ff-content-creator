@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { SourceContent } from '@/lib/types/content';
-import { formatDistanceToNow } from 'date-fns';
-import { ExternalLink, User } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar, ExternalLink, User } from 'lucide-react';
 
 interface ContentCardProps {
   content: SourceContent;
@@ -57,9 +57,12 @@ export function ContentCard({
                   {content.sourceSystem === 'advisorstream' ? 'Broadridge Forefield' : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>
-                {content.publishedAt
-                  ? formatDistanceToNow(new Date(content.publishedAt), { addSuffix: true })
-                  : 'Published date unavailable'}
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {content.publishedAt
+                    ? format(new Date(content.publishedAt), 'MMM d, yyyy')
+                    : 'Published date unavailable'}
+                </span>
               </CardDescription>
             </div>
           </div>
