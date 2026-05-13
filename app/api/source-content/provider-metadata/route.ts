@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getAdvisorStreamAccessToken,
   getAdvisorStreamConfig,
+  searchAdvisorStreamArticles,
   validateAdvisorStreamConfig,
 } from '@/lib/integrations/advisorstream/provider';
 import {
@@ -37,6 +38,8 @@ export async function GET(request: NextRequest) {
 
   const mode = request.nextUrl.searchParams.get('mode') || 'all';
   const articleId = request.nextUrl.searchParams.get('articleId') || request.nextUrl.searchParams.get('id') || '';
+  const search = request.nextUrl.searchParams.get('search') || '';
+  const limit = Number(request.nextUrl.searchParams.get('limit') || '10');
 
   try {
     const token = await getAdvisorStreamAccessToken(config);
@@ -67,6 +70,14 @@ export async function GET(request: NextRequest) {
         `/wealth-management/advisor-content/v3/bas-content-api/articles/${encodeURIComponent(articleId)}`
       );
       return NextResponse.json({ ok: true, mode, articleId, article });
+    }
+    if (mode === 'search-contents') {
+      const payload = await searchAdvisorStreamArticles(config, token, {
+        query: search || '401k',
+        limit: Number.isFinite(limit) ? limit : 10,
+        offset: 0,
+      });
+      return NextResponse.json({ ok: true, mode, search: search || '401k', payload });
     }
 
     const [categories, subcategories, sources, tags] = await Promise.all([
