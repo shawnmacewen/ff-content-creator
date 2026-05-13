@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,title,body,publisher,source_system,published_at')
+      .select('id,title,body,publisher,source_system,published_at,external_id,content_type,url,tags,excerpt')
       .order('published_at', { ascending: false, nullsFirst: false });
 
     if (structured.publisher) q = q.eq('publisher', structured.publisher);
@@ -71,10 +71,16 @@ export async function POST(req: Request) {
 
     const matches = rows.map((row: any) => ({
       id: row.id,
+      externalId: row.external_id || null,
       title: row.title,
       publisher: row.publisher || null,
       sourceSystem: row.source_system || null,
+      type: row.content_type || 'article',
       publishedAt: row.published_at || null,
+      url: row.url || null,
+      tags: Array.isArray(row.tags) ? row.tags : [],
+      body: row.body || '',
+      excerpt: row.excerpt || makeSnippet(row.body || '', includeTerms),
       snippet: makeSnippet(row.body || '', includeTerms),
       score: includeTerms.length,
     }));

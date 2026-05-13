@@ -4,15 +4,22 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, User } from 'lucide-react';
+import { ContentDetail } from '@/components/source-content/content-detail';
+import type { SourceContent } from '@/lib/types/content';
 
 type Match = {
   id: string;
+  externalId?: string | null;
   title: string;
   publisher: string | null;
   sourceSystem: string | null;
+  type?: string | null;
   publishedAt: string | null;
+  url?: string | null;
+  tags?: string[];
+  body?: string;
+  excerpt?: string;
   snippet: string;
   score: number;
 };
@@ -29,6 +36,8 @@ export default function AuditPage() {
   const [analyzeDepth, setAnalyzeDepth] = useState<'quick' | 'deep'>('quick');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string>('');
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<SourceContent | null>(null);
 
   const run = async () => {
     setLoading(true);
@@ -70,6 +79,41 @@ export default function AuditPage() {
     const lines = rows.map((r) => [r.id,r.title,r.publisher||'',r.sourceSystem||'',r.publishedAt||'',(r.snippet||'').replace(/"/g,'""')].map((v)=>`"${String(v)}"`).join(','));
     return [head.join(','), ...lines].join('\n');
   }, [result]);
+
+  const publisherDisplay = (publisher: string | null) => {
+    if (publisher === 'broadridge-forefield') return 'Broadridge Forefield';
+    if (publisher === 'publisher-content') return 'Publisher Content';
+    if (publisher === 'sample') return 'Sample';
+    return publisher || 'Unavailable';
+  };
+
+  const publisherClass = (publisher: string | null, sourceSystem: string | null) => {
+    if (publisher === 'publisher-content') return 'text-purple-500';
+    if (sourceSystem === 'advisorstream') return 'text-blue-500';
+    if (sourceSystem === 'sample-seed') return 'text-green-500';
+    return 'text-blue-500';
+  };
+
+  const openDetails = (m: Match) => {
+    const content: SourceContent = {
+      id: m.id,
+      title: m.title,
+      body: m.body || m.snippet || '',
+      excerpt: m.excerpt || m.snippet || '',
+      type: (m.type as SourceContent['type']) || 'article',
+      status: 'new',
+      sourceSystem: m.sourceSystem || 'advisorstream',
+      externalId: m.externalId || undefined,
+      publisher: m.publisher || undefined,
+      publishedAt: m.publishedAt || undefined,
+      tags: Array.isArray(m.tags) ? m.tags : [],
+      url: m.url || undefined,
+      createdAt: '',
+      updatedAt: '',
+    };
+    setSelectedContent(content);
+    setDetailOpen(true);
+  };
 
   const markNeedsUpdate = async () => {
     const ids = Array.from(selectedIds);
@@ -187,7 +231,7 @@ export default function AuditPage() {
         <div className="text-xs text-muted-foreground rounded border p-3 space-y-1">
           {result?.structured && <div>Parsed query: <code>{JSON.stringify(result.structured)}</code></div>}
           <div>Mode: <strong>{method === 'analyze' ? 'AI Analyze' : 'Standard Search'}</strong></div>
-          <div>Parser: <strong>{result?.parserUsed === 'fallback' ? 'Fallback' : 'AI parser'}</strong></div>
+          <div>Parser: <strong>{result?.parserUsed === 'fallback' ? 'Fallback' : method === 'search' ? 'Deterministic parser' : 'AI parser'}</strong></div>
           {result?.summary && <div>Summary: <span>{result.summary}</span></div>}
           <div>Matches: <strong>{result?.total ?? result?.matches?.length ?? 0}</strong> · Scanned: <strong>{result?.scanned ?? 0}</strong></div>
         </div>
@@ -201,8 +245,13 @@ export default function AuditPage() {
         {(result?.matches || []).map((m: Match) => (
           <div key={m.id} className="rounded border p-3 space-y-2">
             <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
-            <div className="flex items-center justify-between gap-2">
-              <div className="font-medium">{m.title}</div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-1 flex-1">
+                <div className="font-medium">{m.title}</div>
+                <div className="text-xs text-muted-foreground">
+                  {m.externalId ? `External Article ID: ${m.externalId}` : 'External Article ID unavailable'}
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 {'confidence' in m && typeof (m as any).confidence === 'number' && (
                   <Badge
@@ -217,20 +266,33 @@ export default function AuditPage() {
                     {Math.round(((m as any).confidence || 0) * 100)}%
                   </Badge>
                 )}
-                <Badge variant="outline">{m.publisher || 'Unavailable'}</Badge>
+                <span className={`text-xs font-medium ${publisherClass(m.publisher, m.sourceSystem)}`}>
+                  {publisherDisplay(m.publisher)}
+                </span>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <User className="h-3 w-3" />
+              <span>Type: {m.type || 'article'}</span>
+              <span>•</span>
+              <span>{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</span>
+            </div>
             {'reason' in m && (m as any).reason && (
               <p className="text-sm text-foreground/90">Reason: {(m as any).reason}</p>
             )}
             <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
             <div>
-              <Link href={`/source-content`} className="text-xs text-blue-500 hover:underline">Open in Source Content</Link>
+              <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDetails(m)}>View Details</Button>
             </div>
           </div>
         ))}
       </div>
+
+      <ContentDetail
+        content={selectedContent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }
