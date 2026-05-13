@@ -124,12 +124,24 @@ export function mapAdvisorStreamSearchResults(
 
   return list
     .map((item: any) => {
-      const externalId = item.id || item.uuid || item._id;
+      const externalId = item.id || item.uuid || item._id || item.articleId;
       const title = item.headline || item.title || item?.files?.title || item?.files?.[0]?.title;
-      const excerpt = item.summary || item.description || item?.extraProps?.description || '';
-      const body = item.content || item?.extraProps?.content || excerpt || '';
-      const tags = Array.isArray(item.tags) ? item.tags : Array.isArray(item?.extraProps?.tags) ? item.extraProps.tags : [];
-      const categories = Array.isArray(item.categories) ? item.categories : Array.isArray(item?.extraProps?.categories) ? item.extraProps.categories : [];
+      const excerpt = item.summary || item.description || item?.extraProps?.description || item?.extra_properties?.description || '';
+      const body = item.content || item?.extraProps?.content || item?.extra_properties?.content || excerpt || '';
+      const tags = Array.isArray(item.tags)
+        ? item.tags
+        : Array.isArray(item?.extraProps?.tags)
+          ? item.extraProps.tags
+          : Array.isArray(item?.extra_properties?.tags)
+            ? item.extra_properties.tags
+            : [];
+      const categories = Array.isArray(item.categories)
+        ? item.categories
+        : Array.isArray(item?.extraProps?.categories)
+          ? item.extraProps.categories
+          : Array.isArray(item?.extra_properties?.categories)
+            ? item.extra_properties.categories
+            : [];
 
       if (!externalId || !title) return null;
 
@@ -142,8 +154,8 @@ export function mapAdvisorStreamSearchResults(
         excerpt,
         author: item.source_name || item.source || item.author || 'AdvisorStream',
         tags: [...categories, ...tags],
-        publishedAt: item.publication_date || item.publishedAt || item.createdAt,
-        url: item.articleUrl || item.url,
+        publishedAt: item.publication_date || item.publishedAt || item.createdAt || item.updated_at,
+        url: item.articleUrl || item.article_url || item.url,
         imageUrl: item.imageUrl || item.image_url,
         metadata: { raw: item },
       } as NormalizedSourceItem;
