@@ -59,7 +59,15 @@ export function ContentDetail({
                 </span>
               </DialogDescription>
             </div>
-            <Badge variant="secondary">{content.type}</Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant="secondary">{content.type}</Badge>
+              {content.sourceSystem === 'advisorstream' && (
+                <Badge className="bg-purple-600 hover:bg-purple-600 text-white">AdvisorStream</Badge>
+              )}
+              {content.sourceSystem === 'sample-seed' && (
+                <Badge className="bg-green-600 hover:bg-green-600 text-white">Sample</Badge>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
