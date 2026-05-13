@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ export default function AuditPage() {
   const [publisher, setPublisher] = useState('all');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const run = async () => {
     setLoading(true);
@@ -33,6 +34,19 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const csv = useMemo(() => {
+    const rows: Match[] = result?.matches || [];
+    const head = ['id','title','publisher','sourceSystem','publishedAt','snippet'];
+    const lines = rows.map((r) => [r.id,r.title,r.publisher||'',r.sourceSystem||'',r.publishedAt||'',(r.snippet||'').replace(/"/g,'""')].map((v)=>`"${String(v)}"`).join(','));
+    return [head.join(','), ...lines].join('\n');
+  }, [result]);
+
+  const markNeedsUpdate = async () => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    await fetch('/api/audit/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, note: prompt }) });
   };
 
   return (
@@ -51,6 +65,14 @@ export default function AuditPage() {
           <option value="sample">Sample</option>
         </select>
         <Button onClick={run} disabled={loading || !prompt.trim()}>{loading ? 'Running...' : 'Run Audit'}</Button>
+        <Button variant="outline" onClick={() => {
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'audit-results.csv'; a.click();
+          URL.revokeObjectURL(url);
+        }} disabled={!result?.matches?.length}>Export CSV</Button>
+        <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark Needs Update</Button>
       </div>
 
       {result?.structured && (
@@ -62,6 +84,7 @@ export default function AuditPage() {
       <div className="space-y-3">
         {(result?.matches || []).map((m: Match) => (
           <div key={m.id} className="rounded border p-3 space-y-2">
+            <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
             <div className="flex items-center justify-between gap-2">
               <div className="font-medium">{m.title}</div>
               <Badge variant="outline">{m.publisher || 'Unavailable'}</Badge>
