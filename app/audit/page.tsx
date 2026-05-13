@@ -20,6 +20,7 @@ export default function AuditPage() {
   const [publisher, setPublisher] = useState('all');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [method, setMethod] = useState<'search' | 'analyze'>('search');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string>('');
 
@@ -28,7 +29,8 @@ export default function AuditPage() {
     setError('');
     setSelectedIds(new Set());
     try {
-      const res = await fetch('/api/audit/query', {
+      const endpoint = method === 'analyze' ? '/api/audit/analyze' : '/api/audit/query';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, publisher, limit: 200 }),
@@ -65,15 +67,19 @@ export default function AuditPage() {
         <p className="text-muted-foreground">Type what you want to find. AI will convert your request into DB search rules.</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate" />
+        <div className="flex items-center gap-1 rounded border px-2 py-1 text-xs">
+          <button className={`px-2 py-1 rounded ${method==='search'?'bg-muted':''}`} onClick={() => setMethod('search')} type="button">Search</button>
+          <button className={`px-2 py-1 rounded ${method==='analyze'?'bg-muted':''}`} onClick={() => setMethod('analyze')} type="button">AI Analyze</button>
+        </div>
         <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
           <option value="all">All publishers</option>
           <option value="broadridge-forefield">Broadridge Forefield</option>
           <option value="publisher-content">Publisher Content</option>
           <option value="sample">Sample</option>
         </select>
-        <Button onClick={run} disabled={loading || !prompt.trim()}>{loading ? 'Running...' : 'Run Audit'}</Button>
+        <Button onClick={run} disabled={loading || !prompt.trim()}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
         <Button variant="outline" onClick={() => {
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
