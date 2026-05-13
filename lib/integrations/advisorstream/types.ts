@@ -20,6 +20,7 @@ export interface AdvisorStreamSearchResponse {
 export interface NormalizedSourceItem {
   externalId: string;
   sourceSystem: string;
+  publisher?: string;
   type: string;
   title: string;
   body: string;

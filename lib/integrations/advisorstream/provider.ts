@@ -199,9 +199,20 @@ export function mapAdvisorStreamSearchResults(
 
       const publishedAt = coalescePublishedAt(item);
 
+      const contentDesignation = String(item.content_designation || '').toLowerCase();
+      const sourceName = String(item.source || '');
+      const createdBy = String(item.created_by || '').toLowerCase();
+      const publisher =
+        sourceName.toLowerCase().includes('broadridge advisor content') ||
+        createdBy.includes('broadridge') ||
+        contentDesignation.includes('topic discussion')
+          ? 'broadridge-forefield'
+          : 'publisher-content';
+
       return {
         externalId,
         sourceSystem: 'advisorstream',
+        publisher,
         type: 'article',
         title,
         body,

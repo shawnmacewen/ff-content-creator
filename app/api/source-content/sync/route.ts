@@ -188,6 +188,7 @@ export async function POST(req: Request) {
       rows = normalized.map((item) => ({
         external_id: item.externalId,
         source_system: item.sourceSystem,
+        publisher: item.publisher || null,
         type: item.type,
         title: item.title,
         body: item.body,

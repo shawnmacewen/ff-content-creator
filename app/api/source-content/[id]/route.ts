@@ -30,5 +30,6 @@ export async function GET(
     url: data.metadata?.url || null,
     imageUrl: data.metadata?.imageUrl || null,
     sourceSystem: data.source_system || null,
+    publisher: data.publisher || null,
   });
 }
