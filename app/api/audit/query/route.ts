@@ -15,11 +15,13 @@ function makeSnippet(text: string, terms: string[]) {
 
 export async function POST(req: Request) {
   try {
-    const { prompt, publisher, limit, mode } = (await req.json()) as {
+    const { prompt, publisher, limit, mode, mustInclude, mustExclude } = (await req.json()) as {
       prompt: string;
       publisher?: string;
       limit?: number;
       mode?: 'all' | 'any';
+      mustInclude?: string;
+      mustExclude?: string;
     };
 
     if (!prompt?.trim()) {
@@ -27,9 +29,16 @@ export async function POST(req: Request) {
     }
 
     const parsed = parseSearchPrompt(prompt);
+    const includeList = mustInclude
+      ? mustInclude.split(',').map((s) => s.trim()).filter(Boolean)
+      : parsed.mustInclude;
+    const excludeList = mustExclude
+      ? mustExclude.split(',').map((s) => s.trim()).filter(Boolean)
+      : parsed.mustExclude;
+
     const structured = {
-      mustInclude: parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()],
-      mustExclude: parsed.mustExclude,
+      mustInclude: includeList.length ? includeList : [prompt.trim()],
+      mustExclude: excludeList,
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
       limit: Math.min(500, Math.max(1, Number(limit) || 100)),

@@ -19,11 +19,14 @@ type Match = {
 
 export default function AuditPage() {
   const [prompt, setPrompt] = useState('');
+  const [includeTerms, setIncludeTerms] = useState('');
+  const [excludeTerms, setExcludeTerms] = useState('');
   const [publisher, setPublisher] = useState('all');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [method, setMethod] = useState<'search' | 'analyze'>('search');
   const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
+  const [analyzeDepth, setAnalyzeDepth] = useState<'quick' | 'deep'>('quick');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string>('');
 
@@ -33,10 +36,21 @@ export default function AuditPage() {
     setSelectedIds(new Set());
     try {
       const endpoint = method === 'analyze' ? '/api/audit/analyze' : '/api/audit/query';
+      const searchPrompt = method === 'search'
+        ? `include ${includeTerms || prompt}${excludeTerms ? ` but not ${excludeTerms}` : ''}`
+        : prompt;
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, publisher, limit: 200, mode: matchMode }),
+        body: JSON.stringify({
+          prompt: searchPrompt,
+          publisher,
+          limit: 200,
+          mode: matchMode,
+          depth: analyzeDepth,
+          mustInclude: includeTerms,
+          mustExclude: excludeTerms,
+        }),
       });
       const body = await res.json();
       setResult(body);
@@ -90,7 +104,7 @@ export default function AuditPage() {
           </button>
         </div>
 
-        <div className={`rounded-md border p-3 text-xs ${method === 'search' ? 'bg-muted/40 border-muted-foreground/20 text-muted-foreground' : 'bg-blue-500/10 border-blue-500/30 text-blue-100'}`}>
+        <div className="rounded-md border p-3 text-xs bg-muted/40 border-muted-foreground/20 text-muted-foreground">
           {method === 'search' ? (
             <>
               <div className="font-medium text-foreground mb-1">How Standard Search works</div>
@@ -112,20 +126,35 @@ export default function AuditPage() {
           )}
         </div>
 
-        <div className="flex gap-2 items-center">
-          <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={method === 'search' ? 'e.g. "standard mileage rate" but not "2026"' : 'e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate'} />
-        </div>
+        {method === 'search' ? (
+          <div className="grid md:grid-cols-2 gap-2">
+            <Input value={includeTerms} onChange={(e) => setIncludeTerms(e.target.value)} placeholder='Include terms (e.g. "standard mileage rate", 2025)' />
+            <Input value={excludeTerms} onChange={(e) => setExcludeTerms(e.target.value)} placeholder='Exclude terms (e.g. 2026, old threshold)' />
+          </div>
+        ) : (
+          <div className="flex gap-2 items-center">
+            <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder='e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate' />
+          </div>
+        )}
         <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
           <option value="all">All publishers</option>
           <option value="broadridge-forefield">Broadridge Forefield</option>
           <option value="publisher-content">Publisher Content</option>
           <option value="sample">Sample</option>
         </select>
-        <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
-          <option value="all">Match all include terms</option>
-          <option value="any">Match any include term</option>
-        </select>
-        <Button onClick={run} disabled={loading || !prompt.trim()}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
+        {method === 'search' && (
+          <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
+            <option value="all">Match all include terms</option>
+            <option value="any">Match any include term</option>
+          </select>
+        )}
+        {method === 'analyze' && (
+          <select className="border rounded px-2 bg-background text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
+            <option value="quick">AI Quick Scan</option>
+            <option value="deep">AI Deep Scan</option>
+          </select>
+        )}
+        <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
         <Button variant="outline" onClick={() => {
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
