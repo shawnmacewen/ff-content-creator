@@ -1,4 +1,5 @@
 import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerEnv } from '@/lib/env';
@@ -41,13 +42,14 @@ export async function POST(req: Request) {
   const systemPrompt = buildSystemPrompt(type, tone);
   const userPrompt = buildUserPrompt(type, sourceText, customPrompt, additionalContext);
 
+  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+
   const result = streamText({
-    model: `openai/${env.OPENAI_MODEL}`,
+    model: openai(env.OPENAI_MODEL),
     system: systemPrompt,
     prompt: userPrompt,
     maxOutputTokens: 2000,
     temperature: 0.7,
-    apiKey: env.OPENAI_API_KEY,
   });
 
   return result.toTextStreamResponse();
