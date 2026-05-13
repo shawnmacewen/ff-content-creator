@@ -9,7 +9,6 @@ export interface AdvisorStreamConfig {
   clientId: string;
   clientSecret: string;
   oauthScope?: string;
-  articleSearchPath?: string;
 }
 
 export function getAdvisorStreamConfig(): AdvisorStreamConfig {
@@ -18,10 +17,8 @@ export function getAdvisorStreamConfig(): AdvisorStreamConfig {
   const clientId = process.env.ADVISORSTREAM_CLIENT_ID || '';
   const clientSecret = process.env.ADVISORSTREAM_CLIENT_SECRET || '';
   const oauthScope = process.env.ADVISORSTREAM_OAUTH_SCOPE || '';
-  const articleSearchPath =
-    process.env.ADVISORSTREAM_ARTICLE_SEARCH_PATH || '/wealth-management/advisor-content/v3/bas-content-api/articles/search';
 
-  return { apiBaseUrl, oauthTokenUrl, clientId, clientSecret, oauthScope, articleSearchPath };
+  return { apiBaseUrl, oauthTokenUrl, clientId, clientSecret, oauthScope };
 }
 
 export function validateAdvisorStreamConfig(config: AdvisorStreamConfig) {
@@ -68,12 +65,19 @@ export async function searchAdvisorStreamArticles(
   options?: { query?: string; limit?: number; offset?: number }
 ): Promise<AdvisorStreamSearchResponse> {
   const base = config.apiBaseUrl.replace(/\/$/, '');
-  const searchPath = config.articleSearchPath || '/wealth-management/advisor-content/v3/bas-content-api/articles/search';
-  const normalizedPath = searchPath.startsWith('/') ? searchPath : `/${searchPath}`;
-  const url = new URL(`${base}${normalizedPath}`);
-  if (options?.query) url.searchParams.set('q', options.query);
-  if (options?.limit) url.searchParams.set('limit', String(options.limit));
-  if (options?.offset) url.searchParams.set('offset', String(options.offset));
+  const url = new URL(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/search`);
+
+  // Opinionated defaults based on working Postman collection
+  url.searchParams.set('is_active', 'true');
+  url.searchParams.set('filter', 'source_sort=Broadridge Advisor Content');
+  url.searchParams.set(
+    'fields',
+    'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps'
+  );
+
+  url.searchParams.set('limit', String(options?.limit ?? 25));
+  url.searchParams.set('offset', String(options?.offset ?? 0));
+  if (options?.query) url.searchParams.set('search', options.query);
 
   const response = await fetch(url.toString(), {
     method: 'GET',
