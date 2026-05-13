@@ -1,4 +1,7 @@
-import type { AdvisorStreamSearchResponse, NormalizedSourceItem } from './types';
+import type {
+  AdvisorStreamSearchResponse,
+  NormalizedSourceItem,
+} from './types';
 
 export interface AdvisorStreamConfig {
   apiBaseUrl: string;
@@ -16,7 +19,70 @@ export function getAdvisorStreamConfig(): AdvisorStreamConfig {
   return { apiBaseUrl, oauthTokenUrl, clientId, clientSecret };
 }
 
-export function mapAdvisorStreamSearchResults(payload: AdvisorStreamSearchResponse): NormalizedSourceItem[] {
+export function validateAdvisorStreamConfig(config: AdvisorStreamConfig) {
+  return (
+    !!config.apiBaseUrl &&
+    !!config.oauthTokenUrl &&
+    !!config.clientId &&
+    !!config.clientSecret
+  );
+}
+
+export async function getAdvisorStreamAccessToken(config: AdvisorStreamConfig): Promise<string> {
+  const basic = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
+
+  const response = await fetch(config.oauthTokenUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basic}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ grant_type: 'client_credentials' }).toString(),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`AdvisorStream token request failed (${response.status}): ${body}`);
+  }
+
+  const payload = (await response.json()) as { access_token?: string };
+  if (!payload.access_token) {
+    throw new Error('AdvisorStream token response missing access_token');
+  }
+
+  return payload.access_token;
+}
+
+export async function searchAdvisorStreamArticles(
+  config: AdvisorStreamConfig,
+  token: string,
+  options?: { query?: string; limit?: number; offset?: number }
+): Promise<AdvisorStreamSearchResponse> {
+  const base = config.apiBaseUrl.replace(/\/$/, '');
+  const url = new URL(`${base}/article-search`);
+  if (options?.query) url.searchParams.set('q', options.query);
+  if (options?.limit) url.searchParams.set('limit', String(options.limit));
+  if (options?.offset) url.searchParams.set('offset', String(options.offset));
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`AdvisorStream article search failed (${response.status}): ${body}`);
+  }
+
+  return (await response.json()) as AdvisorStreamSearchResponse;
+}
+
+export function mapAdvisorStreamSearchResults(
+  payload: AdvisorStreamSearchResponse
+): NormalizedSourceItem[] {
   return (payload.results || []).map((item) => ({
     externalId: item.id,
     sourceSystem: 'advisorstream',

@@ -1,6 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import {
+  getAdvisorStreamConfig,
+  getAdvisorStreamAccessToken,
+  mapAdvisorStreamSearchResults,
+  searchAdvisorStreamArticles,
+  validateAdvisorStreamConfig,
+} from '@/lib/integrations/advisorstream/provider';
 
 interface SyncRequestBody {
   mode?: 'sample-seed' | 'provider';
@@ -12,33 +19,61 @@ export async function POST(req: Request) {
   const mode = body.mode || 'sample-seed';
   const dryRun = !!body.dryRun;
 
-  if (mode !== 'sample-seed') {
-    return NextResponse.json({
-      ok: false,
-      error: 'Provider sync not wired yet. Use mode=sample-seed for now.',
-    }, { status: 400 });
+  let rows: any[] = [];
+
+  if (mode === 'sample-seed') {
+    const raw = await readFile(process.cwd() + '/data/content-samples-export.json', 'utf8');
+    const parsed = JSON.parse(raw);
+    const source = Array.isArray(parsed?.sourceContent) ? parsed.sourceContent : [];
+
+    rows = source.map((item: any) => ({
+      external_id: item.id,
+      source_system: 'sample-seed',
+      type: item.type || 'article',
+      title: item.title || 'Untitled',
+      body: item.body || item.summary || '',
+      author: item.author || null,
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      published_at: item.publishedAt || null,
+      metadata: {
+        excerpt: item.excerpt || null,
+        url: item.url || null,
+        imageUrl: item.imageUrl || null,
+        importedFrom: 'data/content-samples-export.json',
+      },
+    }));
+  } else if (mode === 'provider') {
+    const config = getAdvisorStreamConfig();
+    if (!validateAdvisorStreamConfig(config)) {
+      return NextResponse.json({
+        ok: false,
+        error: 'AdvisorStream env vars are not fully configured',
+      }, { status: 400 });
+    }
+
+    const token = await getAdvisorStreamAccessToken(config);
+    const payload = await searchAdvisorStreamArticles(config, token, { limit: 25, offset: 0 });
+    const normalized = mapAdvisorStreamSearchResults(payload);
+
+    rows = normalized.map((item) => ({
+      external_id: item.externalId,
+      source_system: item.sourceSystem,
+      type: item.type,
+      title: item.title,
+      body: item.body,
+      author: item.author || null,
+      tags: item.tags || [],
+      published_at: item.publishedAt || null,
+      metadata: {
+        excerpt: item.excerpt || null,
+        url: item.url || null,
+        imageUrl: item.imageUrl || null,
+        ...item.metadata,
+      },
+    }));
+  } else {
+    return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
-
-  const raw = await readFile(process.cwd() + '/data/content-samples-export.json', 'utf8');
-  const parsed = JSON.parse(raw);
-  const source = Array.isArray(parsed?.sourceContent) ? parsed.sourceContent : [];
-
-  const rows = source.map((item: any) => ({
-    external_id: item.id,
-    source_system: 'sample-seed',
-    type: item.type || 'article',
-    title: item.title || 'Untitled',
-    body: item.body || item.summary || '',
-    author: item.author || null,
-    tags: Array.isArray(item.tags) ? item.tags : [],
-    published_at: item.publishedAt || null,
-    metadata: {
-      excerpt: item.excerpt || null,
-      url: item.url || null,
-      imageUrl: item.imageUrl || null,
-      importedFrom: 'data/content-samples-export.json',
-    },
-  }));
 
   if (dryRun) {
     return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rows.length });
