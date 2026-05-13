@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       const normalized = mapAdvisorStreamSearchResults(payload);
 
       if (!normalized.length) {
+        const maybeErrors = (payload as any)?.errors;
         return NextResponse.json({
           ok: true,
           mode,
@@ -66,7 +67,23 @@ export async function POST(req: Request) {
           updated: 0,
           debug: {
             payloadKeys: Object.keys(payload || {}),
-            sampleKeys: Object.keys((payload as any)?.results?.[0] || (payload as any)?.data?.[0] || (payload as any)?.items?.[0] || {}),
+            payloadMeta: (payload as any)?.meta || null,
+            payloadErrors: maybeErrors || null,
+            dataType: Array.isArray((payload as any)?.data)
+              ? 'array'
+              : typeof (payload as any)?.data,
+            dataKeys: (payload as any)?.data && typeof (payload as any)?.data === 'object'
+              ? Object.keys((payload as any).data)
+              : [],
+            sampleKeys: Object.keys(
+              (payload as any)?.results?.[0] ||
+              (payload as any)?.items?.[0] ||
+              (payload as any)?.data?.[0] ||
+              (payload as any)?.data?.results?.[0] ||
+              (payload as any)?.data?.items?.[0] ||
+              (payload as any)?.data?.articles?.[0] ||
+              {}
+            ),
           },
         });
       }

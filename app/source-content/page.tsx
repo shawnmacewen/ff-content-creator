@@ -117,11 +117,19 @@ export default function SourceContentPage() {
     }
 
     if (dryRun) {
-      toast.success(`${mode} dry run: would process ${body?.wouldProcess ?? 0} rows`);
+      toast.success(`${mode} dry run: would process ${body?.wouldProcess ?? body?.processed ?? 0} rows`);
+      if ((body?.wouldProcess ?? body?.processed ?? 0) === 0 && body?.debug) {
+        console.warn('Provider debug:', body.debug);
+        toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
+      }
       return;
     }
 
     toast.success(`${mode} sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
+    if ((body?.processed ?? 0) === 0 && body?.debug) {
+      console.warn('Provider debug:', body.debug);
+      toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
+    }
     mutate();
   };
 
