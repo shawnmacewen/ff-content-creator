@@ -9,6 +9,7 @@ export interface AdvisorStreamConfig {
   clientId: string;
   clientSecret: string;
   oauthScope?: string;
+  articleSearchPath?: string;
 }
 
 export function getAdvisorStreamConfig(): AdvisorStreamConfig {
@@ -17,8 +18,10 @@ export function getAdvisorStreamConfig(): AdvisorStreamConfig {
   const clientId = process.env.ADVISORSTREAM_CLIENT_ID || '';
   const clientSecret = process.env.ADVISORSTREAM_CLIENT_SECRET || '';
   const oauthScope = process.env.ADVISORSTREAM_OAUTH_SCOPE || '';
+  const articleSearchPath =
+    process.env.ADVISORSTREAM_ARTICLE_SEARCH_PATH || '/wealth-management/advisor-content/v3/bas-content-api/articles/search';
 
-  return { apiBaseUrl, oauthTokenUrl, clientId, clientSecret, oauthScope };
+  return { apiBaseUrl, oauthTokenUrl, clientId, clientSecret, oauthScope, articleSearchPath };
 }
 
 export function validateAdvisorStreamConfig(config: AdvisorStreamConfig) {
@@ -34,6 +37,7 @@ export async function getAdvisorStreamAccessToken(config: AdvisorStreamConfig): 
   const basic = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
 
   const params = new URLSearchParams({ grant_type: 'client_credentials' });
+  params.set('client_id', config.clientId);
   if (config.oauthScope) params.set('scope', config.oauthScope);
 
   const response = await fetch(config.oauthTokenUrl, {
@@ -64,7 +68,9 @@ export async function searchAdvisorStreamArticles(
   options?: { query?: string; limit?: number; offset?: number }
 ): Promise<AdvisorStreamSearchResponse> {
   const base = config.apiBaseUrl.replace(/\/$/, '');
-  const url = new URL(`${base}/article-search`);
+  const searchPath = config.articleSearchPath || '/wealth-management/advisor-content/v3/bas-content-api/articles/search';
+  const normalizedPath = searchPath.startsWith('/') ? searchPath : `/${searchPath}`;
+  const url = new URL(`${base}${normalizedPath}`);
   if (options?.query) url.searchParams.set('q', options.query);
   if (options?.limit) url.searchParams.set('limit', String(options.limit));
   if (options?.offset) url.searchParams.set('offset', String(options.offset));

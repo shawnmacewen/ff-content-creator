@@ -1,0 +1,17 @@
+Saved from user-provided attachment on 2026-05-13.
+Original attachment id: fb1c48ef-96c6-42c6-9595-29ca630e47f5
+
+Key integration notes extracted:
+- Base path examples use:
+  /wealth-management/advisor-content/v3/bas-content-api
+- Article search endpoint:
+  /wealth-management/advisor-content/v3/bas-content-api/articles/search
+- Query examples:
+  is_active=true
+  limit=10
+  fields=uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps
+  filter=source_sort=Broadridge Advisor Content
+- Token flow: client_credentials with basic auth and scope values such as:
+  advisor-content:bas-content-api:articles:read
+  advisor-content:bas-content-api:health:read
+- Postman also passes client_id in body along with grant_type and scope.
