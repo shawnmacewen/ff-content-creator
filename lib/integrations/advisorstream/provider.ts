@@ -98,7 +98,14 @@ export async function searchAdvisorStreamArticles(
 export function mapAdvisorStreamSearchResults(
   payload: AdvisorStreamSearchResponse
 ): NormalizedSourceItem[] {
-  const list = payload.results || payload.data || payload.items || [];
+  const rawList = payload.results || payload.data || payload.items || [];
+  const list = Array.isArray(rawList)
+    ? rawList
+    : Array.isArray((rawList as any)?.results)
+      ? (rawList as any).results
+      : Array.isArray((rawList as any)?.items)
+        ? (rawList as any).items
+        : [];
 
   return list
     .map((item: any) => {
