@@ -109,6 +109,10 @@ export async function POST(req: Request) {
   const forceDetailDateRefresh = !!body.forceDetailDateRefresh;
 
   let rows: any[] = [];
+  let detailFetchSuccess = 0;
+  let detailFetchMiss = 0;
+  let detailDateMapped = 0;
+  let detailPublisherMapped = 0;
 
   if (mode === 'sample-seed') {
     const raw = await readFile(process.cwd() + '/data/content-samples-export.json', 'utf8');
@@ -229,16 +233,36 @@ export async function POST(req: Request) {
       // Enrichment pass: fetch article details for missing published dates,
       // or force-refresh dates for all rows when requested.
       for (const row of rows) {
-        if ((!forceDetailDateRefresh && row.published_at) || !row.external_id) continue;
-        const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, row.external_id);
+        if (!forceDetailDateRefresh && row.published_at) continue;
+
+        const fallbackId =
+          row.external_id ||
+          row?.metadata?.raw?.articleId ||
+          row?.metadata?.raw?.uuid ||
+          null;
+
+        if (!fallbackId) {
+          detailFetchMiss += 1;
+          continue;
+        }
+
+        const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, fallbackId);
+        if (!detail) {
+          detailFetchMiss += 1;
+          continue;
+        }
+        detailFetchSuccess += 1;
+
         const detailData = detail?.article?.data || detail?.data || detail;
         const detailSource = String(detailData?.source || '').trim().toLowerCase();
 
         // Canonical publisher classification from detail source
-        row.publisher =
+        const nextPublisher =
           detailSource === 'broadridge advisor content'
             ? 'broadridge-forefield'
             : (row.publisher || 'publisher-content');
+        if (nextPublisher !== row.publisher) detailPublisherMapped += 1;
+        row.publisher = nextPublisher;
 
         // Explicit date mapping for forefield -> effective_date, others -> publish_date first
         let mappedDate: string | null = null;
@@ -260,6 +284,7 @@ export async function POST(req: Request) {
 
         if (mappedDate) {
           row.published_at = mappedDate;
+          detailDateMapped += 1;
         }
 
         row.metadata = {
@@ -309,5 +334,18 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, mode, dryRun: false, processed: rows.length, inserted, updated });
+  return NextResponse.json({
+    ok: true,
+    mode,
+    dryRun: false,
+    processed: rows.length,
+    inserted,
+    updated,
+    enrichment: mode === 'provider' ? {
+      detailFetchSuccess: (typeof detailFetchSuccess !== 'undefined' ? detailFetchSuccess : 0),
+      detailFetchMiss: (typeof detailFetchMiss !== 'undefined' ? detailFetchMiss : 0),
+      detailDateMapped: (typeof detailDateMapped !== 'undefined' ? detailDateMapped : 0),
+      detailPublisherMapped: (typeof detailPublisherMapped !== 'undefined' ? detailPublisherMapped : 0),
+    } : undefined,
+  });
 }
