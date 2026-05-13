@@ -67,7 +67,6 @@ export async function searchAdvisorStreamArticles(
   const base = config.apiBaseUrl.replace(/\/$/, '');
   const url = new URL(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/search`);
 
-  // Opinionated defaults based on working Postman collection
   url.searchParams.set('is_active', 'true');
   url.searchParams.set('filter', 'source_sort=Broadridge Advisor Content');
   url.searchParams.set(
@@ -95,17 +94,28 @@ export async function searchAdvisorStreamArticles(
   return (await response.json()) as AdvisorStreamSearchResponse;
 }
 
+function findArticleArray(payload: any): any[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+
+  const direct = payload.results || payload.data || payload.items || payload.articles;
+  if (Array.isArray(direct)) return direct;
+
+  for (const value of Object.values(payload)) {
+    if (Array.isArray(value) && value.length && typeof value[0] === 'object') return value as any[];
+    if (value && typeof value === 'object') {
+      const nested = findArticleArray(value);
+      if (nested.length) return nested;
+    }
+  }
+
+  return [];
+}
+
 export function mapAdvisorStreamSearchResults(
   payload: AdvisorStreamSearchResponse
 ): NormalizedSourceItem[] {
-  const rawList = payload.results || payload.data || payload.items || [];
-  const list = Array.isArray(rawList)
-    ? rawList
-    : Array.isArray((rawList as any)?.results)
-      ? (rawList as any).results
-      : Array.isArray((rawList as any)?.items)
-        ? (rawList as any).items
-        : [];
+  const list = findArticleArray(payload);
 
   return list
     .map((item: any) => {
