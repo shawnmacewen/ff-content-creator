@@ -98,7 +98,12 @@ function findArticleArray(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== 'object') return [];
 
-  const direct = payload.results || payload.data || payload.items || payload.articles;
+  const direct =
+    payload.results ||
+    payload.data ||
+    payload.items ||
+    payload.articles ||
+    payload.records;
   if (Array.isArray(direct)) return direct;
 
   for (const value of Object.values(payload)) {
@@ -119,8 +124,8 @@ export function mapAdvisorStreamSearchResults(
 
   return list
     .map((item: any) => {
-      const externalId = item.id || item.uuid;
-      const title = item.headline || item.title || item?.files?.title;
+      const externalId = item.id || item.uuid || item._id;
+      const title = item.headline || item.title || item?.files?.title || item?.files?.[0]?.title;
       const excerpt = item.summary || item.description || '';
       const body = item.content || excerpt || '';
       const tags = Array.isArray(item.tags) ? item.tags : [];
