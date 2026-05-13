@@ -60,11 +60,7 @@ export function ContentDetail({
                           : content.publisher === 'sample'
                             ? 'Sample'
                             : content.publisher
-                      : content.sourceSystem === 'advisorstream'
-                        ? 'Broadridge Forefield'
-                        : content.sourceSystem === 'sample-seed'
-                          ? 'Sample'
-                          : content.author}
+                      : 'Unavailable'}
                   </span>
                 </span>
                 <span className="flex items-center gap-1">

@@ -22,27 +22,49 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
   return response.json();
 }
 
-function coalesceEffectiveDate(input: any): string | null {
-  const directCandidates = [
-    input?.publish_date,
-    input?.published_date,
-    input?.published_at,
-    input?.publication_date,
-    input?.effective_date,
-    input?.Effective_date,
-    input?.data?.publish_date,
-    input?.data?.published_date,
-    input?.data?.published_at,
-    input?.data?.publication_date,
-    input?.data?.effective_date,
-    input?.data?.Effective_date,
-    input?.article?.publish_date,
-    input?.article?.published_date,
-    input?.article?.published_at,
-    input?.article?.publication_date,
-    input?.article?.effective_date,
-    input?.article?.Effective_date,
-  ].filter(Boolean);
+function coalesceEffectiveDate(input: any, publisher?: string | null): string | null {
+  const isForefield = publisher === 'broadridge-forefield';
+  const directCandidates = isForefield
+    ? [
+        input?.effective_date,
+        input?.Effective_date,
+        input?.data?.effective_date,
+        input?.data?.Effective_date,
+        input?.article?.effective_date,
+        input?.article?.Effective_date,
+        input?.publish_date,
+        input?.published_date,
+        input?.published_at,
+        input?.publication_date,
+        input?.data?.publish_date,
+        input?.data?.published_date,
+        input?.data?.published_at,
+        input?.data?.publication_date,
+        input?.article?.publish_date,
+        input?.article?.published_date,
+        input?.article?.published_at,
+        input?.article?.publication_date,
+      ]
+    : [
+        input?.publish_date,
+        input?.published_date,
+        input?.published_at,
+        input?.publication_date,
+        input?.effective_date,
+        input?.Effective_date,
+        input?.data?.publish_date,
+        input?.data?.published_date,
+        input?.data?.published_at,
+        input?.data?.publication_date,
+        input?.data?.effective_date,
+        input?.data?.Effective_date,
+        input?.article?.publish_date,
+        input?.article?.published_date,
+        input?.article?.published_at,
+        input?.article?.publication_date,
+        input?.article?.effective_date,
+        input?.article?.Effective_date,
+      ];
 
   for (const value of directCandidates) {
     const d = new Date(value as string);
@@ -209,7 +231,7 @@ export async function POST(req: Request) {
       for (const row of rows) {
         if ((!forceDetailDateRefresh && row.published_at) || !row.external_id) continue;
         const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, row.external_id);
-        const effective = coalesceEffectiveDate(detail);
+        const effective = coalesceEffectiveDate(detail, row.publisher);
         if (effective) {
           row.published_at = effective;
           row.metadata = {
