@@ -48,13 +48,13 @@ export function ContentCard({
                 <span
                   className={
                     content.sourceSystem === 'advisorstream'
-                      ? 'text-purple-500'
+                      ? 'text-blue-500'
                       : content.sourceSystem === 'sample-seed'
                         ? 'text-green-500'
                         : 'text-blue-500'
                   }
                 >
-                  {content.author}
+                  {content.sourceSystem === 'advisorstream' ? 'Broadridge Forefield' : content.author}
                 </span>
                 <span className="text-muted-foreground">•</span>
                 {formatDistanceToNow(new Date(content.publishedAt), { addSuffix: true })}
