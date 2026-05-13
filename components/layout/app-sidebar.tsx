@@ -51,14 +51,14 @@ const mainNavItems = [
     icon: Library,
   },
   {
-    title: 'API Lab',
-    href: '/api-lab',
-    icon: Bug,
-  },
-  {
     title: 'Content Audit',
     href: '/audit',
     icon: SearchCheck,
+  },
+  {
+    title: 'API Lab',
+    href: '/api-lab',
+    icon: Bug,
   },
 ];
 

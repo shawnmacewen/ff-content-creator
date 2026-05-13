@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 type Match = {
   id: string;
@@ -116,10 +117,31 @@ export default function AuditPage() {
             <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
             <div className="flex items-center justify-between gap-2">
               <div className="font-medium">{m.title}</div>
-              <Badge variant="outline">{m.publisher || 'Unavailable'}</Badge>
+              <div className="flex items-center gap-2">
+                {'confidence' in m && typeof (m as any).confidence === 'number' && (
+                  <Badge
+                    className={
+                      (m as any).confidence >= 0.8
+                        ? 'bg-green-600 text-white'
+                        : (m as any).confidence >= 0.5
+                          ? 'bg-yellow-600 text-white'
+                          : 'bg-muted text-foreground'
+                    }
+                  >
+                    {Math.round(((m as any).confidence || 0) * 100)}%
+                  </Badge>
+                )}
+                <Badge variant="outline">{m.publisher || 'Unavailable'}</Badge>
+              </div>
             </div>
             <div className="text-xs text-muted-foreground">{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</div>
+            {'reason' in m && (m as any).reason && (
+              <p className="text-sm text-foreground/90">Reason: {(m as any).reason}</p>
+            )}
             <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
+            <div>
+              <Link href={`/source-content`} className="text-xs text-blue-500 hover:underline">Open in Source Content</Link>
+            </div>
           </div>
         ))}
       </div>
