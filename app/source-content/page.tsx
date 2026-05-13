@@ -36,6 +36,7 @@ export default function SourceContentPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [syncingMode, setSyncingMode] = useState<null | 'sample-seed' | 'provider'>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -112,6 +113,9 @@ export default function SourceContentPage() {
   };
 
   const runSync = async (mode: 'sample-seed' | 'provider', dryRun: boolean) => {
+    setSyncingMode(mode);
+    toast.info(`${mode === 'provider' ? 'Provider' : 'Samples'} sync started...`);
+
     const response = await fetch('/api/source-content/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -125,6 +129,7 @@ export default function SourceContentPage() {
     if (!response.ok) {
       const message = body?.error || rawText || `Sync failed (${response.status})`;
       toast.error(message);
+      setSyncingMode(null);
       return;
     }
 
@@ -134,6 +139,7 @@ export default function SourceContentPage() {
         console.warn('Provider debug:', body.debug);
         toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
       }
+      setSyncingMode(null);
       return;
     }
 
@@ -143,6 +149,7 @@ export default function SourceContentPage() {
       toast.info(`Debug: dataType=${body.debug?.dataType || 'unknown'}, keys=${(body.debug?.dataKeys || []).join(',') || 'none'}`);
     }
     mutate();
+    setSyncingMode(null);
   };
 
   return (
@@ -168,9 +175,9 @@ export default function SourceContentPage() {
               <Database className="h-4 w-4 mr-2" />
               Dry Run Provider
             </Button>
-            <Button variant="outline" size="sm" onClick={() => runSync('provider', false)}>
-              <Database className="h-4 w-4 mr-2" />
-              Sync Provider
+            <Button variant="outline" size="sm" onClick={() => runSync('provider', false)} disabled={syncingMode !== null}>
+              <Database className={`h-4 w-4 mr-2 ${syncingMode === 'provider' ? 'animate-pulse' : ''}`} />
+              {syncingMode === 'provider' ? 'Syncing Provider...' : 'Sync Provider'}
             </Button>
             <Button
               variant="outline"
