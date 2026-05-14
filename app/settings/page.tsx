@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { Database, Info } from 'lucide-react';
+import { toast } from 'sonner';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -76,7 +77,7 @@ export default function SettingsPage() {
         startPage = nextStartPage;
       }
 
-      setRunResult({
+      const result = {
         ok: true,
         mode: 'provider-batched',
         batchesRun: batches.length,
@@ -86,8 +87,14 @@ export default function SettingsPage() {
           updated: batches.reduce((n, b) => n + (b.updated || 0), 0),
         },
         batches,
-      });
+      };
+      setRunResult(result);
+      toast.success(
+        `Batched sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
+      );
       mutate();
+    } catch (error: any) {
+      toast.error(error?.message || 'Batched sync failed');
     } finally {
       setRunningBatched(false);
     }
