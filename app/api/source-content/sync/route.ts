@@ -288,7 +288,7 @@ export async function POST(req: Request) {
 
         // Canonical publisher classification from detail source
         const nextPublisher =
-          (detailSource.includes('broadridge') || detailSource.includes('forefield'))
+          detailSource === 'broadridge advisor content'
             ? 'broadridge-forefield'
             : (row.publisher || 'publisher-content');
         if (nextPublisher !== row.publisher) detailPublisherMapped += 1;
@@ -377,7 +377,7 @@ export async function POST(req: Request) {
       const detailSource = String(
         detailData?.source || detailData?.source_sort || detailData?.enterprise_name || detailData?.enterprise_names?.[0] || ''
       ).trim().toLowerCase();
-      const publisher = (detailSource.includes('broadridge') || detailSource.includes('forefield')) ? 'broadridge-forefield' : 'publisher-content';
+      const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
 
       let mappedDate: string | null = null;
       if (publisher === 'broadridge-forefield') {
@@ -418,11 +418,7 @@ export async function POST(req: Request) {
   }
 
   const rowsAfterPublisher = rows.filter((row) => !forefieldOnly || String(row.publisher || '').toLowerCase() === 'broadridge-forefield');
-  const rowsAfterFilters = rowsAfterPublisher.filter((row) => {
-    if (!row.published_at) return false;
-    const iso = new Date(row.published_at).toISOString();
-    return iso >= minPublishedAtIso;
-  });
+  const rowsAfterFilters = rowsAfterPublisher;
 
   if (dryRun) {
     return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsAfterFilters.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length });
@@ -469,7 +465,7 @@ export async function POST(req: Request) {
     ok: true,
     mode,
     runId,
-    filters: { forefieldOnly, yearsBack, minPublishedAtIso, maxPages },
+    filters: { forefieldOnly, yearsBack: null, minPublishedAtIso: null, maxPages },
     dryRun: false,
     processed: rowsAfterFilters.length,
     scannedTotal: rows.length,

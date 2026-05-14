@@ -202,7 +202,7 @@ export function mapAdvisorStreamSearchResults(
       const sourceName = String(item.source || item.source_sort || item.enterprise_names?.[0] || '');
       const normalizedSource = sourceName.trim().toLowerCase();
       const publisher =
-        (normalizedSource.includes('broadridge') || normalizedSource.includes('forefield'))
+        normalizedSource === 'broadridge advisor content'
           ? 'broadridge-forefield'
           : 'publisher-content';
 
