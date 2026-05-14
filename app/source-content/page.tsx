@@ -7,7 +7,7 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Sparkles, RefreshCw, Database } from 'lucide-react';
+import { Sparkles, RefreshCw, Database, Info } from 'lucide-react';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 
@@ -38,7 +38,7 @@ export default function SourceContentPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [syncingMode, setSyncingMode] = useState<null | 'sample-seed' | 'provider'>(null);
+  const [syncingMode, setSyncingMode] = useState<null | 'provider'>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -116,17 +116,18 @@ export default function SourceContentPage() {
     setPage((p) => Math.min(data.totalPages || 1, p + 1));
   };
 
-  const runSync = async (mode: 'sample-seed' | 'provider', dryRun: boolean) => {
-    setSyncingMode(mode);
-    toast.info(`${mode === 'provider' ? 'Provider' : 'Samples'} sync started...`);
+  const runProviderSync = async () => {
+    setSyncingMode('provider');
+    toast.info('Broadridge Content API sync started...');
 
     const response = await fetch('/api/source-content/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        mode,
-        dryRun,
-        ...(mode === 'provider' ? { maxItems: 500, maxPages: 20 } : {}),
+        mode: 'provider',
+        dryRun: false,
+        maxItems: 500,
+        maxPages: 20,
       }),
     });
 
@@ -141,13 +142,7 @@ export default function SourceContentPage() {
       return;
     }
 
-    if (dryRun) {
-      toast.success(`${mode} dry run: would process ${body?.wouldProcess ?? body?.processed ?? 0} rows`);
-      setSyncingMode(null);
-      return;
-    }
-
-    toast.success(`${mode} sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
+    toast.success(`Broadridge Content API sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
     mutate();
     setSyncingMode(null);
   };
@@ -160,24 +155,22 @@ export default function SourceContentPage() {
           <p className="text-muted-foreground">
             Browse existing content to use as inspiration for AI generation
           </p>
+          <div className="mt-2 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
+            Broadridge Advisor Content pieces: {data?.meta?.sourceCounts?.['broadridge-forefield'] ?? 0}
+          </div>
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', true)}>
-              <Database className="h-4 w-4 mr-2" />
-              Dry Run Samples
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => runSync('sample-seed', false)}>
-              <Database className="h-4 w-4 mr-2" />
-              Sync Samples
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => runSync('provider', true)}>
-              <Database className="h-4 w-4 mr-2" />
-              Dry Run Provider
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => runSync('provider', false)} disabled={syncingMode !== null}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runProviderSync}
+              disabled={syncingMode !== null}
+              title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the API Lab."
+            >
               <Database className={`h-4 w-4 mr-2 ${syncingMode === 'provider' ? 'animate-pulse' : ''}`} />
-              {syncingMode === 'provider' ? 'Syncing Provider...' : 'Sync Provider'}
+              {syncingMode === 'provider' ? 'Syncing Broadridge Content API...' : 'Sync Broadridge Content API'}
+              <Info className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
             </Button>
 
             <Button

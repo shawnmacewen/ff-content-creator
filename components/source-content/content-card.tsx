@@ -107,6 +107,7 @@ export function ContentCard({
           >
             View Details
           </Button>
+          <span className="text-xs text-muted-foreground">External ID: {content.externalId}</span>
           {content.url && (
             <Button
               variant="ghost"
