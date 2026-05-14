@@ -41,7 +41,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-[92vw] w-[92vw] max-h-[94vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
@@ -85,15 +85,38 @@ export function ContentDetail({
 
         <Separator className="my-4" />
 
-        <ScrollArea className="h-[300px] pr-4">
-          <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
-            {content.body.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-sm text-foreground/90 mb-4">
-                {paragraph}
-              </p>
-            ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[58vh]">
+          <div className="lg:col-span-2">
+            <ScrollArea className="h-[58vh] pr-4">
+              <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
+                {content.body.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className="text-sm text-foreground/90 mb-4">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
+
+          <div className="lg:col-span-1 rounded-md border p-3">
+            <h3 className="text-sm font-semibold mb-3">Metadata</h3>
+            <ScrollArea className="h-[58vh] pr-2">
+              <div className="space-y-2 text-xs">
+                <div><span className="text-muted-foreground">External ID:</span> {content.externalId || 'Unavailable'}</div>
+                <div><span className="text-muted-foreground">BasContentId:</span> {content.metadata?.extraProperties?.BasContentId || 'n/a'}</div>
+                <div><span className="text-muted-foreground">BasContentFilename:</span> {content.metadata?.extraProperties?.BasContentFilename || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Format:</span> {content.metadata?.extraProperties?.Format || 'n/a'}</div>
+                <div><span className="text-muted-foreground">FinraLetterUrl:</span> {content.metadata?.extraProperties?.FinraLetterUrl || 'n/a'}</div>
+                <div><span className="text-muted-foreground">FinraApproved:</span> {content.metadata?.extraProperties?.FinraApproved || 'n/a'}</div>
+                <div><span className="text-muted-foreground">APContentType:</span> {content.metadata?.extraProperties?.APContentType || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Evergreen:</span> {content.metadata?.extraProperties?.Evergreen || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Content Designation:</span> {content.metadata?.contentDesignation || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Categories:</span> {Array.isArray(content.metadata?.categories) ? content.metadata.categories.join(', ') || 'n/a' : 'n/a'}</div>
+                <div><span className="text-muted-foreground">Sub-categories:</span> {Array.isArray(content.metadata?.subCategories) ? content.metadata.subCategories.join(', ') || 'n/a' : 'n/a'}</div>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
 
         <Separator className="my-4" />
 
