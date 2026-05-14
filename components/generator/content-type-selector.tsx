@@ -42,12 +42,12 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {categories.map((category) => {
         const types = getContentTypesByCategory(category);
         
         return (
-          <div key={category} className="space-y-3">
+          <div key={category} className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">
               {categoryLabels[category]}
             </h3>
