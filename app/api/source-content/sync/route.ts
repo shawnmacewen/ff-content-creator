@@ -165,7 +165,7 @@ export async function POST(req: Request) {
 
       while (offset < totalItems && page < maxPages) {
         const started = Date.now();
-        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: false });
+        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: true });
         lastPayload = payload;
 
         const rawCount =
@@ -203,7 +203,9 @@ export async function POST(req: Request) {
         page += 1;
       }
 
-      const normalized = collected;
+      // Reuse provider-search flow (same structure as existing Provider Sync)
+      // and only persist records matching Broadridge Advisor Content.
+      const normalized = collected.filter((item) => String(item.publisher || '').toLowerCase() === 'broadridge-forefield');
 
       if (!normalized.length) {
         const payload = lastPayload || {};

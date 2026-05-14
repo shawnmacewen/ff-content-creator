@@ -73,7 +73,7 @@ export async function searchAdvisorStreamArticles(
   }
   url.searchParams.set(
     'fields',
-    'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps'
+    'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps,source,source_sort,enterprise_names,enterprise_name'
   );
 
   url.searchParams.set('limit', String(options?.limit ?? 25));
