@@ -126,7 +126,7 @@ export default function SourceContentPage() {
       body: JSON.stringify({
         mode,
         dryRun,
-        ...(mode === 'provider' ? { maxItems: 1000, maxPages: 40 } : {}),
+        ...(mode === 'provider' ? { maxItems: 3000, maxPages: 120 } : {}),
       }),
     });
 
