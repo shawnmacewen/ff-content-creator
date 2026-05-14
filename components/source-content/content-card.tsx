@@ -29,7 +29,7 @@ export function ContentCard({
         isSelected ? 'border-primary ring-1 ring-primary' : ''
       }`}
     >
-      <CardHeader className="pb-2 min-h-[96px]">
+      <CardHeader className="pb-1 min-h-[84px]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
             <div className="space-y-1 flex-1">
@@ -84,7 +84,7 @@ export function ContentCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="pt-0 flex-1 flex flex-col">
         <div className="min-h-[56px] flex items-start">
           <p className="text-sm text-muted-foreground line-clamp-2 w-full">{content.excerpt}</p>
         </div>
