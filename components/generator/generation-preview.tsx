@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
+import type { ContentTypeInfo } from '@/lib/types/content';
 import type { ContentType, ContentStatus } from '@/lib/types/content';
 import { Copy, Check, Save, RefreshCw, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -34,6 +35,7 @@ export function GenerationPreview({
   const [copied, setCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [activeView, setActiveView] = useState<'all' | string>('all');
 
   const typeInfo = contentType ? CONTENT_TYPE_MAP[contentType] : null;
 
@@ -78,6 +80,25 @@ export function GenerationPreview({
   const characterCount = content.length;
   const maxLength = typeInfo?.maxLength;
   const isOverLimit = maxLength ? characterCount > maxLength : false;
+
+  const sectionTypeByTitle: Record<string, keyof typeof CONTENT_TYPE_MAP> = {
+    'LinkedIn Post': 'social-linkedin',
+    'Instagram Caption': 'social-instagram',
+    Email: 'email-marketing',
+  };
+
+  const sectionsWithMeta = sections.map((s) => {
+    const contentTypeKey = sectionTypeByTitle[s.title] as keyof typeof CONTENT_TYPE_MAP | undefined;
+    const info: ContentTypeInfo | undefined = contentTypeKey ? CONTENT_TYPE_MAP[contentTypeKey] : undefined;
+    const length = s.body.length;
+    const limit = info?.maxLength;
+    const over = limit ? length > limit : false;
+    return { ...s, info, length, limit, over };
+  });
+
+  const visibleSections = activeView === 'all'
+    ? sectionsWithMeta
+    : sectionsWithMeta.filter((s) => s.title === activeView);
 
   if (!contentType) {
     return (
@@ -165,33 +186,47 @@ export function GenerationPreview({
             placeholder="Generated content will appear here..."
           />
         ) : sections.length > 1 ? (
-          <ScrollArea className="h-[420px] rounded-lg border border-border bg-muted/30 p-4">
-            <div className="space-y-4">
-              {sections.map((section) => (
-                <div key={section.title} className="rounded border bg-background/60 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="font-medium text-sm">{section.title}</div>
-                    <Button variant="outline" size="sm" onClick={() => handleCopySection(section.title, section.body)}>
-                      {copiedSection === section.title ? (
-                        <><Check className="h-4 w-4 mr-1" />Copied</>
-                      ) : (
-                        <><Copy className="h-4 w-4 mr-1" />Copy {section.title}</>
-                      )}
-                    </Button>
-                  </div>
-                  {isEditing ? (
-                    <Textarea
-                      value={section.body}
-                      onChange={(e) => handleSectionChange(section.title, e.target.value)}
-                      className="min-h-[140px] font-mono text-sm bg-background"
-                    />
-                  ) : (
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
-                  )}
-                </div>
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant={activeView === 'all' ? 'default' : 'outline'} onClick={() => setActiveView('all')}>All Outputs</Button>
+              {sectionsWithMeta.map((section) => (
+                <Button key={section.title} size="sm" variant={activeView === section.title ? 'default' : 'outline'} onClick={() => setActiveView(section.title)}>
+                  {section.title}
+                </Button>
               ))}
             </div>
-          </ScrollArea>
+            <ScrollArea className="h-[420px] rounded-lg border border-border bg-muted/30 p-4">
+              <div className="space-y-4">
+                {visibleSections.map((section) => (
+                  <div key={section.title} className="rounded border bg-background/60 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-medium text-sm">{section.title}</div>
+                      <Button variant="outline" size="sm" onClick={() => handleCopySection(section.title, section.body)}>
+                        {copiedSection === section.title ? (
+                          <><Check className="h-4 w-4 mr-1" />Copied</>
+                        ) : (
+                          <><Copy className="h-4 w-4 mr-1" />Copy {section.title}</>
+                        )}
+                      </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {section.length} characters{section.limit ? ` / ${section.limit} max` : ''}
+                      {section.over ? <span className="text-destructive ml-2">Over limit</span> : null}
+                    </div>
+                    {isEditing ? (
+                      <Textarea
+                        value={section.body}
+                        onChange={(e) => handleSectionChange(section.title, e.target.value)}
+                        className="min-h-[140px] font-mono text-sm bg-background"
+                      />
+                    ) : (
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </>
         ) : (
           <ScrollArea className="h-[300px] rounded-lg border border-border bg-muted/30 p-4">
             {content ? (
@@ -212,14 +247,20 @@ export function GenerationPreview({
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <span className={isOverLimit ? 'text-destructive' : ''}>
-              {characterCount} characters
-              {maxLength && ` / ${maxLength} max`}
-            </span>
-            {isOverLimit && (
-              <Badge variant="destructive" className="text-xs">
-                Over limit
-              </Badge>
+            {sections.length > 1 ? (
+              <span>{characterCount} total characters across KIT outputs</span>
+            ) : (
+              <>
+                <span className={isOverLimit ? 'text-destructive' : ''}>
+                  {characterCount} characters
+                  {maxLength && ` / ${maxLength} max`}
+                </span>
+                {isOverLimit && (
+                  <Badge variant="destructive" className="text-xs">
+                    Over limit
+                  </Badge>
+                )}
+              </>
             )}
           </div>
           <Button
