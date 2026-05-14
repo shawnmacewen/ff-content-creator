@@ -394,6 +394,13 @@ export async function POST(req: Request) {
           detailSource: detailData?.source || null,
           detailMappedDate: row.published_at || null,
           extraProperties: pickExtraProperties(detailData),
+          categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
+          subCategories: Array.isArray(detailData?.sub_categories)
+            ? detailData.sub_categories
+            : Array.isArray(detailData?.subCategories)
+              ? detailData.subCategories
+              : [],
+          contentDesignation: detailData?.content_designation || null,
         };
 
         verifiedRows.push(row);
@@ -485,6 +492,13 @@ export async function POST(req: Request) {
           detailSource: detailData?.source || null,
           detailMappedDate: mappedDate || null,
           extraProperties: pickExtraProperties(detailData),
+          categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
+          subCategories: Array.isArray(detailData?.sub_categories)
+            ? detailData.sub_categories
+            : Array.isArray(detailData?.subCategories)
+              ? detailData.subCategories
+              : [],
+          contentDesignation: detailData?.content_designation || null,
         },
       });
     }
