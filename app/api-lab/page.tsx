@@ -28,11 +28,13 @@ export default function ApiLabPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>('');
   const [responseText, setResponseText] = useState('');
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const run = async () => {
     setLoading(true);
     setStatus('');
     setResponseText('');
+    setImagePreview('');
     try {
       const res = await fetch(path, {
         method,
@@ -43,6 +45,13 @@ export default function ApiLabPage() {
       setStatus(`${res.status} ${res.statusText}`);
       try {
         const json = JSON.parse(text);
+        const rawImage = typeof json?.imageUrl === 'string' ? json.imageUrl : '';
+        if (rawImage.startsWith('data:image/') || rawImage.startsWith('http')) {
+          setImagePreview(rawImage);
+          json.imageUrl = rawImage.startsWith('data:image/')
+            ? `[data-image:${rawImage.slice(0, 48)}... (${rawImage.length} chars)]`
+            : rawImage;
+        }
         setResponseText(JSON.stringify(json, null, 2));
       } catch {
         setResponseText(text);
@@ -79,8 +88,14 @@ export default function ApiLabPage() {
 
       <Button onClick={run} disabled={loading}>{loading ? 'Running...' : 'Run Request'}</Button>
 
-      <div className="rounded border p-3">
-        <div className="text-sm font-medium mb-2">Status: {status || '—'}</div>
+      <div className="rounded border p-3 space-y-3">
+        <div className="text-sm font-medium">Status: {status || '—'}</div>
+        {imagePreview ? (
+          <div className="rounded border bg-muted/20 p-2">
+            <div className="text-xs text-muted-foreground mb-2">Image Preview</div>
+            <img src={imagePreview} alt="API generated" className="rounded border max-h-80" />
+          </div>
+        ) : null}
         <pre className="text-xs whitespace-pre-wrap break-words max-h-[500px] overflow-auto">{responseText || 'No response yet.'}</pre>
       </div>
     </div>
