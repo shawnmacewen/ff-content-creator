@@ -135,6 +135,8 @@ export async function POST(req: Request) {
   let detailFetchMiss = 0;
   let detailDateMapped = 0;
   let detailPublisherMapped = 0;
+  let repeatingPageDetected = false;
+  const repeatingIdsSample: string[] = [];
 
   if (mode === 'sample-seed') {
     const raw = await readFile(process.cwd() + '/data/content-samples-export.json', 'utf8');
@@ -176,8 +178,6 @@ export async function POST(req: Request) {
       let lastPayload: any = null;
       let page = 0;
       let previousPageIdsSignature = '';
-      let repeatingPageDetected = false;
-      const repeatingIdsSample: string[] = [];
 
       while (offset < totalItems && page < maxPages && collected.length < maxItems) {
         const started = Date.now();
