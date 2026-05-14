@@ -75,6 +75,7 @@ export function ContentCard({
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
+                className="h-8 w-8 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
               />
             )}
             <Badge variant="secondary" className="shrink-0">
