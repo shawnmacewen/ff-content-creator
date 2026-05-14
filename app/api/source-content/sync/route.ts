@@ -139,6 +139,7 @@ export async function POST(req: Request) {
   let detailPublisherMapped = 0;
   let repeatingPageDetected = false;
   const repeatingIdsSample: string[] = [];
+  const pageDiagnostics: Array<{ page: number; offset: number; firstExternalId: string | null; lastExternalId: string | null; sampleExternalIds: string[] }> = [];
 
   if (mode === 'sample-seed') {
     const raw = await readFile(process.cwd() + '/data/content-samples-export.json', 'utf8');
@@ -200,6 +201,13 @@ export async function POST(req: Request) {
 
         const pageItems = mapAdvisorStreamSearchResults(payload);
         const pageIds = pageItems.map((i) => String(i.externalId || '')).filter(Boolean);
+        pageDiagnostics.push({
+          page,
+          offset,
+          firstExternalId: pageIds[0] || null,
+          lastExternalId: pageIds[pageIds.length - 1] || null,
+          sampleExternalIds: pageIds.slice(0, 5),
+        });
         const pageIdsSignature = pageIds.join('|');
         if (previousPageIdsSignature && pageIdsSignature && previousPageIdsSignature === pageIdsSignature) {
           repeatingPageDetected = true;
@@ -470,12 +478,26 @@ export async function POST(req: Request) {
   const uniqueRows = Array.from(dedupedByExternal.values());
 
   if (dryRun) {
-    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: uniqueRows.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length, duplicateExternalIdsSkipped, uniqueExternalIdsSeen: uniqueRows.length, repeatingPageDetected, repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10) });
+    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: uniqueRows.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length, duplicateExternalIdsSkipped, uniqueExternalIdsSeen: uniqueRows.length, repeatingPageDetected, repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10), startPage, endPage: Math.max(startPage, startPage + pageDiagnostics.length - 1), nextStartPage: startPage + pageDiagnostics.length, pageDiagnostics: pageDiagnostics.slice(0, 20) });
   }
 
   const supabase = getSupabaseServerClient();
   let inserted = 0;
   let updated = 0;
+
+  let newExternalIdsDiscovered = 0;
+  if (mode === 'provider') {
+    const uniqueExternalIds = uniqueRows.map((r: any) => r.external_id).filter(Boolean);
+    if (uniqueExternalIds.length) {
+      const { data: existingRows } = await supabase
+        .from('source_content')
+        .select('external_id')
+        .eq('source_system', 'advisorstream')
+        .in('external_id', uniqueExternalIds as string[]);
+      const existingSet = new Set((existingRows || []).map((r: any) => r.external_id));
+      newExternalIdsDiscovered = uniqueExternalIds.filter((id: string) => !existingSet.has(id)).length;
+    }
+  }
 
   for (const row of uniqueRows) {
     if (mode === 'provider-backfill' && row.id) {
@@ -525,8 +547,13 @@ export async function POST(req: Request) {
     skippedOlderOrUndated: Math.max(0, rows.length - rowsAfterFilters.length),
     inserted,
     updated,
+    newExternalIdsDiscovered,
+    startPage,
+    endPage: Math.max(startPage, startPage + pageDiagnostics.length - 1),
+    nextStartPage: startPage + pageDiagnostics.length,
     repeatingPageDetected,
     repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10),
+    pageDiagnostics: pageDiagnostics.slice(0, 20),
     enrichment: mode === 'provider' ? {
       detailFetchSuccess: (typeof detailFetchSuccess !== 'undefined' ? detailFetchSuccess : 0),
       detailFetchMiss: (typeof detailFetchMiss !== 'undefined' ? detailFetchMiss : 0),
