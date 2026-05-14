@@ -106,6 +106,7 @@ export async function POST(req: Request) {
     }
 
     const parts: string[] = [];
+    const images: Record<string, string> = {};
     const sectionScores: Array<{ label: string; grade: string; confidence: number; findings: string[] }> = [];
     for (const asset of assets) {
       const systemPrompt = buildSystemPrompt(asset.type, tone);
@@ -122,7 +123,8 @@ export async function POST(req: Request) {
         const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${sectionText.slice(0, 800)}`;
         const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
         if (image.imageUrl) {
-          sectionText += `\n\nImage URL: ${image.imageUrl}`;
+          images.instagram = image.imageUrl;
+          sectionText += `\n\nImage generation status: success`;
         } else {
           sectionText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
         }
@@ -133,7 +135,7 @@ export async function POST(req: Request) {
 
     const content = parts.join('\n\n---\n\n');
     const overall = assessCompliance(content);
-    return new Response(JSON.stringify({ content, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    return new Response(JSON.stringify({ content, images, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
   const systemPrompt = buildSystemPrompt(type, tone);
@@ -147,16 +149,18 @@ export async function POST(req: Request) {
   });
 
   let outputText = result.text;
+  const images: Record<string, string> = {};
   if (includeInstagramImage && type === 'social-instagram') {
     const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${outputText.slice(0, 800)}`;
     const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
     if (image.imageUrl) {
-      outputText += `\n\nImage URL: ${image.imageUrl}`;
+      images.instagram = image.imageUrl;
+      outputText += `\n\nImage generation status: success`;
     } else {
       outputText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
     }
   }
 
   const compliance = assessCompliance(outputText);
-  return new Response(JSON.stringify({ content: outputText, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  return new Response(JSON.stringify({ content: outputText, images, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }

@@ -21,6 +21,7 @@ interface GenerationPreviewProps {
   onSave: (status: ContentStatus) => void;
   compliance?: { grade?: string; confidence?: number; findings?: string[]; sectionScores?: Array<{ label: string; grade: string; confidence: number; findings: string[] }> } | null;
   imageGenerationEnabled?: boolean;
+  generatedImages?: Record<string, string>;
   imageStatus?: string | null;
 }
 
@@ -34,6 +35,7 @@ export function GenerationPreview({
   onSave,
   compliance,
   imageGenerationEnabled = false,
+  generatedImages = {},
   imageStatus = null,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
@@ -237,7 +239,8 @@ export function GenerationPreview({
                     ) : (
                       (() => {
                         const imageLine = section.body.split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
-                        const imageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
+                        const inlineImageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
+                        const imageSrc = section.title === 'Instagram Caption' ? (generatedImages.instagram || inlineImageSrc) : inlineImageSrc;
                         const captionOnly = section.body.replace(/\n*Image URL:\s*.*$/im, '').trim();
                         if (section.title === 'Instagram Caption') {
                           return (
