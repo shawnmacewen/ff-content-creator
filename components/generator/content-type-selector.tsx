@@ -51,7 +51,7 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
             <h3 className="text-sm font-medium text-muted-foreground">
               {categoryLabels[category]}
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-wrap gap-3">
               {types.map((contentType) => {
                 const Icon = iconMap[contentType.icon] || FileText;
                 const isSelected = selected.includes(contentType.id);
@@ -60,7 +60,7 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                   <Card
                     key={contentType.id}
                     className={cn(
-                      'cursor-pointer transition-all hover:border-primary/50 h-full min-h-[135px] flex flex-col',
+                      'cursor-pointer transition-all hover:border-primary/50 h-[200px] w-[200px] flex flex-col',
                       isSelected && 'border-primary ring-1 ring-primary bg-primary/5'
                     )}
                     onClick={() => onToggle(contentType.id)}
