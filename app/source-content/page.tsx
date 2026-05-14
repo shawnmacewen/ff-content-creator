@@ -155,9 +155,6 @@ export default function SourceContentPage() {
           <p className="text-muted-foreground">
             Browse existing content to use as inspiration for AI generation
           </p>
-          <div className="mt-2 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
-            Broadridge Advisor Content pieces: {data?.meta?.publisherCounts?.['broadridge-forefield'] ?? 0}
-          </div>
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
@@ -211,6 +208,10 @@ export default function SourceContentPage() {
         availablePublishers={data?.filters?.availablePublishers || []}
         onClearFilters={handleClearFilters}
       />
+
+      <div className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
+        Broadridge Advisor Content: {data?.meta?.publisherCounts?.['broadridge-forefield'] ?? 0}
+      </div>
 
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
