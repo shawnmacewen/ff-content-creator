@@ -221,8 +221,11 @@ export function GenerationPreview({
                         {section.length} characters{section.limit ? ` / ${section.limit} max` : ''}
                         {section.over ? <span className="text-destructive ml-2">Over limit</span> : null}
                       </div>
-                      {section.title === 'Instagram Caption' && imageGenerationEnabled && !/Image URL:|Image generation status:/i.test(section.body) ? (
-                        <div className="text-amber-400">Image status: missing from output (re-run generation with image setting enabled)</div>
+                      {section.title === 'Instagram Caption' && imageGenerationEnabled ? (
+                        <div className="text-amber-400">
+                          Image present: {imageSrc ? 'yes' : 'no'}
+                          {!/Image URL:|Image generation status:/i.test(section.body) ? ' · missing from output (re-run generation with image setting enabled)' : ''}
+                        </div>
                       ) : null}
                     </div>
                     {isEditing ? (
@@ -233,14 +236,15 @@ export function GenerationPreview({
                       />
                     ) : (
                       (() => {
-                        const match = section.body.match(/Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i);
-                        const captionOnly = section.body.replace(/\n*Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i, '').trim();
+                        const imageLine = section.body.split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
+                        const imageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
+                        const captionOnly = section.body.replace(/\n*Image URL:\s*.*$/im, '').trim();
                         if (section.title === 'Instagram Caption') {
                           return (
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="whitespace-pre-wrap text-sm leading-relaxed">{captionOnly}</div>
                               <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
-                                {match ? <img src={match[1]} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                                {imageSrc ? <img src={imageSrc} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
                               </div>
                             </div>
                           );
