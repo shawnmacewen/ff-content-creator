@@ -240,9 +240,22 @@ export default function GeneratePage() {
                           <CardTitle className="text-sm font-medium">{info.label}</CardTitle>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0 space-y-2">
                         <CardDescription className="text-xs">{info.description}</CardDescription>
                         {info.maxLength && <Badge variant="outline" className="mt-2 text-xs">Max {info.maxLength} chars</Badge>}
+                        {opt.key === 'instagram' && selected && (
+                          <label
+                            className="flex items-center gap-2 text-xs text-muted-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={includeInstagramImage}
+                              onChange={(e) => setIncludeInstagramImage(e.target.checked)}
+                            />
+                            Include image
+                          </label>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -268,7 +281,7 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-              {((generationMode === 'single' && contentType === 'social-instagram') || (generationMode === 'kit' && kitAssets.instagram)) && (
+              {generationMode === 'single' && contentType === 'social-instagram' && (
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={includeInstagramImage} onChange={(e) => setIncludeInstagramImage(e.target.checked)} />
                   Include AI image generation for Instagram
