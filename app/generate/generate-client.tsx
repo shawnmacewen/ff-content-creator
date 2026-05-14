@@ -190,14 +190,6 @@ export default function GeneratePage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={!canGenerate || isGenerating}
-          className="gap-2"
-        >
-          <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
-          {isGenerating ? 'Generating...' : 'Generate'}
-        </Button>
       </div>
 
       <div className="rounded-lg border p-4 space-y-3">
@@ -266,11 +258,11 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-              <div className="pt-2">
+              <div className="pt-3 border-t border-border flex justify-end">
                 <Button
                   onClick={handleGenerate}
                   disabled={!canGenerate || isGenerating}
-                  className="gap-2"
+                  className="gap-2 min-w-36"
                 >
                   <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
                   {isGenerating ? 'Generating...' : 'Generate'}

@@ -100,7 +100,7 @@ export function GenerationPreview({
     ? sectionsWithMeta
     : sectionsWithMeta.filter((s) => s.title === activeView);
 
-  if (!contentType) {
+  if (!contentType && !content && sections.length === 0) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
