@@ -17,7 +17,7 @@ export type SyncBlockLog = {
   createdAt: string;
 };
 
-const LOG_DIR = path.join(process.cwd(), 'data');
+const LOG_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const LOG_FILE = path.join(LOG_DIR, 'source-sync-logs.json');
 
 export async function readSyncLogs(): Promise<SyncBlockLog[]> {
