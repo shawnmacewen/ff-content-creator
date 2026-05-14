@@ -204,8 +204,7 @@ export async function POST(req: Request) {
       }
 
       const normalized = collected
-        .filter((item) => !forefieldOnly || String(item.publisher || '').toLowerCase() === 'broadridge-forefield')
-        .filter((item) => item.publishedAt && new Date(item.publishedAt).toISOString() >= minPublishedAtIso);
+        .filter((item) => !forefieldOnly || String(item.publisher || '').toLowerCase() === 'broadridge-forefield');
 
       if (!normalized.length) {
         const payload = lastPayload || {};
@@ -415,15 +414,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
 
+  const rowsInDateWindow = rows.filter((row) => {
+    if (!row.published_at) return false;
+    const iso = new Date(row.published_at).toISOString();
+    return iso >= minPublishedAtIso;
+  });
+
   if (dryRun) {
-    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rows.length });
+    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsInDateWindow.length, scanned: rows.length });
   }
 
   const supabase = getSupabaseServerClient();
   let inserted = 0;
   let updated = 0;
 
-  for (const row of rows) {
+  for (const row of rowsInDateWindow) {
     if (mode === 'provider-backfill' && row.id) {
       const { id, ...patch } = row;
       const { error } = await supabase
@@ -462,7 +467,8 @@ export async function POST(req: Request) {
     runId,
     filters: { forefieldOnly, yearsBack, minPublishedAtIso, maxPages },
     dryRun: false,
-    processed: rows.length,
+    processed: rowsInDateWindow.length,
+    skippedOlderOrUndated: Math.max(0, rows.length - rowsInDateWindow.length),
     inserted,
     updated,
     enrichment: mode === 'provider' ? {
