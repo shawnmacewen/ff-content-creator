@@ -24,6 +24,7 @@ export default function GeneratePage() {
   const [additionalContext, setAdditionalContext] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [compliance, setCompliance] = useState<any>(null);
   const [generationMode, setGenerationMode] = useState<'single' | 'kit'>('single');
   const [kitAssets, setKitAssets] = useState({ linkedin: true, instagram: true, email: true });
 
@@ -60,6 +61,7 @@ export default function GeneratePage() {
 
     setIsGenerating(true);
     setGeneratedContent('');
+    setCompliance(null);
 
     try {
       const response = await fetch('/api/generate', {
@@ -80,8 +82,15 @@ export default function GeneratePage() {
         throw new Error('Generation failed');
       }
 
-      const text = await response.text();
-      setGeneratedContent(text);
+      const contentTypeHeader = response.headers.get('content-type') || '';
+      if (contentTypeHeader.includes('application/json')) {
+        const payload = await response.json();
+        setGeneratedContent(payload?.content || '');
+        setCompliance(payload?.compliance || null);
+      } else {
+        const text = await response.text();
+        setGeneratedContent(text);
+      }
 
       toast.success('Content generated successfully');
     } catch (error) {
@@ -233,6 +242,7 @@ export default function GeneratePage() {
           onContentChange={setGeneratedContent}
           onRegenerate={handleRegenerate}
           onSave={handleSave}
+          compliance={compliance}
         />
       </div>
     </div>

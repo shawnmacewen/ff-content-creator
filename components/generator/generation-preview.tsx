@@ -17,6 +17,7 @@ interface GenerationPreviewProps {
   onContentChange: (content: string) => void;
   onRegenerate: () => void;
   onSave: (status: ContentStatus) => void;
+  compliance?: { grade?: string; confidence?: number; findings?: string[]; sectionScores?: Array<{ label: string; grade: string; confidence: number; findings: string[] }> } | null;
 }
 
 export function GenerationPreview({
@@ -26,6 +27,7 @@ export function GenerationPreview({
   onContentChange,
   onRegenerate,
   onSave,
+  compliance,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -107,7 +109,14 @@ export function GenerationPreview({
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>{typeInfo?.label || contentType}</CardDescription>
+            <CardDescription className="flex items-center gap-2 flex-wrap">
+              <span>{typeInfo?.label || contentType}</span>
+              {compliance?.grade && (
+                <Badge variant={compliance.grade === 'A' || compliance.grade === 'B' ? 'secondary' : compliance.grade === 'C' ? 'outline' : 'destructive'}>
+                  Compliance Confidence: {compliance.grade} ({Math.round((compliance.confidence || 0) * 100)}%)
+                </Badge>
+              )}
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {content && (
@@ -192,6 +201,12 @@ export function GenerationPreview({
             )}
           </ScrollArea>
         )}
+
+        {compliance?.findings?.length ? (
+          <div className="text-xs rounded border border-amber-500/30 bg-amber-500/10 p-2 text-amber-100">
+            Potential compliance flags: {compliance.findings.join('; ')}
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
