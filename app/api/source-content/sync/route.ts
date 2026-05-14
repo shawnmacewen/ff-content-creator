@@ -282,11 +282,13 @@ export async function POST(req: Request) {
         detailFetchSuccess += 1;
 
         const detailData = detail?.article?.data || detail?.data || detail;
-        const detailSource = String(detailData?.source || '').trim().toLowerCase();
+        const detailSource = String(
+          detailData?.source || detailData?.source_sort || detailData?.enterprise_name || detailData?.enterprise_names?.[0] || ''
+        ).trim().toLowerCase();
 
         // Canonical publisher classification from detail source
         const nextPublisher =
-          detailSource === 'broadridge advisor content'
+          (detailSource.includes('broadridge') || detailSource.includes('forefield'))
             ? 'broadridge-forefield'
             : (row.publisher || 'publisher-content');
         if (nextPublisher !== row.publisher) detailPublisherMapped += 1;
@@ -372,8 +374,10 @@ export async function POST(req: Request) {
       detailFetchSuccess += 1;
 
       const detailData = detail?.article?.data || detail?.data || detail;
-      const detailSource = String(detailData?.source || '').trim().toLowerCase();
-      const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
+      const detailSource = String(
+        detailData?.source || detailData?.source_sort || detailData?.enterprise_name || detailData?.enterprise_names?.[0] || ''
+      ).trim().toLowerCase();
+      const publisher = (detailSource.includes('broadridge') || detailSource.includes('forefield')) ? 'broadridge-forefield' : 'publisher-content';
 
       let mappedDate: string | null = null;
       if (publisher === 'broadridge-forefield') {
@@ -413,16 +417,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
 
-  const rowsAfterFilters = rows
-    .filter((row) => !forefieldOnly || String(row.publisher || '').toLowerCase() === 'broadridge-forefield')
-    .filter((row) => {
-      if (!row.published_at) return false;
-      const iso = new Date(row.published_at).toISOString();
-      return iso >= minPublishedAtIso;
-    });
+  const rowsAfterPublisher = rows.filter((row) => !forefieldOnly || String(row.publisher || '').toLowerCase() === 'broadridge-forefield');
+  const rowsAfterFilters = rowsAfterPublisher.filter((row) => {
+    if (!row.published_at) return false;
+    const iso = new Date(row.published_at).toISOString();
+    return iso >= minPublishedAtIso;
+  });
 
   if (dryRun) {
-    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsAfterFilters.length, scanned: rows.length });
+    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsAfterFilters.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length });
   }
 
   const supabase = getSupabaseServerClient();
@@ -469,6 +472,9 @@ export async function POST(req: Request) {
     filters: { forefieldOnly, yearsBack, minPublishedAtIso, maxPages },
     dryRun: false,
     processed: rowsAfterFilters.length,
+    scannedTotal: rows.length,
+    publisherMatchedTotal: rowsAfterPublisher.length,
+    dateMatchedTotal: rowsAfterFilters.length,
     skippedOlderOrUndated: Math.max(0, rows.length - rowsAfterFilters.length),
     inserted,
     updated,

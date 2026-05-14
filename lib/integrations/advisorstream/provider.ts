@@ -199,9 +199,10 @@ export function mapAdvisorStreamSearchResults(
 
       const publishedAt = coalescePublishedAt(item);
 
-      const sourceName = String(item.source || '');
+      const sourceName = String(item.source || item.source_sort || item.enterprise_names?.[0] || '');
+      const normalizedSource = sourceName.trim().toLowerCase();
       const publisher =
-        sourceName.trim().toLowerCase() === 'broadridge advisor content'
+        (normalizedSource.includes('broadridge') || normalizedSource.includes('forefield'))
           ? 'broadridge-forefield'
           : 'publisher-content';
 
