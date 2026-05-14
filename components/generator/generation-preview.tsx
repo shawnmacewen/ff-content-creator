@@ -106,6 +106,12 @@ export function GenerationPreview({
     ? sectionsWithMeta
     : sectionsWithMeta.filter((s) => s.title === activeView);
 
+  const getSectionImageSrc = (section: { title: string; body: string }) => {
+    const imageLine = section.body.split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
+    const inlineImageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
+    return section.title === 'Instagram Caption' ? (generatedImages.instagram || inlineImageSrc) : inlineImageSrc;
+  };
+
   if (!contentType && !content && sections.length === 0) {
     return (
       <Card className="bg-card border-border">
@@ -225,7 +231,7 @@ export function GenerationPreview({
                       </div>
                       {section.title === 'Instagram Caption' && imageGenerationEnabled ? (
                         <div className="text-amber-400">
-                          Image present: {imageSrc ? 'yes' : 'no'}
+                          Image present: {getSectionImageSrc(section) ? 'yes' : 'no'}
                           {!/Image URL:|Image generation status:/i.test(section.body) ? ' · missing from output (re-run generation with image setting enabled)' : ''}
                         </div>
                       ) : null}
@@ -238,9 +244,7 @@ export function GenerationPreview({
                       />
                     ) : (
                       (() => {
-                        const imageLine = section.body.split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
-                        const inlineImageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
-                        const imageSrc = section.title === 'Instagram Caption' ? (generatedImages.instagram || inlineImageSrc) : inlineImageSrc;
+                        const imageSrc = getSectionImageSrc(section);
                         const captionOnly = section.body
                           .replace(/\n*Image URL:\s*.*$/im, '')
                           .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]')
@@ -269,7 +273,16 @@ export function GenerationPreview({
         ) : (
           <ScrollArea className="h-[300px] rounded-lg border border-border bg-muted/30 p-4">
             {content ? (
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">{content}</div>
+              (contentType === 'social-instagram' && imageGenerationEnabled) ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{content.replace(/\n*Image URL:\s*.*$/im, '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]').trim()}</div>
+                  <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
+                    {generatedImages.instagram ? <img src={generatedImages.instagram} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                  </div>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">{content}</div>
+              )
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 {isGenerating ? 'Generating content...' : 'Click "Generate" to create content'}
