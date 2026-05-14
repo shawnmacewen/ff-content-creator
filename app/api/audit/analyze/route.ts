@@ -8,16 +8,14 @@ import { parseSearchPrompt } from '@/lib/audit/search-parser';
 
 const OutSchema = z.object({
   summary: z.string(),
-  matches: z
-    .array(
-      z.object({
-        id: z.string(),
-        reason: z.string(),
-        evidence: z.string().default(''),
-        confidence: z.number().min(0).max(1),
-      })
-    )
-    .default([]),
+  matches: z.array(
+    z.object({
+      id: z.string(),
+      reason: z.string(),
+      evidence: z.string(),
+      confidence: z.number(),
+    })
+  ),
 });
 
 function fallbackAnalyze(rows: any[], prompt: string) {
