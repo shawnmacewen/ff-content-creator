@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceSelector } from '@/components/generator/source-selector';
 import { ToneControls } from '@/components/generator/tone-controls';
@@ -12,8 +10,7 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
-import { cn } from '@/lib/utils';
-import { Sparkles, ArrowLeft, Linkedin, Instagram, Mail } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 
@@ -223,10 +220,6 @@ export default function GeneratePage() {
           <div>
             <h2 className="text-lg font-semibold mb-4">2. Configure Generation</h2>
             <div className="space-y-4">
-              <SourceSelector
-                selectedIds={selectedSourceIds}
-                onSelectionChange={setSelectedSourceIds}
-              />
               <ToneControls
                 tone={tone}
                 onToneChange={setTone}
@@ -251,7 +244,15 @@ export default function GeneratePage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold mb-4">3. Preview & Save</h2>
+        <h2 className="text-lg font-semibold mb-4">3. Source Content</h2>
+        <SourceSelector
+          selectedIds={selectedSourceIds}
+          onSelectionChange={setSelectedSourceIds}
+        />
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-4">4. Preview & Save</h2>
         <GenerationPreview
           contentType={selectedContentTypes[0] ?? null}
           previewLabel={previewLabel}
