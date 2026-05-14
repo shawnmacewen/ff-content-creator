@@ -45,6 +45,7 @@ export default function SettingsPage() {
       const batches: any[] = [];
       let startPage = 0;
       const maxBatches = 6; // up to ~3000 items at 500 per batch
+      const seenWindows = new Set<string>();
 
       for (let i = 0; i < maxBatches; i += 1) {
         const response = await fetch('/api/source-content/sync', {
@@ -66,7 +67,13 @@ export default function SettingsPage() {
         if (json?.repeatingPageDetected) break;
         if ((json?.processed ?? 0) === 0) break;
 
-        startPage += 20;
+        const windowKey = `${json?.startPage ?? startPage}-${json?.endPage ?? startPage}`;
+        if (seenWindows.has(windowKey)) break;
+        seenWindows.add(windowKey);
+
+        const nextStartPage = Number(json?.nextStartPage);
+        if (!Number.isFinite(nextStartPage) || nextStartPage <= startPage) break;
+        startPage = nextStartPage;
       }
 
       setRunResult({
