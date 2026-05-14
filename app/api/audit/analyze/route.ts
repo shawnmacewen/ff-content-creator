@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,external_id,title,body,publisher,source_system,type,metadata,tags,excerpt,published_at')
+      .select('id,external_id,title,body,publisher,source_system,type,metadata,tags,published_at')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(scanLimit);
     if (publisher !== 'all') q = q.eq('publisher', publisher);
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       type: r.type || 'article',
       url: r.metadata?.url || null,
       tags: Array.isArray(r.tags) ? r.tags : [],
-      excerpt: r.excerpt || '',
+      excerpt: '',
       publishedAt: r.published_at,
       body: String(r.body || '').slice(0, 2000),
     }));
