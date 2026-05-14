@@ -203,8 +203,7 @@ export async function POST(req: Request) {
         page += 1;
       }
 
-      const normalized = collected
-        .filter((item) => !forefieldOnly || String(item.publisher || '').toLowerCase() === 'broadridge-forefield');
+      const normalized = collected;
 
       if (!normalized.length) {
         const payload = lastPayload || {};
@@ -414,21 +413,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: `Unsupported mode: ${mode}` }, { status: 400 });
   }
 
-  const rowsInDateWindow = rows.filter((row) => {
-    if (!row.published_at) return false;
-    const iso = new Date(row.published_at).toISOString();
-    return iso >= minPublishedAtIso;
-  });
+  const rowsAfterFilters = rows
+    .filter((row) => !forefieldOnly || String(row.publisher || '').toLowerCase() === 'broadridge-forefield')
+    .filter((row) => {
+      if (!row.published_at) return false;
+      const iso = new Date(row.published_at).toISOString();
+      return iso >= minPublishedAtIso;
+    });
 
   if (dryRun) {
-    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsInDateWindow.length, scanned: rows.length });
+    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: rowsAfterFilters.length, scanned: rows.length });
   }
 
   const supabase = getSupabaseServerClient();
   let inserted = 0;
   let updated = 0;
 
-  for (const row of rowsInDateWindow) {
+  for (const row of rowsAfterFilters) {
     if (mode === 'provider-backfill' && row.id) {
       const { id, ...patch } = row;
       const { error } = await supabase
@@ -467,8 +468,8 @@ export async function POST(req: Request) {
     runId,
     filters: { forefieldOnly, yearsBack, minPublishedAtIso, maxPages },
     dryRun: false,
-    processed: rowsInDateWindow.length,
-    skippedOlderOrUndated: Math.max(0, rows.length - rowsInDateWindow.length),
+    processed: rowsAfterFilters.length,
+    skippedOlderOrUndated: Math.max(0, rows.length - rowsAfterFilters.length),
     inserted,
     updated,
     enrichment: mode === 'provider' ? {
