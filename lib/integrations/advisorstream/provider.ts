@@ -62,7 +62,7 @@ export async function getAdvisorStreamAccessToken(config: AdvisorStreamConfig): 
 export async function searchAdvisorStreamArticles(
   config: AdvisorStreamConfig,
   token: string,
-  options?: { query?: string; limit?: number; offset?: number; includeSourceFilter?: boolean }
+  options?: { query?: string; limit?: number; offset?: number; pageNumber?: number; includeSourceFilter?: boolean }
 ): Promise<AdvisorStreamSearchResponse> {
   const base = config.apiBaseUrl.replace(/\/$/, '');
   const url = new URL(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/search`);
@@ -76,8 +76,18 @@ export async function searchAdvisorStreamArticles(
     'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps,source'
   );
 
-  url.searchParams.set('limit', String(options?.limit ?? 25));
+  const size = options?.limit ?? 25;
+  const pageNumber = options?.pageNumber;
+
+  // Some AdvisorStream deployments page by number/size, others by offset/limit.
+  // Send both to maximize compatibility.
+  url.searchParams.set('limit', String(size));
   url.searchParams.set('offset', String(options?.offset ?? 0));
+  if (typeof pageNumber === 'number' && Number.isFinite(pageNumber)) {
+    url.searchParams.set('number', String(pageNumber));
+    url.searchParams.set('size', String(size));
+    url.searchParams.set('page', String(pageNumber));
+  }
   if (options?.query) url.searchParams.set('search', options.query);
 
   const response = await fetch(url.toString(), {

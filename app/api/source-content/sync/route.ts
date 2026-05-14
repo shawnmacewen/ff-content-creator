@@ -181,7 +181,12 @@ export async function POST(req: Request) {
 
       while (offset < totalItems && page < maxPages && collected.length < maxItems) {
         const started = Date.now();
-        const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: true });
+        const payload = await searchAdvisorStreamArticles(config, token, {
+          limit: pageSize,
+          offset,
+          pageNumber: page,
+          includeSourceFilter: true,
+        });
         lastPayload = payload;
 
         const rawCount =
