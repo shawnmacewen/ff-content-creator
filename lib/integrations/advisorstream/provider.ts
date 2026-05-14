@@ -73,7 +73,7 @@ export async function searchAdvisorStreamArticles(
   }
   url.searchParams.set(
     'fields',
-    'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps,source,source_sort,enterprise_names,enterprise_name'
+    'uuid,files.title,description,articleUrl,content,tags,categories,subCategories,extraProps,source'
   );
 
   url.searchParams.set('limit', String(options?.limit ?? 25));
@@ -199,7 +199,7 @@ export function mapAdvisorStreamSearchResults(
 
       const publishedAt = coalescePublishedAt(item);
 
-      const sourceName = String(item.source || item.source_sort || item.enterprise_names?.[0] || '');
+      const sourceName = String(item.source || '');
       const normalizedSource = sourceName.trim().toLowerCase();
       const publisher =
         normalizedSource === 'broadridge advisor content'

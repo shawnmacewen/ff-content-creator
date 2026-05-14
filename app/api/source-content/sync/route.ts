@@ -284,9 +284,7 @@ export async function POST(req: Request) {
         detailFetchSuccess += 1;
 
         const detailData = detail?.article?.data || detail?.data || detail;
-        const detailSource = String(
-          detailData?.source || detailData?.source_sort || detailData?.enterprise_name || detailData?.enterprise_names?.[0] || ''
-        ).trim().toLowerCase();
+        const detailSource = String(detailData?.source || '').trim().toLowerCase();
 
         // Canonical publisher classification from detail source
         const nextPublisher =
@@ -376,9 +374,7 @@ export async function POST(req: Request) {
       detailFetchSuccess += 1;
 
       const detailData = detail?.article?.data || detail?.data || detail;
-      const detailSource = String(
-        detailData?.source || detailData?.source_sort || detailData?.enterprise_name || detailData?.enterprise_names?.[0] || ''
-      ).trim().toLowerCase();
+      const detailSource = String(detailData?.source || '').trim().toLowerCase();
       const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
 
       let mappedDate: string | null = null;
