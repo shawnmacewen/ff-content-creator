@@ -72,7 +72,12 @@ export default function SettingsPage() {
         if (seenWindows.has(windowKey)) break;
         seenWindows.add(windowKey);
 
-        const nextStartPage = Number(json?.nextStartPage);
+        const nextFromServer = Number(json?.nextStartPage);
+        const endPage = Number(json?.endPage);
+        const computedNext = Number.isFinite(endPage) ? endPage + 1 : NaN;
+        const nextStartPage = Number.isFinite(nextFromServer) && nextFromServer > startPage
+          ? nextFromServer
+          : computedNext;
         if (!Number.isFinite(nextStartPage) || nextStartPage <= startPage) break;
         startPage = nextStartPage;
       }
