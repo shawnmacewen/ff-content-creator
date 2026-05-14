@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
     imageUrl: row.metadata?.imageUrl || null,
     sourceSystem: row.source_system || null,
     publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
+    externalId: row.external_id || null,
   }));
 
   const sourceCounts = allRows.reduce((acc: Record<string, number>, r: any) => {
