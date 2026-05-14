@@ -156,7 +156,7 @@ export default function SourceContentPage() {
             Browse existing content to use as inspiration for AI generation
           </p>
           <div className="mt-2 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
-            Broadridge Advisor Content pieces: {data?.meta?.sourceCounts?.['broadridge-forefield'] ?? 0}
+            Broadridge Advisor Content pieces: {data?.meta?.publisherCounts?.['broadridge-forefield'] ?? 0}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">

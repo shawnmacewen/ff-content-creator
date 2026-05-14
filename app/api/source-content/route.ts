@@ -81,6 +81,11 @@ export async function GET(request: NextRequest) {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+  const publisherCounts = allRows.reduce((acc: Record<string, number>, r: any) => {
+    const key = r.publisher || (r.source_system === 'sample-seed' ? 'sample' : 'unknown');
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
   const lastSyncedAt = allRows
     .map((r: any) => r.updated_at)
     .filter(Boolean)
@@ -94,6 +99,6 @@ export async function GET(request: NextRequest) {
     pageSize,
     totalPages: Math.ceil((count || 0) / pageSize),
     filters: { availableTags, availableTypes, availableAuthors, availablePublishers },
-    meta: { sourceCounts, lastSyncedAt },
+    meta: { sourceCounts, publisherCounts, lastSyncedAt },
   });
 }
