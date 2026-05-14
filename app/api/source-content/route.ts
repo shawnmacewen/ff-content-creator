@@ -74,7 +74,21 @@ export async function GET(request: NextRequest) {
     sourceSystem: row.source_system || null,
     publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
     externalId: row.external_id || null,
-    metadata: row.metadata || {},
+    metadata: {
+      ...(row.metadata || {}),
+      contentDesignation: row.content_designation ?? row.metadata?.contentDesignation ?? null,
+      categories: row.categories ?? row.metadata?.categories ?? [],
+      subCategories: row.sub_categories ?? row.metadata?.subCategories ?? [],
+      extraPropertiesSelected: {
+        BasContentId: row.bas_content_id ?? row.metadata?.extraPropertiesSelected?.BasContentId ?? null,
+        BasContentFilename: row.bas_content_filename ?? row.metadata?.extraPropertiesSelected?.BasContentFilename ?? null,
+        Format: row.content_format ?? row.metadata?.extraPropertiesSelected?.Format ?? null,
+        FinraLetterUrl: row.finra_letter_url ?? row.metadata?.extraPropertiesSelected?.FinraLetterUrl ?? null,
+        FinraApproved: row.finra_approved ?? row.metadata?.extraPropertiesSelected?.FinraApproved ?? null,
+        APContentType: row.ap_content_type ?? row.metadata?.extraPropertiesSelected?.APContentType ?? null,
+        Evergreen: row.evergreen ?? row.metadata?.extraPropertiesSelected?.Evergreen ?? null,
+      },
+    },
   }));
 
   const sourceCounts = allRows.reduce((acc: Record<string, number>, r: any) => {

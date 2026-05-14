@@ -41,7 +41,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[92vw] w-[92vw] max-h-[94vh] overflow-hidden">
+      <DialogContent className="max-w-[96vw] w-[96vw] max-h-[95vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
@@ -103,16 +103,31 @@ export function ContentDetail({
             <ScrollArea className="h-[58vh] pr-2">
               <div className="space-y-2 text-xs">
                 <div><span className="text-muted-foreground">External ID:</span> {content.externalId || 'Unavailable'}</div>
-                <div><span className="text-muted-foreground">BasContentId:</span> {content.metadata?.extraProperties?.BasContentId || 'n/a'}</div>
-                <div><span className="text-muted-foreground">BasContentFilename:</span> {content.metadata?.extraProperties?.BasContentFilename || 'n/a'}</div>
-                <div><span className="text-muted-foreground">Format:</span> {content.metadata?.extraProperties?.Format || 'n/a'}</div>
-                <div><span className="text-muted-foreground">FinraLetterUrl:</span> {content.metadata?.extraProperties?.FinraLetterUrl || 'n/a'}</div>
-                <div><span className="text-muted-foreground">FinraApproved:</span> {content.metadata?.extraProperties?.FinraApproved || 'n/a'}</div>
-                <div><span className="text-muted-foreground">APContentType:</span> {content.metadata?.extraProperties?.APContentType || 'n/a'}</div>
-                <div><span className="text-muted-foreground">Evergreen:</span> {content.metadata?.extraProperties?.Evergreen || 'n/a'}</div>
+                <div><span className="text-muted-foreground">BasContentId:</span> {content.metadata?.extraPropertiesSelected?.BasContentId || 'n/a'}</div>
+                <div><span className="text-muted-foreground">BasContentFilename:</span> {content.metadata?.extraPropertiesSelected?.BasContentFilename || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Format:</span> {content.metadata?.extraPropertiesSelected?.Format || 'n/a'}</div>
+                <div><span className="text-muted-foreground">FinraLetterUrl:</span> {content.metadata?.extraPropertiesSelected?.FinraLetterUrl || 'n/a'}</div>
+                <div><span className="text-muted-foreground">FinraApproved:</span> {String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? 'n/a')}</div>
+                <div><span className="text-muted-foreground">APContentType:</span> {content.metadata?.extraPropertiesSelected?.APContentType || 'n/a'}</div>
+                <div><span className="text-muted-foreground">Evergreen:</span> {String(content.metadata?.extraPropertiesSelected?.Evergreen ?? 'n/a')}</div>
                 <div><span className="text-muted-foreground">Content Designation:</span> {content.metadata?.contentDesignation || 'n/a'}</div>
                 <div><span className="text-muted-foreground">Categories:</span> {Array.isArray(content.metadata?.categories) ? content.metadata.categories.join(', ') || 'n/a' : 'n/a'}</div>
                 <div><span className="text-muted-foreground">Sub-categories:</span> {Array.isArray(content.metadata?.subCategories) ? content.metadata.subCategories.join(', ') || 'n/a' : 'n/a'}</div>
+
+                <div className="pt-3 mt-3 border-t">
+                  <div className="text-xs font-semibold mb-2">Extra Properties (variable)</div>
+                  <div className="space-y-1">
+                    {Object.entries(content.metadata?.extraProperties || {}).length ? (
+                      Object.entries(content.metadata.extraProperties as Record<string, any>).map(([k, v]) => (
+                        <div key={k} className="break-words">
+                          <span className="text-muted-foreground">{k}:</span> {String(v ?? '') || 'n/a'}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground">n/a</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </ScrollArea>
           </div>
