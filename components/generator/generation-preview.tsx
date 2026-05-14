@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 
 interface GenerationPreviewProps {
   contentType: ContentType | null;
+  previewLabel?: string | null;
   content: string;
   isGenerating: boolean;
   onContentChange: (content: string) => void;
@@ -22,6 +23,7 @@ interface GenerationPreviewProps {
 
 export function GenerationPreview({
   contentType,
+  previewLabel,
   content,
   isGenerating,
   onContentChange,
@@ -110,7 +112,7 @@ export function GenerationPreview({
               )}
             </CardTitle>
             <CardDescription className="flex items-center gap-2 flex-wrap">
-              <span>{typeInfo?.label || contentType}</span>
+              <span>{previewLabel || typeInfo?.label || contentType || 'Generated content'}</span>
               {compliance?.grade && (
                 <Badge variant={compliance.grade === 'A' || compliance.grade === 'B' ? 'secondary' : compliance.grade === 'C' ? 'outline' : 'destructive'}>
                   Compliance Confidence: {compliance.grade} ({Math.round((compliance.confidence || 0) * 100)}%)

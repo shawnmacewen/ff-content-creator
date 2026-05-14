@@ -169,6 +169,12 @@ export default function GeneratePage() {
   };
 
   const canGenerate = generationMode === 'kit' ? Object.values(kitAssets).some(Boolean) : contentType !== null;
+  const selectedKitLabels = KIT_OPTIONS
+    .filter((opt) => kitAssets[opt.key as keyof typeof kitAssets])
+    .map((opt) => CONTENT_TYPE_MAP[opt.type].label);
+  const previewLabel = generationMode === 'kit'
+    ? (selectedKitLabels.length ? `KIT: ${selectedKitLabels.join(' · ')}` : 'KIT')
+    : (contentType ? CONTENT_TYPE_MAP[contentType].label : null);
 
   return (
     <div className="space-y-6">
@@ -260,6 +266,16 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
+              <div className="pt-2">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate || isGenerating}
+                  className="gap-2"
+                >
+                  <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
+                  {isGenerating ? 'Generating...' : 'Generate'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -268,7 +284,8 @@ export default function GeneratePage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">3. Preview & Save</h2>
         <GenerationPreview
-          contentType={generationMode === 'kit' ? 'social-linkedin' : contentType}
+          contentType={contentType}
+          previewLabel={previewLabel}
           content={generatedContent}
           isGenerating={isGenerating}
           onContentChange={setGeneratedContent}
