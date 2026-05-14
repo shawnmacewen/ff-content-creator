@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
+import { Database, Info } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -9,10 +10,6 @@ export default function SettingsPage() {
   const { data, isLoading, mutate } = useSWR('/api/source-content/sync/logs', fetcher, { refreshInterval: 5000 });
   const logs = data?.logs || [];
 
-  const [yearsBack, setYearsBack] = useState(3);
-  const [maxPages, setMaxPages] = useState(250);
-  const [forefieldOnly, setForefieldOnly] = useState(true);
-  const [dryRun, setDryRun] = useState(false);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
@@ -25,10 +22,9 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'provider',
-          yearsBack,
-          maxPages,
-          forefieldOnly,
-          dryRun,
+          dryRun: false,
+          maxItems: 500,
+          maxPages: 20,
         }),
       });
       const json = await response.json();
@@ -48,23 +44,16 @@ export default function SettingsPage() {
 
       <div className="rounded-lg border p-4 space-y-3">
         <h2 className="text-lg font-semibold">Run Content Sync</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-sm">Years Back
-            <input className="mt-1 w-full rounded border bg-background px-2 py-1" type="number" min={1} max={10} value={yearsBack} onChange={(e) => setYearsBack(Number(e.target.value) || 3)} />
-          </label>
-          <label className="text-sm">Max Pages
-            <input className="mt-1 w-full rounded border bg-background px-2 py-1" type="number" min={1} max={1000} value={maxPages} onChange={(e) => setMaxPages(Number(e.target.value) || 250)} />
-          </label>
-          <label className="text-sm flex items-end gap-2">
-            <input type="checkbox" checked={forefieldOnly} onChange={(e) => setForefieldOnly(e.target.checked)} /> Forefield only
-          </label>
-          <label className="text-sm flex items-end gap-2">
-            <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} /> Dry run
-          </label>
-        </div>
-        <div className="flex gap-2">
-          <button className="rounded bg-primary text-primary-foreground px-4 py-2 text-sm disabled:opacity-50" onClick={runSync} disabled={running}>
-            {running ? 'Running...' : 'Run Sync'}
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
+            onClick={runSync}
+            disabled={running}
+            title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the API Lab."
+          >
+            <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
+            {running ? 'Syncing Broadridge Content API...' : 'Sync Broadridge Content API'}
+            <Info className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
           </button>
           <button className="rounded border px-4 py-2 text-sm" onClick={() => mutate()} disabled={running}>Refresh Logs</button>
         </div>
