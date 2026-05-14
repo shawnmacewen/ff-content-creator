@@ -65,7 +65,7 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                     )}
                     onClick={() => onToggle(contentType.id)}
                   >
-                    <CardHeader className="pb-1.5 pt-4">
+                    <CardHeader className="pb-1 pt-2.5">
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           'flex h-9 w-9 items-center justify-center rounded-lg',
