@@ -200,7 +200,7 @@ export function GenerationPreview({
             className="min-h-[300px] font-mono text-sm bg-muted/50"
             placeholder="Generated content will appear here..."
           />
-        ) : sections.length > 1 ? (
+        ) : sections.length > 0 ? (
           <>
             <div className="flex flex-wrap items-center gap-2">
               <Button size="sm" variant={activeView === 'all' ? 'default' : 'outline'} onClick={() => setActiveView('all')}>All Outputs</Button>
