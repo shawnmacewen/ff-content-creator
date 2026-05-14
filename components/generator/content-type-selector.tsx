@@ -32,11 +32,11 @@ const categoryLabels: Record<string, string> = {
 };
 
 interface ContentTypeSelectorProps {
-  selected: ContentType | null;
-  onSelect: (type: ContentType) => void;
+  selected: ContentType[];
+  onToggle: (type: ContentType) => void;
 }
 
-export function ContentTypeSelector({ selected, onSelect }: ContentTypeSelectorProps) {
+export function ContentTypeSelector({ selected, onToggle }: ContentTypeSelectorProps) {
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
@@ -52,7 +52,7 @@ export function ContentTypeSelector({ selected, onSelect }: ContentTypeSelectorP
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {types.map((contentType) => {
                 const Icon = iconMap[contentType.icon] || FileText;
-                const isSelected = selected === contentType.id;
+                const isSelected = selected.includes(contentType.id);
                 
                 return (
                   <Card
@@ -61,7 +61,7 @@ export function ContentTypeSelector({ selected, onSelect }: ContentTypeSelectorP
                       'cursor-pointer transition-all hover:border-primary/50',
                       isSelected && 'border-primary ring-1 ring-primary bg-primary/5'
                     )}
-                    onClick={() => onSelect(contentType.id)}
+                    onClick={() => onToggle(contentType.id)}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-3">

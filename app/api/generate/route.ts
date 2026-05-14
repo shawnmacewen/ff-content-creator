@@ -58,10 +58,10 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const { type, mode = 'single', kitAssets, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
+  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
     type: ContentType;
     mode?: 'single' | 'kit';
-    kitAssets?: { linkedin?: boolean; instagram?: boolean; email?: boolean };
+    selectedTypes?: ContentType[];
     includeInstagramImage?: boolean;
     sourceContentIds: string[];
     customPrompt?: string;
@@ -95,14 +95,19 @@ export async function POST(req: Request) {
   const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
   if (mode === 'kit') {
-    const assets = [
-      kitAssets?.linkedin ? ({ label: 'LinkedIn Post', type: 'social-linkedin' as ContentType }) : null,
-      kitAssets?.instagram ? ({ label: 'Instagram Caption', type: 'social-instagram' as ContentType }) : null,
-      kitAssets?.email ? ({ label: 'Email', type: 'email-marketing' as ContentType }) : null,
-    ].filter(Boolean) as Array<{ label: string; type: ContentType }>;
+    const assets = (selectedTypes || []).map((assetType) => ({
+      type: assetType,
+      label: assetType === 'email-marketing' ? 'Email' :
+        assetType === 'social-instagram' ? 'Instagram Caption' :
+        assetType === 'social-linkedin' ? 'LinkedIn Post' :
+        assetType === 'social-twitter' ? 'Twitter/X Post' :
+        assetType === 'newsletter' ? 'Newsletter' :
+        assetType === 'article' ? 'Article/Blog Post' :
+        'Infographic Copy',
+    }));
 
     if (!assets.length) {
-      return new Response(JSON.stringify({ error: 'Select at least one KIT asset' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Select at least one content type' }), { status: 400 });
     }
 
     const parts: string[] = [];

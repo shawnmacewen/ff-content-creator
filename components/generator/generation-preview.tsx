@@ -249,7 +249,7 @@ export function GenerationPreview({
                           .replace(/\n*Image URL:\s*.*$/im, '')
                           .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]')
                           .trim();
-                        if (section.title === 'Instagram Caption') {
+                        if (section.title === 'Instagram Caption' && activeView !== 'all') {
                           return (
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="whitespace-pre-wrap text-sm leading-relaxed">{captionOnly}</div>

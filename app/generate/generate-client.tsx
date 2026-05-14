@@ -16,18 +16,13 @@ import { cn } from '@/lib/utils';
 import { Sparkles, ArrowLeft, Linkedin, Instagram, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
-const KIT_OPTIONS = [
-  { key: 'linkedin', type: 'social-linkedin' as ContentType, icon: Linkedin },
-  { key: 'instagram', type: 'social-instagram' as ContentType, icon: Instagram },
-  { key: 'email', type: 'email-marketing' as ContentType, icon: Mail },
-] as const;
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   // State
-  const [contentType, setContentType] = useState<ContentType | null>(null);
+  const [selectedContentTypes, setSelectedContentTypes] = useState<ContentType[]>([]);
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [tone, setTone] = useState<ToneType>('professional');
   const [customPrompt, setCustomPrompt] = useState('');
@@ -37,8 +32,6 @@ export default function GeneratePage() {
   const [compliance, setCompliance] = useState<any>(null);
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [imageStatus, setImageStatus] = useState<string | null>(null);
-  const [generationMode, setGenerationMode] = useState<'single' | 'kit'>('single');
-  const [kitAssets, setKitAssets] = useState({ linkedin: true, instagram: true, email: true });
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
 
   // Parse URL params on mount
@@ -47,13 +40,13 @@ export default function GeneratePage() {
     const sourceIdsParam = searchParams.get('sourceIds');
 
     if (typeParam && typeParam.includes('-')) {
-      setContentType(typeParam as ContentType);
+      setSelectedContentTypes([typeParam as ContentType]);
     } else if (typeParam === 'social') {
-      setContentType('social-twitter');
+      setSelectedContentTypes(['social-twitter']);
     } else if (typeParam === 'email') {
-      setContentType('email-marketing');
+      setSelectedContentTypes(['email-marketing']);
     } else if (typeParam === 'article') {
-      setContentType('article');
+      setSelectedContentTypes(['article']);
     }
 
     if (sourceIdsParam) {
@@ -62,13 +55,8 @@ export default function GeneratePage() {
   }, [searchParams]);
 
   const handleGenerate = useCallback(async () => {
-    if (generationMode === 'single' && !contentType) {
-      toast.error('Please select a content type');
-      return;
-    }
-
-    if (generationMode === 'kit' && !Object.values(kitAssets).some(Boolean)) {
-      toast.error('Select at least one KIT asset');
+    if (!selectedContentTypes.length) {
+      toast.error('Please select at least one content type');
       return;
     }
 
@@ -83,9 +71,9 @@ export default function GeneratePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: contentType,
-          mode: generationMode,
-          kitAssets,
+          type: selectedContentTypes[0],
+          mode: selectedContentTypes.length > 1 ? 'kit' : 'single',
+          selectedTypes: selectedContentTypes,
           includeInstagramImage,
           sourceContentIds: selectedSourceIds,
           customPrompt,
@@ -122,18 +110,19 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [contentType, generationMode, kitAssets, includeInstagramImage, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [selectedContentTypes, includeInstagramImage, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleRegenerate = () => {
     handleGenerate();
   };
 
   const handleSave = async (status: ContentStatus) => {
-    if (!contentType || !generatedContent) return;
+    const primaryType = selectedContentTypes[0];
+    if (!primaryType || !generatedContent) return;
 
     const content: GeneratedContent = {
       id: generateId(),
-      type: contentType,
+      type: primaryType,
       title: generatedContent.split('\n')[0].slice(0, 100) || 'Untitled',
       content: generatedContent,
       sourceContentIds: selectedSourceIds,
@@ -181,13 +170,17 @@ export default function GeneratePage() {
     }
   };
 
-  const canGenerate = generationMode === 'kit' ? Object.values(kitAssets).some(Boolean) : contentType !== null;
-  const selectedKitLabels = KIT_OPTIONS
-    .filter((opt) => kitAssets[opt.key as keyof typeof kitAssets])
-    .map((opt) => CONTENT_TYPE_MAP[opt.type].label);
-  const previewLabel = generationMode === 'kit'
-    ? (selectedKitLabels.length ? `KIT: ${selectedKitLabels.join(' · ')}` : 'KIT')
-    : (contentType ? CONTENT_TYPE_MAP[contentType].label : null);
+  const generationMode: 'single' | 'kit' = selectedContentTypes.length > 1 ? 'kit' : 'single';
+  const canGenerate = selectedContentTypes.length > 0;
+  const previewLabel = selectedContentTypes.length
+    ? (generationMode === 'kit'
+      ? `KIT: ${selectedContentTypes.map((type) => CONTENT_TYPE_MAP[type].label).join(' · ')}`
+      : CONTENT_TYPE_MAP[selectedContentTypes[0]].label)
+    : null;
+
+  const handleToggleType = (type: ContentType) => {
+    setSelectedContentTypes((prev) => prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]);
+  };
 
   return (
     <div className="space-y-6">
@@ -208,64 +201,17 @@ export default function GeneratePage() {
       <div className="rounded-lg border p-4 space-y-3">
         <h2 className="text-lg font-semibold">Generation Mode</h2>
         <div className="flex gap-2">
-          <Button type="button" variant={generationMode === 'single' ? 'default' : 'outline'} onClick={() => setGenerationMode('single')}>Single Asset</Button>
-          <Button type="button" variant={generationMode === 'kit' ? 'default' : 'outline'} onClick={() => setGenerationMode('kit')}>KIT</Button>
+          <Button type="button" variant={generationMode === 'single' ? 'default' : 'outline'} disabled>Single Asset</Button>
+          <Button type="button" variant={generationMode === 'kit' ? 'default' : 'outline'} disabled>KIT</Button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          {generationMode === 'single' ? (
-            <div>
-              <h2 className="text-lg font-semibold mb-4">1. Select Content Type</h2>
-              <ContentTypeSelector selected={contentType} onSelect={setContentType} />
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-lg font-semibold mb-2">1. Select KIT Content Types</h2>
-              <p className="text-sm text-muted-foreground mb-4">Choose one or more assets to generate from the selected source article(s).</p>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {KIT_OPTIONS.map((opt) => {
-                  const info = CONTENT_TYPE_MAP[opt.type];
-                  const Icon = opt.icon;
-                  const selected = kitAssets[opt.key as keyof typeof kitAssets];
-                  return (
-                    <Card
-                      key={opt.key}
-                      className={cn('cursor-pointer transition-all hover:border-primary/50', selected && 'border-primary ring-1 ring-primary bg-primary/5')}
-                      onClick={() => setKitAssets((s) => ({ ...s, [opt.key]: !s[opt.key as keyof typeof s] }))}
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center gap-3">
-                          <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', selected ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <CardTitle className="text-sm font-medium">{info.label}</CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0 space-y-2">
-                        <CardDescription className="text-xs">{info.description}</CardDescription>
-                        {info.maxLength && <Badge variant="outline" className="mt-2 text-xs">Max {info.maxLength} chars</Badge>}
-                        {opt.key === 'instagram' && selected && (
-                          <label
-                            className="flex items-center gap-2 text-xs text-muted-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={includeInstagramImage}
-                              onChange={(e) => setIncludeInstagramImage(e.target.checked)}
-                            />
-                            Include image
-                          </label>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">1. Select Content Type</h2>
+            <ContentTypeSelector selected={selectedContentTypes} onToggle={handleToggleType} />
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -284,7 +230,7 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-              {generationMode === 'single' && contentType === 'social-instagram' && (
+              {selectedContentTypes.includes('social-instagram') && (
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={includeInstagramImage} onChange={(e) => setIncludeInstagramImage(e.target.checked)} />
                   Include AI image generation for Instagram
@@ -308,7 +254,7 @@ export default function GeneratePage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">3. Preview & Save</h2>
         <GenerationPreview
-          contentType={contentType}
+          contentType={selectedContentTypes[0] ?? null}
           previewLabel={previewLabel}
           content={generatedContent}
           isGenerating={isGenerating}
@@ -316,7 +262,7 @@ export default function GeneratePage() {
           onRegenerate={handleRegenerate}
           onSave={handleSave}
           compliance={compliance}
-          imageGenerationEnabled={((generationMode === 'single' && contentType === 'social-instagram') || (generationMode === 'kit' && kitAssets.instagram)) ? includeInstagramImage : false}
+          imageGenerationEnabled={selectedContentTypes.includes('social-instagram') ? includeInstagramImage : false}
           generatedImages={generatedImages}
           imageStatus={imageStatus}
         />
