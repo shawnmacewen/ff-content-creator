@@ -86,6 +86,13 @@ export async function GET(request: NextRequest) {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+
+  // Accurate count for Broadridge rows (all records, not capped by metadata list size)
+  const { count: broadridgeCount } = await supabase
+    .from('source_content')
+    .select('id', { count: 'exact', head: true })
+    .eq('publisher', 'broadridge-forefield');
+  publisherCounts['broadridge-forefield'] = broadridgeCount || 0;
   const lastSyncedAt = allRows
     .map((r: any) => r.updated_at)
     .filter(Boolean)
