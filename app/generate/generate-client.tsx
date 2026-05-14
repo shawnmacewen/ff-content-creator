@@ -24,6 +24,8 @@ export default function GeneratePage() {
   const [additionalContext, setAdditionalContext] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationMode, setGenerationMode] = useState<'single' | 'kit'>('single');
+  const [kitAssets, setKitAssets] = useState({ linkedin: true, instagram: true, email: true });
 
   // Parse URL params on mount
   useEffect(() => {
@@ -46,8 +48,13 @@ export default function GeneratePage() {
   }, [searchParams]);
 
   const handleGenerate = useCallback(async () => {
-    if (!contentType) {
+    if (generationMode === 'single' && !contentType) {
       toast.error('Please select a content type');
+      return;
+    }
+
+    if (generationMode === 'kit' && !Object.values(kitAssets).some(Boolean)) {
+      toast.error('Select at least one KIT asset');
       return;
     }
 
@@ -60,6 +67,8 @@ export default function GeneratePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: contentType,
+          mode: generationMode,
+          kitAssets,
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
@@ -71,21 +80,8 @@ export default function GeneratePage() {
         throw new Error('Generation failed');
       }
 
-      // Stream the response
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
-
-      const decoder = new TextDecoder();
-      let accumulated = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        accumulated += chunk;
-        setGeneratedContent(accumulated);
-      }
+      const text = await response.text();
+      setGeneratedContent(text);
 
       toast.success('Content generated successfully');
     } catch (error) {
@@ -153,7 +149,7 @@ export default function GeneratePage() {
     }
   };
 
-  const canGenerate = contentType !== null;
+  const canGenerate = generationMode === 'kit' ? Object.values(kitAssets).some(Boolean) : contentType !== null;
 
   return (
     <div className="space-y-6">
@@ -177,6 +173,21 @@ export default function GeneratePage() {
           <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
           {isGenerating ? 'Generating...' : 'Generate'}
         </Button>
+      </div>
+
+      <div className="rounded-lg border p-4 space-y-3">
+        <h2 className="text-lg font-semibold">Generation Mode</h2>
+        <div className="flex gap-2">
+          <Button type="button" variant={generationMode === 'single' ? 'default' : 'outline'} onClick={() => setGenerationMode('single')}>Single Asset</Button>
+          <Button type="button" variant={generationMode === 'kit' ? 'default' : 'outline'} onClick={() => setGenerationMode('kit')}>KIT</Button>
+        </div>
+        {generationMode === 'kit' && (
+          <div className="grid md:grid-cols-3 gap-2 text-sm">
+            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.linkedin} onChange={(e) => setKitAssets((s) => ({ ...s, linkedin: e.target.checked }))} /> LinkedIn Post</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.instagram} onChange={(e) => setKitAssets((s) => ({ ...s, instagram: e.target.checked }))} /> Instagram Caption</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.email} onChange={(e) => setKitAssets((s) => ({ ...s, email: e.target.checked }))} /> Email</label>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -211,7 +222,7 @@ export default function GeneratePage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">3. Preview & Save</h2>
         <GenerationPreview
-          contentType={contentType}
+          contentType={generationMode === 'kit' ? 'social-linkedin' : contentType}
           content={generatedContent}
           isGenerating={isGenerating}
           onContentChange={setGeneratedContent}
