@@ -65,6 +65,12 @@ export function GenerationPreview({
     setTimeout(() => setCopiedSection((prev) => (prev === title ? null : prev)), 2000);
   };
 
+  const handleSectionChange = (title: string, nextBody: string) => {
+    const updated = sections.map((s) => (s.title === title ? { ...s, body: nextBody } : s));
+    const recomposed = updated.map((s) => `## ${s.title}\n\n${s.body.trim()}`).join('\n\n---\n\n');
+    onContentChange(recomposed);
+  };
+
   const characterCount = content.length;
   const maxLength = typeInfo?.maxLength;
   const isOverLimit = maxLength ? characterCount > maxLength : false;
@@ -148,7 +154,7 @@ export function GenerationPreview({
             placeholder="Generated content will appear here..."
           />
         ) : sections.length > 1 ? (
-          <ScrollArea className="h-[300px] rounded-lg border border-border bg-muted/30 p-4">
+          <ScrollArea className="h-[420px] rounded-lg border border-border bg-muted/30 p-4">
             <div className="space-y-4">
               {sections.map((section) => (
                 <div key={section.title} className="rounded border bg-background/60 p-3 space-y-2">
@@ -162,7 +168,15 @@ export function GenerationPreview({
                       )}
                     </Button>
                   </div>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
+                  {isEditing ? (
+                    <Textarea
+                      value={section.body}
+                      onChange={(e) => handleSectionChange(section.title, e.target.value)}
+                      className="min-h-[140px] font-mono text-sm bg-background"
+                    />
+                  ) : (
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
+                  )}
                 </div>
               ))}
             </div>

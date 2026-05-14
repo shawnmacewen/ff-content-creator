@@ -181,21 +181,26 @@ export default function GeneratePage() {
           <Button type="button" variant={generationMode === 'single' ? 'default' : 'outline'} onClick={() => setGenerationMode('single')}>Single Asset</Button>
           <Button type="button" variant={generationMode === 'kit' ? 'default' : 'outline'} onClick={() => setGenerationMode('kit')}>KIT</Button>
         </div>
-        {generationMode === 'kit' && (
-          <div className="grid md:grid-cols-3 gap-2 text-sm">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.linkedin} onChange={(e) => setKitAssets((s) => ({ ...s, linkedin: e.target.checked }))} /> LinkedIn Post</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.instagram} onChange={(e) => setKitAssets((s) => ({ ...s, instagram: e.target.checked }))} /> Instagram Caption</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.email} onChange={(e) => setKitAssets((s) => ({ ...s, email: e.target.checked }))} /> Email</label>
-          </div>
-        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold mb-4">1. Select Content Type</h2>
-            <ContentTypeSelector selected={contentType} onSelect={setContentType} />
-          </div>
+          {generationMode === 'single' ? (
+            <div>
+              <h2 className="text-lg font-semibold mb-4">1. Select Content Type</h2>
+              <ContentTypeSelector selected={contentType} onSelect={setContentType} />
+            </div>
+          ) : (
+            <div className="rounded-lg border p-4">
+              <h2 className="text-lg font-semibold mb-2">1. Select KIT Content Types</h2>
+              <p className="text-sm text-muted-foreground">Choose one or more assets to generate from the selected source article(s).</p>
+              <div className="grid md:grid-cols-1 gap-2 text-sm mt-3">
+                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.linkedin} onChange={(e) => setKitAssets((s) => ({ ...s, linkedin: e.target.checked }))} /> LinkedIn Post</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.instagram} onChange={(e) => setKitAssets((s) => ({ ...s, instagram: e.target.checked }))} /> Instagram Caption</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.email} onChange={(e) => setKitAssets((s) => ({ ...s, email: e.target.checked }))} /> Email</label>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
