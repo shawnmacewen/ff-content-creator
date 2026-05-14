@@ -241,13 +241,19 @@ export function GenerationPreview({
                         const imageLine = section.body.split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
                         const inlineImageSrc = imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
                         const imageSrc = section.title === 'Instagram Caption' ? (generatedImages.instagram || inlineImageSrc) : inlineImageSrc;
-                        const captionOnly = section.body.replace(/\n*Image URL:\s*.*$/im, '').trim();
+                        const captionOnly = section.body
+                          .replace(/\n*Image URL:\s*.*$/im, '')
+                          .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]')
+                          .trim();
                         if (section.title === 'Instagram Caption') {
                           return (
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="whitespace-pre-wrap text-sm leading-relaxed">{captionOnly}</div>
                               <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
                                 {imageSrc ? <img src={imageSrc} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                                {imageSrc?.startsWith('data:image/') ? (
+                                  <div className="text-[10px] text-muted-foreground mt-1">Image source: inline base64 (rendered)</div>
+                                ) : null}
                               </div>
                             </div>
                           );
