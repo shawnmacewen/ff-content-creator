@@ -60,7 +60,7 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                   <Card
                     key={contentType.id}
                     className={cn(
-                      'cursor-pointer transition-all hover:border-primary/50 h-[250px] w-[250px] flex flex-col',
+                      'cursor-pointer transition-all hover:border-primary/50 h-[225px] w-[225px] flex flex-col',
                       isSelected && 'border-primary ring-1 ring-primary bg-primary/5'
                     )}
                     onClick={() => onToggle(contentType.id)}
