@@ -58,7 +58,7 @@ export function ContentCard({
                 >
                   {content.publisher
                     ? content.publisher === 'broadridge-forefield'
-                      ? 'Broadridge Forefield'
+                      ? 'Broadridge Advisor Content'
                       : content.publisher === 'publisher-content'
                         ? 'Publisher Content'
                         : content.publisher === 'sample'
@@ -74,6 +74,7 @@ export function ContentCard({
                     : 'Published date unavailable'}
                 </span>
               </CardDescription>
+              <div className="text-xs text-muted-foreground">External ID: {content.externalId || 'Unavailable'}</div>
             </div>
           </div>
           <div className="flex flex-col gap-1 items-end">
@@ -107,7 +108,6 @@ export function ContentCard({
           >
             View Details
           </Button>
-          <span className="text-xs text-muted-foreground">External ID: {content.externalId}</span>
           {content.url && (
             <Button
               variant="ghost"
