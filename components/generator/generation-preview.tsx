@@ -20,6 +20,7 @@ interface GenerationPreviewProps {
   onRegenerate: () => void;
   onSave: (status: ContentStatus) => void;
   compliance?: { grade?: string; confidence?: number; findings?: string[]; sectionScores?: Array<{ label: string; grade: string; confidence: number; findings: string[] }> } | null;
+  imageGenerationEnabled?: boolean;
 }
 
 export function GenerationPreview({
@@ -31,6 +32,7 @@ export function GenerationPreview({
   onRegenerate,
   onSave,
   compliance,
+  imageGenerationEnabled = false,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -139,6 +141,9 @@ export function GenerationPreview({
                   Compliance Confidence: {compliance.grade} ({Math.round((compliance.confidence || 0) * 100)}%)
                 </Badge>
               )}
+              <Badge variant="outline">
+                Instagram Image: {imageGenerationEnabled ? 'On' : 'Off'}
+              </Badge>
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -209,9 +214,14 @@ export function GenerationPreview({
                         )}
                       </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {section.length} characters{section.limit ? ` / ${section.limit} max` : ''}
-                      {section.over ? <span className="text-destructive ml-2">Over limit</span> : null}
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <div>
+                        {section.length} characters{section.limit ? ` / ${section.limit} max` : ''}
+                        {section.over ? <span className="text-destructive ml-2">Over limit</span> : null}
+                      </div>
+                      {section.title === 'Instagram Caption' && imageGenerationEnabled && !/Image URL:|Image generation status:/i.test(section.body) ? (
+                        <div className="text-amber-400">Image status: missing from output (re-run generation with image setting enabled)</div>
+                      ) : null}
                     </div>
                     {isEditing ? (
                       <Textarea

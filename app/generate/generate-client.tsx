@@ -292,6 +292,7 @@ export default function GeneratePage() {
           onRegenerate={handleRegenerate}
           onSave={handleSave}
           compliance={compliance}
+          imageGenerationEnabled={((generationMode === 'single' && contentType === 'social-instagram') || (generationMode === 'kit' && kitAssets.instagram)) ? includeInstagramImage : false}
         />
       </div>
     </div>
