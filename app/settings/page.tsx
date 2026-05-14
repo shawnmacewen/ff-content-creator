@@ -45,7 +45,7 @@ export default function SettingsPage() {
     try {
       const batches: any[] = [];
       let startPage = 0;
-      const maxBatches = 6; // up to ~3000 items at 500 per batch
+      const maxBatches = 20; // target up to ~5000 items at 250 per batch
       const seenWindows = new Set<string>();
 
       for (let i = 0; i < maxBatches; i += 1) {
@@ -55,8 +55,8 @@ export default function SettingsPage() {
           body: JSON.stringify({
             mode: 'provider',
             dryRun: false,
-            maxItems: 500,
-            maxPages: 20,
+            maxItems: 250,
+            maxPages: 10,
             startPage,
           }),
         });
@@ -94,10 +94,20 @@ export default function SettingsPage() {
         batches,
       };
       setRunResult(result);
-      toast.success(
-        `Batched sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
-      );
       mutate();
+
+      let finalBroadridgeCount: number | null = null;
+      try {
+        const countResp = await fetch('/api/source-content?page=1&pageSize=1&publisher=broadridge-forefield');
+        const countJson = await countResp.json();
+        finalBroadridgeCount = Number(countJson?.total ?? 0);
+      } catch {
+        finalBroadridgeCount = null;
+      }
+
+      toast.success(
+        `Batched sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es)${finalBroadridgeCount !== null ? `. Final Broadridge count: ${finalBroadridgeCount}.` : ''}`
+      );
     } catch (error: any) {
       toast.error(error?.message || 'Batched sync failed');
     } finally {
@@ -129,7 +139,7 @@ export default function SettingsPage() {
             className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
             onClick={runSyncBatched}
             disabled={running || runningBatched}
-            title="Runs multiple 500-item sync batches in sequence using startPage offsets. Stops on repeat-page or zero-processed response."
+            title="Runs multiple 250-item sync batches in sequence using startPage offsets (target up to ~5000 items). Stops on repeat-page or zero-processed response."
           >
             <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
             {runningBatched ? 'Running Batched Sync...' : 'Sync Broadridge Content API (Batched)'}
