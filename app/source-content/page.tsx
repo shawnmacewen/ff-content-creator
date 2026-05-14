@@ -213,17 +213,6 @@ export default function SourceContentPage() {
         Broadridge Advisor Content: {data?.meta?.publisherCounts?.['broadridge-forefield'] ?? 0}
       </div>
 
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{selectedIds.size} item(s) selected</span>
-          <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-            Select all
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
-            Deselect all
-          </Button>
-        </div>
-      )}
 
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
@@ -245,13 +234,24 @@ export default function SourceContentPage() {
             <span>
               Showing {data.data.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
             </span>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (data.totalPages || 1)}>
-                Next
-              </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{selectedIds.size} item(s) selected</span>
+                <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+                  Select all
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
+                  Deselect all
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
+                  Previous
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (data.totalPages || 1)}>
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
