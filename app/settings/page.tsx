@@ -11,6 +11,7 @@ export default function SettingsPage() {
   const logs = data?.logs || [];
 
   const [running, setRunning] = useState(false);
+  const [runningBatched, setRunningBatched] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
   const runSync = async () => {
@@ -35,6 +36,54 @@ export default function SettingsPage() {
     }
   };
 
+  const runSyncBatched = async () => {
+    setRunningBatched(true);
+    setRunResult(null);
+    try {
+      const batches: any[] = [];
+      let startPage = 0;
+      const maxBatches = 6; // up to ~3000 items at 500 per batch
+
+      for (let i = 0; i < maxBatches; i += 1) {
+        const response = await fetch('/api/source-content/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'provider',
+            dryRun: false,
+            maxItems: 500,
+            maxPages: 20,
+            startPage,
+          }),
+        });
+
+        const json = await response.json();
+        batches.push({ batch: i + 1, startPage, ...json });
+
+        if (!response.ok || !json?.ok) break;
+        if (json?.repeatingPageDetected) break;
+        if ((json?.processed ?? 0) === 0) break;
+
+        startPage += 20;
+      }
+
+      setRunResult({
+        ok: true,
+        mode: 'provider-batched',
+        batchesRun: batches.length,
+        totals: {
+          processed: batches.reduce((n, b) => n + (b.processed || 0), 0),
+          inserted: batches.reduce((n, b) => n + (b.inserted || 0), 0),
+          updated: batches.reduce((n, b) => n + (b.updated || 0), 0),
+        },
+        batches,
+      });
+      mutate();
+    } finally {
+      setRunningBatched(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -48,14 +97,23 @@ export default function SettingsPage() {
           <button
             className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
             onClick={runSync}
-            disabled={running}
+            disabled={running || runningBatched}
             title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the API Lab."
           >
             <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
             {running ? 'Syncing Broadridge Content API...' : 'Sync Broadridge Content API'}
             <Info className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
           </button>
-          <button className="rounded border px-4 py-2 text-sm" onClick={() => mutate()} disabled={running}>Refresh Logs</button>
+          <button
+            className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
+            onClick={runSyncBatched}
+            disabled={running || runningBatched}
+            title="Runs multiple 500-item sync batches in sequence using startPage offsets. Stops on repeat-page or zero-processed response."
+          >
+            <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
+            {runningBatched ? 'Running Batched Sync...' : 'Sync Broadridge Content API (Batched)'}
+          </button>
+          <button className="rounded border px-4 py-2 text-sm" onClick={() => mutate()} disabled={running || runningBatched}>Refresh Logs</button>
         </div>
         {runResult ? (
           <pre className="text-xs bg-muted rounded p-2 overflow-auto">{JSON.stringify(runResult, null, 2)}</pre>

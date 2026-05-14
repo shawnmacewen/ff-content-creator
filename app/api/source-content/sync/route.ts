@@ -115,6 +115,7 @@ interface SyncRequestBody {
   forefieldOnly?: boolean;
   maxPages?: number;
   maxItems?: number;
+  startPage?: number;
 }
 
 export async function POST(req: Request) {
@@ -127,6 +128,7 @@ export async function POST(req: Request) {
   const forefieldOnly = body.forefieldOnly !== false;
   const maxPages = Math.max(1, Number(body.maxPages) || 250);
   const maxItems = Math.max(1, Number(body.maxItems) || 3000);
+  const startPage = Math.max(0, Number(body.startPage) || 0);
   const minPublishedAtIso = new Date(new Date().setUTCFullYear(new Date().getUTCFullYear() - yearsBack)).toISOString();
   const runId = `sync_${Date.now()}`;
 
@@ -173,10 +175,10 @@ export async function POST(req: Request) {
       const token = await getAdvisorStreamAccessToken(config);
       const pageSize = 25;
       const collected: any[] = [];
-      let offset = 0;
+      let page = startPage;
+      let offset = page * pageSize;
       let totalItems = Number.MAX_SAFE_INTEGER;
       let lastPayload: any = null;
-      let page = 0;
       let previousPageIdsSignature = '';
 
       while (offset < totalItems && page < maxPages && collected.length < maxItems) {
@@ -511,7 +513,7 @@ export async function POST(req: Request) {
     ok: true,
     mode,
     runId,
-    filters: { forefieldOnly, yearsBack: null, minPublishedAtIso: null, maxPages, maxItems },
+    filters: { forefieldOnly, yearsBack: null, minPublishedAtIso: null, maxPages, maxItems, startPage },
     dryRun: false,
     processed: uniqueRows.length,
     scannedTotal: rows.length,
