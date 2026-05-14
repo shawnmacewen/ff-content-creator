@@ -58,7 +58,7 @@ function fallbackAnalyze(rows: any[], prompt: string) {
       sourceSystem: r.sourceSystem || null,
       type: r.type || 'article',
       publishedAt: r.publishedAt || null,
-      url: r.url || null,
+      url: r.metadata?.url || null,
       tags: r.tags || [],
       body: r.body || '',
       excerpt: r.excerpt || '',
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,external_id,title,body,publisher,source_system,type,url,tags,excerpt,published_at')
+      .select('id,external_id,title,body,publisher,source_system,type,metadata,tags,excerpt,published_at')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(scanLimit);
     if (publisher !== 'all') q = q.eq('publisher', publisher);
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
       publisher: r.publisher,
       sourceSystem: r.source_system || null,
       type: r.type || 'article',
-      url: r.url || null,
+      url: r.metadata?.url || null,
       tags: Array.isArray(r.tags) ? r.tags : [],
       excerpt: r.excerpt || '',
       publishedAt: r.published_at,
