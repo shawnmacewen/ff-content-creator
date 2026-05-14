@@ -85,7 +85,9 @@ export function ContentCard({
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] max-h-[40px] overflow-hidden">{content.excerpt}</p>
+        <div className="min-h-[56px] flex items-start">
+          <p className="text-sm text-muted-foreground line-clamp-2 w-full">{content.excerpt}</p>
+        </div>
         <div className="mt-auto">
           <div className="flex flex-wrap gap-1.5 min-h-[24px]">
             {content.tags.slice(0, 4).map((tag) => (
