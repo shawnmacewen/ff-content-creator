@@ -111,7 +111,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [contentType, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [contentType, generationMode, kitAssets, includeInstagramImage, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleRegenerate = () => {
     handleGenerate();
