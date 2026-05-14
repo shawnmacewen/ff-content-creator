@@ -34,9 +34,11 @@ const categoryLabels: Record<string, string> = {
 interface ContentTypeSelectorProps {
   selected: ContentType[];
   onToggle: (type: ContentType) => void;
+  includeInstagramImage?: boolean;
+  onToggleInstagramImage?: () => void;
 }
 
-export function ContentTypeSelector({ selected, onToggle }: ContentTypeSelectorProps) {
+export function ContentTypeSelector({ selected, onToggle, includeInstagramImage = false, onToggleInstagramImage }: ContentTypeSelectorProps) {
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
@@ -86,6 +88,23 @@ export function ContentTypeSelector({ selected, onToggle }: ContentTypeSelectorP
                         <Badge variant="outline" className="mt-2 text-xs">
                           Max {contentType.maxLength} chars
                         </Badge>
+                      )}
+                      {contentType.id === 'social-instagram' && isSelected && onToggleInstagramImage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleInstagramImage();
+                          }}
+                          className={cn(
+                            'mt-3 w-full rounded-md border px-3 py-2 text-xs font-medium transition-colors',
+                            includeInstagramImage
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-border bg-background hover:bg-muted'
+                          )}
+                        >
+                          {includeInstagramImage ? 'Image ON' : 'Image OFF'}
+                        </button>
                       )}
                     </CardContent>
                   </Card>

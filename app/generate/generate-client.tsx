@@ -210,7 +210,12 @@ export default function GeneratePage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-lg font-semibold mb-4">1. Select Content Type</h2>
-            <ContentTypeSelector selected={selectedContentTypes} onToggle={handleToggleType} />
+            <ContentTypeSelector
+              selected={selectedContentTypes}
+              onToggle={handleToggleType}
+              includeInstagramImage={includeInstagramImage}
+              onToggleInstagramImage={() => setIncludeInstagramImage((v) => !v)}
+            />
           </div>
         </div>
 
@@ -230,23 +235,6 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-              {selectedContentTypes.includes('social-instagram') && (
-                <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
-                  <div>
-                    <p className="text-base font-semibold">Instagram Image Generation</p>
-                    <p className="text-sm text-muted-foreground">Generate an Instagram image alongside the caption output.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="lg"
-                    variant={includeInstagramImage ? 'default' : 'outline'}
-                    className="min-w-56"
-                    onClick={() => setIncludeInstagramImage((v) => !v)}
-                  >
-                    {includeInstagramImage ? 'ON · Generate Image' : 'OFF · No Image'}
-                  </Button>
-                </div>
-              )}
               <div className="pt-3 border-t border-border flex justify-end">
                 <Button
                   onClick={handleGenerate}
