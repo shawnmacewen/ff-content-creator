@@ -104,6 +104,7 @@ interface SyncRequestBody {
   yearsBack?: number;
   forefieldOnly?: boolean;
   maxPages?: number;
+  maxItems?: number;
 }
 
 export async function POST(req: Request) {
@@ -114,6 +115,7 @@ export async function POST(req: Request) {
   const yearsBack = Math.min(10, Math.max(1, Number(body.yearsBack) || 3));
   const forefieldOnly = body.forefieldOnly !== false;
   const maxPages = Math.max(1, Number(body.maxPages) || 250);
+  const maxItems = Math.max(1, Number(body.maxItems) || 3000);
   const minPublishedAtIso = new Date(new Date().setUTCFullYear(new Date().getUTCFullYear() - yearsBack)).toISOString();
   const runId = `sync_${Date.now()}`;
 
@@ -163,7 +165,7 @@ export async function POST(req: Request) {
       let lastPayload: any = null;
       let page = 0;
 
-      while (offset < totalItems && page < maxPages) {
+      while (offset < totalItems && page < maxPages && collected.length < maxItems) {
         const started = Date.now();
         const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: true });
         lastPayload = payload;
@@ -260,10 +262,10 @@ export async function POST(req: Request) {
         },
       }));
 
-      // Enrichment pass: fetch article details for missing published dates,
-      // or force-refresh dates for all rows when requested.
+      // Detail-first verification pass: only keep rows whose article detail source
+      // is exactly "Broadridge Advisor Content".
+      const verifiedRows: any[] = [];
       for (const row of rows) {
-        if (!forceDetailDateRefresh && row.published_at) continue;
 
         const fallbackId =
           row.external_id ||
@@ -290,9 +292,13 @@ export async function POST(req: Request) {
         const nextPublisher =
           detailSource === 'broadridge advisor content'
             ? 'broadridge-forefield'
-            : (row.publisher || 'publisher-content');
+            : 'publisher-content';
         if (nextPublisher !== row.publisher) detailPublisherMapped += 1;
         row.publisher = nextPublisher;
+
+        if (nextPublisher !== 'broadridge-forefield') {
+          continue;
+        }
 
         // Explicit date mapping for forefield -> effective_date, others -> publish_date first
         let mappedDate: string | null = null;
@@ -323,7 +329,11 @@ export async function POST(req: Request) {
           detailSource: detailData?.source || null,
           detailMappedDate: row.published_at || null,
         };
+
+        verifiedRows.push(row);
       }
+
+      rows = verifiedRows;
     } catch (error: any) {
       return NextResponse.json(
         { ok: false, error: error?.message || 'Provider sync failed' },
@@ -463,7 +473,7 @@ export async function POST(req: Request) {
     ok: true,
     mode,
     runId,
-    filters: { forefieldOnly, yearsBack: null, minPublishedAtIso: null, maxPages },
+    filters: { forefieldOnly, yearsBack: null, minPublishedAtIso: null, maxPages, maxItems },
     dryRun: false,
     processed: rowsAfterFilters.length,
     scannedTotal: rows.length,
