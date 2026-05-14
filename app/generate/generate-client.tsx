@@ -37,6 +37,7 @@ export default function GeneratePage() {
   const [compliance, setCompliance] = useState<any>(null);
   const [generationMode, setGenerationMode] = useState<'single' | 'kit'>('single');
   const [kitAssets, setKitAssets] = useState({ linkedin: true, instagram: true, email: true });
+  const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
 
   // Parse URL params on mount
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function GeneratePage() {
           type: contentType,
           mode: generationMode,
           kitAssets,
+          includeInstagramImage,
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
@@ -258,6 +260,12 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
+              {((generationMode === 'single' && contentType === 'social-instagram') || (generationMode === 'kit' && kitAssets.instagram)) && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={includeInstagramImage} onChange={(e) => setIncludeInstagramImage(e.target.checked)} />
+                  Include AI image generation for Instagram
+                </label>
+              )}
               <div className="pt-3 border-t border-border flex justify-end">
                 <Button
                   onClick={handleGenerate}

@@ -28,13 +28,36 @@ function assessCompliance(text: string) {
   return { grade, confidence: Number(confidence.toFixed(2)), findings };
 }
 
+async function generateInstagramImage(apiKey: string, prompt: string): Promise<string | null> {
+  try {
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-1',
+        prompt,
+        size: '1024x1024',
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data?.[0]?.url || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const { type, mode = 'single', kitAssets, sourceContentIds, customPrompt, tone, additionalContext } = body as {
+  const { type, mode = 'single', kitAssets, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
     type: ContentType;
     mode?: 'single' | 'kit';
     kitAssets?: { linkedin?: boolean; instagram?: boolean; email?: boolean };
+    includeInstagramImage?: boolean;
     sourceContentIds: string[];
     customPrompt?: string;
     tone: ToneType;
@@ -89,7 +112,14 @@ export async function POST(req: Request) {
         maxOutputTokens: 1200,
         temperature: 0.7,
       });
-      const sectionText = result.text.trim();
+      let sectionText = result.text.trim();
+      if (includeInstagramImage && asset.type === 'social-instagram') {
+        const imagePrompt = `Create a professional Instagram image concept based on: ${sectionText.slice(0, 800)}`;
+        const imageUrl = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
+        if (imageUrl) {
+          sectionText += `\n\nImage URL: ${imageUrl}`;
+        }
+      }
       parts.push(`## ${asset.label}\n\n${sectionText}`);
       sectionScores.push({ label: asset.label, ...assessCompliance(sectionText) });
     }
@@ -109,6 +139,15 @@ export async function POST(req: Request) {
     temperature: 0.7,
   });
 
-  const compliance = assessCompliance(result.text);
-  return new Response(JSON.stringify({ content: result.text, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  let outputText = result.text;
+  if (includeInstagramImage && type === 'social-instagram') {
+    const imagePrompt = `Create a professional Instagram image concept based on: ${outputText.slice(0, 800)}`;
+    const imageUrl = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
+    if (imageUrl) {
+      outputText += `\n\nImage URL: ${imageUrl}`;
+    }
+  }
+
+  const compliance = assessCompliance(outputText);
+  return new Response(JSON.stringify({ content: outputText, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }
