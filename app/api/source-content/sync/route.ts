@@ -182,7 +182,8 @@ export async function POST(req: Request) {
       let lastPayload: any = null;
       let previousPageIdsSignature = '';
 
-      while (offset < totalItems && page < maxPages && collected.length < maxItems) {
+      const endPageExclusive = startPage + maxPages;
+      while (offset < totalItems && page < endPageExclusive && collected.length < maxItems) {
         const started = Date.now();
         const payload = await searchAdvisorStreamArticles(config, token, {
           limit: pageSize,
