@@ -231,10 +231,21 @@ export default function GeneratePage() {
                 onAdditionalContextChange={setAdditionalContext}
               />
               {selectedContentTypes.includes('social-instagram') && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={includeInstagramImage} onChange={(e) => setIncludeInstagramImage(e.target.checked)} />
-                  Include AI image generation for Instagram
-                </label>
+                <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
+                  <div>
+                    <p className="text-base font-semibold">Instagram Image Generation</p>
+                    <p className="text-sm text-muted-foreground">Generate an Instagram image alongside the caption output.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant={includeInstagramImage ? 'default' : 'outline'}
+                    className="min-w-56"
+                    onClick={() => setIncludeInstagramImage((v) => !v)}
+                  >
+                    {includeInstagramImage ? 'ON · Generate Image' : 'OFF · No Image'}
+                  </Button>
+                </div>
               )}
               <div className="pt-3 border-t border-border flex justify-end">
                 <Button
