@@ -33,6 +33,31 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
   }
 }
 
+function pickExtraProperties(detailData: any) {
+  const list = Array.isArray(detailData?.extra_properties)
+    ? detailData.extra_properties
+    : Array.isArray(detailData?.extraProps)
+      ? detailData.extraProps
+      : [];
+
+  const map: Record<string, string> = {};
+  for (const item of list) {
+    const key = String(item?.key || '').trim();
+    if (!key) continue;
+    map[key] = String(item?.stringValue ?? '');
+  }
+
+  return {
+    BasContentId: map.BasContentId || null,
+    BasContentFilename: map.BasContentFilename || null,
+    Format: map.Format || null,
+    FinraLetterUrl: map.FinraLetterUrl || null,
+    FinraApproved: map.FinraApproved || null,
+    APContentType: map.APContentType || null,
+    Evergreen: map.Evergreen || null,
+  };
+}
+
 function coalesceEffectiveDate(input: any, publisher?: string | null): string | null {
   const isForefield = publisher === 'broadridge-forefield';
   const directCandidates = isForefield
@@ -368,6 +393,7 @@ export async function POST(req: Request) {
           detailFetched: true,
           detailSource: detailData?.source || null,
           detailMappedDate: row.published_at || null,
+          extraProperties: pickExtraProperties(detailData),
         };
 
         verifiedRows.push(row);
@@ -458,6 +484,7 @@ export async function POST(req: Request) {
           detailFetched: true,
           detailSource: detailData?.source || null,
           detailMappedDate: mappedDate || null,
+          extraProperties: pickExtraProperties(detailData),
         },
       });
     }
