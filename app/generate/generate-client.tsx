@@ -218,8 +218,8 @@ export default function GeneratePage() {
 
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-semibold mb-4">2. Configure Generation</h2>
-            <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Generation Settings</h3>
+            <div className="space-y-4 rounded-lg border p-4">
               <ToneControls
                 tone={tone}
                 onToneChange={setTone}
