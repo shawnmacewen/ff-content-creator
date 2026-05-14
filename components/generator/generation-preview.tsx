@@ -21,6 +21,7 @@ interface GenerationPreviewProps {
   onSave: (status: ContentStatus) => void;
   compliance?: { grade?: string; confidence?: number; findings?: string[]; sectionScores?: Array<{ label: string; grade: string; confidence: number; findings: string[] }> } | null;
   imageGenerationEnabled?: boolean;
+  imageStatus?: string | null;
 }
 
 export function GenerationPreview({
@@ -33,6 +34,7 @@ export function GenerationPreview({
   onSave,
   compliance,
   imageGenerationEnabled = false,
+  imageStatus = null,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -230,13 +232,21 @@ export function GenerationPreview({
                         className="min-h-[140px] font-mono text-sm bg-background"
                       />
                     ) : (
-                      <div className="space-y-2">
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
-                        {(() => {
-                          const match = section.body.match(/Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i);
-                          return match ? <img src={match[1]} alt="Generated Instagram" className="rounded border max-h-64" /> : null;
-                        })()}
-                      </div>
+                      (() => {
+                        const match = section.body.match(/Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i);
+                        const captionOnly = section.body.replace(/\n*Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i, '').trim();
+                        if (section.title === 'Instagram Caption') {
+                          return (
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="whitespace-pre-wrap text-sm leading-relaxed">{captionOnly}</div>
+                              <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
+                                {match ? <img src={match[1]} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>;
+                      })()
                     )}
                   </div>
                 ))}
@@ -254,6 +264,12 @@ export function GenerationPreview({
             )}
           </ScrollArea>
         )}
+
+        {imageGenerationEnabled && imageStatus ? (
+          <div className="text-xs rounded border border-blue-500/30 bg-blue-500/10 p-2 text-blue-100">
+            Image generation: {imageStatus}
+          </div>
+        ) : null}
 
         {compliance?.findings?.length ? (
           <div className="text-xs rounded border border-amber-500/30 bg-amber-500/10 p-2 text-amber-100">

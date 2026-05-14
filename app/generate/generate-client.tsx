@@ -35,6 +35,7 @@ export default function GeneratePage() {
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [compliance, setCompliance] = useState<any>(null);
+  const [imageStatus, setImageStatus] = useState<string | null>(null);
   const [generationMode, setGenerationMode] = useState<'single' | 'kit'>('single');
   const [kitAssets, setKitAssets] = useState({ linkedin: true, instagram: true, email: true });
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
@@ -73,6 +74,7 @@ export default function GeneratePage() {
     setIsGenerating(true);
     setGeneratedContent('');
     setCompliance(null);
+    setImageStatus(includeInstagramImage ? 'Generating Instagram image...' : null);
 
     try {
       const response = await fetch('/api/generate', {
@@ -99,6 +101,12 @@ export default function GeneratePage() {
         const payload = await response.json();
         setGeneratedContent(payload?.content || '');
         setCompliance(payload?.compliance || null);
+        if (includeInstagramImage) {
+          const txt = String(payload?.content || '');
+          if (/Image URL:/i.test(txt)) setImageStatus('Instagram image generated');
+          else if (/Image generation status: failed/i.test(txt)) setImageStatus('Instagram image failed (see output section)');
+          else setImageStatus('Instagram image status unknown');
+        }
       } else {
         const text = await response.text();
         setGeneratedContent(text);
@@ -293,6 +301,7 @@ export default function GeneratePage() {
           onSave={handleSave}
           compliance={compliance}
           imageGenerationEnabled={((generationMode === 'single' && contentType === 'social-instagram') || (generationMode === 'kit' && kitAssets.instagram)) ? includeInstagramImage : false}
+          imageStatus={imageStatus}
         />
       </div>
     </div>
