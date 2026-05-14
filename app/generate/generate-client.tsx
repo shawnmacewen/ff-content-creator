@@ -3,14 +3,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceSelector } from '@/components/generator/source-selector';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { CONTENT_TYPE_MAP } from '@/lib/content-config';
+import { cn } from '@/lib/utils';
+import { Sparkles, ArrowLeft, Linkedin, Instagram, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+
+const KIT_OPTIONS = [
+  { key: 'linkedin', type: 'social-linkedin' as ContentType, icon: Linkedin },
+  { key: 'instagram', type: 'social-instagram' as ContentType, icon: Instagram },
+  { key: 'email', type: 'email-marketing' as ContentType, icon: Mail },
+] as const;
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -200,13 +210,35 @@ export default function GeneratePage() {
               <ContentTypeSelector selected={contentType} onSelect={setContentType} />
             </div>
           ) : (
-            <div className="rounded-lg border p-4">
+            <div>
               <h2 className="text-lg font-semibold mb-2">1. Select KIT Content Types</h2>
-              <p className="text-sm text-muted-foreground">Choose one or more assets to generate from the selected source article(s).</p>
-              <div className="grid md:grid-cols-1 gap-2 text-sm mt-3">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.linkedin} onChange={(e) => setKitAssets((s) => ({ ...s, linkedin: e.target.checked }))} /> LinkedIn Post</label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.instagram} onChange={(e) => setKitAssets((s) => ({ ...s, instagram: e.target.checked }))} /> Instagram Caption</label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={kitAssets.email} onChange={(e) => setKitAssets((s) => ({ ...s, email: e.target.checked }))} /> Email</label>
+              <p className="text-sm text-muted-foreground mb-4">Choose one or more assets to generate from the selected source article(s).</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {KIT_OPTIONS.map((opt) => {
+                  const info = CONTENT_TYPE_MAP[opt.type];
+                  const Icon = opt.icon;
+                  const selected = kitAssets[opt.key as keyof typeof kitAssets];
+                  return (
+                    <Card
+                      key={opt.key}
+                      className={cn('cursor-pointer transition-all hover:border-primary/50', selected && 'border-primary ring-1 ring-primary bg-primary/5')}
+                      onClick={() => setKitAssets((s) => ({ ...s, [opt.key]: !s[opt.key as keyof typeof s] }))}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', selected ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <CardTitle className="text-sm font-medium">{info.label}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <CardDescription className="text-xs">{info.description}</CardDescription>
+                        {info.maxLength && <Badge variant="outline" className="mt-2 text-xs">Max {info.maxLength} chars</Badge>}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
