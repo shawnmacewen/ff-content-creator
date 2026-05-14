@@ -209,7 +209,8 @@ export async function POST(req: Request) {
         previousPageIdsSignature = pageIdsSignature;
 
         const publisherMatched = pageItems.filter((i) => String(i.publisher || '').toLowerCase() === 'broadridge-forefield').length;
-        const dateMatched = pageItems.filter((i) => i.publishedAt && new Date(i.publishedAt).toISOString() >= minPublishedAtIso).length;
+        // Date gating is currently disabled; keep dateMatched aligned with current effective filter stage.
+        const dateMatched = publisherMatched;
         await appendSyncLog({
           runId,
           mode,

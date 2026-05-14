@@ -7,12 +7,14 @@ import { Database, Info } from 'lucide-react';
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function SettingsPage() {
-  const { data, isLoading, mutate } = useSWR('/api/source-content/sync/logs', fetcher, { refreshInterval: 5000 });
-  const logs = data?.logs || [];
-
   const [running, setRunning] = useState(false);
   const [runningBatched, setRunningBatched] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
+
+  const { data, isLoading, mutate } = useSWR('/api/source-content/sync/logs', fetcher, {
+    refreshInterval: running || runningBatched ? 5000 : 0,
+  });
+  const logs = data?.logs || [];
 
   const runSync = async () => {
     setRunning(true);
