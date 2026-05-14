@@ -13,7 +13,7 @@ const OutSchema = z.object({
       z.object({
         id: z.string(),
         reason: z.string(),
-        evidence: z.string().optional(),
+        evidence: z.string().default(''),
         confidence: z.number().min(0).max(1),
       })
     )
