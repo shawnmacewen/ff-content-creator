@@ -28,7 +28,7 @@ function assessCompliance(text: string) {
   return { grade, confidence: Number(confidence.toFixed(2)), findings };
 }
 
-async function generateInstagramImage(apiKey: string, prompt: string): Promise<string | null> {
+async function generateInstagramImage(apiKey: string, prompt: string): Promise<{ imageUrl: string | null; error?: string }> {
   try {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -42,14 +42,16 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<s
         size: '1024x1024',
       }),
     });
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { imageUrl: null, error: data?.error?.message || `Image API error (${res.status})` };
+    }
     const first = data?.data?.[0];
-    if (first?.url) return first.url as string;
-    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}` as string;
-    return null;
-  } catch {
-    return null;
+    if (first?.url) return { imageUrl: first.url as string };
+    if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` as string };
+    return { imageUrl: null, error: 'Image API returned no image payload' };
+  } catch (err: any) {
+    return { imageUrl: null, error: err?.message || 'Image generation request failed' };
   }
 }
 
@@ -117,10 +119,12 @@ export async function POST(req: Request) {
       });
       let sectionText = result.text.trim();
       if (includeInstagramImage && asset.type === 'social-instagram') {
-        const imagePrompt = `Create a professional Instagram image concept based on: ${sectionText.slice(0, 800)}`;
-        const imageUrl = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
-        if (imageUrl) {
-          sectionText += `\n\nImage URL: ${imageUrl}`;
+        const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${sectionText.slice(0, 800)}`;
+        const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
+        if (image.imageUrl) {
+          sectionText += `\n\nImage URL: ${image.imageUrl}`;
+        } else {
+          sectionText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
         }
       }
       parts.push(`## ${asset.label}\n\n${sectionText}`);
@@ -144,10 +148,12 @@ export async function POST(req: Request) {
 
   let outputText = result.text;
   if (includeInstagramImage && type === 'social-instagram') {
-    const imagePrompt = `Create a professional Instagram image concept based on: ${outputText.slice(0, 800)}`;
-    const imageUrl = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
-    if (imageUrl) {
-      outputText += `\n\nImage URL: ${imageUrl}`;
+    const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${outputText.slice(0, 800)}`;
+    const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
+    if (image.imageUrl) {
+      outputText += `\n\nImage URL: ${image.imageUrl}`;
+    } else {
+      outputText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
     }
   }
 
