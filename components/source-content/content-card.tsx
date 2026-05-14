@@ -25,20 +25,13 @@ export function ContentCard({
 }: ContentCardProps) {
   return (
     <Card
-      className={`bg-card border-border transition-colors hover:border-primary/50 ${
+      className={`bg-card border-border transition-colors hover:border-primary/50 h-[280px] flex flex-col ${
         isSelected ? 'border-primary ring-1 ring-primary' : ''
       }`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
-            {selectable && (
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
-                className="mt-1"
-              />
-            )}
             <div className="space-y-1 flex-1">
               <CardTitle className="text-base font-medium leading-tight line-clamp-2">
                 {content.title}
@@ -77,50 +70,57 @@ export function ContentCard({
               <div className="text-xs text-muted-foreground">External ID: {content.externalId || 'Unavailable'}</div>
             </div>
           </div>
-          <div className="flex flex-col gap-1 items-end">
+          <div className="flex flex-col gap-2 items-end">
+            {selectable && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
+              />
+            )}
             <Badge variant="secondary" className="shrink-0">
               {content.type}
             </Badge>
-
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-3">{content.excerpt}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {content.tags.slice(0, 4).map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-          {content.tags.length > 4 && (
-            <Badge variant="outline" className="text-xs">
-              +{content.tags.length - 4}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2 pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onViewDetail?.(content)}
-            className="h-8"
-          >
-            View Details
-          </Button>
-          {content.url && (
+      <CardContent className="flex-1 flex flex-col">
+        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[60px]">{content.excerpt}</p>
+        <div className="mt-auto">
+          <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+            {content.tags.slice(0, 4).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {content.tags.length > 4 && (
+              <Badge variant="outline" className="text-xs">
+                +{content.tags.length - 4}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
             <Button
               variant="ghost"
               size="sm"
-              asChild
+              onClick={() => onViewDetail?.(content)}
               className="h-8"
             >
-              <a href={content.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                Source
-              </a>
+              View Details
             </Button>
-          )}
+            {content.url && (
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="h-8"
+              >
+                <a href={content.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Source
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
