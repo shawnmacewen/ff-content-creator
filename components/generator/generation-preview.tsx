@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import type { ContentType, ContentStatus } from '@/lib/types/content';
 import { Copy, Check, Save, RefreshCw, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface GenerationPreviewProps {
   contentType: ContentType | null;
@@ -28,6 +28,7 @@ export function GenerationPreview({
   onSave,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const typeInfo = contentType ? CONTENT_TYPE_MAP[contentType] : null;
@@ -36,6 +37,32 @@ export function GenerationPreview({
     await navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const sections = useMemo(() => {
+    const lines = content.split('\n');
+    const out: Array<{ title: string; body: string }> = [];
+    let currentTitle: string | null = null;
+    let currentBody: string[] = [];
+
+    for (const line of lines) {
+      if (line.startsWith('## ')) {
+        if (currentTitle) out.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+        currentTitle = line.replace(/^##\s+/, '').trim();
+        currentBody = [];
+      } else {
+        currentBody.push(line);
+      }
+    }
+
+    if (currentTitle) out.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+    return out.filter((s) => s.title && s.body);
+  }, [content]);
+
+  const handleCopySection = async (title: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedSection(title);
+    setTimeout(() => setCopiedSection((prev) => (prev === title ? null : prev)), 2000);
   };
 
   const characterCount = content.length;
@@ -120,6 +147,26 @@ export function GenerationPreview({
             className="min-h-[300px] font-mono text-sm bg-muted/50"
             placeholder="Generated content will appear here..."
           />
+        ) : sections.length > 1 ? (
+          <ScrollArea className="h-[300px] rounded-lg border border-border bg-muted/30 p-4">
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <div key={section.title} className="rounded border bg-background/60 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-medium text-sm">{section.title}</div>
+                    <Button variant="outline" size="sm" onClick={() => handleCopySection(section.title, section.body)}>
+                      {copiedSection === section.title ? (
+                        <><Check className="h-4 w-4 mr-1" />Copied</>
+                      ) : (
+                        <><Copy className="h-4 w-4 mr-1" />Copy {section.title}</>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         ) : (
           <ScrollArea className="h-[300px] rounded-lg border border-border bg-muted/30 p-4">
             {content ? (
