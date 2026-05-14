@@ -41,7 +41,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[88vw] w-[88vw] sm:max-w-[88vw] h-[82vh] overflow-hidden">
+      <DialogContent className="max-w-[84vw] w-[84vw] sm:max-w-[84vw] h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
@@ -83,11 +83,11 @@ export function ContentDetail({
           ))}
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-3" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[58vh]">
-          <div className="lg:col-span-2">
-            <ScrollArea className="h-[58vh] pr-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+          <div className="lg:col-span-2 min-h-0">
+            <ScrollArea className="h-full pr-4">
               <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
                 {content.body.split('\n\n').map((paragraph, index) => (
                   <p key={index} className="text-sm text-foreground/90 mb-4">
@@ -98,9 +98,9 @@ export function ContentDetail({
             </ScrollArea>
           </div>
 
-          <div className="lg:col-span-1 rounded-md border p-3">
+          <div className="lg:col-span-1 rounded-md border p-3 min-h-0">
             <h3 className="text-sm font-semibold mb-3">Metadata</h3>
-            <ScrollArea className="h-[58vh] pr-2">
+            <ScrollArea className="h-full pr-2">
               <div className="space-y-2 text-xs">
                 <div><span className="text-muted-foreground">External ID:</span> {content.externalId || 'Unavailable'}</div>
                 <div><span className="text-muted-foreground">BasContentId:</span> {content.metadata?.extraPropertiesSelected?.BasContentId || 'n/a'}</div>
@@ -133,7 +133,7 @@ export function ContentDetail({
           </div>
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-3" />
 
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
