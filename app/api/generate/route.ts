@@ -44,7 +44,10 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<s
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.data?.[0]?.url || null;
+    const first = data?.data?.[0];
+    if (first?.url) return first.url as string;
+    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}` as string;
+    return null;
   } catch {
     return null;
   }

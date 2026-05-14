@@ -223,7 +223,7 @@ export function GenerationPreview({
                       <div className="space-y-2">
                         <div className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</div>
                         {(() => {
-                          const match = section.body.match(/Image URL:\s*(https?:\/\/\S+)/i);
+                          const match = section.body.match(/Image URL:\s*((?:https?:\/\/\S+)|(?:data:image\/[^\s]+))/i);
                           return match ? <img src={match[1]} alt="Generated Instagram" className="rounded border max-h-64" /> : null;
                         })()}
                       </div>
