@@ -34,27 +34,31 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
 }
 
 function pickExtraProperties(detailData: any) {
-  const list = Array.isArray(detailData?.extra_properties)
+  const raw = Array.isArray(detailData?.extra_properties)
     ? detailData.extra_properties
     : Array.isArray(detailData?.extraProps)
       ? detailData.extraProps
       : [];
 
   const map: Record<string, string> = {};
-  for (const item of list) {
+  for (const item of raw) {
     const key = String(item?.key || '').trim();
     if (!key) continue;
     map[key] = String(item?.stringValue ?? '');
   }
 
   return {
-    BasContentId: map.BasContentId || null,
-    BasContentFilename: map.BasContentFilename || null,
-    Format: map.Format || null,
-    FinraLetterUrl: map.FinraLetterUrl || null,
-    FinraApproved: map.FinraApproved || null,
-    APContentType: map.APContentType || null,
-    Evergreen: map.Evergreen || null,
+    raw,
+    map,
+    selected: {
+      BasContentId: map.BasContentId || null,
+      BasContentFilename: map.BasContentFilename || null,
+      Format: map.Format || null,
+      FinraLetterUrl: map.FinraLetterUrl || null,
+      FinraApproved: map.FinraApproved || null,
+      APContentType: map.APContentType || null,
+      Evergreen: map.Evergreen || null,
+    },
   };
 }
 
@@ -388,12 +392,15 @@ export async function POST(req: Request) {
           detailDateMapped += 1;
         }
 
+        const extra = pickExtraProperties(detailData);
         row.metadata = {
           ...(row.metadata || {}),
           detailFetched: true,
           detailSource: detailData?.source || null,
           detailMappedDate: row.published_at || null,
-          extraProperties: pickExtraProperties(detailData),
+          extraPropertiesRaw: extra.raw,
+          extraProperties: extra.map,
+          extraPropertiesSelected: extra.selected,
           categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
           subCategories: Array.isArray(detailData?.sub_categories)
             ? detailData.sub_categories
@@ -491,7 +498,9 @@ export async function POST(req: Request) {
           detailFetched: true,
           detailSource: detailData?.source || null,
           detailMappedDate: mappedDate || null,
-          extraProperties: pickExtraProperties(detailData),
+          extraPropertiesRaw: pickExtraProperties(detailData).raw,
+          extraProperties: pickExtraProperties(detailData).map,
+          extraPropertiesSelected: pickExtraProperties(detailData).selected,
           categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
           subCategories: Array.isArray(detailData?.sub_categories)
             ? detailData.sub_categories
