@@ -393,6 +393,23 @@ export async function POST(req: Request) {
         }
 
         const extra = pickExtraProperties(detailData);
+        const categories = Array.isArray(detailData?.categories) ? detailData.categories : [];
+        const subCategories = Array.isArray(detailData?.sub_categories)
+          ? detailData.sub_categories
+          : Array.isArray(detailData?.subCategories)
+            ? detailData.subCategories
+            : [];
+        row.content_designation = detailData?.content_designation || null;
+        row.categories = categories;
+        row.sub_categories = subCategories;
+        row.bas_content_id = extra.selected.BasContentId;
+        row.bas_content_filename = extra.selected.BasContentFilename;
+        row.content_format = extra.selected.Format;
+        row.finra_letter_url = extra.selected.FinraLetterUrl;
+        row.finra_approved = extra.selected.FinraApproved === null ? null : String(extra.selected.FinraApproved).toLowerCase() === 'true';
+        row.ap_content_type = extra.selected.APContentType;
+        row.evergreen = extra.selected.Evergreen === null ? null : String(extra.selected.Evergreen).toLowerCase() === 'true';
+
         row.metadata = {
           ...(row.metadata || {}),
           detailFetched: true,
@@ -401,12 +418,8 @@ export async function POST(req: Request) {
           extraPropertiesRaw: extra.raw,
           extraProperties: extra.map,
           extraPropertiesSelected: extra.selected,
-          categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
-          subCategories: Array.isArray(detailData?.sub_categories)
-            ? detailData.sub_categories
-            : Array.isArray(detailData?.subCategories)
-              ? detailData.subCategories
-              : [],
+          categories,
+          subCategories,
           contentDesignation: detailData?.content_designation || null,
         };
 
@@ -487,26 +500,40 @@ export async function POST(req: Request) {
       if (mappedDate) detailDateMapped += 1;
       detailPublisherMapped += 1;
 
+      const extra = pickExtraProperties(detailData);
+      const categories = Array.isArray(detailData?.categories) ? detailData.categories : [];
+      const subCategories = Array.isArray(detailData?.sub_categories)
+        ? detailData.sub_categories
+        : Array.isArray(detailData?.subCategories)
+          ? detailData.subCategories
+          : [];
+
       rows.push({
         id: target.id,
         external_id: target.external_id,
         source_system: 'advisorstream',
         publisher,
         published_at: mappedDate,
+        content_designation: detailData?.content_designation || null,
+        categories,
+        sub_categories: subCategories,
+        bas_content_id: extra.selected.BasContentId,
+        bas_content_filename: extra.selected.BasContentFilename,
+        content_format: extra.selected.Format,
+        finra_letter_url: extra.selected.FinraLetterUrl,
+        finra_approved: extra.selected.FinraApproved === null ? null : String(extra.selected.FinraApproved).toLowerCase() === 'true',
+        ap_content_type: extra.selected.APContentType,
+        evergreen: extra.selected.Evergreen === null ? null : String(extra.selected.Evergreen).toLowerCase() === 'true',
         metadata: {
           ...((target as any).metadata || {}),
           detailFetched: true,
           detailSource: detailData?.source || null,
           detailMappedDate: mappedDate || null,
-          extraPropertiesRaw: pickExtraProperties(detailData).raw,
-          extraProperties: pickExtraProperties(detailData).map,
-          extraPropertiesSelected: pickExtraProperties(detailData).selected,
-          categories: Array.isArray(detailData?.categories) ? detailData.categories : [],
-          subCategories: Array.isArray(detailData?.sub_categories)
-            ? detailData.sub_categories
-            : Array.isArray(detailData?.subCategories)
-              ? detailData.subCategories
-              : [],
+          extraPropertiesRaw: extra.raw,
+          extraProperties: extra.map,
+          extraPropertiesSelected: extra.selected,
+          categories,
+          subCategories,
           contentDesignation: detailData?.content_designation || null,
         },
       });
