@@ -20,7 +20,17 @@ async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, art
     },
   });
   if (!response.ok) return null;
-  return response.json();
+
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
 
 function coalesceEffectiveDate(input: any, publisher?: string | null): string | null {
@@ -108,7 +118,8 @@ interface SyncRequestBody {
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as SyncRequestBody;
+  try {
+    const body = (await req.json().catch(() => ({}))) as SyncRequestBody;
   const mode = body.mode || 'sample-seed';
   const dryRun = !!body.dryRun;
   const forceDetailDateRefresh = !!body.forceDetailDateRefresh;
@@ -515,4 +526,14 @@ export async function POST(req: Request) {
       detailPublisherMapped: (typeof detailPublisherMapped !== 'undefined' ? detailPublisherMapped : 0),
     } : undefined,
   });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error?.message || 'Source content sync failed',
+        stage: 'sync-route',
+      },
+      { status: 500 }
+    );
+  }
 }
