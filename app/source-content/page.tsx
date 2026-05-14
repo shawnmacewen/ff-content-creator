@@ -123,7 +123,11 @@ export default function SourceContentPage() {
     const response = await fetch('/api/source-content/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode, dryRun }),
+      body: JSON.stringify({
+        mode,
+        dryRun,
+        ...(mode === 'provider' ? { maxItems: 3000, maxPages: 120 } : {}),
+      }),
     });
 
     const rawText = await response.text();
