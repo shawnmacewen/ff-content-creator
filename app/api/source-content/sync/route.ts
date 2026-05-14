@@ -164,6 +164,9 @@ export async function POST(req: Request) {
       let totalItems = Number.MAX_SAFE_INTEGER;
       let lastPayload: any = null;
       let page = 0;
+      let previousPageIdsSignature = '';
+      let repeatingPageDetected = false;
+      const repeatingIdsSample: string[] = [];
 
       while (offset < totalItems && page < maxPages && collected.length < maxItems) {
         const started = Date.now();
@@ -178,6 +181,15 @@ export async function POST(req: Request) {
           0;
 
         const pageItems = mapAdvisorStreamSearchResults(payload);
+        const pageIds = pageItems.map((i) => String(i.externalId || '')).filter(Boolean);
+        const pageIdsSignature = pageIds.join('|');
+        if (previousPageIdsSignature && pageIdsSignature && previousPageIdsSignature === pageIdsSignature) {
+          repeatingPageDetected = true;
+          repeatingIdsSample.push(...pageIds.slice(0, 5));
+          break;
+        }
+        previousPageIdsSignature = pageIdsSignature;
+
         const publisherMatched = pageItems.filter((i) => String(i.publisher || '').toLowerCase() === 'broadridge-forefield').length;
         const dateMatched = pageItems.filter((i) => i.publishedAt && new Date(i.publishedAt).toISOString() >= minPublishedAtIso).length;
         await appendSyncLog({
@@ -439,7 +451,7 @@ export async function POST(req: Request) {
   const uniqueRows = Array.from(dedupedByExternal.values());
 
   if (dryRun) {
-    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: uniqueRows.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length, duplicateExternalIdsSkipped, uniqueExternalIdsSeen: uniqueRows.length });
+    return NextResponse.json({ ok: true, mode, dryRun: true, wouldProcess: uniqueRows.length, scanned: rows.length, publisherMatched: rowsAfterPublisher.length, dateMatched: rowsAfterFilters.length, duplicateExternalIdsSkipped, uniqueExternalIdsSeen: uniqueRows.length, repeatingPageDetected, repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10) });
   }
 
   const supabase = getSupabaseServerClient();
@@ -494,6 +506,8 @@ export async function POST(req: Request) {
     skippedOlderOrUndated: Math.max(0, rows.length - rowsAfterFilters.length),
     inserted,
     updated,
+    repeatingPageDetected,
+    repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10),
     enrichment: mode === 'provider' ? {
       detailFetchSuccess: (typeof detailFetchSuccess !== 'undefined' ? detailFetchSuccess : 0),
       detailFetchMiss: (typeof detailFetchMiss !== 'undefined' ? detailFetchMiss : 0),
