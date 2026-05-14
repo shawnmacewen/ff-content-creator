@@ -8,6 +8,7 @@ import {
   searchAdvisorStreamArticles,
   validateAdvisorStreamConfig,
 } from '@/lib/integrations/advisorstream/provider';
+import { appendSyncLog } from '@/lib/source-sync-logs';
 
 async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, articleId: string) {
   const base = baseUrl.replace(/\/$/, '');
@@ -100,6 +101,9 @@ interface SyncRequestBody {
   mode?: 'sample-seed' | 'provider' | 'provider-backfill';
   dryRun?: boolean;
   forceDetailDateRefresh?: boolean;
+  yearsBack?: number;
+  forefieldOnly?: boolean;
+  maxPages?: number;
 }
 
 export async function POST(req: Request) {
@@ -107,6 +111,11 @@ export async function POST(req: Request) {
   const mode = body.mode || 'sample-seed';
   const dryRun = !!body.dryRun;
   const forceDetailDateRefresh = !!body.forceDetailDateRefresh;
+  const yearsBack = Math.min(10, Math.max(1, Number(body.yearsBack) || 3));
+  const forefieldOnly = body.forefieldOnly !== false;
+  const maxPages = Math.max(1, Number(body.maxPages) || 250);
+  const minPublishedAtIso = new Date(new Date().setUTCFullYear(new Date().getUTCFullYear() - yearsBack)).toISOString();
+  const runId = `sync_${Date.now()}`;
 
   let rows: any[] = [];
   let detailFetchSuccess = 0;
@@ -148,13 +157,14 @@ export async function POST(req: Request) {
     try {
       const token = await getAdvisorStreamAccessToken(config);
       const pageSize = 25;
-      const maxItems = 50;
       const collected: any[] = [];
       let offset = 0;
       let totalItems = Number.MAX_SAFE_INTEGER;
       let lastPayload: any = null;
+      let page = 0;
 
-      while (offset < totalItems && collected.length < maxItems) {
+      while (offset < totalItems && page < maxPages) {
+        const started = Date.now();
         const payload = await searchAdvisorStreamArticles(config, token, { limit: pageSize, offset, includeSourceFilter: false });
         lastPayload = payload;
 
@@ -166,6 +176,23 @@ export async function POST(req: Request) {
           0;
 
         const pageItems = mapAdvisorStreamSearchResults(payload);
+        const publisherMatched = pageItems.filter((i) => String(i.publisher || '').toLowerCase() === 'broadridge-forefield').length;
+        const dateMatched = pageItems.filter((i) => i.publishedAt && new Date(i.publishedAt).toISOString() >= minPublishedAtIso).length;
+        await appendSyncLog({
+          runId,
+          mode,
+          page,
+          offset,
+          fetched: rawCount,
+          normalized: pageItems.length,
+          publisherMatched,
+          dateMatched,
+          inserted: 0,
+          updated: 0,
+          skipped: Math.max(0, pageItems.length - Math.min(publisherMatched, dateMatched)),
+          elapsedMs: Date.now() - started,
+          createdAt: new Date().toISOString(),
+        });
         collected.push(...pageItems);
 
         const payloadTotal = Number((payload as any)?.data?.totalItems ?? (payload as any)?.totalItems ?? 0);
@@ -173,9 +200,12 @@ export async function POST(req: Request) {
 
         if (rawCount < pageSize) break;
         offset += pageSize;
+        page += 1;
       }
 
-      const normalized = collected;
+      const normalized = collected
+        .filter((item) => !forefieldOnly || String(item.publisher || '').toLowerCase() === 'broadridge-forefield')
+        .filter((item) => item.publishedAt && new Date(item.publishedAt).toISOString() >= minPublishedAtIso);
 
       if (!normalized.length) {
         const payload = lastPayload || {};
@@ -429,6 +459,8 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     mode,
+    runId,
+    filters: { forefieldOnly, yearsBack, minPublishedAtIso, maxPages },
     dryRun: false,
     processed: rows.length,
     inserted,
