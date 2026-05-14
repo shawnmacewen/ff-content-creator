@@ -228,16 +228,6 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-              <div className="pt-3 border-t border-border flex justify-end">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate || isGenerating}
-                  className="gap-2 min-w-36"
-                >
-                  <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
-                  {isGenerating ? 'Generating...' : 'Generate'}
-                </Button>
-              </div>
             </div>
           </div>
         </div>
@@ -249,6 +239,17 @@ export default function GeneratePage() {
           selectedIds={selectedSourceIds}
           onSelectionChange={setSelectedSourceIds}
         />
+      </div>
+
+      <div className="pt-1 border-t border-border flex justify-end">
+        <Button
+          onClick={handleGenerate}
+          disabled={!canGenerate || isGenerating}
+          className="gap-2 min-w-36"
+        >
+          <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
+          {isGenerating ? 'Generating...' : 'Generate'}
+        </Button>
       </div>
 
       <div>
