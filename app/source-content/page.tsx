@@ -60,7 +60,9 @@ export default function SourceContentPage() {
     return `/api/source-content?${params.toString()}`;
   }, [debouncedQuery, selectedType, selectedTag, selectedPublisher, page]);
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse>(apiUrl(), fetcher);
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ApiResponse>(apiUrl(), fetcher, {
+    keepPreviousData: true,
+  });
 
   const handleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -174,9 +176,9 @@ export default function SourceContentPage() {
               variant="outline"
               size="sm"
               onClick={() => mutate()}
-              disabled={isLoading}
+              disabled={false}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${isValidating ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             {selectedIds.size > 0 && (
@@ -220,7 +222,7 @@ export default function SourceContentPage() {
         </div>
       )}
 
-      {isLoading && (
+      {!data && isLoading && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-64 rounded-lg bg-card animate-pulse" />
@@ -228,7 +230,7 @@ export default function SourceContentPage() {
         </div>
       )}
 
-      {data && !isLoading && (
+      {data && (
         <>
           <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
             <span>
