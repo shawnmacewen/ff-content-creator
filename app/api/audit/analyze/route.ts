@@ -52,6 +52,17 @@ function fallbackAnalyze(rows: any[], prompt: string) {
     })
     .map((r) => ({
       id: r.id,
+      externalId: r.externalId || null,
+      title: r.title || '',
+      publisher: r.publisher || null,
+      sourceSystem: r.sourceSystem || null,
+      type: r.type || 'article',
+      publishedAt: r.publishedAt || null,
+      url: r.url || null,
+      tags: r.tags || [],
+      body: r.body || '',
+      excerpt: r.excerpt || '',
+      snippet: r.excerpt || (r.body || '').slice(0, 240),
       reason: 'Matched fallback keyword logic',
       evidence: (r.body || '').slice(0, 180),
       confidence: 0.55,
@@ -80,7 +91,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,title,body,publisher,published_at')
+      .select('id,external_id,title,body,publisher,source_system,type,url,tags,excerpt,published_at')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(scanLimit);
     if (publisher !== 'all') q = q.eq('publisher', publisher);
@@ -89,14 +100,21 @@ export async function POST(req: Request) {
 
     const rows = (data || []).map((r: any) => ({
       id: r.id,
+      externalId: r.external_id || null,
       title: r.title,
       publisher: r.publisher,
+      sourceSystem: r.source_system || null,
+      type: r.type || 'article',
+      url: r.url || null,
+      tags: Array.isArray(r.tags) ? r.tags : [],
+      excerpt: r.excerpt || '',
       publishedAt: r.published_at,
       body: String(r.body || '').slice(0, 2000),
     }));
 
     let parserUsed: 'ai' | 'fallback' = 'ai';
     const idSet = new Set(rows.map((r) => r.id));
+    const rowById = new Map(rows.map((r) => [r.id, r]));
 
     try {
       const env = getServerEnv();
@@ -122,7 +140,28 @@ export async function POST(req: Request) {
         if (!prev || (m.confidence || 0) > (prev.confidence || 0)) dedup.set(m.id, m);
       }
 
-      const matches = Array.from(dedup.values()).sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+      const matches = Array.from(dedup.values())
+        .map((m: any) => {
+          const row = rowById.get(m.id);
+          return {
+            id: m.id,
+            externalId: row?.externalId || null,
+            title: row?.title || '',
+            publisher: row?.publisher || null,
+            sourceSystem: row?.sourceSystem || null,
+            type: row?.type || 'article',
+            publishedAt: row?.publishedAt || null,
+            url: row?.url || null,
+            tags: row?.tags || [],
+            body: row?.body || '',
+            excerpt: row?.excerpt || '',
+            snippet: row?.excerpt || (row?.body || '').slice(0, 240),
+            reason: m.reason,
+            evidence: m.evidence,
+            confidence: m.confidence,
+          };
+        })
+        .sort((a: any, b: any) => (b.confidence || 0) - (a.confidence || 0));
 
       if (!matches.length) {
         parserUsed = 'fallback';
