@@ -93,24 +93,22 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                       </div>
 
                       {contentType.id === 'social-instagram' && onToggleInstagramImage ? (
-                        <div className="mt-auto pt-3">
-                          <div className="border-t border-border/60 pt-3">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleInstagramImage();
-                              }}
-                              className={cn(
-                                'w-full rounded-md border px-3 py-2 text-sm font-semibold transition-colors',
-                                includeInstagramImage
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'border-border bg-background hover:bg-muted'
-                              )}
-                            >
-                              {includeInstagramImage ? 'Image ON' : 'Image OFF'}
-                            </button>
-                          </div>
+                        <div className="mt-3 border-t border-border/60 pt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleInstagramImage();
+                            }}
+                            className={cn(
+                              'w-full rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors',
+                              includeInstagramImage
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-background hover:bg-muted'
+                            )}
+                          >
+                            {includeInstagramImage ? 'Image ON' : 'Image OFF'}
+                          </button>
                         </div>
                       ) : null}
                     </CardContent>
