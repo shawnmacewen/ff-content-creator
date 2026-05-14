@@ -41,7 +41,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[140vw] w-[140vw] max-h-[86vh] overflow-hidden">
+      <DialogContent className="max-w-none w-[98vw] h-[86vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
