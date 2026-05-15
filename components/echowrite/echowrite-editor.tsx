@@ -132,7 +132,8 @@ export function EchoWriteEditor({
     extensions: [
       StarterKit,
       Underline,
-      Link.configure({ openOnClick: true }),
+      // Prevent link-click navigation from inside the editor (can cause perceived "404" route jumps)
+      Link.configure({ openOnClick: false }),
       Highlight.configure({ multicolor: true }),
       Placeholder.configure({ placeholder: 'Generated content will appear here…' }),
       AttributionMark,
@@ -145,6 +146,16 @@ export function EchoWriteEditor({
           'prose prose-sm prose-invert max-w-none focus:outline-none min-h-[420px]',
       },
       handleDOMEvents: {
+        click: (_view, event) => {
+          // Never navigate away from EchoWrite due to accidental link clicks inside editable content.
+          const el = event.target as HTMLElement | null;
+          const a = el?.closest?.('a') as HTMLAnchorElement | null;
+          if (a) {
+            event.preventDefault();
+            return true;
+          }
+          return false;
+        },
         mouseover: (_view, event) => {
           const el = event.target as HTMLElement | null;
           const span = el?.closest?.('span[data-attribution]') as HTMLElement | null;
