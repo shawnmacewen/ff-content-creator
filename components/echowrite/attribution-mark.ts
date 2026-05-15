@@ -53,11 +53,12 @@ export const AttributionMark = Mark.create({
 
   renderHTML({ HTMLAttributes }) {
     const colorClass = HTMLAttributes['data-color-class'] || '';
+    const existing = HTMLAttributes.class || '';
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-attribution': 'true',
-        class: `echowrite-attrib inline rounded px-0.5 ${colorClass}`.trim(),
+        class: `echowrite-attrib inline rounded px-0.5 ${existing} ${colorClass}`.trim(),
       }),
       0,
     ];
