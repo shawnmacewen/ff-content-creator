@@ -16,6 +16,24 @@ import { format } from 'date-fns';
 import { ExternalLink, User, Calendar, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
+const designationColorClasses = [
+  'bg-blue-500/15 text-blue-300 border-blue-500/30',
+  'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  'bg-violet-500/15 text-violet-300 border-violet-500/30',
+  'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+  'bg-lime-500/15 text-lime-300 border-lime-500/30',
+  'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30',
+];
+
+function designationColorClass(value?: string | null) {
+  const text = String(value || 'unknown');
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  return designationColorClasses[hash % designationColorClasses.length];
+}
+
 interface ContentDetailProps {
   content: SourceContent | null;
   open: boolean;
@@ -70,7 +88,7 @@ export function ContentDetail({
               </DialogDescription>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <Badge variant="secondary">{content.type}</Badge>
+              <Badge variant="outline" className={designationColorClass(content.type)}>{content.type}</Badge>
             </div>
           </div>
         </DialogHeader>
