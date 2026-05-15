@@ -42,6 +42,8 @@ export default function EchoWritePage() {
   const [content, setContent] = useState('');
   const [sources, setSources] = useState<any[]>([]);
   const [activeEvidence, setActiveEvidence] = useState<number | null>(null);
+  const [hoverSourceId, setHoverSourceId] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   const sourceColors = useMemo(() => {
     const map = new Map<string, string>();
@@ -100,12 +102,29 @@ export default function EchoWritePage() {
       setContent(json.content || '');
       setSources(json.sources || []);
       setActiveEvidence(null);
+      setHoverSourceId(null);
     } finally {
       setLoading(false);
     }
   };
 
   const contentSentences = sentenceSplit(content);
+
+  type AnnotatedSpan = { text: string; sourceId: string | null; snippet: string | null; confidence: number | null; colorClass?: string };
+
+  const annotated = useMemo(() => {
+    if (!contentSentences.length) return [] as AnnotatedSpan[];
+    return contentSentences.map((s) => {
+      const match = evidence.find((e) => e.claim === s);
+      return {
+        text: s,
+        sourceId: match?.sourceId || null,
+        snippet: match?.snippet || null,
+        confidence: match ? Math.min(0.99, 0.55 + Math.min(0.44, (match.score || 0) * 0.06)) : null,
+        colorClass: match?.colorClass,
+      };
+    });
+  }, [contentSentences, evidence]);
 
   return (
     <div className="space-y-6">
@@ -134,35 +153,40 @@ export default function EchoWritePage() {
             <h2 className="text-sm font-semibold">Generated Output</h2>
             <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(content || '')}>Copy</Button>
           </div>
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={16} placeholder="Generated content will appear here." />
-          {evidence.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="text-xs font-semibold">Color-coded evidence view (left-justified)</div>
-              <div className="rounded border p-3 space-y-2 text-sm text-left text-foreground">
-                {contentSentences.map((s, i) => {
-                  const match = evidence.find((e) => e.claim === s);
-                  return (
-                    <div
-                      key={`${i}-${s.slice(0, 16)}`}
-                      className={match ? `rounded px-2 py-1 border ${match.colorClass} text-foreground` : 'px-2 py-1'}
-                    >
-                      {s}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="text-xs font-semibold mb-1">Claim-to-source map</div>
-              <div className="flex flex-wrap gap-2">
-                {evidence.map((e) => (
-                  <button
-                    key={e.id}
-                    onClick={() => setActiveEvidence(e.id)}
-                    className={`text-xs rounded border px-2 py-1 ${e.colorClass} text-foreground ${activeEvidence === e.id ? 'ring-1 ring-primary' : ''}`}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-muted-foreground">Hover highlights to see the supporting snippet + source mapping.</div>
+            <Button size="sm" variant="outline" onClick={() => setEditMode((v) => !v)}>
+              {editMode ? 'View Highlights' : 'Edit Text'}
+            </Button>
+          </div>
+
+          {editMode ? (
+            <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={18} placeholder="Generated content will appear here." />
+          ) : (
+            <div className="rounded border p-3 text-sm text-left text-foreground leading-relaxed">
+              {annotated.length ? annotated.map((span, i) => {
+                const highlight = span.sourceId && span.colorClass;
+                const isHovered = hoverSourceId && span.sourceId === hoverSourceId;
+                return (
+                  <span
+                    key={`${i}-${span.text.slice(0, 12)}`}
+                    className={highlight ? `inline-block mr-1 mb-1 px-1.5 py-0.5 rounded ${span.colorClass} text-foreground transition-all ${isHovered ? 'ring-1 ring-primary' : ''}` : 'mr-1'}
+                    onMouseEnter={() => {
+                      if (span.sourceId) setHoverSourceId(span.sourceId);
+                      setActiveEvidence(i);
+                    }}
+                    onMouseLeave={() => {
+                      setHoverSourceId(null);
+                      setActiveEvidence(null);
+                    }}
+                    title={span.snippet || undefined}
                   >
-                    Claim {e.id + 1}
-                  </button>
-                ))}
-              </div>
+                    {span.text}{' '}
+                  </span>
+                );
+              }) : (
+                <div className="text-muted-foreground">Generated content will appear here.</div>
+              )}
             </div>
           )}
         </div>
@@ -173,14 +197,27 @@ export default function EchoWritePage() {
             {sources.length ? sources.map((s) => {
               const mapped = evidence.filter((e) => e.sourceId === s.id);
               const activeMatch = mapped.find((m) => m.id === activeEvidence);
+              const hoverMatch = hoverSourceId && s.id === hoverSourceId;
+              const colorClass = (sourceColors.get(s.id) || '');
+
               return (
-                <div key={s.id} className={`rounded border p-2 text-foreground ${activeMatch ? `${activeMatch.colorClass} text-foreground` : ''}`}>
+                <div
+                  key={s.id}
+                  className={`rounded border p-2 text-foreground transition-all ${hoverMatch ? `${colorClass} ring-1 ring-primary` : ''}`}
+                  onMouseEnter={() => setHoverSourceId(s.id)}
+                  onMouseLeave={() => setHoverSourceId(null)}
+                  ref={(el) => {
+                    // scroll into view when a related highlight is hovered
+                    if (el && hoverMatch) el.scrollIntoView({ block: 'nearest' });
+                  }}
+                >
                   <div className="font-medium">{s.title}</div>
                   <div className="text-xs text-muted-foreground">{s.publisher || 'n/a'} • {s.designation || 'n/a'} • score {s.score}</div>
-                  {activeMatch && (
+
+                  {(hoverMatch || activeMatch) && (
                     <div className="mt-2 text-xs">
-                      <div className="font-semibold">Matched snippet</div>
-                      <div className="text-muted-foreground">{activeMatch.snippet || 'n/a'}</div>
+                      <div className="font-semibold">Supporting snippet</div>
+                      <div className="text-muted-foreground">{(activeMatch?.snippet || mapped?.[0]?.snippet) ?? 'n/a'}</div>
                     </div>
                   )}
                 </div>
