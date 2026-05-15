@@ -84,11 +84,11 @@ export function EchoWriteEditor({
 
     const spanQueue = [...spans];
     const takeNextSpan = (sentence: string) => {
+      // Prefer positional alignment. If the attribution builder and renderer
+      // split sentences slightly differently, exact-text matching can fail and
+      // result in zero highlights. Positional mapping is more robust.
       const next = spanQueue.shift();
-      if (next && next.text === sentence) return next;
-      // fallback: find by exact text
-      const idx = spanQueue.findIndex((s) => s.text === sentence);
-      if (idx >= 0) return spanQueue.splice(idx, 1)[0];
+      if (next) return next;
       return { text: sentence, sourceId: null, snippet: null, confidence: null, citationNumber: null } as AttributionSpan;
     };
 
@@ -100,7 +100,7 @@ export function EchoWriteEditor({
     const renderSentence = (s: AttributionSpan) => {
       const safe = s.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       if (!showMatches || !s.sourceId || !s.citationNumber) {
-        return `<span>${safe}</span>`;
+        return `<span class="text-foreground">${safe}</span>`;
       }
 
       const colors = colorForCitation(s.citationNumber);
