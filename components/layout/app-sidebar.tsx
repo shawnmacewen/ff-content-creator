@@ -52,19 +52,19 @@ const mainNavItems = [
     icon: Library,
   },
   {
-    title: 'Content Audit',
+    title: 'Content Scan',
     href: '/audit',
     icon: SearchCheck,
-  },
-  {
-    title: 'API Lab',
-    href: '/api-lab',
-    icon: Bug,
   },
   {
     title: 'EchoWrite',
     href: '/echo-write',
     icon: PenSquare,
+  },
+  {
+    title: 'API Lab',
+    href: '/api-lab',
+    icon: Bug,
   },
 ];
 

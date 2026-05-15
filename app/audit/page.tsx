@@ -124,7 +124,7 @@ export default function AuditPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Content Audit</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Content Scan</h1>
         <p className="text-muted-foreground">Type what you want to find. AI will convert your request into DB search rules.</p>
       </div>
 
