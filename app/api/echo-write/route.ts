@@ -102,6 +102,7 @@ export async function POST(req: Request) {
         publisher: x.row.publisher,
         designation: x.row.content_designation,
         score: x.score,
+        bodySnippet: String(x.row.body || '').slice(0, 2200),
       })),
     });
   } catch (e: any) {
