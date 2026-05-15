@@ -9,14 +9,14 @@ import { format } from 'date-fns';
 import { Calendar, ExternalLink, User } from 'lucide-react';
 
 const designationColorClasses = [
-  'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  'bg-rose-500/15 text-rose-300 border-rose-500/30',
-  'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-  'bg-lime-500/15 text-lime-300 border-lime-500/30',
-  'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30',
+  'bg-blue-500/12 text-foreground border-border',
+  'bg-emerald-500/12 text-foreground border-border',
+  'bg-violet-500/12 text-foreground border-border',
+  'bg-amber-500/12 text-foreground border-border',
+  'bg-rose-500/12 text-foreground border-border',
+  'bg-cyan-500/12 text-foreground border-border',
+  'bg-lime-500/12 text-foreground border-border',
+  'bg-fuchsia-500/12 text-foreground border-border',
 ];
 
 function designationColorClass(value?: string | null) {
