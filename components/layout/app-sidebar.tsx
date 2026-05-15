@@ -13,6 +13,7 @@ import {
   Share2,
   Bug,
   SearchCheck,
+  PenSquare,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -59,6 +60,11 @@ const mainNavItems = [
     title: 'API Lab',
     href: '/api-lab',
     icon: Bug,
+  },
+  {
+    title: 'EchoWrite',
+    href: '/echo-write',
+    icon: PenSquare,
   },
 ];
 
