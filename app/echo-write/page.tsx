@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EchoWriteEditor } from '@/components/echowrite/echowrite-editor';
 import { buildAttribution } from '@/lib/echowrite/attribution';
+import { Switch } from '@/components/ui/switch';
 
 export default function EchoWritePage() {
   const [prompt, setPrompt] = useState('');
@@ -20,6 +21,7 @@ export default function EchoWritePage() {
   const [sources, setSources] = useState<any[]>([]);
   const [hoverSourceId, setHoverSourceId] = useState<string | null>(null);
   const [hoverSnippet, setHoverSnippet] = useState<string | null>(null);
+  const [showMatches, setShowMatches] = useState(true);
 
   const { spans, citationMap } = useMemo(() => {
     return buildAttribution(content, sources);
@@ -128,6 +130,8 @@ export default function EchoWritePage() {
             value={content}
             spans={spans}
             onChange={setContent}
+            showMatches={showMatches}
+            hoveredSourceId={hoverSourceId}
             onHoverSpan={(sourceId, snippet) => {
               setHoverSourceId(sourceId);
               setHoverSnippet(snippet);
@@ -135,35 +139,67 @@ export default function EchoWritePage() {
           />
         </div>
 
-        <div className="lg:col-span-2 rounded-lg border p-4">
-          <h2 className="text-sm font-semibold mb-2">Sources Used</h2>
+        <div className="lg:col-span-2 rounded-lg border p-0 overflow-hidden">
+          <div className="shrink-0 p-4 border-b border-border flex items-center justify-between">
+            <span className="font-semibold text-sm">Sources Used ({sourcesWithCitation.length})</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Show matches</span>
+              <Switch checked={showMatches} onCheckedChange={(v) => setShowMatches(Boolean(v))} />
+            </div>
+          </div>
+
           {hoverSnippet ? (
-            <div className="mb-3 rounded border bg-muted/50 p-2 text-xs text-foreground">
-              <div className="font-semibold mb-1">Supporting snippet</div>
-              <div className="text-muted-foreground">{hoverSnippet}</div>
+            <div className="p-3 text-xs text-muted-foreground border-b bg-muted/20">
+              <div className="font-semibold text-foreground mb-1">Supporting snippet</div>
+              <div>“{hoverSnippet}”</div>
             </div>
           ) : null}
 
-          <div className="space-y-2 text-sm max-h-[720px] overflow-auto">
+          <div className="flex-1 overflow-auto p-3 space-y-2.5 max-h-[720px]">
             {sourcesWithCitation.length ? sourcesWithCitation.map((s) => {
               const isHovered = hoverSourceId && s.id === hoverSourceId;
+              const n = s.citationNumber || 0;
+              const colors = n ? [
+                { bg: 'bg-[#f3e8ff]', darkBg: 'dark:bg-purple-950/50', badge: 'bg-[#a855f7]', border: 'border-l-[#a855f7]' },
+                { bg: 'bg-[#fef9c3]', darkBg: 'dark:bg-yellow-950/50', badge: 'bg-[#eab308]', border: 'border-l-[#eab308]' },
+                { bg: 'bg-[#fee2e2]', darkBg: 'dark:bg-red-950/50', badge: 'bg-[#f87171]', border: 'border-l-[#f87171]' },
+                { bg: 'bg-[#dcfce7]', darkBg: 'dark:bg-green-950/50', badge: 'bg-[#22c55e]', border: 'border-l-[#22c55e]' },
+                { bg: 'bg-[#dbeafe]', darkBg: 'dark:bg-blue-950/50', badge: 'bg-[#3b82f6]', border: 'border-l-[#3b82f6]' },
+              ][(n - 1) % 5] : null;
+
               return (
                 <div
                   key={s.id}
-                  className={`rounded border p-2 text-foreground transition-all ${isHovered ? 'ring-1 ring-primary' : ''}`}
+                  className={`p-3 rounded-lg bg-card border-l-4 ${colors?.border || 'border-l-border'} transition-all cursor-pointer ${isHovered ? 'ring-2 ring-[#7c3aed] ring-offset-1 ring-offset-background' : ''}`}
                   onMouseEnter={() => setHoverSourceId(s.id)}
                   onMouseLeave={() => setHoverSourceId(null)}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="font-medium">{s.title}</div>
-                    {s.citationNumber ? (
-                      <div className="text-[10px] rounded border px-1.5 py-0.5 bg-muted text-foreground">[{s.citationNumber}]</div>
+                  <div className="flex gap-2.5">
+                    {n ? (
+                      <span className={`${colors?.badge} text-white text-xs w-5 h-5 rounded flex items-center justify-center shrink-0 font-semibold`}>
+                        {n}
+                      </span>
                     ) : null}
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm leading-tight text-foreground">{s.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {s.publisher || 'n/a'} • {s.designation || 'n/a'}
+                      </p>
+                      {showMatches && isHovered && hoverSnippet ? (
+                        <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>
+                          “{hoverSnippet}”
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">{s.publisher || 'n/a'} • {s.designation || 'n/a'} • score {s.score}</div>
                 </div>
               );
-            }) : <div className="text-muted-foreground">No sources yet.</div>}
+            }) : <div className="text-muted-foreground p-3">No sources yet.</div>}
+          </div>
+
+          <div className="p-3 text-xs text-muted-foreground border-t bg-muted/10">
+            Sources were automatically matched to highlighted content.
           </div>
         </div>
       </div>

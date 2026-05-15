@@ -11,17 +11,46 @@ import { Button } from '@/components/ui/button';
 import { AttributionMark } from './attribution-mark';
 import type { AttributionSpan } from '@/lib/echowrite/attribution';
 
-const sourcePalette = [
-  'bg-blue-500/15 border border-blue-500/30 text-foreground',
-  'bg-emerald-500/15 border border-emerald-500/30 text-foreground',
-  'bg-violet-500/15 border border-violet-500/30 text-foreground',
-  'bg-amber-500/15 border border-amber-500/30 text-foreground',
-  'bg-rose-500/15 border border-rose-500/30 text-foreground',
-  'bg-cyan-500/15 border border-cyan-500/30 text-foreground',
-];
+const sourceColors = [
+  {
+    bg: 'bg-[#f3e8ff]',
+    darkBg: 'dark:bg-purple-950/50',
+    badge: 'bg-[#a855f7]',
+    border: 'border-l-[#a855f7]',
+    ring: 'ring-[#7c3aed]',
+  },
+  {
+    bg: 'bg-[#fef9c3]',
+    darkBg: 'dark:bg-yellow-950/50',
+    badge: 'bg-[#eab308]',
+    border: 'border-l-[#eab308]',
+    ring: 'ring-[#7c3aed]',
+  },
+  {
+    bg: 'bg-[#fee2e2]',
+    darkBg: 'dark:bg-red-950/50',
+    badge: 'bg-[#f87171]',
+    border: 'border-l-[#f87171]',
+    ring: 'ring-[#7c3aed]',
+  },
+  {
+    bg: 'bg-[#dcfce7]',
+    darkBg: 'dark:bg-green-950/50',
+    badge: 'bg-[#22c55e]',
+    border: 'border-l-[#22c55e]',
+    ring: 'ring-[#7c3aed]',
+  },
+  {
+    bg: 'bg-[#dbeafe]',
+    darkBg: 'dark:bg-blue-950/50',
+    badge: 'bg-[#3b82f6]',
+    border: 'border-l-[#3b82f6]',
+    ring: 'ring-[#7c3aed]',
+  },
+] as const;
 
-function paletteClassForCitation(n: number) {
-  return sourcePalette[(n - 1) % sourcePalette.length];
+function colorForCitation(n: number) {
+  return sourceColors[(n - 1) % sourceColors.length];
 }
 
 export function EchoWriteEditor({
@@ -29,27 +58,38 @@ export function EchoWriteEditor({
   spans,
   onChange,
   onHoverSpan,
+  showMatches,
+  hoveredSourceId,
 }: {
   value: string;
   spans: AttributionSpan[];
   onChange: (text: string) => void;
   onHoverSpan: (sourceId: string | null, snippet: string | null) => void;
+  showMatches: boolean;
+  hoveredSourceId: string | null;
 }) {
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
 
   const html = useMemo(() => {
-    // Build simple paragraph HTML where each sentence is a span with attribution attrs.
+    // Build paragraph HTML where each sentence is a highlight span + citation badge.
     if (!spans.length) return '';
     const parts = spans.map((s) => {
-      const attrib = s.sourceId && s.citationNumber
-        ? ` data-attribution="true" data-source-id="${s.sourceId}" data-citation-number="${s.citationNumber}" data-color-class="${paletteClassForCitation(s.citationNumber).replace(/"/g, '')}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="echowrite-attrib inline rounded px-1.5 py-0.5 ${paletteClassForCitation(s.citationNumber)}"`
-        : '';
-      const citation = s.citationNumber ? `<sup class="ml-1 text-[10px] align-super text-muted-foreground">[${s.citationNumber}]</sup>` : '';
       const safe = s.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      return `<span${attrib}>${safe}${citation}</span>`;
+      if (!showMatches || !s.sourceId || !s.citationNumber) {
+        return `<span>${safe}</span>`;
+      }
+
+      const colors = colorForCitation(s.citationNumber);
+      const hoverRing = hoveredSourceId && hoveredSourceId === s.sourceId
+        ? ` ring-2 ${colors.ring} ring-offset-1 ring-offset-background`
+        : '';
+
+      const attrib = ` data-attribution="true" data-source-id="${s.sourceId}" data-citation-number="${s.citationNumber}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="${colors.bg} ${colors.darkBg} px-0.5 rounded cursor-pointer inline transition-all text-foreground${hoverRing}"`;
+      const badge = `<sup class="${colors.badge} text-white text-[10px] px-1.5 py-0.5 rounded font-semibold ml-0.5 inline-flex items-center justify-center min-w-[18px]">${s.citationNumber}</sup>`;
+      return `<span${attrib}>${safe}${badge}</span>`;
     });
     return `<p>${parts.join(' ')}</p>`;
-  }, [spans]);
+  }, [spans, showMatches, hoveredSourceId]);
 
   const editor = useEditor({
     extensions: [
@@ -101,6 +141,12 @@ export function EchoWriteEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, html]);
+
+  useEffect(() => {
+    if (!editor) return;
+    if (mode !== 'highlight') return;
+    editor.commands.setContent(html || '', false);
+  }, [editor, html, mode]);
 
   return (
     <div className="space-y-2">
