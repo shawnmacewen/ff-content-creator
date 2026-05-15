@@ -28,6 +28,46 @@ function assessCompliance(text: string) {
   return { grade, confidence: Number(confidence.toFixed(2)), findings };
 }
 
+const INSTAGRAM_FINANCE_STYLES = [
+  'editorial cartoon illustration with modern flat colors',
+  'semi-realistic cartoon with expressive characters and cinematic lighting',
+  '3D cartoon style with polished textures and playful proportions',
+  'hand-drawn comic style with clean ink lines and soft color fills',
+  'digital watercolor cartoon with warm tones and subtle grain',
+] as const;
+
+const INSTAGRAM_FINANCE_SCENES = [
+  'young professional reviewing a retirement dashboard on a phone in a coffee shop',
+  'family couple discussing a monthly budget at a kitchen table with bills and laptop',
+  'small business owner analyzing cash-flow charts in a bright studio office',
+  'advisor and client planning long-term goals at a desk with tablet and notes',
+  'friends comparing savings goals during a walk in an urban park',
+] as const;
+
+function pickVariantSeed(text: string): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  return hash;
+}
+
+function buildInstagramImagePrompt(caption: string) {
+  const seed = pickVariantSeed(caption);
+  const style = INSTAGRAM_FINANCE_STYLES[seed % INSTAGRAM_FINANCE_STYLES.length];
+  const scene = INSTAGRAM_FINANCE_SCENES[(seed >> 3) % INSTAGRAM_FINANCE_SCENES.length];
+
+  return [
+    'Create an Instagram-ready square image (1:1) for a financial services post.',
+    'Primary style: cartoon-forward, polished, and scroll-stopping.',
+    `Art direction: ${style}.`,
+    `Scene: ${scene}.`,
+    'Blend cartoon storytelling with realistic human emotion, natural body language, and believable scenery.',
+    'Keep tone positive, trustworthy, and educational (no fearmongering, no unrealistic promises).',
+    'Do not include logos, watermarks, UI screenshots, or text overlays.',
+    'Financial context should be visually clear with subtle props (phone dashboards, notes, charts, calculators).',
+    `Caption intent to match: ${caption.slice(0, 900)}`,
+  ].join(' ');
+}
+
 async function generateInstagramImage(apiKey: string, prompt: string): Promise<{ imageUrl: string | null; error?: string }> {
   try {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
@@ -125,7 +165,7 @@ export async function POST(req: Request) {
       });
       let sectionText = result.text.trim();
       if (includeInstagramImage && asset.type === 'social-instagram') {
-        const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${sectionText.slice(0, 800)}`;
+        const imagePrompt = buildInstagramImagePrompt(sectionText);
         const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
         if (image.imageUrl) {
           images.instagram = image.imageUrl;
@@ -156,7 +196,7 @@ export async function POST(req: Request) {
   let outputText = result.text;
   const images: Record<string, string> = {};
   if (includeInstagramImage && type === 'social-instagram') {
-    const imagePrompt = `Create a professional, compliance-safe Instagram visual concept for financial services based on: ${outputText.slice(0, 800)}`;
+    const imagePrompt = buildInstagramImagePrompt(outputText);
     const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
     if (image.imageUrl) {
       images.instagram = image.imageUrl;
