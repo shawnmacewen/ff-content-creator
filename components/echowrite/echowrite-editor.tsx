@@ -146,10 +146,8 @@ export function EchoWriteEditor({
           onHoverSpan(sourceId, snippet);
           return false;
         },
-        mouseout: () => {
-          onHoverSpan(null, null);
-          return false;
-        },
+        // Intentionally do NOT clear hover on mouseout; otherwise moving from the editor
+        // into the Sources sidebar can clear the hover state and prevent highlight sync.
       },
     },
     onUpdate: ({ editor }) => {

@@ -158,12 +158,6 @@ export default function EchoWritePage() {
             </div>
           </div>
 
-          {hoverSnippet ? (
-            <div className="p-3 text-xs text-muted-foreground border-b bg-muted/20">
-              <div className="font-semibold text-foreground mb-1">Supporting snippet</div>
-              <div>“{hoverSnippet}”</div>
-            </div>
-          ) : null}
 
           <div className="flex-1 overflow-auto p-3 space-y-2.5 max-h-[720px]">
             {sourcesWithCitation.length ? sourcesWithCitation.map((s) => {
@@ -203,9 +197,9 @@ export default function EchoWritePage() {
                         {s.designation || 'n/a'}
                       </p>
 
-                      {showMatches && isHovered && hoverSnippet ? (
+                      {showMatches ? (
                         <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>
-                          “{hoverSnippet}”
+                          “{sourceSnippetMap.get(s.id) || 'n/a'}”
                         </p>
                       ) : null}
 
