@@ -35,9 +35,9 @@ function normalizeBody(input: string): string {
     .trim();
 }
 
-function buildNaturalLanguageOrClause(query: string): string {
+function parseIntentTokens(query: string) {
   const cleaned = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-  const stopWords = new Set(['the', 'a', 'an', 'of', 'on', 'in', 'to', 'for', 'and', 'or', 'with', 'about', 'show', 'me', 'articles', 'article']);
+  const stopWords = new Set(['the', 'a', 'an', 'of', 'on', 'in', 'to', 'for', 'and', 'or', 'with', 'about', 'show', 'me', 'articles', 'article', 'content', 'want', 'see']);
   const tokens = Array.from(new Set(cleaned.split(/\s+/).map((t) => t.trim()).filter((t) => t.length > 2 && !stopWords.has(t))));
 
   const synonymMap: Record<string, string[]> = {
@@ -45,22 +45,40 @@ function buildNaturalLanguageOrClause(query: string): string {
     oil: ['energy', 'crude', 'petroleum'],
     prices: ['pricing', 'inflation', 'market'],
     impact: ['effect', 'effects', 'influence'],
+    advisor: ['adviser', 'financial advisor'],
+    advisors: ['adviser', 'financial advisor'],
+    switching: ['switch', 'change', 'transition'],
+    ai: ['artificial intelligence', 'machine learning'],
+    economy: ['economic', 'markets', 'macro'],
   };
 
   const expanded = new Set(tokens);
+  for (const t of tokens) for (const s of synonymMap[t] || []) expanded.add(s);
+  return { tokens, expanded: Array.from(expanded) };
+}
+
+function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: string[]) {
+  const title = String(row.title || '').toLowerCase();
+  const body = String(row.body || '').toLowerCase();
+  const q = query.toLowerCase();
+
+  let score = 0;
+  if (title.includes(q)) score += 20;
+  if (body.includes(q)) score += 10;
+
+  let coreMatches = 0;
   for (const t of tokens) {
-    for (const s of synonymMap[t] || []) expanded.add(s);
+    if (title.includes(t)) { score += 6; coreMatches += 1; }
+    else if (body.includes(t)) { score += 3; coreMatches += 1; }
   }
 
-  const clauses: string[] = [];
-  const escapedFull = query.replace(/,/g, ' ');
-  clauses.push(`title.ilike.%${escapedFull}%,body.ilike.%${escapedFull}%`);
-
-  for (const token of expanded) {
-    clauses.push(`title.ilike.%${token}%,body.ilike.%${token}%`);
+  for (const t of expanded) {
+    if (tokens.includes(t)) continue;
+    if (title.includes(t)) score += 2;
+    else if (body.includes(t)) score += 1;
   }
 
-  return clauses.join(',');
+  return { score, coreMatches };
 }
 
 export async function GET(request: NextRequest) {
@@ -85,13 +103,39 @@ export async function GET(request: NextRequest) {
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  if (query) dbQuery = dbQuery.or(buildNaturalLanguageOrClause(query));
   if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
   if (author) dbQuery = dbQuery.eq('author', author);
   if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
   if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
 
-  const { data, count, error } = await dbQuery.range(from, to);
+  let data: any[] | null = null;
+  let count: number | null = 0;
+  let error: any = null;
+
+  if (query) {
+    const { tokens, expanded } = parseIntentTokens(query);
+    const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 999);
+    if (candidateErr) {
+      error = candidateErr;
+    } else {
+      const scored = (candidateRows || [])
+        .map((row) => {
+          const { score, coreMatches } = scoreRowForIntent(row, query, tokens, expanded);
+          return { row, score, coreMatches };
+        })
+        .filter((item) => item.score > 0 && (tokens.length <= 1 || item.coreMatches >= Math.min(2, tokens.length)))
+        .sort((a, b) => b.score - a.score || Number(new Date(b.row.published_at || 0)) - Number(new Date(a.row.published_at || 0)));
+
+      const sliced = scored.slice(from, to + 1).map((s) => s.row);
+      data = sliced;
+      count = scored.length;
+    }
+  } else {
+    const normal = await dbQuery.range(from, to);
+    data = normal.data;
+    count = normal.count;
+    error = normal.error;
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
