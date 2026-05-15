@@ -74,15 +74,15 @@ export async function GET(request: NextRequest) {
   const availableDesignations = Array.from(new Set(allRows.map((r: any) => r.content_designation).filter(Boolean)));
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
   const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher || (r.source_system === 'sample-seed' ? 'sample' : null)).filter(Boolean)));
-  const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
+  const availableTags = Array.from(new Set(allRows.flatMap((r) => (r.tags || []).map((t: string) => decodeHtmlEntities(String(t))))));
 
   const mapped = (data || []).map((row: any) => ({
     id: row.id,
-    title: row.title,
+    title: decodeHtmlEntities(row.title || ''),
     body: normalizeBody(row.body || ''),
     excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
     type: row.content_designation || row.type,
-    tags: row.tags || [],
+    tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
     url: row.metadata?.url || null,
