@@ -17,7 +17,8 @@ function cleanTokens(x: string) {
 
 export function sentenceSplit(text: string) {
   return text
-    .split(/(?<=[.!?])\s+/)
+    .split(/\n{2,}/)
+    .flatMap((p) => p.split(/(?<=[.!?])\s+/))
     .map((s) => s.trim())
     .filter(Boolean);
 }
