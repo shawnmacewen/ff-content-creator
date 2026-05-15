@@ -27,6 +27,16 @@ export default function EchoWritePage() {
     return buildAttribution(content, sources);
   }, [content, sources]);
 
+  const sourceSnippetMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of spans) {
+      if (!s.sourceId || !s.snippet) continue;
+      if (map.has(s.sourceId)) continue;
+      map.set(s.sourceId, s.snippet);
+    }
+    return map;
+  }, [spans]);
+
   const sourcesWithCitation = useMemo(() => {
     const list = [...sources];
     list.sort((a, b) => (citationMap.get(a.id) || 9999) - (citationMap.get(b.id) || 9999));
@@ -171,8 +181,14 @@ export default function EchoWritePage() {
                 <div
                   key={s.id}
                   className={`p-4 min-h-[140px] rounded-lg bg-card border-l-4 ${colors?.border || 'border-l-border'} transition-all cursor-pointer ${isHovered ? 'ring-2 ring-[#7c3aed] ring-offset-1 ring-offset-background' : ''}`}
-                  onMouseEnter={() => setHoverSourceId(s.id)}
-                  onMouseLeave={() => setHoverSourceId(null)}
+                  onMouseEnter={() => {
+                    setHoverSourceId(s.id);
+                    setHoverSnippet(sourceSnippetMap.get(s.id) || null);
+                  }}
+                  onMouseLeave={() => {
+                    setHoverSourceId(null);
+                    setHoverSnippet(null);
+                  }}
                 >
                   <div className="flex gap-2.5">
                     {n ? (
