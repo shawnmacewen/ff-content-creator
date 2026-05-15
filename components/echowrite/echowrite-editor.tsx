@@ -71,6 +71,12 @@ export function EchoWriteEditor({
 }) {
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
 
+  // Default to highlight mode on mount (avoid any hydration weirdness flipping modes).
+  useEffect(() => {
+    setMode('highlight');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const html = useMemo(() => {
     // Build paragraph HTML from the raw value, but decorate each sentence using the precomputed spans attribution.
@@ -131,7 +137,7 @@ export function EchoWriteEditor({
       Placeholder.configure({ placeholder: 'Generated content will appear here…' }),
       AttributionMark,
     ],
-    content: mode === 'edit' ? value : html,
+    content: html,
     editable: mode === 'edit',
     editorProps: {
       attributes: {
@@ -162,21 +168,10 @@ export function EchoWriteEditor({
 
   useEffect(() => {
     if (!editor) return;
-    if (mode === 'edit') {
-      editor.setEditable(true);
-      editor.commands.setContent(value || '', false);
-    } else {
-      editor.setEditable(false);
-      editor.commands.setContent(html || '', false);
-    }
+    editor.setEditable(mode === 'edit');
+    editor.commands.setContent(html || '', false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, html]);
-
-  useEffect(() => {
-    if (!editor) return;
-    if (mode !== 'highlight') return;
-    editor.commands.setContent(html || '', false);
-  }, [editor, html, mode]);
 
   return (
     <div className="space-y-2">
