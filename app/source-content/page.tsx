@@ -52,7 +52,7 @@ export default function SourceContentPage() {
   const apiUrl = useCallback(() => {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('q', debouncedQuery);
-    if (selectedType && selectedType !== 'all') params.set('type', selectedType);
+    if (selectedType && selectedType !== 'all') params.set('contentDesignation', selectedType);
     if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
     if (selectedPublisher && selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
     params.set('page', String(page));

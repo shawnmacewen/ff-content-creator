@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
   const query = searchParams.get('q') || '';
-  const type = searchParams.get('type') || undefined;
+  const contentDesignation = searchParams.get('contentDesignation') || searchParams.get('type') || undefined;
   const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
   const author = searchParams.get('author') || undefined;
   const publisher = searchParams.get('publisher') || undefined;
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (query) dbQuery = dbQuery.or(`title.ilike.%${query}%,body.ilike.%${query}%`);
-  if (type) dbQuery = dbQuery.eq('type', type);
+  if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
   if (author) dbQuery = dbQuery.eq('author', author);
   if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
   if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const allRows = (await supabase.from('source_content').select('type,tags,author,publisher,source_system,updated_at')).data || [];
+  const allRows = (await supabase.from('source_content').select('content_designation,tags,author,publisher,source_system,updated_at')).data || [];
 
-  const availableTypes = Array.from(new Set(allRows.map((r) => r.type).filter(Boolean)));
+  const availableDesignations = Array.from(new Set(allRows.map((r: any) => r.content_designation).filter(Boolean)));
   const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
   const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher || (r.source_system === 'sample-seed' ? 'sample' : null)).filter(Boolean)));
   const availableTags = Array.from(new Set(allRows.flatMap((r) => r.tags || [])));
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     title: row.title,
     body: normalizeBody(row.body || ''),
     excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
-    type: row.type,
+    type: row.content_designation || row.type,
     tags: row.tags || [],
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     page,
     pageSize,
     totalPages: Math.ceil((count || 0) / pageSize),
-    filters: { availableTags, availableTypes, availableAuthors, availablePublishers },
+    filters: { availableTags, availableTypes: availableDesignations, availableAuthors, availablePublishers },
     meta: { sourceCounts, publisherCounts, lastSyncedAt },
   });
 }

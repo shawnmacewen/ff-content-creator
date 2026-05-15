@@ -57,10 +57,10 @@ export function ContentFilters({
       <div className="flex gap-2">
         <Select value={selectedType} onValueChange={onTypeChange}>
           <SelectTrigger className="w-[140px] bg-muted/50">
-            <SelectValue placeholder="All types" />
+            <SelectValue placeholder="All designations" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">All designations</SelectItem>
             {availableTypes.map((type) => (
               <SelectItem key={type} value={type}>
                 {type}
