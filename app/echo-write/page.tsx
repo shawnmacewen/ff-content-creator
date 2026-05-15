@@ -7,12 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const evidencePalette = [
-  'bg-blue-500/15 border-blue-500/40 text-blue-200',
-  'bg-emerald-500/15 border-emerald-500/40 text-emerald-200',
-  'bg-violet-500/15 border-violet-500/40 text-violet-200',
-  'bg-amber-500/15 border-amber-500/40 text-amber-200',
-  'bg-rose-500/15 border-rose-500/40 text-rose-200',
-  'bg-cyan-500/15 border-cyan-500/40 text-cyan-200',
+  'bg-blue-500/15 border-blue-500/30',
+  'bg-emerald-500/15 border-emerald-500/30',
+  'bg-violet-500/15 border-violet-500/30',
+  'bg-amber-500/15 border-amber-500/30',
+  'bg-rose-500/15 border-rose-500/30',
+  'bg-cyan-500/15 border-cyan-500/30',
 ];
 
 function sentenceSplit(text: string) {
@@ -43,28 +43,44 @@ export default function EchoWritePage() {
   const [sources, setSources] = useState<any[]>([]);
   const [activeEvidence, setActiveEvidence] = useState<number | null>(null);
 
+  const sourceColors = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sources) {
+      if (!s?.id) continue;
+      if (map.has(s.id)) continue;
+      map.set(s.id, evidencePalette[map.size % evidencePalette.length]);
+    }
+    return map;
+  }, [sources]);
+
   const evidence = useMemo(() => {
-    const claims = sentenceSplit(content).slice(0, 8);
+    const claims = sentenceSplit(content).slice(0, 10);
     if (!claims.length || !sources.length) return [] as any[];
-    return claims.map((claim, idx) => {
-      const best = [...sources]
-        .map((s) => {
-          const snippet = String(s.bodySnippet || '');
-          const score = overlapScore(claim, snippet);
-          return { source: s, score, snippet: snippet.slice(0, 260) };
-        })
-        .sort((a, b) => b.score - a.score)[0];
-      return {
-        id: idx,
-        claim,
-        colorClass: evidencePalette[idx % evidencePalette.length],
-        sourceId: best?.source?.id,
-        sourceTitle: best?.source?.title,
-        snippet: best?.snippet || '',
-        score: best?.score || 0,
-      };
-    }).filter((x) => x.score > 0);
-  }, [content, sources]);
+    return claims
+      .map((claim, idx) => {
+        const best = [...sources]
+          .map((s) => {
+            const snippet = String(s.bodySnippet || '');
+            const score = overlapScore(claim, snippet);
+            return { source: s, score, snippet: snippet.slice(0, 260) };
+          })
+          .sort((a, b) => b.score - a.score)[0];
+
+        const sourceId = best?.source?.id as string | undefined;
+        const colorClass = sourceId ? (sourceColors.get(sourceId) || evidencePalette[0]) : evidencePalette[idx % evidencePalette.length];
+
+        return {
+          id: idx,
+          claim,
+          colorClass,
+          sourceId,
+          sourceTitle: best?.source?.title,
+          snippet: best?.snippet || '',
+          score: best?.score || 0,
+        };
+      })
+      .filter((x) => x.score > 0);
+  }, [content, sources, sourceColors]);
 
   const generate = async () => {
     setLoading(true);
@@ -122,11 +138,14 @@ export default function EchoWritePage() {
           {evidence.length > 0 && (
             <div className="mt-3 space-y-2">
               <div className="text-xs font-semibold">Color-coded evidence view (left-justified)</div>
-              <div className="rounded border p-3 space-y-2 text-sm text-left">
+              <div className="rounded border p-3 space-y-2 text-sm text-left text-foreground">
                 {contentSentences.map((s, i) => {
                   const match = evidence.find((e) => e.claim === s);
                   return (
-                    <div key={`${i}-${s.slice(0, 16)}`} className={match ? `rounded px-2 py-1 border ${match.colorClass}` : ''}>
+                    <div
+                      key={`${i}-${s.slice(0, 16)}`}
+                      className={match ? `rounded px-2 py-1 border ${match.colorClass} text-foreground` : 'px-2 py-1'}
+                    >
                       {s}
                     </div>
                   );
@@ -135,7 +154,11 @@ export default function EchoWritePage() {
               <div className="text-xs font-semibold mb-1">Claim-to-source map</div>
               <div className="flex flex-wrap gap-2">
                 {evidence.map((e) => (
-                  <button key={e.id} onClick={() => setActiveEvidence(e.id)} className={`text-xs rounded border px-2 py-1 ${e.colorClass} ${activeEvidence === e.id ? 'ring-1 ring-primary' : ''}`}>
+                  <button
+                    key={e.id}
+                    onClick={() => setActiveEvidence(e.id)}
+                    className={`text-xs rounded border px-2 py-1 ${e.colorClass} text-foreground ${activeEvidence === e.id ? 'ring-1 ring-primary' : ''}`}
+                  >
                     Claim {e.id + 1}
                   </button>
                 ))}
@@ -151,7 +174,7 @@ export default function EchoWritePage() {
               const mapped = evidence.filter((e) => e.sourceId === s.id);
               const activeMatch = mapped.find((m) => m.id === activeEvidence);
               return (
-                <div key={s.id} className={`rounded border p-2 ${activeMatch ? activeMatch.colorClass : ''}`}>
+                <div key={s.id} className={`rounded border p-2 text-foreground ${activeMatch ? `${activeMatch.colorClass} text-foreground` : ''}`}>
                   <div className="font-medium">{s.title}</div>
                   <div className="text-xs text-muted-foreground">{s.publisher || 'n/a'} • {s.designation || 'n/a'} • score {s.score}</div>
                   {activeMatch && (
