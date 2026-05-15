@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EchoWriteEditor } from '@/components/echowrite/echowrite-editor';
 import { buildAttribution } from '@/lib/echowrite/attribution';
 import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function EchoWritePage() {
   const [prompt, setPrompt] = useState('');
@@ -22,6 +30,8 @@ export default function EchoWritePage() {
   const [hoverSourceId, setHoverSourceId] = useState<string | null>(null);
   const [hoverSnippet, setHoverSnippet] = useState<string | null>(null);
   const [showMatches, setShowMatches] = useState(true);
+  const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [promptOpen, setPromptOpen] = useState(false);
 
   const { spans, citationMap } = useMemo(() => {
     return buildAttribution(content, sources);
@@ -60,6 +70,7 @@ export default function EchoWritePage() {
       const json = await res.json();
       setContent(json.content || '');
       setSources(json.sources || []);
+      setLastPrompt(String(json?.debug?.prompt || ''));
       setHoverSourceId(null);
       setHoverSnippet(null);
     } finally {
@@ -126,8 +137,31 @@ export default function EchoWritePage() {
           <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim()}>
             Regenerate
           </Button>
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setPromptOpen(true)}
+            title="View last generation prompt"
+          >
+            <Settings2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
+
+      <Dialog open={promptOpen} onOpenChange={setPromptOpen}>
+        <DialogContent className="max-w-4xl w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>Last generation prompt</DialogTitle>
+            <DialogDescription>
+              This is the full prompt used to generate the most recent EchoWrite output.
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="text-xs whitespace-pre-wrap break-words max-h-[65vh] overflow-auto rounded border bg-muted/20 p-3">
+            {lastPrompt || 'No prompt captured yet. Generate content first.'}
+          </pre>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3 rounded-lg border p-4">

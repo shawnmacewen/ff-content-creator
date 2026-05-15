@@ -138,6 +138,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       content: result.text,
+      debug: { prompt },
       sources: ranked.map((x) => ({
         id: x.row.id,
         title: x.row.title,
