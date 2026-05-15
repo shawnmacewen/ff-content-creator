@@ -35,6 +35,34 @@ function normalizeBody(input: string): string {
     .trim();
 }
 
+function buildNaturalLanguageOrClause(query: string): string {
+  const cleaned = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const stopWords = new Set(['the', 'a', 'an', 'of', 'on', 'in', 'to', 'for', 'and', 'or', 'with', 'about', 'show', 'me', 'articles', 'article']);
+  const tokens = Array.from(new Set(cleaned.split(/\s+/).map((t) => t.trim()).filter((t) => t.length > 2 && !stopWords.has(t))));
+
+  const synonymMap: Record<string, string[]> = {
+    war: ['conflict', 'geopolitical'],
+    oil: ['energy', 'crude', 'petroleum'],
+    prices: ['pricing', 'inflation', 'market'],
+    impact: ['effect', 'effects', 'influence'],
+  };
+
+  const expanded = new Set(tokens);
+  for (const t of tokens) {
+    for (const s of synonymMap[t] || []) expanded.add(s);
+  }
+
+  const clauses: string[] = [];
+  const escapedFull = query.replace(/,/g, ' ');
+  clauses.push(`title.ilike.%${escapedFull}%,body.ilike.%${escapedFull}%`);
+
+  for (const token of expanded) {
+    clauses.push(`title.ilike.%${token}%,body.ilike.%${token}%`);
+  }
+
+  return clauses.join(',');
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
@@ -57,7 +85,7 @@ export async function GET(request: NextRequest) {
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  if (query) dbQuery = dbQuery.or(`title.ilike.%${query}%,body.ilike.%${query}%`);
+  if (query) dbQuery = dbQuery.or(buildNaturalLanguageOrClause(query));
   if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
   if (author) dbQuery = dbQuery.eq('author', author);
   if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
