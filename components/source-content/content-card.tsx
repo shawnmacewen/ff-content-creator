@@ -122,27 +122,33 @@ export function ContentCard({
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onViewDetail?.(content)}
-              className="h-8"
-            >
-              View Details
-            </Button>
-            {content.url && (
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                asChild
+                onClick={() => onViewDetail?.(content)}
                 className="h-8"
               >
-                <a href={content.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  Source
-                </a>
+                View Details
               </Button>
+              {content.url && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="h-8"
+                >
+                  <a href={content.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Source
+                  </a>
+                </Button>
+              )}
+            </div>
+
+            {String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? '').toLowerCase() === 'true' && (
+              <Badge className="h-6 text-[10px] px-2 py-0 bg-blue-600 hover:bg-blue-600 text-white">FINRA</Badge>
             )}
           </div>
         </div>
