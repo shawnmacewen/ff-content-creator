@@ -12,10 +12,26 @@ function decodeHtmlEntities(input: string): string {
 
 function normalizeBody(input: string): string {
   const decoded = decodeHtmlEntities(input || '');
+
   return decoded
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    // structure-friendly replacements
+    .replace(/<\/?(section|container|article|corpus)[^>]*>/gi, '\n\n')
+    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+    .replace(/<crossreference[^>]*>([\s\S]*?)<\/crossreference>/gi, '$1')
+    // basic emphasis preservation (markdown-ish)
+    .replace(/<(b|strong)[^>]*>([\s\S]*?)<\/\1>/gi, '**$2**')
+    .replace(/<(i|em)[^>]*>([\s\S]*?)<\/\1>/gi, '*$2*')
+    // strip remaining tags
     .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+    // normalize whitespace while preserving paragraph breaks
+    .replace(/\r/g, '')
+    .replace(/\t/g, ' ')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
