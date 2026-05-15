@@ -16,6 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ContentDetail } from '@/components/source-content/content-detail';
+import type { SourceContent } from '@/lib/types/content';
 
 export default function EchoWritePage() {
   const [prompt, setPrompt] = useState('');
@@ -32,6 +34,9 @@ export default function EchoWritePage() {
   const [showMatches, setShowMatches] = useState(true);
   const [lastPrompt, setLastPrompt] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
+
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
 
   const { spans, citationMap } = useMemo(() => {
     return buildAttribution(content, sources);
@@ -76,6 +81,13 @@ export default function EchoWritePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openSourceDetail = async (id: string) => {
+    const res = await fetch(`/api/source-content/${id}`);
+    const json = await res.json();
+    setDetailContent(json?.data || null);
+    setDetailOpen(true);
   };
 
   return (
@@ -238,8 +250,21 @@ export default function EchoWritePage() {
                       ) : null}
 
                       <div className="mt-auto pt-3">
-                        <div className="border-t pt-2 text-[10px] text-muted-foreground">
-                          BasContentId: {s.basContentId || 'n/a'}
+                        <div className="border-t pt-2 flex items-center justify-between gap-2">
+                          <div className="text-[10px] text-muted-foreground">
+                            BasContentId: {s.basContentId || 'n/a'}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openSourceDetail(String(s.id));
+                            }}
+                          >
+                            View Details
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -254,6 +279,11 @@ export default function EchoWritePage() {
           </div>
         </div>
       </div>
+      <ContentDetail
+        content={detailContent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }
