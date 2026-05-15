@@ -71,10 +71,6 @@ export function EchoWriteEditor({
 }) {
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
 
-  // If the user is hovering sources/highlights, ensure we are in highlight mode so the UX works.
-  useEffect(() => {
-    if (hoveredSourceId && mode !== 'highlight') setMode('highlight');
-  }, [hoveredSourceId, mode]);
 
   const html = useMemo(() => {
     // Build paragraph HTML from the raw value, but decorate each sentence using the precomputed spans attribution.
