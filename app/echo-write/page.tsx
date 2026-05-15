@@ -193,8 +193,10 @@ export default function EchoWritePage() {
                         </p>
                       ) : null}
 
-                      <div className="mt-auto pt-3 text-[10px] text-muted-foreground">
-                        BasContentId: {s.basContentId || 'n/a'}
+                      <div className="mt-auto pt-3">
+                        <div className="border-t pt-2 text-[10px] text-muted-foreground">
+                          BasContentId: {s.basContentId || 'n/a'}
+                        </div>
                       </div>
                     </div>
                   </div>
