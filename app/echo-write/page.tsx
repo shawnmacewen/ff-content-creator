@@ -34,6 +34,7 @@ export default function EchoWritePage() {
   const [showMatches, setShowMatches] = useState(true);
   const [lastPrompt, setLastPrompt] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
@@ -153,6 +154,16 @@ export default function EchoWritePage() {
             Regenerate
           </Button>
           <div className="flex-1" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setHowItWorksOpen(true)}
+            title="How EchoWrite works (retrieval + grounding + highlights)"
+          >
+            <span className="text-xs font-semibold">i</span>
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -163,6 +174,46 @@ export default function EchoWritePage() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
+        <DialogContent className="max-w-3xl w-[92vw]">
+          <DialogHeader>
+            <DialogTitle>How EchoWrite works</DialogTitle>
+            <DialogDescription>
+              Retrieval + grounding + evidence highlighting.
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="text-xs whitespace-pre-wrap break-words max-h-[65vh] overflow-auto rounded border bg-muted/20 p-3">
+{`Current EchoWrite strategy is “lightweight RAG” (semantic-ish retrieval + grounded generation), but it’s not embeddings-based yet.
+
+1) Retrieval (which sources get used)
+When you click Generate, /api/echo-write does:
+- pulls up to 1000 source_content rows (most recent first)
+- scores them against your prompt using simple lexical matching:
+  - phrase match + token overlap in title and body
+- sorts by score
+- takes the top 12 as “retrieved” candidates
+
+So yes: we’re effectively grounding on max 12 sources per generation right now.
+
+2) Grounding / prompt context
+Those top sources are concatenated into the SOURCE CONTEXT block (title + some metadata + body snippet) and sent to OpenAI.
+
+3) Generation
+We ask the model to:
+- synthesize (not copy)
+- avoid hallucinations
+- follow strict formatting rules (paragraph spacing, headings, etc.)
+
+4) Evidence/highlights after generation
+Separately (client-side), we:
+- split the generated output into sentences
+- run lexical overlap against the returned source snippets
+- assign citations/highlights to the best matching source per sentence
+- show only cited sources in the right panel`}
+          </pre>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={promptOpen} onOpenChange={setPromptOpen}>
         <DialogContent className="max-w-4xl w-[95vw]">
