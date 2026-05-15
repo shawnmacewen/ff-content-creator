@@ -71,9 +71,25 @@ export function EchoWriteEditor({
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
 
   const html = useMemo(() => {
-    // Build paragraph HTML where each sentence is a highlight span + citation badge.
-    if (!spans.length) return '';
-    const parts = spans.map((s) => {
+    // Build paragraph HTML from the raw value, but decorate each sentence using the precomputed spans attribution.
+    if (!value?.trim()) return '';
+
+    const spanQueue = [...spans];
+    const takeNextSpan = (sentence: string) => {
+      const next = spanQueue.shift();
+      if (next && next.text === sentence) return next;
+      // fallback: find by exact text
+      const idx = spanQueue.findIndex((s) => s.text === sentence);
+      if (idx >= 0) return spanQueue.splice(idx, 1)[0];
+      return { text: sentence, sourceId: null, snippet: null, confidence: null, citationNumber: null } as AttributionSpan;
+    };
+
+    const paragraphs = String(value)
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const renderSentence = (s: AttributionSpan) => {
       const safe = s.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       if (!showMatches || !s.sourceId || !s.citationNumber) {
         return `<span>${safe}</span>`;
@@ -87,9 +103,21 @@ export function EchoWriteEditor({
       const attrib = ` data-attribution="true" data-source-id="${s.sourceId}" data-citation-number="${s.citationNumber}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="${colors.bg} ${colors.darkBg} px-0.5 rounded cursor-pointer inline transition-all text-foreground${hoverRing}"`;
       const badge = `<sup class="${colors.badge} text-white text-[10px] px-1.5 py-0.5 rounded font-semibold ml-0.5 inline-flex items-center justify-center min-w-[18px]">${s.citationNumber}</sup>`;
       return `<span${attrib}>${safe}${badge}</span>`;
-    });
-    return `<p>${parts.join(' ')}</p>`;
-  }, [spans, showMatches, hoveredSourceId]);
+    };
+
+    const paraHtml = paragraphs
+      .map((p) => {
+        const sentences = p
+          .split(/(?<=[.!?])\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const parts = sentences.map((t) => renderSentence(takeNextSpan(t)));
+        return `<p>${parts.join(' ')}</p>`;
+      })
+      .join('');
+
+    return paraHtml;
+  }, [value, spans, showMatches, hoveredSourceId]);
 
   const editor = useEditor({
     extensions: [

@@ -181,16 +181,21 @@ export default function EchoWritePage() {
                       </span>
                     ) : null}
 
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex flex-col">
                       <h4 className="font-medium text-sm leading-tight text-foreground">{s.title}</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {s.basContentId || 'n/a'} • {s.designation || 'n/a'}
+                        {s.designation || 'n/a'}
                       </p>
+
                       {showMatches && isHovered && hoverSnippet ? (
                         <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>
                           “{hoverSnippet}”
                         </p>
                       ) : null}
+
+                      <div className="mt-auto pt-3 text-[10px] text-muted-foreground">
+                        BasContentId: {s.basContentId || 'n/a'}
+                      </div>
                     </div>
                   </div>
                 </div>
