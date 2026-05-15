@@ -114,6 +114,14 @@ export async function POST(req: Request) {
       contentTypeInstruction,
       styleInstruction(body.writingStyle),
       lengthInstruction(body.length, body.targetWordCount),
+      'Formatting requirements (strict):',
+      '- Write in clearly separated paragraphs.',
+      '- Use a blank line between paragraphs and between sections (double newlines).',
+      '- Do not output one giant block of text.',
+      '- Use short paragraphs (2–4 sentences).',
+      body.contentType === 'article'
+        ? '- Use a clear headline, then subheadings, then paragraphs under each heading.'
+        : '- Use section headings and short spoken paragraphs under each heading.',
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
       'Return publication-ready output only.',
       '',
