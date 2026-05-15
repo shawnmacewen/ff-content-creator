@@ -4,6 +4,31 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+function decodeHtmlEntities(input: string): string {
+  return String(input || '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function normalizeXmlToText(input: string): string {
+  const decoded = decodeHtmlEntities(input || '');
+  return decoded
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/\t/g, ' ')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 type EchoWriteBody = {
   prompt: string;
   writingStyle: 'professional' | 'fun' | 'educational';
@@ -112,7 +137,7 @@ export async function POST(req: Request) {
         basContentId: (x.row as any).bas_content_id || null,
         designation: x.row.content_designation,
         score: x.score,
-        bodySnippet: String(x.row.body || '').slice(0, 2200),
+        bodySnippet: normalizeXmlToText(String(x.row.body || '')).slice(0, 2200),
       })),
     });
   } catch (e: any) {
