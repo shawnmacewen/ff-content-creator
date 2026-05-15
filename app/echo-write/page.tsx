@@ -139,7 +139,7 @@ export default function EchoWritePage() {
           />
         </div>
 
-        <div className="lg:col-span-2 rounded-lg border p-0 overflow-hidden">
+        <div className="lg:col-span-2 w-4/5 justify-self-end rounded-lg border p-0 overflow-hidden">
           <div className="shrink-0 p-4 border-b border-border flex items-center justify-between">
             <span className="font-semibold text-sm">Sources Used ({sourcesWithCitation.length})</span>
             <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function EchoWritePage() {
               return (
                 <div
                   key={s.id}
-                  className={`p-3 rounded-lg bg-card border-l-4 ${colors?.border || 'border-l-border'} transition-all cursor-pointer ${isHovered ? 'ring-2 ring-[#7c3aed] ring-offset-1 ring-offset-background' : ''}`}
+                  className={`p-4 min-h-[140px] rounded-lg bg-card border-l-4 ${colors?.border || 'border-l-border'} transition-all cursor-pointer ${isHovered ? 'ring-2 ring-[#7c3aed] ring-offset-1 ring-offset-background' : ''}`}
                   onMouseEnter={() => setHoverSourceId(s.id)}
                   onMouseLeave={() => setHoverSourceId(null)}
                 >
@@ -184,7 +184,7 @@ export default function EchoWritePage() {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm leading-tight text-foreground">{s.title}</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {s.publisher || 'n/a'} • {s.designation || 'n/a'}
+                        {s.basContentId || 'n/a'} • {s.designation || 'n/a'}
                       </p>
                       {showMatches && isHovered && hoverSnippet ? (
                         <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>

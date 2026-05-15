@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     const { data: rows, error } = await supabase
       .from('source_content')
-      .select('id,title,body,publisher,content_designation,tags,published_at')
+      .select('id,title,body,publisher,content_designation,tags,published_at,bas_content_id')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(1000);
 
@@ -100,6 +100,7 @@ export async function POST(req: Request) {
         id: x.row.id,
         title: x.row.title,
         publisher: x.row.publisher,
+        basContentId: (x.row as any).bas_content_id || null,
         designation: x.row.content_designation,
         score: x.score,
         bodySnippet: String(x.row.body || '').slice(0, 2200),
