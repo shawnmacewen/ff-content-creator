@@ -89,6 +89,8 @@ export default function EchoWritePage() {
     }
   };
 
+  const contentSentences = sentenceSplit(content);
+
   return (
     <div className="space-y-6">
       <div>
@@ -116,10 +118,21 @@ export default function EchoWritePage() {
             <h2 className="text-sm font-semibold">Generated Output</h2>
             <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(content || '')}>Copy</Button>
           </div>
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={22} placeholder="Generated content will appear here." />
+          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={16} placeholder="Generated content will appear here." />
           {evidence.length > 0 && (
-            <div className="mt-3">
-              <div className="text-xs font-semibold mb-2">Claim-to-source map</div>
+            <div className="mt-3 space-y-2">
+              <div className="text-xs font-semibold">Color-coded evidence view (left-justified)</div>
+              <div className="rounded border p-3 space-y-2 text-sm text-left">
+                {contentSentences.map((s, i) => {
+                  const match = evidence.find((e) => e.claim === s);
+                  return (
+                    <div key={`${i}-${s.slice(0, 16)}`} className={match ? `rounded px-2 py-1 border ${match.colorClass}` : ''}>
+                      {s}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="text-xs font-semibold mb-1">Claim-to-source map</div>
               <div className="flex flex-wrap gap-2">
                 {evidence.map((e) => (
                   <button key={e.id} onClick={() => setActiveEvidence(e.id)} className={`text-xs rounded border px-2 py-1 ${e.colorClass} ${activeEvidence === e.id ? 'ring-1 ring-primary' : ''}`}>

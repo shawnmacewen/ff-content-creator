@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
     const contentTypeInstruction = body.contentType === 'video-script'
-      ? 'Write as a production-ready video script with: hook opening, scene/segment structure, speaking cadence notes, optional visual direction callouts, and CTA ending.'
+      ? 'Write as a self-recorded advisor-to-camera video script with: strong hook opening, clear spoken segments, natural speaking cadence notes, and a concise CTA ending. Do not include visual effects direction, scene effects, or production shot lists.'
       : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
 
     const prompt = [
