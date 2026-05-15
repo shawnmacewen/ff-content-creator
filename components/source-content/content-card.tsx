@@ -8,22 +8,22 @@ import type { SourceContent } from '@/lib/types/content';
 import { format } from 'date-fns';
 import { Calendar, ExternalLink, User } from 'lucide-react';
 
-const designationDotClasses = [
-  'bg-blue-500',
-  'bg-emerald-500',
-  'bg-violet-500',
-  'bg-amber-500',
-  'bg-rose-500',
-  'bg-cyan-500',
-  'bg-lime-500',
-  'bg-fuchsia-500',
+const designationToneClasses = [
+  'bg-blue-500/12 text-blue-200 border-blue-500/30',
+  'bg-emerald-500/12 text-emerald-200 border-emerald-500/30',
+  'bg-violet-500/12 text-violet-200 border-violet-500/30',
+  'bg-amber-500/12 text-amber-200 border-amber-500/30',
+  'bg-rose-500/12 text-rose-200 border-rose-500/30',
+  'bg-cyan-500/12 text-cyan-200 border-cyan-500/30',
+  'bg-lime-500/12 text-lime-200 border-lime-500/30',
+  'bg-fuchsia-500/12 text-fuchsia-200 border-fuchsia-500/30',
 ];
 
-function designationDotClass(value?: string | null) {
+function designationToneClass(value?: string | null) {
   const text = String(value || 'unknown');
   let hash = 0;
   for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-  return designationDotClasses[hash % designationDotClasses.length];
+  return designationToneClasses[hash % designationToneClasses.length];
 }
 
 interface ContentCardProps {
@@ -97,8 +97,7 @@ export function ContentCard({
               />
             )}
             {content.type ? (
-              <Badge variant="outline" className="shrink-0 bg-muted text-foreground border-border">
-                <span className={`inline-block h-2 w-2 rounded-full mr-2 ${designationDotClass(content.type)}`} />
+              <Badge variant="outline" className={`shrink-0 font-medium tracking-wide ${designationToneClass(content.type)}`}>
                 {content.type}
               </Badge>
             ) : null}
