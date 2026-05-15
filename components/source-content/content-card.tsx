@@ -96,9 +96,11 @@ export function ContentCard({
                 className="h-8 w-8 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
               />
             )}
-            <Badge variant="outline" className={`shrink-0 ${designationColorClass(content.type)}`}>
-              {content.type}
-            </Badge>
+            {content.type ? (
+              <Badge variant="outline" className={`shrink-0 ${designationColorClass(content.type)}`}>
+                {content.type}
+              </Badge>
+            ) : null}
           </div>
         </div>
       </CardHeader>

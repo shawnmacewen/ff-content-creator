@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     title: decodeHtmlEntities(row.title || ''),
     body: normalizeBody(row.body || ''),
     excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
-    type: row.content_designation || row.type,
+    type: row.content_designation ?? null,
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),

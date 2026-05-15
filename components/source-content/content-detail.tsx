@@ -88,7 +88,9 @@ export function ContentDetail({
               </DialogDescription>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <Badge variant="outline" className={designationColorClass(content.type)}>{content.type}</Badge>
+              {content.type ? (
+                <Badge variant="outline" className={designationColorClass(content.type)}>{content.type}</Badge>
+              ) : null}
             </div>
           </div>
         </DialogHeader>
