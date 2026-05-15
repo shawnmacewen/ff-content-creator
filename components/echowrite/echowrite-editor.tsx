@@ -159,7 +159,8 @@ export function EchoWriteEditor({
     },
     onUpdate: ({ editor }) => {
       if (mode !== 'edit') return;
-      onChange(editor.getText());
+      // Preserve paragraph spacing when saving back to plain text.
+      onChange(editor.getText({ blockSeparator: '\n\n' }));
     },
   });
 
@@ -192,7 +193,7 @@ export function EchoWriteEditor({
         <div className="flex items-center gap-2">
           <Toggle
             pressed={mode === 'edit'}
-            onPressedChange={(on) => setMode(on ? 'edit' : 'highlight')}
+            onClick={() => setMode('edit')}
             variant="outline"
             size="sm"
             className="gap-1.5"
@@ -202,7 +203,7 @@ export function EchoWriteEditor({
           </Toggle>
           <Toggle
             pressed={mode === 'highlight'}
-            onPressedChange={(on) => setMode(on ? 'highlight' : 'edit')}
+            onClick={() => setMode('highlight')}
             variant="outline"
             size="sm"
             className="gap-1.5"
