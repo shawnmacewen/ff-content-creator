@@ -7,7 +7,8 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
-import { Button } from '@/components/ui/button';
+import { Pencil, Highlighter } from 'lucide-react';
+import { Toggle } from '@/components/ui/toggle';
 import { AttributionMark } from './attribution-mark';
 import type { AttributionSpan } from '@/lib/echowrite/attribution';
 
@@ -72,7 +73,7 @@ export function EchoWriteEditor({
 
   // If the user is hovering sources/highlights, ensure we are in highlight mode so the UX works.
   useEffect(() => {
-    if (hoveredSourceId && mode === 'edit') setMode('highlight');
+    if (hoveredSourceId && mode !== 'highlight') setMode('highlight');
   }, [hoveredSourceId, mode]);
 
   const html = useMemo(() => {
@@ -188,9 +189,28 @@ export function EchoWriteEditor({
             ? 'Hover highlights to see supporting snippets and linked sources.'
             : 'Edit mode: changes will update the raw text output.'}
         </div>
-        <Button size="sm" variant="outline" onClick={() => setMode((m) => (m === 'edit' ? 'highlight' : 'edit'))}>
-          {mode === 'edit' ? 'View Highlights' : 'Edit Text'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Toggle
+            pressed={mode === 'highlight'}
+            onPressedChange={(on) => setMode(on ? 'highlight' : 'edit')}
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+          >
+            <Highlighter className="h-4 w-4" />
+            <span>Highlight</span>
+          </Toggle>
+          <Toggle
+            pressed={mode === 'edit'}
+            onPressedChange={(on) => setMode(on ? 'edit' : 'highlight')}
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+          >
+            <Pencil className="h-4 w-4" />
+            <span>Edit</span>
+          </Toggle>
+        </div>
       </div>
       <div className="rounded-lg border p-3 bg-background">
         <EditorContent editor={editor} />
