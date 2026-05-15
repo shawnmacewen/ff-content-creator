@@ -53,9 +53,12 @@ export default function EchoWritePage() {
   }, [spans]);
 
   const sourcesWithCitation = useMemo(() => {
-    const list = [...sources];
-    list.sort((a, b) => (citationMap.get(a.id) || 9999) - (citationMap.get(b.id) || 9999));
-    return list.map((s) => ({ ...s, citationNumber: citationMap.get(s.id) || null }));
+    const list = [...sources]
+      .map((s) => ({ ...s, citationNumber: citationMap.get(s.id) || null }))
+      .filter((s) => s.citationNumber);
+
+    list.sort((a, b) => (a.citationNumber || 9999) - (b.citationNumber || 9999));
+    return list;
   }, [sources, citationMap]);
 
   const generate = async () => {
