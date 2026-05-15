@@ -191,16 +191,6 @@ export function EchoWriteEditor({
         </div>
         <div className="flex items-center gap-2">
           <Toggle
-            pressed={mode === 'highlight'}
-            onPressedChange={(on) => setMode(on ? 'highlight' : 'edit')}
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-          >
-            <Highlighter className="h-4 w-4" />
-            <span>Highlight</span>
-          </Toggle>
-          <Toggle
             pressed={mode === 'edit'}
             onPressedChange={(on) => setMode(on ? 'edit' : 'highlight')}
             variant="outline"
@@ -209,6 +199,16 @@ export function EchoWriteEditor({
           >
             <Pencil className="h-4 w-4" />
             <span>Edit</span>
+          </Toggle>
+          <Toggle
+            pressed={mode === 'highlight'}
+            onPressedChange={(on) => setMode(on ? 'highlight' : 'edit')}
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+          >
+            <Highlighter className="h-4 w-4" />
+            <span>Highlight</span>
           </Toggle>
         </div>
       </div>
