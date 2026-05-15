@@ -21,10 +21,29 @@ export const AttributionMark = Mark.create({
 
   addAttributes() {
     return {
-      sourceId: { default: null },
-      citationNumber: { default: null },
-      colorClass: { default: null },
-      snippet: { default: null },
+      sourceId: {
+        default: null,
+        parseHTML: (el) => (el as HTMLElement).getAttribute('data-source-id'),
+        renderHTML: (attrs) => (attrs.sourceId ? { 'data-source-id': attrs.sourceId } : {}),
+      },
+      citationNumber: {
+        default: null,
+        parseHTML: (el) => {
+          const raw = (el as HTMLElement).getAttribute('data-citation-number');
+          return raw ? Number(raw) : null;
+        },
+        renderHTML: (attrs) => (attrs.citationNumber ? { 'data-citation-number': String(attrs.citationNumber) } : {}),
+      },
+      colorClass: {
+        default: null,
+        parseHTML: (el) => (el as HTMLElement).getAttribute('data-color-class'),
+        renderHTML: (attrs) => (attrs.colorClass ? { 'data-color-class': attrs.colorClass } : {}),
+      },
+      snippet: {
+        default: null,
+        parseHTML: (el) => (el as HTMLElement).getAttribute('data-snippet'),
+        renderHTML: (attrs) => (attrs.snippet ? { 'data-snippet': attrs.snippet } : {}),
+      },
     };
   },
 
@@ -33,12 +52,12 @@ export const AttributionMark = Mark.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    const colorClass = HTMLAttributes.colorClass || '';
+    const colorClass = HTMLAttributes['data-color-class'] || '';
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-attribution': 'true',
-        class: `echowrite-attrib inline rounded px-1.5 py-0.5 ${colorClass}`.trim(),
+        class: `echowrite-attrib inline rounded px-0.5 ${colorClass}`.trim(),
       }),
       0,
     ];
