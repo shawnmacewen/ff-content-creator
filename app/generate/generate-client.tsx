@@ -75,6 +75,48 @@ export default function GeneratePage() {
     setSelectedContentTypes([t]);
   };
 
+  const handleGenerateInstagramCarousel = useCallback(async () => {
+    const instagramSelected = mode === 'single'
+      ? selectedContentTypes[0] === 'social-instagram'
+      : kitTypes.includes('social-instagram');
+
+    if (!instagramSelected) {
+      toast.error('Select Instagram in your content types first');
+      return;
+    }
+
+    if (!selectedSourceIds.length) {
+      toast.error('Select a source article first');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/generate/instagram-carousel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceContentIds: selectedSourceIds,
+          slideCount: instagramCarouselSlides,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || 'Carousel generation failed');
+
+      const slides = Array.isArray(payload?.slides) ? payload.slides : [];
+      const images = Array.isArray(payload?.images) ? payload.images : [];
+      const caption = String(payload?.caption || '');
+
+      const byId = new Map(images.map((i: any) => [i.slideId, i.imageUrl]));
+      const merged = slides.map((s: any) => ({ ...s, imageUrl: byId.get(s.id) ?? null }));
+
+      setInstagramCarouselSlidesData(merged);
+      setInstagramCarouselCaption(caption);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate carousel images');
+    }
+  }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
+
   const handleGenerateKit = useCallback(async () => {
     if (!kitTypes.length) {
       toast.error('Select at least one content type for the kit');
@@ -120,48 +162,6 @@ export default function GeneratePage() {
       setIsGeneratingKit(false);
     }
   }, [kitTypes, includeInstagramImage, instagramImageMode, handleGenerateInstagramCarousel, selectedSourceIds, customPrompt, tone, additionalContext]);
-
-  const handleGenerateInstagramCarousel = useCallback(async () => {
-    const instagramSelected = mode === 'single'
-      ? selectedContentTypes[0] === 'social-instagram'
-      : kitTypes.includes('social-instagram');
-
-    if (!instagramSelected) {
-      toast.error('Select Instagram in your content types first');
-      return;
-    }
-
-    if (!selectedSourceIds.length) {
-      toast.error('Select a source article first');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/generate/instagram-carousel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sourceContentIds: selectedSourceIds,
-          slideCount: instagramCarouselSlides,
-        }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || 'Carousel generation failed');
-
-      const slides = Array.isArray(payload?.slides) ? payload.slides : [];
-      const images = Array.isArray(payload?.images) ? payload.images : [];
-      const caption = String(payload?.caption || '');
-
-      const byId = new Map(images.map((i: any) => [i.slideId, i.imageUrl]));
-      const merged = slides.map((s: any) => ({ ...s, imageUrl: byId.get(s.id) ?? null }));
-
-      setInstagramCarouselSlidesData(merged);
-      setInstagramCarouselCaption(caption);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to generate carousel images');
-    }
-  }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
