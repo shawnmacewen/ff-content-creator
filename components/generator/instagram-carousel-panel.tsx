@@ -155,7 +155,6 @@ export function InstagramCarouselPanel({
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold">Slides</div>
-              <div className="text-xs text-muted-foreground">Set slide count in the modal (3–6)</div>
             </div>
             <div className="text-sm font-semibold tabular-nums">{slideCount}</div>
           </div>
