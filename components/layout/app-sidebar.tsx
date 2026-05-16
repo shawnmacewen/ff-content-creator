@@ -93,9 +93,9 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold text-sidebar-foreground">
-              FF Content Creator
+              EDITOR[AI]L
             </span>
-            <span className="text-xs text-muted-foreground">Editorial Hub</span>
+            <span className="text-xs text-muted-foreground">Content Hub</span>
           </div>
         </Link>
       </SidebarHeader>

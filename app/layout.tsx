@@ -12,7 +12,7 @@ const _geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 const _geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 
 export const metadata: Metadata = {
-  title: 'FF Content Creator | Editorial Hub',
+  title: 'EDITOR[AI]L | Content Hub',
   description: 'AI-powered content creation tool for the editorial team. Generate social media posts, emails, newsletters, and articles.',
   generator: 'v0.app',
 };
