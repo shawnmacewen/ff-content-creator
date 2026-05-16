@@ -43,6 +43,7 @@ export default function GeneratePage() {
   const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
 
   // New: separate toggles for single vs carousel chips (KIT UX)
+  const [instagramKitVariant, setInstagramKitVariant] = useState<'single' | 'carousel' | null>('single');
   const [includeInstagramSingleImages, setIncludeInstagramSingleImages] = useState(false);
   const [includeInstagramCarouselImages, setIncludeInstagramCarouselImages] = useState(false);
 
@@ -315,31 +316,35 @@ export default function GeneratePage() {
             <KitContentTypeSelector
               selected={kitTypes}
               onToggle={(t) => {
-                // If user is toggling instagram, enforce mutual exclusivity between single vs multi by mode toggles.
+                // Base selection (multi-select)
                 toggleKitType(t);
               }}
+              instagramVariant={instagramKitVariant}
+              setInstagramVariant={(v) => setInstagramKitVariant(v)}
               includeInstagramSingleImages={includeInstagramSingleImages}
               includeInstagramCarouselImages={includeInstagramCarouselImages}
               onToggleInstagramSingleImages={() => {
                 // selecting single deselects carousel
+                setInstagramKitVariant('single');
                 setIncludeInstagramCarouselImages(false);
+
+                // ensure instagram is in kit types
+                setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+
                 setInstagramImageMode('single');
-                setIncludeInstagramImage((v) => !v);
-                setIncludeInstagramSingleImages((v) => {
-                  const next = !v;
-                  // single images: no modal
-                  return next;
-                });
+                setIncludeInstagramImage(true);
+                setIncludeInstagramSingleImages((v) => !v);
               }}
               onToggleInstagramCarouselImages={() => {
                 // selecting carousel deselects single
+                setInstagramKitVariant('carousel');
                 setIncludeInstagramSingleImages(false);
+
+                // ensure instagram is in kit types
+                setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+
                 setInstagramImageMode('carousel');
-                setIncludeInstagramImage((v) => {
-                  const next = !v;
-                  if (next) setInstagramImageModalOpen(true);
-                  return next;
-                });
+                setIncludeInstagramImage(true);
                 setIncludeInstagramCarouselImages((v) => {
                   const next = !v;
                   if (next) setInstagramImageModalOpen(true);

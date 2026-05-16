@@ -37,6 +37,8 @@ const categoryLabels: Record<string, string> = {
 export function KitContentTypeSelector({
   selected,
   onToggle,
+  instagramVariant,
+  setInstagramVariant,
   includeInstagramSingleImages,
   includeInstagramCarouselImages,
   onToggleInstagramSingleImages,
@@ -44,6 +46,9 @@ export function KitContentTypeSelector({
 }: {
   selected: ContentType[];
   onToggle: (t: ContentType) => void;
+
+  instagramVariant: 'single' | 'carousel' | null;
+  setInstagramVariant: (v: 'single' | 'carousel') => void;
 
   includeInstagramSingleImages: boolean;
   includeInstagramCarouselImages: boolean;
@@ -66,14 +71,17 @@ export function KitContentTypeSelector({
 
                 // Replace default Instagram chip with two chips: single vs multi-post
                 if (ct.id === 'social-instagram') {
-                  const singleSelected = isSelected; // selection is the same underlying type
-                  const carouselSelected = isSelected;
+                  const singleSelected = isSelected && instagramVariant === 'single';
+                  const carouselSelected = isSelected && instagramVariant === 'carousel';
 
                   return (
                     <React.Fragment key={ct.id}>
                       <button
                         type="button"
-                        onClick={() => onToggle('social-instagram')}
+                        onClick={() => {
+                          setInstagramVariant('single');
+                          onToggle('social-instagram');
+                        }}
                         className={cn(
                           'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
                           singleSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
@@ -115,7 +123,10 @@ export function KitContentTypeSelector({
 
                       <button
                         type="button"
-                        onClick={() => onToggle('social-instagram')}
+                        onClick={() => {
+                          setInstagramVariant('carousel');
+                          onToggle('social-instagram');
+                        }}
                         className={cn(
                           'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
                           carouselSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
