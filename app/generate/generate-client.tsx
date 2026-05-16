@@ -378,32 +378,6 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* Instagram carousel image preview (KIT) */}
-          {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
-              <InstagramCarouselPanel
-                enabled={true}
-                onEnabledChange={() => {}}
-                slideCount={instagramCarouselSlides}
-                onSlideCountChange={setInstagramCarouselSlides}
-                slides={instagramCarouselSlidesData ?? undefined}
-                caption={instagramCarouselCaption}
-                onCaptionChange={setInstagramCarouselCaption}
-              />
-              <div className="mt-3 flex justify-end">
-                <Button
-                  className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  type="button"
-                  onClick={handleGenerateInstagramCarousel}
-                  disabled={!selectedSourceIds.length}
-                >
-                  Generate Carousel Images
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
           <InstagramImageModal
             open={instagramImageModalOpen}
             onOpenChange={setInstagramImageModalOpen}
@@ -415,7 +389,7 @@ export default function GeneratePage() {
           />
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">5. Generated Output</h2>
+            <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
             <KitGeneratedOutput
               selectedTypes={kitTypes}
               outputs={kitOutputs}
@@ -423,6 +397,25 @@ export default function GeneratePage() {
               onGenerate={handleGenerateKit}
             />
           </div>
+
+          {/* Instagram carousel image preview (KIT) */}
+          {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
+              <InstagramCarouselPanel
+                enabled={true}
+                onEnabledChange={() => {}}
+                slideCount={instagramCarouselSlides}
+                onSlideCountChange={setInstagramCarouselSlides}
+                slides={instagramCarouselSlidesData ?? undefined}
+                caption={instagramCarouselCaption}
+                onCaptionChange={setInstagramCarouselCaption}
+                onGenerate={handleGenerateInstagramCarousel}
+                isGenerating={false}
+                canGenerate={!!selectedSourceIds.length}
+              />
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="space-y-6">
@@ -479,17 +472,10 @@ export default function GeneratePage() {
                 slides={instagramCarouselSlidesData ?? undefined}
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
+                onGenerate={handleGenerateInstagramCarousel}
+                isGenerating={false}
+                canGenerate={!!selectedSourceIds.length}
               />
-              <div className="mt-3 flex justify-end">
-                <Button
-                  className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  type="button"
-                  onClick={handleGenerateInstagramCarousel}
-                  disabled={!selectedSourceIds.length}
-                >
-                  Generate Carousel Images
-                </Button>
-              </div>
             </div>
           ) : null}
 

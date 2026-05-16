@@ -99,6 +99,9 @@ export function InstagramCarouselPanel({
   slides,
   caption,
   onCaptionChange,
+  onGenerate,
+  isGenerating,
+  canGenerate = true,
 }: {
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
@@ -107,6 +110,9 @@ export function InstagramCarouselPanel({
   slides?: CarouselSlide[];
   caption?: string;
   onCaptionChange?: (v: string) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
+  canGenerate?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const localSlides = React.useMemo(() => mockSlides(slideCount), [slideCount]);
@@ -145,7 +151,17 @@ export function InstagramCarouselPanel({
             <Instagram className="h-4 w-4 text-violet-600" />
             <CardTitle className="text-base">Preview Your Instagram Post</CardTitle>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {onGenerate ? (
+              <Button
+                size="sm"
+                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                onClick={onGenerate}
+                disabled={!!isGenerating || !canGenerate}
+              >
+                {isGenerating ? 'Generating…' : 'Generate Images'}
+              </Button>
+            ) : null}
             <Label className="text-xs text-muted-foreground">Carousel</Label>
             <Switch checked={enabled} onCheckedChange={onEnabledChange} />
           </div>
