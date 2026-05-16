@@ -9,6 +9,7 @@ import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitFormatSelector } from '@/components/generator/kit-format-selector';
+import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
@@ -214,6 +215,11 @@ export default function GeneratePage() {
               selectedId={selectedSourceIds[0] ?? null}
               onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
             />
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">3. Generated Output</h2>
+            <KitGeneratedOutput selectedTypes={kitTypes} />
           </div>
         </div>
       ) : (
