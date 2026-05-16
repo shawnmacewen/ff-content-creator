@@ -49,6 +49,7 @@ export default function GeneratePage() {
 
   const [instagramCarouselSlidesData, setInstagramCarouselSlidesData] = useState<any[] | null>(null);
   const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
+  const [isGeneratingCarouselImages, setIsGeneratingCarouselImages] = useState(false);
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -97,6 +98,8 @@ export default function GeneratePage() {
       return;
     }
 
+    setIsGeneratingCarouselImages(true);
+
     try {
       const res = await fetch('/api/generate/instagram-carousel', {
         method: 'POST',
@@ -118,9 +121,12 @@ export default function GeneratePage() {
 
       setInstagramCarouselSlidesData(merged);
       setInstagramCarouselCaption(caption);
+      toast.success('Carousel images generated');
     } catch (err: any) {
       console.error(err);
       toast.error(err?.message || 'Failed to generate carousel images');
+    } finally {
+      setIsGeneratingCarouselImages(false);
     }
   }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
 
@@ -411,7 +417,7 @@ export default function GeneratePage() {
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
-                isGenerating={false}
+                isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />
             </div>
@@ -473,7 +479,7 @@ export default function GeneratePage() {
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
-                isGenerating={false}
+                isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />
             </div>

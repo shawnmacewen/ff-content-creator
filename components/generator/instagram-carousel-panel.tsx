@@ -159,7 +159,10 @@ export function InstagramCarouselPanel({
                 onClick={onGenerate}
                 disabled={!!isGenerating || !canGenerate}
               >
-                {isGenerating ? 'Generating…' : 'Generate Images'}
+                <span className={cn('inline-flex items-center gap-2', isGenerating && 'opacity-90')}>
+                  <span className={cn('h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white', isGenerating ? 'animate-spin' : 'hidden')} />
+                  {isGenerating ? 'Generating…' : 'Generate Images'}
+                </span>
               </Button>
             ) : null}
             <Label className="text-xs text-muted-foreground">Carousel</Label>
