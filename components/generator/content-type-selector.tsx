@@ -77,20 +77,29 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                     <span>{contentType.label}</span>
 
                     {contentType.id === 'social-instagram' && onToggleInstagramImage ? (
-                      <span className="ml-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
-                        <button
-                          type="button"
-                          onClick={(e) => {
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleInstagramImage();
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
                             e.stopPropagation();
                             onToggleInstagramImage();
-                          }}
-                          className={cn(
-                            'rounded-full px-1.5 py-0.5 transition-colors',
-                            includeInstagramImage ? 'text-violet-700 dark:text-violet-300' : 'text-muted-foreground'
-                          )}
-                        >
-                          {includeInstagramImage ? 'Images: On' : 'Images: Off'}
-                        </button>
+                          }
+                        }}
+                        className={cn(
+                          'ml-1 select-none rounded-full border px-2 py-0.5 text-[11px] transition-colors',
+                          includeInstagramImage
+                            ? 'border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300'
+                            : 'border-border text-muted-foreground hover:bg-muted'
+                        )}
+                        aria-label="Toggle Instagram images"
+                      >
+                        {includeInstagramImage ? 'Images: On' : 'Images: Off'}
                       </span>
                     ) : null}
                   </button>
