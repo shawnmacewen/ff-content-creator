@@ -2,6 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import sharp from 'sharp';
 
 function pickVariantSeed(text: string): number {
   let hash = 0;
@@ -77,8 +78,9 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, slideId, index, total, beat, quality = 'fast' } = body as {
+  const { theme, masterPlate, slideId, index, total, beat, quality = 'fast' } = body as {
     theme: any;
+    masterPlate?: string | null;
     slideId: string;
     index: number;
     total: number;
@@ -92,7 +94,37 @@ export async function POST(req: Request) {
 
   const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
-  // Derive prompt via model so we can keep the art direction consistent and concise.
+  // If we have a master plate, crop a connected slice for this slide (fast + cohesive)
+  if (masterPlate && masterPlate.startsWith('data:image')) {
+    try {
+      const b64 = masterPlate.split(',')[1] || '';
+      const buf = Buffer.from(b64, 'base64');
+
+      // Create a 4:5 slide by resizing master plate to height=1280 then cropping a 1024x1280 window
+      const targetH = 1280;
+      const targetW = 1024;
+
+      const resized = sharp(buf).resize({ height: targetH });
+      const meta = await resized.metadata();
+      const width = meta.width || 1920;
+      const maxLeft = Math.max(0, width - targetW);
+      const denom = Math.max(1, (total - 1));
+      const left = Math.round((index / denom) * maxLeft);
+
+      const outBuf = await resized.extract({ left, top: 0, width: Math.min(targetW, width), height: targetH }).png().toBuffer();
+      const outB64 = outBuf.toString('base64');
+
+      return new Response(
+        JSON.stringify({ slideId, imageUrl: `data:image/png;base64,${outB64}`, error: null }),
+        { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
+      );
+    } catch (e: any) {
+      // fall through to per-slide generation
+      console.error('masterPlate crop failed', e);
+    }
+  }
+
+  // Fallback: Derive prompt via model so we can keep the art direction consistent and concise.
   const promptRes = await generateObject({
     model: openai(env.OPENAI_MODEL),
     schema: Schema,
@@ -104,6 +136,6 @@ export async function POST(req: Request) {
 
   return new Response(
     JSON.stringify({ slideId, imageUrl: img.imageUrl, error: img.error || null }),
-    { status: img.imageUrl ? 200 : 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
+    { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );
 }

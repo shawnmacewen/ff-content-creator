@@ -95,11 +95,48 @@ export async function POST(req: Request) {
     summary: String(s.summary || ''),
   }));
 
+  // Generate ONE master background plate (landscape) used to create connected slide crops
+  const masterPrompt = [
+    'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
+    'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
+    'No readable text, no logos, no watermarks.',
+    'Must have a continuous horizon/flow that can be panned/cropped across multiple slides.',
+    `Palette: ${themeRes.object.palette}.`,
+    `Lighting: ${themeRes.object.lighting}.`,
+    `Texture: ${themeRes.object.texture}.`,
+    `Imagery theme: ${themeRes.object.imageryTheme}.`,
+  ].join(' ');
+
+  const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-image-1',
+      prompt: masterPrompt,
+      size: '1536x1024',
+    }),
+  });
+
+  const imgData = await imgRes.json().catch(() => ({}));
+  if (!imgRes.ok) {
+    return new Response(
+      JSON.stringify({ error: imgData?.error?.message || `Master plate image API error (${imgRes.status})` }),
+      { status: 500 }
+    );
+  }
+
+  const first = imgData?.data?.[0];
+  const masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
+
   return new Response(
     JSON.stringify({
       theme: themeRes.object,
       slides,
       caption: String(planRes.object.caption || '').trim(),
+      masterPlate,
     }),
     { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );

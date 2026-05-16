@@ -120,6 +120,7 @@ export default function GeneratePage() {
       const slides = Array.isArray(plan?.slides) ? plan.slides : [];
       const caption = String(plan?.caption || '');
       const theme = plan?.theme;
+      const masterPlate = plan?.masterPlate || null;
       setInstagramCarouselTheme(theme || null);
 
       // Initialize UI with slide text immediately
@@ -141,6 +142,7 @@ export default function GeneratePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             theme,
+            masterPlate,
             slideId: s.id,
             index: i,
             total,
