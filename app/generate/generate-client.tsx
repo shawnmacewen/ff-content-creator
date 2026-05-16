@@ -203,7 +203,20 @@ export default function GeneratePage() {
       <GenerationModeToggle mode={mode} onChange={setMode} />
 
       {mode === 'kit' ? (
-        <KitFormatSelector selected={kitTypes} onToggle={toggleKitType} />
+        <div className="space-y-6">
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">1. Select KIT Content Types</h2>
+            <KitFormatSelector selected={kitTypes} onToggle={toggleKitType} />
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">2. Source Content</h2>
+            <SourceArticlePicker
+              selectedId={selectedSourceIds[0] ?? null}
+              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+            />
+          </div>
+        </div>
       ) : (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
