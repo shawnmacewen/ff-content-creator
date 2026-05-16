@@ -85,7 +85,7 @@ export function ContentCard({
                     : 'Published date unavailable'}
                 </span>
               </CardDescription>
-              <div className="text-xs text-muted-foreground">BasContentFilename: {content.metadata?.extraPropertiesSelected?.BasContentFilename || 'Unavailable'}</div>
+              <div className="text-xs text-muted-foreground">Filename: {content.metadata?.extraPropertiesSelected?.BasContentFilename || 'Unavailable'}</div>
             </div>
           </div>
           <div className="flex flex-col gap-2 items-end">
