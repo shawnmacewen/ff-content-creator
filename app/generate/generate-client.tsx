@@ -28,12 +28,17 @@ export default function GeneratePage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Generate Social Content</h1>
-            <p className="text-muted-foreground">Transform your articles into premium Instagram-ready content.</p>
+            <p className="text-muted-foreground">Transform your articles into engaging social media content.</p>
           </div>
         </div>
-        <Button className="gap-2 rounded-2xl" onClick={() => router.push('/library')} variant="outline">
-          Saved Drafts
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button className="rounded-2xl" onClick={() => router.push('/library')} variant="outline">
+            Saved Drafts
+          </Button>
+          <Button className="rounded-2xl bg-violet-600 hover:bg-violet-600/90" onClick={() => {}}>
+            Generate
+          </Button>
+        </div>
       </div>
 
       <InstagramGenerateWorkflow selectedSourceIds={selectedSourceIds} setSelectedSourceIds={setSelectedSourceIds} />
