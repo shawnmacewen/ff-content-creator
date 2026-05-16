@@ -366,21 +366,7 @@ export default function GeneratePage() {
                 onAdditionalContextChange={setAdditionalContext}
               />
 
-              <div className="mt-4">
-                <ContentTypeSelector
-                  selected={kitTypes}
-                  // allow multi-select in KIT
-                  onToggle={toggleKitType}
-                  includeInstagramImage={includeInstagramImage}
-                  onToggleInstagramImage={() => {
-                    setIncludeInstagramImage((v) => {
-                      const next = !v;
-                      if (next) setInstagramImageModalOpen(true);
-                      return next;
-                    });
-                  }}
-                />
-              </div>
+
             </div>
 
             <div>
