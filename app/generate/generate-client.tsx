@@ -106,6 +106,12 @@ export default function GeneratePage() {
       const payload = await response.json().catch(() => ({}));
       const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
       setKitOutputs(outputs);
+
+      // If KIT includes Instagram + images are enabled in carousel mode, generate carousel images too.
+      if (includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram')) {
+        await handleGenerateInstagramCarousel();
+      }
+
       toast.success('KIT generated');
     } catch (err) {
       console.error('KIT generation error:', err);
@@ -113,7 +119,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramImage, instagramImageMode, handleGenerateInstagramCarousel, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerateInstagramCarousel = useCallback(async () => {
     const instagramSelected = mode === 'single'
