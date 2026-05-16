@@ -25,6 +25,7 @@ export default function EchoWritePage() {
   const [contentType, setContentType] = useState<'article' | 'video-script'>('article');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [targetWordCount, setTargetWordCount] = useState('');
+  const [maxSources, setMaxSources] = useState(6);
 
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
@@ -73,6 +74,7 @@ export default function EchoWritePage() {
           writingStyle,
           contentType,
           length,
+          maxSources,
           targetWordCount: targetWordCount ? Number(targetWordCount) : undefined,
         }),
       });
@@ -109,7 +111,7 @@ export default function EchoWritePage() {
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
         />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
             <Select value={writingStyle} onValueChange={(v: any) => setWritingStyle(v)}>
@@ -145,6 +147,16 @@ export default function EchoWritePage() {
           <div>
             <div className="text-xs text-muted-foreground mb-1">Target Word Count</div>
             <Input value={targetWordCount} onChange={(e) => setTargetWordCount(e.target.value)} placeholder="Optional" />
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">Max Articles to Reference</div>
+            <Input
+              type="number"
+              min={0}
+              max={12}
+              value={maxSources}
+              onChange={(e) => setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)))}
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">

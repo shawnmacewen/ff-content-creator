@@ -35,6 +35,7 @@ type EchoWriteBody = {
   contentType: 'article' | 'video-script';
   length: 'short' | 'medium' | 'long';
   targetWordCount?: number;
+  maxSources?: number;
 };
 
 function styleInstruction(style: EchoWriteBody['writingStyle']) {
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
       .map((row) => ({ row, ...scoreRow(row, body.prompt, tokens) }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 12);
+      .slice(0, Math.max(0, Math.min(12, Number(body.maxSources ?? 6))));
 
     const context = ranked
       .map((x, idx) => {
