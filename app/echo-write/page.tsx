@@ -90,7 +90,8 @@ export default function EchoWritePage() {
   const openSourceDetail = async (id: string) => {
     const res = await fetch(`/api/source-content/${id}`);
     const json = await res.json();
-    setDetailContent(json?.data || null);
+    // /api/source-content/[id] returns the content object directly (not wrapped).
+    setDetailContent(json || null);
     setDetailOpen(true);
   };
 
