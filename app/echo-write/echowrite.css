@@ -1,0 +1,5 @@
+.echowrite-prosemirror p { margin: 0 0 0.9rem 0; }
+.echowrite-prosemirror p:last-child { margin-bottom: 0; }
+.echowrite-prosemirror h1 { margin: 0 0 0.9rem 0; font-size: 1.2rem; font-weight: 700; }
+.echowrite-prosemirror h2 { margin: 1.0rem 0 0.7rem 0; font-size: 1.05rem; font-weight: 700; }
+.echowrite-prosemirror h3 { margin: 0.9rem 0 0.6rem 0; font-size: 1.0rem; font-weight: 600; }

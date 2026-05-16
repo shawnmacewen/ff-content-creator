@@ -1,5 +1,7 @@
 'use client';
 
+import './echowrite.css';
+
 import { useMemo, useState } from 'react';
 import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

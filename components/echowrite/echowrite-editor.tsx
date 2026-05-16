@@ -154,7 +154,7 @@ export function EchoWriteEditor({
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm prose-invert max-w-none focus:outline-none min-h-[420px]',
+          'prose prose-sm prose-invert max-w-none focus:outline-none min-h-[420px] echowrite-prosemirror',
       },
       handleDOMEvents: {
         click: (_view, event) => {
