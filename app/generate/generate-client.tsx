@@ -251,16 +251,40 @@ export default function GeneratePage() {
             <KitFormatSelector selected={kitTypes} onToggle={toggleKitType} />
           </div>
 
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">2. Source Content</h2>
-            <SourceArticlePicker
-              selectedId={selectedSourceIds[0] ?? null}
-              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-            />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
+              <ToneControls
+                tone={tone}
+                onToneChange={setTone}
+                customPrompt={customPrompt}
+                onCustomPromptChange={setCustomPrompt}
+                additionalContext={additionalContext}
+                onAdditionalContextChange={setAdditionalContext}
+              />
+
+              <div className="mt-4">
+                <ContentTypeSelector
+                  selected={kitTypes}
+                  // allow multi-select in KIT
+                  onToggle={toggleKitType}
+                  includeInstagramImage={includeInstagramImage}
+                  onToggleInstagramImage={() => setIncludeInstagramImage((v) => !v)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
+              <SourceArticlePicker
+                selectedId={selectedSourceIds[0] ?? null}
+                onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+              />
+            </div>
           </div>
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">3. Generated Output</h2>
+            <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
             <KitGeneratedOutput
               selectedTypes={kitTypes}
               outputs={kitOutputs}
