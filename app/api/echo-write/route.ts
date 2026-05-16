@@ -4,6 +4,28 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+async function recordGenerationEvent(args: {
+  tool: 'generate-content' | 'echowrite';
+  contentType: string;
+  success: boolean;
+  model?: string | null;
+  meta?: Record<string, any>;
+}) {
+  try {
+    const supabase = getSupabaseServerClient();
+    await supabase.from('generation_events').insert({
+      tool: args.tool,
+      content_type: args.contentType,
+      success: args.success,
+      model: args.model || null,
+      meta: args.meta || {},
+    });
+  } catch {
+    // best-effort metrics only
+  }
+}
+
+
 function decodeHtmlEntities(input: string): string {
   return String(input || '')
     .replace(/&lt;/g, '<')
@@ -138,6 +160,18 @@ export async function POST(req: Request) {
       prompt,
       temperature: 0.5,
       maxOutputTokens: 2200,
+    });
+
+    await recordGenerationEvent({
+      tool: 'echowrite',
+      contentType: body.contentType,
+      success: true,
+      model: env.OPENAI_MODEL,
+      meta: {
+        writingStyle: body.writingStyle,
+        length: body.length,
+        maxSources: Number(body.maxSources ?? 6),
+      },
     });
 
     return NextResponse.json({
