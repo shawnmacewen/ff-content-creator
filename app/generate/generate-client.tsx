@@ -10,6 +10,7 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
+import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
@@ -35,10 +36,15 @@ export default function GeneratePage() {
   const [compliance, setCompliance] = useState<any>(null);
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [imageStatus, setImageStatus] = useState<string | null>(null);
+  // Instagram image toggles
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
   const [instagramImageModalOpen, setInstagramImageModalOpen] = useState(false);
   const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
   const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
+
+  // New: separate toggles for single vs carousel chips (KIT UX)
+  const [includeInstagramSingleImages, setIncludeInstagramSingleImages] = useState(false);
+  const [includeInstagramCarouselImages, setIncludeInstagramCarouselImages] = useState(false);
 
   const [instagramCarouselSlidesData, setInstagramCarouselSlidesData] = useState<any[] | null>(null);
   const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
@@ -306,7 +312,41 @@ export default function GeneratePage() {
         <div className="space-y-6">
           <div>
             <h2 className="mb-3 text-lg font-semibold">1. Select KIT Content Types</h2>
-            <KitFormatSelector selected={kitTypes} onToggle={toggleKitType} />
+            <KitContentTypeSelector
+              selected={kitTypes}
+              onToggle={(t) => {
+                // If user is toggling instagram, enforce mutual exclusivity between single vs multi by mode toggles.
+                toggleKitType(t);
+              }}
+              includeInstagramSingleImages={includeInstagramSingleImages}
+              includeInstagramCarouselImages={includeInstagramCarouselImages}
+              onToggleInstagramSingleImages={() => {
+                // selecting single deselects carousel
+                setIncludeInstagramCarouselImages(false);
+                setInstagramImageMode('single');
+                setIncludeInstagramImage((v) => !v);
+                setIncludeInstagramSingleImages((v) => {
+                  const next = !v;
+                  // single images: no modal
+                  return next;
+                });
+              }}
+              onToggleInstagramCarouselImages={() => {
+                // selecting carousel deselects single
+                setIncludeInstagramSingleImages(false);
+                setInstagramImageMode('carousel');
+                setIncludeInstagramImage((v) => {
+                  const next = !v;
+                  if (next) setInstagramImageModalOpen(true);
+                  return next;
+                });
+                setIncludeInstagramCarouselImages((v) => {
+                  const next = !v;
+                  if (next) setInstagramImageModalOpen(true);
+                  return next;
+                });
+              }}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
