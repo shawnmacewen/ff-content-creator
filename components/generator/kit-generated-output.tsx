@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 
 export type KitOutput = {
   type: ContentType;
+  label?: string;
   content: string;
 };
 
@@ -32,8 +33,14 @@ const PREVIEW_MOCK: Record<string, string> = {
 
 export function KitGeneratedOutput({
   selectedTypes,
+  outputs,
+  isGenerating,
+  onGenerate,
 }: {
   selectedTypes: ContentType[];
+  outputs?: KitOutput[] | null;
+  isGenerating?: boolean;
+  onGenerate?: () => void;
 }) {
   const types = selectedTypes.length ? selectedTypes : (['social-instagram'] as ContentType[]);
   const [active, setActive] = React.useState<ContentType>(types[0]);
@@ -42,8 +49,8 @@ export function KitGeneratedOutput({
     if (!types.includes(active)) setActive(types[0]);
   }, [types, active]);
 
-  const activeLabel = CONTENT_TYPE_MAP[active]?.label ?? active;
-  const content = PREVIEW_MOCK[active] ?? 'Generated output will appear here.';
+  const activeOutput = outputs?.find((o) => o.type === active);
+  const content = activeOutput?.content || PREVIEW_MOCK[active] || 'Generated output will appear here.';
 
   const handleCopy = async () => {
     try {
@@ -59,10 +66,22 @@ export function KitGeneratedOutput({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-base">Generated Output (Preview)</CardTitle>
-          <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
-            <Copy className="h-4 w-4" />
-            Copy
-          </Button>
+          <div className="flex items-center gap-2">
+            {onGenerate ? (
+              <Button
+                size="sm"
+                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                onClick={onGenerate}
+                disabled={!!isGenerating}
+              >
+                {isGenerating ? 'Generating…' : 'Generate'}
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
+              <Copy className="h-4 w-4" />
+              Copy
+            </Button>
+          </div>
         </div>
       </CardHeader>
 
@@ -77,14 +96,18 @@ export function KitGeneratedOutput({
             ))}
           </TabsList>
 
-          {types.map((t) => (
-            <TabsContent key={t} value={t} className="mt-4">
-              <div className="rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm">
-                <div className="mb-2 text-xs font-medium text-muted-foreground">{CONTENT_TYPE_MAP[t]?.label ?? t}</div>
-                <div className="whitespace-pre-wrap">{PREVIEW_MOCK[t] ?? content}</div>
-              </div>
-            </TabsContent>
-          ))}
+          {types.map((t) => {
+            const out = outputs?.find((o) => o.type === t);
+            const txt = out?.content || PREVIEW_MOCK[t] || content;
+            return (
+              <TabsContent key={t} value={t} className="mt-4">
+                <div className="rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm">
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">{out?.label || CONTENT_TYPE_MAP[t]?.label || t}</div>
+                  <div className="whitespace-pre-wrap">{txt}</div>
+                </div>
+              </TabsContent>
+            );
+          })}
         </Tabs>
 
         <div className="rounded-2xl border bg-violet-500/10 px-4 py-3 text-xs text-violet-700 dark:text-violet-300">

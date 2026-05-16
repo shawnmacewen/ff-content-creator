@@ -37,6 +37,8 @@ export default function GeneratePage() {
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
+  const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
+  const [isGeneratingKit, setIsGeneratingKit] = useState(false);
 
   // Parse URL params
   useEffect(() => {
@@ -64,6 +66,46 @@ export default function GeneratePage() {
     // single asset → choose exactly one
     setSelectedContentTypes([t]);
   };
+
+  const handleGenerateKit = useCallback(async () => {
+    if (!kitTypes.length) {
+      toast.error('Select at least one content type for the kit');
+      return;
+    }
+
+    setIsGeneratingKit(true);
+    setKitOutputs(null);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // type is ignored for kit mode but we send a stable value
+          type: kitTypes[0],
+          mode: 'kit',
+          selectedTypes: kitTypes,
+          includeInstagramImage: false,
+          sourceContentIds: selectedSourceIds,
+          customPrompt,
+          tone,
+          additionalContext,
+        }),
+      });
+
+      if (!response.ok) throw new Error('KIT generation failed');
+
+      const payload = await response.json().catch(() => ({}));
+      const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
+      setKitOutputs(outputs);
+      toast.success('KIT generated');
+    } catch (err) {
+      console.error('KIT generation error:', err);
+      toast.error('Failed to generate kit');
+    } finally {
+      setIsGeneratingKit(false);
+    }
+  }, [kitTypes, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -219,7 +261,12 @@ export default function GeneratePage() {
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">3. Generated Output</h2>
-            <KitGeneratedOutput selectedTypes={kitTypes} />
+            <KitGeneratedOutput
+              selectedTypes={kitTypes}
+              outputs={kitOutputs}
+              isGenerating={isGeneratingKit}
+              onGenerate={handleGenerateKit}
+            />
           </div>
         </div>
       ) : (

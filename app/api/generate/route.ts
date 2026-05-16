@@ -174,9 +174,10 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'Select at least one content type' }), { status: 400 });
     }
 
-    const parts: string[] = [];
+    const outputs: Array<{ type: ContentType; label: string; content: string }> = [];
     const images: Record<string, string> = {};
     const sectionScores: Array<{ label: string; grade: string; confidence: number; findings: string[] }> = [];
+
     for (const asset of assets) {
       const systemPrompt = buildSystemPrompt(asset.type, tone);
       const userPrompt = buildUserPrompt(asset.type, sourceText, customPrompt, additionalContext);
@@ -187,6 +188,7 @@ export async function POST(req: Request) {
         maxOutputTokens: 1200,
         temperature: 0.7,
       });
+
       let sectionText = result.text.trim();
       if (includeInstagramImage && asset.type === 'social-instagram') {
         const imagePrompt = buildInstagramImagePrompt(sectionText);
@@ -198,13 +200,14 @@ export async function POST(req: Request) {
           sectionText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
         }
       }
-      parts.push(`## ${asset.label}\n\n${sectionText}`);
+
+      outputs.push({ type: asset.type, label: asset.label, content: sectionText });
       sectionScores.push({ label: asset.label, ...assessCompliance(sectionText) });
     }
 
-    const content = parts.join('\n\n---\n\n');
-    const overall = assessCompliance(content);
-    return new Response(JSON.stringify({ content, images, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    const combined = outputs.map((o) => `## ${o.label}\n\n${o.content}`).join('\n\n---\n\n');
+    const overall = assessCompliance(combined);
+    return new Response(JSON.stringify({ outputs, images, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
   const systemPrompt = buildSystemPrompt(type, tone);
