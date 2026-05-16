@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
-import { SourceSelector } from '@/components/generator/source-selector';
+import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { InstagramGenerateWorkflow } from '@/components/generator/instagram-workflow';
@@ -241,7 +241,10 @@ export default function GeneratePage() {
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
-            <SourceSelector selectedIds={selectedSourceIds} onSelectionChange={setSelectedSourceIds} />
+            <SourceArticlePicker
+              selectedId={selectedSourceIds[0] ?? null}
+              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+            />
           </div>
 
           <div>
