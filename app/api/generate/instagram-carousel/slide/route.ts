@@ -10,43 +10,41 @@ function pickVariantSeed(text: string): number {
   return hash;
 }
 
-function buildBackgroundPrompt(args: {
-  theme: any;
-  index: number;
-  total: number;
-  beat: string;
-}) {
-  // Lightweight background imagery: consistent motif + moody gradients + subtle texture.
-  // NO readable text: UI overlays text.
-  const seed = pickVariantSeed(`${args.theme?.title || 'theme'}|${args.index}`);
-  const variants = [
-    'soft purple gradient with subtle grain and abstract market shapes',
-    'cinematic moody violet/indigo gradient with light chart-like lines',
-    'minimal editorial background with overlay textures and gentle vignetting',
-  ];
-  const variant = variants[seed % variants.length];
-
+function buildForegroundPrompt(args: { theme: any; motif: string; placement: string; index: number; total: number }) {
   return [
-    'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
-    'Format: 4:5 portrait (1080x1350).',
-    'Do NOT include any readable text, letters, numbers, or logos.',
-    'Avoid ultra-detailed photorealism; keep it cinematic, stylized, and fast to render.',
-
-    `Master visual direction (must stay consistent across slides):`,
-    `Palette: ${args.theme?.palette || ''}.`,
-    `Typography vibe: ${args.theme?.typography || ''}. (No text rendered here.)`,
-    `Lighting: ${args.theme?.lighting || ''}.`,
-    `Texture: ${args.theme?.texture || ''}.`,
-    `Composition: ${args.theme?.composition || ''}.`,
-    `Imagery theme: ${args.theme?.imageryTheme || ''}.`,
-
-    `Slide ${args.index + 1}/${args.total} narrative beat: ${args.beat}.`,
-    `Background variation: ${variant}.`,
-    'Keep generous negative space for headline and summary overlays.',
+    'Create a simple premium editorial foreground element for an Instagram carousel slide.',
+    'Style: clean cinematic fintech editorial icon/illustration (NOT photorealistic).',
+    'Return a PNG with TRANSPARENT background (sticker-style).',
+    'No readable text, no logos, no watermarks.',
+    `Motif: ${args.motif}.`,
+    `Palette: ${args.theme?.palette || 'soft purples and neutrals'}.`,
+    `Lighting: ${args.theme?.lighting || 'soft cinematic'}.`,
+    `Texture: ${args.theme?.texture || 'subtle grain'}.`,
+    `Consistency: must match the same visual system across slides.`,
   ].join(' ');
 }
 
-async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '768x1024') {
+function placementToXY(args: { placement: string; canvasW: number; canvasH: number; fgW: number; fgH: number }) {
+  const pad = 70;
+  const midX = Math.round((args.canvasW - args.fgW) / 2);
+  const midY = Math.round((args.canvasH - args.fgH) / 2);
+
+  switch (args.placement) {
+    case 'left':
+      return { left: pad, top: midY };
+    case 'right':
+      return { left: args.canvasW - args.fgW - pad, top: midY };
+    case 'center':
+      return { left: midX, top: midY };
+    case 'bottom-left':
+      return { left: pad, top: args.canvasH - args.fgH - pad };
+    case 'bottom-right':
+    default:
+      return { left: args.canvasW - args.fgW - pad, top: args.canvasH - args.fgH - pad };
+  }
+}
+
+async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '768x1024' | '1024x1024') {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -78,13 +76,15 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, slideId, index, total, beat, quality = 'fast' } = body as {
+  const { theme, masterPlate, slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     slideId: string;
     index: number;
     total: number;
     beat: string;
+    motif?: string;
+    placement?: 'left' | 'right' | 'center' | 'bottom-left' | 'bottom-right';
     quality?: 'fast' | 'cover';
   };
 
@@ -111,7 +111,35 @@ export async function POST(req: Request) {
       const denom = Math.max(1, (total - 1));
       const left = Math.round((index / denom) * maxLeft);
 
-      const outBuf = await resized.extract({ left, top: 0, width: Math.min(targetW, width), height: targetH }).png().toBuffer();
+      // Optional: generate a simple foreground motif and composite it on top
+      let base = resized.extract({ left, top: 0, width: Math.min(targetW, width), height: targetH });
+
+      if (motif) {
+        const fgPrompt = buildForegroundPrompt({ theme, motif, placement, index, total });
+        const fg = await generateImage(env.OPENAI_API_KEY, fgPrompt, '1024x1024');
+        if (fg.imageUrl && fg.imageUrl.startsWith('data:image')) {
+          try {
+            const fgB64 = fg.imageUrl.split(',')[1] || '';
+            const fgBuf = Buffer.from(fgB64, 'base64');
+            // scale motif asset down for compositing
+            const fgSized = await sharp(fgBuf)
+              .resize({ width: 520 })
+              .png()
+              .toBuffer();
+            const fgMeta = await sharp(fgSized).metadata();
+            const fgW = fgMeta.width || 520;
+            const fgH = fgMeta.height || 520;
+            const { left: x, top: y } = placementToXY({ placement, canvasW: targetW, canvasH: targetH, fgW, fgH });
+
+            base = base.composite([{ input: fgSized, left: x, top: y, blend: 'over' }]);
+          } catch (e) {
+            // ignore motif failures
+            console.error('motif composite failed', e);
+          }
+        }
+      }
+
+      const outBuf = await base.png().toBuffer();
       const outB64 = outBuf.toString('base64');
 
       return new Response(
@@ -128,7 +156,19 @@ export async function POST(req: Request) {
   const promptRes = await generateObject({
     model: openai(env.OPENAI_MODEL),
     schema: Schema,
-    prompt: buildBackgroundPrompt({ theme, index, total, beat }),
+    prompt: [
+      'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
+      'Format: 4:5 portrait (1080x1350).',
+      'Do NOT include any readable text, letters, numbers, or logos.',
+      'Avoid ultra-detailed photorealism; keep it cinematic, stylized, and fast to render.',
+      `Palette: ${theme?.palette || ''}.`,
+      `Lighting: ${theme?.lighting || ''}.`,
+      `Texture: ${theme?.texture || ''}.`,
+      `Composition: ${theme?.composition || ''}.`,
+      `Imagery theme: ${theme?.imageryTheme || ''}.`,
+      `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
+      'Keep generous negative space for headline and summary overlays.',
+    ].join(' '),
   });
 
   const size = quality === 'cover' ? '1024x1536' : '768x1024';

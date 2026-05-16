@@ -50,6 +50,9 @@ export async function POST(req: Request) {
       z.object({
         headline: z.string().min(1),
         summary: z.string().min(1),
+        // Fast, consistent foreground motif per slide (e.g. "cargo ship silhouette", "country flag")
+        motif: z.string().min(1),
+        placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']).default('right'),
       })
     ),
     caption: z.string(),
@@ -80,9 +83,12 @@ export async function POST(req: Request) {
       'You are an expert editorial social strategist for a fintech brand.',
       `Generate an Instagram carousel plan with exactly ${count} slides that builds narratively:`,
       'Hook/Cover → Core Problem → Supporting Insight/Data → Market Impact → Broader Implications → CTA/What to Watch.',
-      'Each slide:',
+      'Each slide must include:',
       '- headline: max 7 words (editorial headline)',
       '- summary: max 22 words (minimal, impactful)',
+      '- motif: ONE simple visual symbol/object that represents the slide context (e.g., cargo ship, flag, oil rig, chart line, gavel).',
+      '- placement: where the motif should sit (left/right/center/bottom-left/bottom-right).',
+      'Motifs must be fast + consistent: simple editorial icon/illustration, not photorealism.',
       'Final slide summary must include a CTA (no guarantees).',
       'Also return caption (max 1200 chars) with optional hashtag line.',
       'SOURCE:\n' + sourceText.slice(0, 12000),
@@ -93,6 +99,8 @@ export async function POST(req: Request) {
     id: `slide-${idx + 1}`,
     headline: String(s.headline || `Slide ${idx + 1}`),
     summary: String(s.summary || ''),
+    motif: String((s as any).motif || 'abstract icon'),
+    placement: String((s as any).placement || 'right'),
   }));
 
   // Generate ONE master background plate (landscape) used to create connected slide crops

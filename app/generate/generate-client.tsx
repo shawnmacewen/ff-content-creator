@@ -147,6 +147,8 @@ export default function GeneratePage() {
             index: i,
             total,
             beat: beats[i] || 'Story Beat',
+            motif: s.motif,
+            placement: s.placement,
             quality,
           }),
         });
