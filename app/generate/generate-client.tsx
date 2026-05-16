@@ -51,6 +51,7 @@ export default function GeneratePage() {
   const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
   const [isGeneratingCarouselImages, setIsGeneratingCarouselImages] = useState(false);
   const [carouselProgress, setCarouselProgress] = useState<{ total: number; done: number; activeSlide: number } | null>(null);
+  const [instagramCarouselTheme, setInstagramCarouselTheme] = useState<any | null>(null);
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -119,6 +120,7 @@ export default function GeneratePage() {
       const slides = Array.isArray(plan?.slides) ? plan.slides : [];
       const caption = String(plan?.caption || '');
       const theme = plan?.theme;
+      setInstagramCarouselTheme(theme || null);
 
       // Initialize UI with slide text immediately
       const seeded = slides.map((s: any) => ({ ...s, imageUrl: null }));
@@ -460,6 +462,7 @@ export default function GeneratePage() {
                 slideCount={instagramCarouselSlides}
                 onSlideCountChange={setInstagramCarouselSlides}
                 slides={instagramCarouselSlidesData ?? undefined}
+                theme={instagramCarouselTheme ?? undefined}
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
@@ -522,6 +525,7 @@ export default function GeneratePage() {
                 slideCount={instagramCarouselSlides}
                 onSlideCountChange={setInstagramCarouselSlides}
                 slides={instagramCarouselSlidesData ?? undefined}
+                theme={instagramCarouselTheme ?? undefined}
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}

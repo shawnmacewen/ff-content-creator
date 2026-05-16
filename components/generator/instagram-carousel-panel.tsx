@@ -106,6 +106,7 @@ export function InstagramCarouselPanel({
   slideCount,
   onSlideCountChange,
   slides,
+  theme,
   caption,
   onCaptionChange,
   onGenerate,
@@ -117,6 +118,7 @@ export function InstagramCarouselPanel({
   slideCount: number;
   onSlideCountChange: (n: number) => void;
   slides?: CarouselSlide[];
+  theme?: any;
   caption?: string;
   onCaptionChange?: (v: string) => void;
   onGenerate?: () => void;
@@ -211,27 +213,32 @@ export function InstagramCarouselPanel({
               </div>
             </div>
 
-            <div className="relative">
-              <div
-                className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
-                aria-label="Instagram carousel preview"
-              >
-                {/* left spacer so first slide can center */}
-                <div className="w-[12%] shrink-0" aria-hidden />
+            {/* Instagram-like stage */}
+            <div className="rounded-2xl border bg-muted/30 p-4">
+              <div className="relative">
+                <div
+                  className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+                  aria-label="Instagram carousel preview"
+                >
+                  <div className="w-[12%] shrink-0" aria-hidden />
 
-                {effectiveSlides.map((s, idx) => (
-                  <div key={s.id} className="w-[76%] shrink-0 sm:w-[58%] lg:w-[72%]">
-                    <SlideCard
-                      slide={s}
-                      index={idx}
-                      active={idx === activeIndex}
-                      onClick={() => setActiveIndex(idx)}
-                    />
-                  </div>
-                ))}
+                  {effectiveSlides.map((s, idx) => (
+                    <div key={s.id} className="w-[76%] shrink-0 sm:w-[58%] lg:w-[72%]">
+                      <SlideCard
+                        slide={s}
+                        index={idx}
+                        active={idx === activeIndex}
+                        onClick={() => setActiveIndex(idx)}
+                      />
+                    </div>
+                  ))}
 
-                {/* right spacer so last slide can center */}
-                <div className="w-[12%] shrink-0" aria-hidden />
+                  <div className="w-[12%] shrink-0" aria-hidden />
+                </div>
+
+                {/* subtle edge fade */}
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-muted/80 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-muted/80 to-transparent" />
               </div>
             </div>
 
