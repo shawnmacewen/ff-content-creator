@@ -51,68 +51,49 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
             <h3 className="text-sm font-medium text-muted-foreground">
               {categoryLabels[category]}
             </h3>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {types.map((contentType) => {
                 const Icon = iconMap[contentType.icon] || FileText;
                 const isSelected = selected.includes(contentType.id);
                 
                 return (
-                  <Card
+                  <button
                     key={contentType.id}
-                    className={cn(
-                      'cursor-pointer transition-all hover:border-primary/50 h-[230px] w-[225px] flex flex-col',
-                      isSelected && 'border-primary ring-1 ring-primary bg-primary/5'
-                    )}
+                    type="button"
                     onClick={() => onToggle(contentType.id)}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                      isSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                    )}
                   >
-                    <CardHeader className="pb-1 pt-2.5">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          'flex h-9 w-9 items-center justify-center rounded-lg',
-                          isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        )}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-sm font-medium">
-                            {contentType.label}
-                          </CardTitle>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-4 flex flex-1 flex-col">
-                      <div>
-                        <CardDescription className="text-xs">
-                          {contentType.description}
-                        </CardDescription>
-                        {contentType.maxLength && (
-                          <Badge variant="outline" className="mt-2 text-xs">
-                            Max {contentType.maxLength} chars
-                          </Badge>
-                        )}
-                      </div>
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-xl',
+                        isSelected ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span>{contentType.label}</span>
 
-                      {contentType.id === 'social-instagram' && onToggleInstagramImage ? (
-                        <div className="mt-3 border-t border-border/60 pt-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleInstagramImage();
-                            }}
-                            className={cn(
-                              'w-full rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors',
-                              includeInstagramImage
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-border bg-background hover:bg-muted'
-                            )}
-                          >
-                            {includeInstagramImage ? 'Image ON' : 'Image OFF'}
-                          </button>
-                        </div>
-                      ) : null}
-                    </CardContent>
-                  </Card>
+                    {contentType.id === 'social-instagram' && onToggleInstagramImage ? (
+                      <span className="ml-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleInstagramImage();
+                          }}
+                          className={cn(
+                            'rounded-full px-1.5 py-0.5 transition-colors',
+                            includeInstagramImage ? 'text-violet-700 dark:text-violet-300' : 'text-muted-foreground'
+                          )}
+                        >
+                          {includeInstagramImage ? 'Images: On' : 'Images: Off'}
+                        </button>
+                      </span>
+                    ) : null}
+                  </button>
                 );
               })}
             </div>
