@@ -107,7 +107,7 @@ export default function GeneratePage() {
         }),
       });
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || 'Carousel generation failed');
+      if (!res.ok) throw new Error(payload?.error || `Carousel generation failed (${res.status})`);
 
       const slides = Array.isArray(payload?.slides) ? payload.slides : [];
       const images = Array.isArray(payload?.images) ? payload.images : [];
@@ -118,9 +118,9 @@ export default function GeneratePage() {
 
       setInstagramCarouselSlidesData(merged);
       setInstagramCarouselCaption(caption);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to generate carousel images');
+      toast.error(err?.message || 'Failed to generate carousel images');
     }
   }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
 

@@ -1,5 +1,6 @@
-import { generateText } from 'ai';
+import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -60,6 +61,9 @@ export async function POST(req: Request) {
   const { sourceContentIds, slideCount = 6 } = body as { sourceContentIds: string[]; slideCount?: number };
 
   const env = getServerEnv();
+  if (!env.OPENAI_API_KEY) {
+    return new Response(JSON.stringify({ error: 'Missing OPENAI_API_KEY on server' }), { status: 500 });
+  }
   const supabase = getSupabaseServerClient();
   let sourceText = '';
 
@@ -82,42 +86,40 @@ export async function POST(req: Request) {
   const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
   const count = Math.min(6, Math.max(3, Number(slideCount) || 6));
 
-  const system =
-    'You are an expert editorial social strategist for a fintech brand. Output must be accurate, compliant, and concise.';
-
-  const prompt = [
-    'From the source article, generate an Instagram carousel plan.',
-    `Return exactly ${count} slides as JSON with keys: slides (array).`,
-    'Each slide must have: headline (max 7 words), summary (max 22 words).',
-    'The final slide should include a clear CTA in the summary (no guarantees).',
-    'Also return: caption (max 1200 chars) with optional hashtag line.',
-    'Return ONLY valid JSON.',
-    'SOURCE:\n' + sourceText.slice(0, 12000),
-  ].join('\n\n');
-
-  const text = await generateText({
-    model: openai(env.OPENAI_MODEL),
-    system,
-    prompt,
-    maxOutputTokens: 1200,
-    temperature: 0.5,
+  const OutSchema = z.object({
+    slides: z.array(
+      z.object({
+        headline: z.string().min(1),
+        summary: z.string().min(1),
+      })
+    ),
+    caption: z.string().default(''),
   });
 
-  let parsed: any = null;
-  try {
-    parsed = JSON.parse(text.text);
-  } catch {
-    return new Response(JSON.stringify({ error: 'Failed to parse model JSON output', raw: text.text.slice(0, 2000) }), { status: 500 });
-  }
+  const result = await generateObject({
+    model: openai(env.OPENAI_MODEL),
+    schema: OutSchema,
+    prompt: [
+      'You are an expert editorial social strategist for a fintech brand.',
+      'From the source article, generate an Instagram carousel plan.',
+      `Return exactly ${count} slides.`,
+      'Each slide:',
+      '- headline: max 7 words',
+      '- summary: max 22 words',
+      'The final slide summary must include a clear CTA (no guarantees).',
+      'Also return caption (max 1200 chars) with optional hashtag line.',
+      'SOURCE:\n' + sourceText.slice(0, 12000),
+    ].join('\n'),
+  });
 
-  const slidesIn: Array<{ headline: string; summary: string }> = Array.isArray(parsed?.slides) ? parsed.slides : [];
-  const slides = slidesIn.slice(0, count).map((s, idx) => ({
+  const slidesIn = (result.object.slides || []).slice(0, count);
+  const slides = slidesIn.map((s, idx) => ({
     id: `slide-${idx + 1}`,
-    headline: String(s?.headline || `Slide ${idx + 1}`),
-    summary: String(s?.summary || ''),
+    headline: String(s.headline || `Slide ${idx + 1}`),
+    summary: String(s.summary || ''),
   }));
 
-  const caption = String(parsed?.caption || '').trim();
+  const caption = String(result.object.caption || '').trim();
 
   // Generate images per slide
   const images: Array<{ slideId: string; imageUrl: string | null; error?: string }> = [];

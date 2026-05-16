@@ -226,22 +226,7 @@ export function InstagramCarouselPanel({
               </div>
             </div>
 
-            {/* Caption preview directly below carousel */}
-            <div className="rounded-2xl border bg-background p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-medium text-muted-foreground">Caption Preview</div>
-                <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </Button>
-              </div>
-              <textarea
-                className="mt-3 min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={effectiveCaption}
-                onChange={(e) => setCaption(e.target.value)}
-              />
-              <div className="mt-2 text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
-            </div>
+
           </TabsContent>
 
           <TabsContent value="caption" className="mt-4 space-y-3">
