@@ -80,27 +80,30 @@ export function EchoWriteEditor({
   }, []);
 
 
-  const html = useMemo(() => {
-    // Build paragraph HTML from the raw value, but decorate each sentence using the precomputed spans attribution.
-    if (!value?.trim()) return '';
-
-    const spanQueue = [...spans];
-    const takeNextSpan = (sentence: string) => {
-      // Prefer positional alignment. If the attribution builder and renderer
-      // split sentences slightly differently, exact-text matching can fail and
-      // result in zero highlights. Positional mapping is more robust.
-      const next = spanQueue.shift();
-      if (next) return next;
-      return { text: sentence, sourceId: null, snippet: null, confidence: null, citationNumber: null } as AttributionSpan;
-    };
+  const { htmlHighlight, htmlEdit } = useMemo(() => {
+    // Build paragraph HTML from the raw value.
+    // - highlight mode: decorate sentences w/ attribution + citation badges
+    // - edit mode: preserve paragraph formatting but NO attribution marks/badges
+    if (!value?.trim()) return { htmlHighlight: '', htmlEdit: '' };
 
     const paragraphs = String(value)
       .split(/\n{2,}/)
       .map((p) => p.trim())
       .filter(Boolean);
 
-    const renderSentence = (s: AttributionSpan) => {
-      const safe = s.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const renderPlainSentence = (text: string) => {
+      const safe = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<span class="text-foreground">${safe}</span>`;
+    };
+
+    const spanQueue = [...spans];
+    const takeNextSpan = () => spanQueue.shift() || ({ text: '', sourceId: null, snippet: null, confidence: null, citationNumber: null } as AttributionSpan);
+
+    const renderHighlightedSentence = (fallbackText: string) => {
+      const s = takeNextSpan();
+      const text = s.text || fallbackText;
+      const safe = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
       if (!showMatches || !s.sourceId || !s.citationNumber) {
         return `<span class="text-foreground">${safe}</span>`;
       }
@@ -116,18 +119,24 @@ export function EchoWriteEditor({
       return `<span${attrib}>${safe}${badge}</span>`;
     };
 
-    const paraHtml = paragraphs
+    const toSentences = (p: string) =>
+      p.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+
+    const htmlEdit = paragraphs
       .map((p) => {
-        const sentences = p
-          .split(/(?<=[.!?])\s+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const parts = sentences.map((t) => renderSentence(takeNextSpan(t)));
+        const parts = toSentences(p).map(renderPlainSentence);
         return `<p>${parts.join(' ')}</p>`;
       })
       .join('');
 
-    return paraHtml;
+    const htmlHighlight = paragraphs
+      .map((p) => {
+        const parts = toSentences(p).map((t) => renderHighlightedSentence(t));
+        return `<p>${parts.join(' ')}</p>`;
+      })
+      .join('');
+
+    return { htmlHighlight, htmlEdit };
   }, [value, spans, showMatches, hoveredSourceId]);
 
   const editor = useEditor({
@@ -140,7 +149,7 @@ export function EchoWriteEditor({
       Placeholder.configure({ placeholder: 'Generated content will appear here…' }),
       AttributionMark,
     ],
-    content: html,
+    content: mode === 'edit' ? htmlEdit : htmlHighlight,
     editable: mode === 'edit',
     editorProps: {
       attributes: {
@@ -159,6 +168,7 @@ export function EchoWriteEditor({
           return false;
         },
         mouseover: (_view, event) => {
+          if (mode !== 'highlight') return false;
           const el = event.target as HTMLElement | null;
           const span = el?.closest?.('span[data-attribution]') as HTMLElement | null;
           if (!span) return false;
@@ -192,17 +202,19 @@ export function EchoWriteEditor({
     const externalChanged = value !== lastExternalValueRef.current;
     if (externalChanged) lastExternalValueRef.current = value;
 
-    const shouldApply = mode === 'highlight' || externalChanged || editor.isEmpty;
+    const shouldApply = externalChanged || editor.isEmpty || mode === 'highlight';
     if (!shouldApply) return;
+
+    const contentToApply = mode === 'edit' ? htmlEdit : htmlHighlight;
 
     applyingRef.current = true;
     try {
-      editor.commands.setContent(html || '', false);
+      editor.commands.setContent(contentToApply || '', false);
     } finally {
       applyingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, html, value]);
+  }, [mode, htmlEdit, htmlHighlight, value]);
 
   return (
     <div className="space-y-2">
