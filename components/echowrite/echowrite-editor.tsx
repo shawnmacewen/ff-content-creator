@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -70,6 +70,8 @@ export function EchoWriteEditor({
   hoveredSourceId: string | null;
 }) {
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
+  const applyingRef = useRef(false);
+  const lastExternalValueRef = useRef<string>('');
 
   // Default to highlight mode on mount (avoid any hydration weirdness flipping modes).
   useEffect(() => {
@@ -172,6 +174,7 @@ export function EchoWriteEditor({
     },
     onUpdate: ({ editor }) => {
       if (mode !== 'edit') return;
+      if (applyingRef.current) return;
       // Preserve paragraph spacing when saving back to plain text.
       onChange(editor.getText({ blockSeparator: '\n\n' }));
     },
@@ -179,10 +182,27 @@ export function EchoWriteEditor({
 
   useEffect(() => {
     if (!editor) return;
+
     editor.setEditable(mode === 'edit');
-    editor.commands.setContent(html || '', false);
+
+    // Only force-reset content when:
+    // - switching back to highlight mode, OR
+    // - the external value changed (generate/regenerate), OR
+    // - editor has no content yet.
+    const externalChanged = value !== lastExternalValueRef.current;
+    if (externalChanged) lastExternalValueRef.current = value;
+
+    const shouldApply = mode === 'highlight' || externalChanged || editor.isEmpty;
+    if (!shouldApply) return;
+
+    applyingRef.current = true;
+    try {
+      editor.commands.setContent(html || '', false);
+    } finally {
+      applyingRef.current = false;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, html]);
+  }, [mode, html, value]);
 
   return (
     <div className="space-y-2">
