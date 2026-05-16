@@ -85,7 +85,7 @@ export default function GeneratePage() {
           type: kitTypes[0],
           mode: 'kit',
           selectedTypes: kitTypes,
-          includeInstagramImage: false,
+          includeInstagramImage,
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
