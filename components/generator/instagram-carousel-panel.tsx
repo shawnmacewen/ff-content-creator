@@ -53,8 +53,9 @@ function SlideCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-        active && 'ring-2 ring-violet-500/60'
+        'group relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden rounded-2xl border shadow-sm transition-all',
+        'focus:outline-none focus:ring-2 focus:ring-violet-500/40',
+        active ? 'ring-2 ring-violet-500/60' : 'hover:shadow-md'
       )}
       style={
         slide.imageUrl
@@ -63,11 +64,11 @@ function SlideCard({
       }
     >
       {/* fallback / tint */}
-      <div className={cn('absolute inset-0', slide.imageUrl ? 'bg-black/25' : 'bg-gradient-to-br from-violet-500/12 via-fuchsia-500/6 to-transparent')} />
+      <div className={cn('absolute inset-0', slide.imageUrl ? 'bg-black/25' : 'bg-gradient-to-br from-violet-500/18 via-fuchsia-500/10 to-transparent')} />
       {/* editorial overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
 
-      <div className="relative flex h-full flex-col p-4 text-left">
+      <div className="relative flex h-full flex-col p-5 text-left">
         <div className="flex items-center justify-between">
           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold text-white backdrop-blur">
             {index + 1}
@@ -75,17 +76,18 @@ function SlideCard({
           <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
-        <div className="mt-5 space-y-2">
-          <div className="text-sm font-semibold leading-snug tracking-tight text-white whitespace-pre-line drop-shadow">
+        <div className="mt-auto pb-1 space-y-2">
+          <div className="text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm">
             {slide.headline}
           </div>
-          <div className="text-xs leading-relaxed text-white/80 line-clamp-5 drop-shadow">{slide.summary}</div>
+          <div className="text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">{slide.summary}</div>
         </div>
 
         {!slide.imageUrl ? (
-          <div className="mt-auto">
-            <div className="h-16 w-full rounded-xl bg-white/10" />
-            <div className="mt-2 text-[10px] text-white/60">Image placeholder</div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-xs text-white/70 backdrop-blur">
+              Generating background…
+            </div>
           </div>
         ) : null}
       </div>
@@ -204,10 +206,28 @@ export function InstagramCarouselPanel({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {effectiveSlides.map((s, idx) => (
-                <SlideCard key={s.id} slide={s} index={idx} active={idx === activeIndex} onClick={() => setActiveIndex(idx)} />
-              ))}
+            <div className="relative">
+              <div
+                className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+                aria-label="Instagram carousel preview"
+              >
+                {/* left spacer so first slide can center */}
+                <div className="w-[12%] shrink-0" aria-hidden />
+
+                {effectiveSlides.map((s, idx) => (
+                  <div key={s.id} className="w-[76%] shrink-0 sm:w-[58%] lg:w-[72%]">
+                    <SlideCard
+                      slide={s}
+                      index={idx}
+                      active={idx === activeIndex}
+                      onClick={() => setActiveIndex(idx)}
+                    />
+                  </div>
+                ))}
+
+                {/* right spacer so last slide can center */}
+                <div className="w-[12%] shrink-0" aria-hidden />
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
