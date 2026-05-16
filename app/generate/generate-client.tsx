@@ -15,6 +15,7 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { InstagramCarouselPanel } from '@/components/generator/instagram-carousel-panel';
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -34,6 +35,8 @@ export default function GeneratePage() {
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [imageStatus, setImageStatus] = useState<string | null>(null);
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
+  const [includeInstagramCarousel, setIncludeInstagramCarousel] = useState(false);
+  const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -331,8 +334,20 @@ export default function GeneratePage() {
             />
           </div>
 
+          {selectedContentTypes[0] === 'social-instagram' ? (
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel (optional)</h2>
+              <InstagramCarouselPanel
+                enabled={includeInstagramCarousel}
+                onEnabledChange={setIncludeInstagramCarousel}
+                slideCount={instagramCarouselSlides}
+                onSlideCountChange={setInstagramCarouselSlides}
+              />
+            </div>
+          ) : null}
+
           <div>
-            <h2 className="mb-3 text-lg font-semibold">4. Preview & Save</h2>
+            <h2 className="mb-3 text-lg font-semibold">5. Preview & Save</h2>
             <GenerationPreview
               contentType={selectedContentTypes[0] ?? null}
               previewLabel={selectedContentTypes[0] ? CONTENT_TYPE_MAP[selectedContentTypes[0]].label : null}
