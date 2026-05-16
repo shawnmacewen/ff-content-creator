@@ -53,9 +53,9 @@ function SlideCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden rounded-2xl border shadow-sm transition-all',
+        'group relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden rounded-[28px] transition-all',
         'focus:outline-none focus:ring-2 focus:ring-violet-500/40',
-        active ? 'ring-2 ring-violet-500/60' : 'hover:shadow-md'
+        active ? 'ring-2 ring-violet-500/50' : 'hover:brightness-[1.02]'
       )}
       style={
         slide.imageUrl
@@ -63,30 +63,35 @@ function SlideCard({
           : undefined
       }
     >
-      {/* fallback / tint */}
-      <div className={cn('absolute inset-0', slide.imageUrl ? 'bg-black/25' : 'bg-gradient-to-br from-violet-500/18 via-fuchsia-500/10 to-transparent')} />
-      {/* editorial overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+      {/* full-bleed visual composition */}
+      <div className={cn(
+        'absolute inset-0',
+        slide.imageUrl ? 'bg-black/20' : 'bg-gradient-to-br from-violet-600/25 via-fuchsia-600/10 to-slate-950/10'
+      )} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.18),transparent_50%)]" />
 
-      <div className="relative flex h-full flex-col p-5 text-left">
+      <div className="relative flex h-full flex-col p-7 text-left">
+        {/* minimal chrome: no admin badges */}
         <div className="flex items-center justify-between">
-          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold text-white backdrop-blur">
-            {index + 1}
-          </div>
+          <div className="text-[11px] font-medium tracking-wide text-white/70">Slide {index + 1}</div>
           <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
-        <div className="mt-auto pb-1 space-y-2">
-          <div className="text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm">
+        <div className="mt-auto space-y-3 pb-1">
+          <div className="text-3xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-sm">
             {slide.headline}
           </div>
-          <div className="text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">{slide.summary}</div>
+          <div className="max-w-[90%] text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">
+            {slide.summary}
+          </div>
         </div>
 
         {!slide.imageUrl ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-xs text-white/70 backdrop-blur">
-              Generating background…
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 animate-pulse bg-white/5" />
+            <div className="absolute bottom-8 left-7 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70 backdrop-blur">
+              Generating…
             </div>
           </div>
         ) : null}

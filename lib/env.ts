@@ -7,7 +7,8 @@ function required(name: string): string {
 export function getServerEnv() {
   return {
     OPENAI_API_KEY: required('OPENAI_API_KEY'),
-    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    // Default model for text planning/generation (can be overridden via OPENAI_MODEL in env)
+    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4.1',
     NEXT_PUBLIC_SUPABASE_URL: required('NEXT_PUBLIC_SUPABASE_URL'),
     SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),
   };
