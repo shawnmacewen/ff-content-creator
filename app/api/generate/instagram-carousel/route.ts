@@ -16,18 +16,46 @@ const CAROUSEL_STYLES = [
   'clean poster design, purple-to-lavender gradient, light texture, lots of whitespace',
 ] as const;
 
-function buildSlideImagePrompt(args: { headline: string; summary: string; index: number; total: number }) {
-  const seed = pickVariantSeed(`${args.headline}|${args.summary}`);
-  const style = CAROUSEL_STYLES[seed % CAROUSEL_STYLES.length];
+function buildSlideImagePrompt(args: {
+  theme: {
+    title: string;
+    palette: string;
+    typography: string;
+    imagery: string;
+    layout: string;
+    textures: string;
+  };
+  headline: string;
+  summary: string;
+  index: number;
+  total: number;
+}) {
   return [
     'Create an Instagram carousel slide image in 4:5 portrait ratio (1080x1350).',
     'This is for a financial services brand. Must be compliant: no performance guarantees, no promissory language.',
-    `Style: ${style}.`,
-    'Include tasteful, minimal iconography or abstract shapes. No logos, no watermarks.',
-    'IMPORTANT: Do NOT render any readable text in the image (no text overlays).',
-    `Slide context (for composition only): Slide ${args.index + 1}/${args.total}.`,
-    `Headline intent: ${args.headline}.`,
-    `Summary intent: ${args.summary}.`,
+
+    // Cohesion across the whole carousel
+    'CRITICAL: This slide must match the SAME visual system as all other slides in this carousel.',
+    `Carousel theme title: ${args.theme.title}.`,
+    `Color palette (consistent across slides): ${args.theme.palette}.`,
+    `Typography system (consistent): ${args.theme.typography}.`,
+    `Imagery style (consistent): ${args.theme.imagery}.`,
+    `Layout language (consistent): ${args.theme.layout}.`,
+    `Textures/overlays (consistent): ${args.theme.textures}.`,
+
+    // Narrative progression
+    `Slide ${args.index + 1} of ${args.total}. This slide should feel like the next beat in one cohesive editorial story.`,
+
+    // On-slide text guidance (we want designed typography)
+    'Include readable, high-quality typography.',
+    'Use ONE large editorial headline and optionally 1 short supporting line (minimal text).',
+    'Keep spacing consistent. Avoid clutter. Avoid generic infographic templates.',
+    'No logos, no watermarks.',
+
+    `Headline text to render: "${args.headline}"`,
+    `Supporting line (optional): "${args.summary}"`,
+
+    'Cinematic premium fintech aesthetic: moody gradients, tasteful overlays, subtle chart/graphic elements when appropriate.',
   ].join(' ');
 }
 
@@ -104,9 +132,11 @@ export async function POST(req: Request) {
       'You are an expert editorial social strategist for a fintech brand.',
       'From the source article, generate an Instagram carousel plan.',
       `Return exactly ${count} slides.`,
+      'Each slide should build narratively on the previous slide:',
+      'Hook/Cover → Core Problem → Supporting Insight/Data → Market Impact → Broader Implications → CTA/What to Watch.',
       'Each slide:',
-      '- headline: max 7 words',
-      '- summary: max 22 words',
+      '- headline: max 7 words (strong editorial headline)',
+      '- summary: max 22 words (minimal, impactful)',
       'The final slide summary must include a clear CTA (no guarantees).',
       'Also return caption (max 1200 chars) with optional hashtag line.',
       'SOURCE:\n' + sourceText.slice(0, 12000),
@@ -122,11 +152,40 @@ export async function POST(req: Request) {
 
   const caption = String(result.object.caption || '').trim();
 
-  // Generate images per slide
+  // Generate a single cohesive theme used across ALL slides
+  const ThemeSchema = z.object({
+    title: z.string(),
+    palette: z.string(),
+    typography: z.string(),
+    imagery: z.string(),
+    layout: z.string(),
+    textures: z.string(),
+  });
+
+  const themeRes = await generateObject({
+    model: openai(env.OPENAI_MODEL),
+    schema: ThemeSchema,
+    prompt: [
+      'Design a cohesive visual system for an Instagram carousel for a premium fintech/editorial brand.',
+      'It must feel cinematic, modern, and highly polished (Apple keynote / Bloomberg graphics vibes).',
+      'Return a compact style guide as JSON fields:',
+      '- title',
+      '- palette (moody gradients, soft purples, neutrals)',
+      '- typography (headline style, font vibe, sizing rules)',
+      '- imagery (photography/abstract blend guidance)',
+      '- layout (grid, margins, hierarchy)',
+      '- textures (grain, overlays, chart accents)',
+      'Keep it consistent across 3–6 slides.',
+    ].join('\n'),
+  });
+
+  const theme = themeRes.object;
+
+  // Generate images per slide (all share the same theme)
   const images: Array<{ slideId: string; imageUrl: string | null; error?: string }> = [];
   for (let i = 0; i < slides.length; i += 1) {
     const s = slides[i];
-    const imgPrompt = buildSlideImagePrompt({ headline: s.headline, summary: s.summary, index: i, total: slides.length });
+    const imgPrompt = buildSlideImagePrompt({ theme, headline: s.headline, summary: s.summary, index: i, total: slides.length });
     const img = await generateSlideImage(env.OPENAI_API_KEY, imgPrompt);
     images.push({ slideId: s.id, imageUrl: img.imageUrl, error: img.error });
   }
