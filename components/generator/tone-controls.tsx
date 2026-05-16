@@ -26,11 +26,7 @@ export function ToneControls({
 }: ToneControlsProps) {
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Generation Settings</CardTitle>
-        <CardDescription>Customize the tone and provide additional instructions</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         <div className="space-y-3">
           <Label className="text-sm font-medium">Tone</Label>
           <RadioGroup
