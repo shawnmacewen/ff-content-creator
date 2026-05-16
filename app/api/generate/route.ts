@@ -120,11 +120,13 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
+  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, instagramImageMode = 'single', instagramCarouselSlides = 6, sourceContentIds, customPrompt, tone, additionalContext } = body as {
     type: ContentType;
     mode?: 'single' | 'kit';
     selectedTypes?: ContentType[];
     includeInstagramImage?: boolean;
+    instagramImageMode?: 'single' | 'carousel';
+    instagramCarouselSlides?: number;
     sourceContentIds: string[];
     customPrompt?: string;
     tone: ToneType;

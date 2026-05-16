@@ -15,6 +15,7 @@ export type CarouselSlide = {
   id: string;
   headline: string;
   summary: string;
+  imageUrl?: string | null;
 };
 
 function mockSlides(count: number): CarouselSlide[] {
@@ -76,8 +77,15 @@ function SlideCard({
         </div>
 
         <div className="mt-auto">
-          <div className="h-16 w-full rounded-xl bg-gradient-to-br from-black/5 to-black/0 dark:from-white/10 dark:to-white/0" />
-          <div className="mt-2 text-[10px] text-muted-foreground/80">Image placeholder</div>
+          <div className="h-16 w-full overflow-hidden rounded-xl bg-gradient-to-br from-black/5 to-black/0 dark:from-white/10 dark:to-white/0">
+            {slide.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={slide.imageUrl} alt="" className="h-full w-full object-cover opacity-90" />
+            ) : null}
+          </div>
+          <div className="mt-2 text-[10px] text-muted-foreground/80">
+            {slide.imageUrl ? 'Generated image' : 'Image placeholder'}
+          </div>
         </div>
       </div>
     </button>
@@ -89,31 +97,45 @@ export function InstagramCarouselPanel({
   onEnabledChange,
   slideCount,
   onSlideCountChange,
+  slides,
+  caption,
+  onCaptionChange,
 }: {
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
   slideCount: number;
   onSlideCountChange: (n: number) => void;
+  slides?: CarouselSlide[];
+  caption?: string;
+  onCaptionChange?: (v: string) => void;
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const slides = React.useMemo(() => mockSlides(slideCount), [slideCount]);
-  const [caption, setCaption] = React.useState(() => mockCaption(slideCount));
+  const localSlides = React.useMemo(() => mockSlides(slideCount), [slideCount]);
+  const effectiveSlides = slides?.length ? slides : localSlides;
+
+  const [localCaption, setLocalCaption] = React.useState(() => mockCaption(slideCount));
+  const effectiveCaption = caption ?? localCaption;
 
   React.useEffect(() => {
     setActiveIndex((i) => Math.min(i, slideCount - 1));
-    setCaption(mockCaption(slideCount));
-  }, [slideCount]);
+    if (!caption) setLocalCaption(mockCaption(slideCount));
+  }, [slideCount, caption]);
 
   const canPrev = activeIndex > 0;
   const canNext = activeIndex < slideCount - 1;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(caption);
+      await navigator.clipboard.writeText(effectiveCaption);
       toast.success('Caption copied');
     } catch {
       toast.error('Copy failed');
     }
+  };
+
+  const setCaption = (v: string) => {
+    onCaptionChange?.(v);
+    if (!onCaptionChange) setLocalCaption(v);
   };
 
   return (
@@ -159,7 +181,7 @@ export function InstagramCarouselPanel({
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {slides.map((s, idx) => (
+              {effectiveSlides.map((s, idx) => (
                 <SlideCard key={s.id} slide={s} index={idx} active={idx === activeIndex} onClick={() => setActiveIndex(idx)} />
               ))}
             </div>
@@ -202,7 +224,7 @@ export function InstagramCarouselPanel({
               </div>
               <textarea
                 className="mt-3 min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={caption}
+                value={effectiveCaption}
                 onChange={(e) => setCaption(e.target.value)}
               />
               <div className="mt-2 text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
@@ -219,7 +241,7 @@ export function InstagramCarouselPanel({
             </div>
             <textarea
               className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-              value={caption}
+              value={effectiveCaption}
               onChange={(e) => setCaption(e.target.value)}
             />
             <div className="text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>

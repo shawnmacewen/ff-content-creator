@@ -16,6 +16,7 @@ import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { InstagramCarouselPanel } from '@/components/generator/instagram-carousel-panel';
+import { InstagramImageModal } from '@/components/generator/instagram-image-modal';
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -35,8 +36,12 @@ export default function GeneratePage() {
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [imageStatus, setImageStatus] = useState<string | null>(null);
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
-  const [includeInstagramCarousel, setIncludeInstagramCarousel] = useState(false);
+  const [instagramImageModalOpen, setInstagramImageModalOpen] = useState(false);
+  const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
   const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
+
+  const [instagramCarouselSlidesData, setInstagramCarouselSlidesData] = useState<any[] | null>(null);
+  const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -110,6 +115,40 @@ export default function GeneratePage() {
     }
   }, [kitTypes, selectedSourceIds, customPrompt, tone, additionalContext]);
 
+  const handleGenerateInstagramCarousel = useCallback(async () => {
+    if (selectedContentTypes[0] !== 'social-instagram') return;
+    if (!selectedSourceIds.length) {
+      toast.error('Select a source article first');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/generate/instagram-carousel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceContentIds: selectedSourceIds,
+          slideCount: instagramCarouselSlides,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || 'Carousel generation failed');
+
+      const slides = Array.isArray(payload?.slides) ? payload.slides : [];
+      const images = Array.isArray(payload?.images) ? payload.images : [];
+      const caption = String(payload?.caption || '');
+
+      const byId = new Map(images.map((i: any) => [i.slideId, i.imageUrl]));
+      const merged = slides.map((s: any) => ({ ...s, imageUrl: byId.get(s.id) ?? null }));
+
+      setInstagramCarouselSlidesData(merged);
+      setInstagramCarouselCaption(caption);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate carousel images');
+    }
+  }, [selectedContentTypes, selectedSourceIds, instagramCarouselSlides]);
+
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
     if (!primaryType) {
@@ -131,6 +170,8 @@ export default function GeneratePage() {
           type: primaryType,
           mode: 'single',
           includeInstagramImage,
+          instagramImageMode,
+          instagramCarouselSlides,
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
@@ -272,7 +313,13 @@ export default function GeneratePage() {
                   // allow multi-select in KIT
                   onToggle={toggleKitType}
                   includeInstagramImage={includeInstagramImage}
-                  onToggleInstagramImage={() => setIncludeInstagramImage((v) => !v)}
+                  onToggleInstagramImage={() => {
+                    setIncludeInstagramImage((v) => {
+                      const next = !v;
+                      if (next) setInstagramImageModalOpen(true);
+                      return next;
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -285,6 +332,16 @@ export default function GeneratePage() {
               />
             </div>
           </div>
+
+          <InstagramImageModal
+            open={instagramImageModalOpen}
+            onOpenChange={setInstagramImageModalOpen}
+            mode={instagramImageMode}
+            setMode={setInstagramImageMode}
+            slideCount={instagramCarouselSlides}
+            setSlideCount={setInstagramCarouselSlides}
+            onConfirm={() => setInstagramImageModalOpen(false)}
+          />
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
@@ -306,7 +363,13 @@ export default function GeneratePage() {
                   selected={selectedContentTypes}
                   onToggle={handleToggleTypeSingle}
                   includeInstagramImage={includeInstagramImage}
-                  onToggleInstagramImage={() => setIncludeInstagramImage((v) => !v)}
+                  onToggleInstagramImage={() => {
+                    setIncludeInstagramImage((v) => {
+                      const next = !v;
+                      if (next) setInstagramImageModalOpen(true);
+                      return next;
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -334,17 +397,49 @@ export default function GeneratePage() {
             />
           </div>
 
-          {selectedContentTypes[0] === 'social-instagram' ? (
+          {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div>
-              <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel (optional)</h2>
+              <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
               <InstagramCarouselPanel
-                enabled={includeInstagramCarousel}
-                onEnabledChange={setIncludeInstagramCarousel}
+                enabled={true}
+                onEnabledChange={() => {}}
                 slideCount={instagramCarouselSlides}
                 onSlideCountChange={setInstagramCarouselSlides}
+                slides={instagramCarouselSlidesData ?? undefined}
+                caption={instagramCarouselCaption}
+                onCaptionChange={setInstagramCarouselCaption}
               />
+              <div className="mt-3 flex justify-end">
+                <Button
+                  className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                  type="button"
+                  onClick={handleGenerateInstagramCarousel}
+                  disabled={!selectedSourceIds.length}
+                >
+                  Generate Carousel Images
+                </Button>
+              </div>
             </div>
           ) : null}
+
+          <InstagramImageModal
+            open={instagramImageModalOpen}
+            onOpenChange={(v) => {
+              setInstagramImageModalOpen(v);
+              if (!v && !includeInstagramImage) return;
+            }}
+            mode={instagramImageMode}
+            setMode={setInstagramImageMode}
+            slideCount={instagramCarouselSlides}
+            setSlideCount={setInstagramCarouselSlides}
+            onConfirm={() => {
+              setInstagramImageModalOpen(false);
+              if (instagramImageMode === 'carousel') {
+                setInstagramCarouselSlidesData(null);
+                setInstagramCarouselCaption('');
+              }
+            }}
+          />
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">5. Preview & Save</h2>
