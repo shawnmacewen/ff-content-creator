@@ -60,6 +60,14 @@ export const CONTENT_TYPES: ContentTypeInfo[] = [
     category: 'long-form',
     placeholder: 'Create copy for an infographic about...',
   },
+  {
+    id: 'faq',
+    label: 'FAQ',
+    description: 'Frequently asked questions with clear, compliant answers',
+    icon: 'help-circle',
+    category: 'long-form',
+    placeholder: 'Create an FAQ about...',
+  },
 ];
 
 export const TONE_OPTIONS: { value: ToneType; label: string; description: string }[] = [

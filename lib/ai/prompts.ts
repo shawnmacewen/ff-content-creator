@@ -75,6 +75,17 @@ Structure:
 
 Use numbers, percentages, and short phrases.
 Optimize for visual scanning.`,
+
+  faq: `Create a Frequently Asked Questions (FAQ) section.
+Structure:
+- Title
+- 6-10 Q&A pairs
+
+Guidelines:
+- Questions should reflect real customer concerns and objections
+- Answers should be clear, concise, and compliant (no guarantees; avoid specific performance claims)
+- Use plain language, define jargon briefly
+- If any answer depends on jurisdiction/eligibility, include a brief disclaimer`,
 };
 
 export function buildSystemPrompt(contentType: ContentType, tone: ToneType): string {

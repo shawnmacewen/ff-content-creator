@@ -6,7 +6,8 @@ export type ContentType =
   | 'email-marketing'
   | 'newsletter'
   | 'article'
-  | 'infographic-copy';
+  | 'infographic-copy'
+  | 'faq';
 
 export type ContentStatus = 'draft' | 'review' | 'approved' | 'published';
 
