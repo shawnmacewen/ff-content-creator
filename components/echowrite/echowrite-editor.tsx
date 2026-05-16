@@ -115,8 +115,8 @@ export function EchoWriteEditor({
 
       const colorClass = `${colors.bg} ${colors.darkBg} cursor-pointer transition-all text-foreground${hoverRing}`.trim();
       const attrib = ` data-attribution="true" data-source-id="${s.sourceId}" data-citation-number="${s.citationNumber}" data-color-class="${colorClass.replace(/\"/g, '')}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="${colorClass.replace(/\"/g, '')}"`;
-      const badge = `<sup class="${colors.badge} text-white text-[10px] px-1.5 py-0.5 rounded font-semibold ml-0.5 inline-flex items-center justify-center min-w-[18px]">${s.citationNumber}</sup>`;
-      return `<span${attrib}>${safe}${badge}</span>`;
+      // Citation badge disabled for now (it was being appended repeatedly during mode toggles).
+      return `<span${attrib}>${safe}</span>`;
     };
 
     const toSentences = (p: string) =>
