@@ -214,7 +214,7 @@ export function InstagramCarouselPanel({
             </div>
 
             {/* Instagram-like stage */}
-            <div className="rounded-2xl border bg-muted/30 p-4">
+            <div className="rounded-2xl border bg-muted/30 p-4 max-h-[520px] overflow-hidden">
               <div className="relative">
                 <div
                   className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
@@ -223,7 +223,10 @@ export function InstagramCarouselPanel({
                   <div className="w-[12%] shrink-0" aria-hidden />
 
                   {effectiveSlides.map((s, idx) => (
-                    <div key={s.id} className="w-[76%] shrink-0 sm:w-[58%] lg:w-[72%]">
+                    <div
+                      key={s.id}
+                      className="w-[68%] shrink-0 sm:w-[46%] lg:w-[52%] max-w-[360px]"
+                    >
                       <SlideCard
                         slide={s}
                         index={idx}
