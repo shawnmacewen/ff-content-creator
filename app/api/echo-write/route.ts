@@ -90,7 +90,10 @@ export async function POST(req: Request) {
       .slice(0, 12);
 
     const context = ranked
-      .map((x, idx) => `Source ${idx + 1} | ${x.row.title}\nPublisher: ${x.row.publisher || 'n/a'}\nDesignation: ${x.row.content_designation || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\n\n${String(x.row.body || '').slice(0, 1800)}`)
+      .map((x, idx) => {
+        const cleanBody = normalizeXmlToText(String(x.row.body || '')).slice(0, 1800);
+        return `Source ${idx + 1} | ${decodeHtmlEntities(String(x.row.title || ''))}\nDesignation: ${x.row.content_designation || 'n/a'}\nBasContentId: ${(x.row as any).bas_content_id || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\n\n${cleanBody}`;
+      })
       .join('\n\n---\n\n');
 
     const env = getServerEnv();
