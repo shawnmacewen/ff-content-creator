@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -152,15 +151,14 @@ export function InstagramCarouselPanel({
           </div>
         </div>
 
-        <div className={cn('mt-4 space-y-3', !enabled && 'opacity-50 pointer-events-none')}>
+        <div className={cn('mt-4 space-y-2', !enabled && 'opacity-50 pointer-events-none')}>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold">Slides</div>
-              <div className="text-xs text-muted-foreground">Support 3–6 slides</div>
+              <div className="text-xs text-muted-foreground">Set slide count in the modal (3–6)</div>
             </div>
             <div className="text-sm font-semibold tabular-nums">{slideCount}</div>
           </div>
-          <Slider min={3} max={6} step={1} value={[slideCount]} onValueChange={(v) => onSlideCountChange(v[0] ?? 6)} />
         </div>
       </CardHeader>
 
