@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Copy } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Copy, ChevronLeft, ChevronRight, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -103,6 +104,9 @@ export function InstagramCarouselPanel({
     setCaption(mockCaption(slideCount));
   }, [slideCount]);
 
+  const canPrev = activeIndex > 0;
+  const canNext = activeIndex < slideCount - 1;
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(caption);
@@ -116,14 +120,13 @@ export function InstagramCarouselPanel({
     <Card className="rounded-2xl border bg-card shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">Instagram Carousel</CardTitle>
-            <div className="mt-1 text-sm text-muted-foreground">Generate branded carousel slides + caption.</div>
+          <div className="flex items-center gap-2">
+            <Instagram className="h-4 w-4 text-violet-600" />
+            <CardTitle className="text-base">Preview Your Instagram Post</CardTitle>
           </div>
           <div className="flex items-center gap-3">
-            <Label className="text-xs text-muted-foreground">Off</Label>
+            <Label className="text-xs text-muted-foreground">Carousel</Label>
             <Switch checked={enabled} onCheckedChange={onEnabledChange} />
-            <Label className="text-xs text-muted-foreground">On</Label>
           </div>
         </div>
 
@@ -140,43 +143,88 @@ export function InstagramCarouselPanel({
       </CardHeader>
 
       <CardContent className={cn('space-y-4', !enabled && 'opacity-50')}>
-        {/* Preview panel */}
-        <div className="rounded-2xl border bg-background p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-muted-foreground">Carousel Preview ({slideCount} slides)</div>
-            <div className="text-xs text-muted-foreground">Click a slide to select</div>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {slides.map((s, idx) => (
-              <SlideCard key={s.id} slide={s} index={idx} active={idx === activeIndex} onClick={() => setActiveIndex(idx)} />
-            ))}
-          </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <div>
-              Active slide: <span className="font-medium text-foreground">{activeIndex + 1}</span>
-            </div>
-            <div>
-              {activeIndex + 1}/{slideCount}
-            </div>
-          </div>
-        </div>
+        <Tabs defaultValue="preview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 rounded-2xl">
+            <TabsTrigger value="preview" className="rounded-2xl">Preview</TabsTrigger>
+            <TabsTrigger value="caption" className="rounded-2xl">Caption</TabsTrigger>
+          </TabsList>
 
-        {/* Caption preview below carousel */}
-        <div className="rounded-2xl border bg-background p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-muted-foreground">Caption Preview</div>
-            <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
-          </div>
-          <textarea
-            className="mt-3 min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-          />
-          <div className="mt-2 text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
-        </div>
+          <TabsContent value="preview" className="mt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">Carousel Preview ({slideCount} Slides)</div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>↔</span>
+                <span>Swipe to preview</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {slides.map((s, idx) => (
+                <SlideCard key={s.id} slide={s} index={idx} active={idx === activeIndex} onClick={() => setActiveIndex(idx)} />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="rounded-2xl" disabled={!canPrev} onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="rounded-2xl" disabled={!canNext} onClick={() => setActiveIndex((i) => Math.min(slideCount - 1, i + 1))}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: slideCount }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full bg-muted-foreground/30',
+                      i === activeIndex && 'w-5 bg-violet-600/80'
+                    )}
+                  />
+                ))}
+              </div>
+
+              <div className="text-xs text-muted-foreground tabular-nums">
+                {activeIndex + 1}/{slideCount}
+              </div>
+            </div>
+
+            {/* Caption preview directly below carousel */}
+            <div className="rounded-2xl border bg-background p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium text-muted-foreground">Caption Preview</div>
+                <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              </div>
+              <textarea
+                className="mt-3 min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+              />
+              <div className="mt-2 text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="caption" className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">Generated Caption</div>
+              <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy}>
+                <Copy className="h-4 w-4" />
+                Copy
+              </Button>
+            </div>
+            <textarea
+              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+            />
+            <div className="text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
