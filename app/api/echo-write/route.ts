@@ -123,9 +123,9 @@ export async function POST(req: Request) {
       '- Use a blank line between paragraphs and between sections (double newlines).',
       '- Do not output one giant block of text.',
       '- Use short paragraphs (2–4 sentences).',
-      body.contentType === 'article'
-        ? '- Use a clear headline, then subheadings, then paragraphs under each heading.'
-        : '- Use section headings and short spoken paragraphs under each heading.',
+      body.contentType === 'video-script'
+        ? '- Use a clear headline, then section headings, then short spoken paragraphs under each heading.'
+        : '- Write like a readable editorial article a human would actually read: natural headline, subheadings only where helpful (don’t over-fragment), and longer coherent paragraphs when needed.' ,
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
       'Return publication-ready output only.',
       '',
