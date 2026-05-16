@@ -5,6 +5,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { SourceSelector } from '@/components/generator/source-selector';
 import { InstagramGenerateWorkflow } from '@/components/generator/instagram-workflow';
+import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
+import { KitFormatSelector } from '@/components/generator/kit-format-selector';
+import type { ContentType } from '@/lib/types/content';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function GeneratePage() {
@@ -12,12 +15,18 @@ export default function GeneratePage() {
   const router = useRouter();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const [mode, setMode] = useState<GenerationMode>('single');
+  const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
 
   // Preserve deep-link source selection
   useEffect(() => {
     const sourceIdsParam = searchParams.get('sourceIds');
     if (sourceIdsParam) setSelectedSourceIds(sourceIdsParam.split(',').filter(Boolean));
   }, [searchParams]);
+
+  const toggleKitType = (t: ContentType) => {
+    setKitTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  };
 
   return (
     <div className="space-y-6">
@@ -41,7 +50,13 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      <InstagramGenerateWorkflow selectedSourceIds={selectedSourceIds} setSelectedSourceIds={setSelectedSourceIds} />
+      <GenerationModeToggle mode={mode} onChange={setMode} />
+
+      {mode === 'kit' ? (
+        <KitFormatSelector selected={kitTypes} onToggle={toggleKitType} />
+      ) : (
+        <InstagramGenerateWorkflow selectedSourceIds={selectedSourceIds} setSelectedSourceIds={setSelectedSourceIds} />
+      )}
 
       <div className="rounded-2xl border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">

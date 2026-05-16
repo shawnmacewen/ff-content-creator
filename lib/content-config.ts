@@ -68,6 +68,14 @@ export const CONTENT_TYPES: ContentTypeInfo[] = [
     category: 'long-form',
     placeholder: 'Create an FAQ about...',
   },
+  {
+    id: 'video-script',
+    label: 'Video Script',
+    description: 'Short-form video scripts with hook, beats, and CTA',
+    icon: 'video',
+    category: 'long-form',
+    placeholder: 'Write a video script about...',
+  },
 ];
 
 export const TONE_OPTIONS: { value: ToneType; label: string; description: string }[] = [

@@ -86,6 +86,17 @@ Guidelines:
 - Answers should be clear, concise, and compliant (no guarantees; avoid specific performance claims)
 - Use plain language, define jargon briefly
 - If any answer depends on jurisdiction/eligibility, include a brief disclaimer`,
+
+  'video-script': `Create a short-form video script suitable for social platforms.
+Structure:
+- Hook (first 1-2 lines)
+- 4-7 beats (short sections / bullet points)
+- Closing + CTA
+
+Guidelines:
+- Keep it punchy and easy to read out loud
+- Avoid exaggerated claims; stay compliant for financial services
+- If you reference numbers, only use those present in source material`,
 };
 
 export function buildSystemPrompt(contentType: ContentType, tone: ToneType): string {

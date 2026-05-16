@@ -166,6 +166,7 @@ export async function POST(req: Request) {
         assetType === 'newsletter' ? 'Newsletter' :
         assetType === 'article' ? 'Article/Blog Post' :
         assetType === 'faq' ? 'FAQ' :
+        assetType === 'video-script' ? 'Video Script' :
         'Infographic Copy',
     }));
 

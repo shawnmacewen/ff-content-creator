@@ -7,7 +7,8 @@ export type ContentType =
   | 'newsletter'
   | 'article'
   | 'infographic-copy'
-  | 'faq';
+  | 'faq'
+  | 'video-script';
 
 export type ContentStatus = 'draft' | 'review' | 'approved' | 'published';
 
