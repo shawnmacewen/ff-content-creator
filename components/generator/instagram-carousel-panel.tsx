@@ -53,39 +53,41 @@ function SlideCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-white/60 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-white/5',
+        'group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
         active && 'ring-2 ring-violet-500/60'
       )}
+      style={
+        slide.imageUrl
+          ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : undefined
+      }
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/12 via-fuchsia-500/6 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/70 to-transparent dark:from-black/30" />
+      {/* fallback / tint */}
+      <div className={cn('absolute inset-0', slide.imageUrl ? 'bg-black/25' : 'bg-gradient-to-br from-violet-500/12 via-fuchsia-500/6 to-transparent')} />
+      {/* editorial overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
       <div className="relative flex h-full flex-col p-4 text-left">
         <div className="flex items-center justify-between">
-          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-violet-600 text-xs font-semibold text-white">
+          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold text-white backdrop-blur">
             {index + 1}
           </div>
-          <div className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10" aria-hidden />
+          <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
-        <div className="mt-4 space-y-2">
-          <div className="text-sm font-semibold leading-snug tracking-tight text-foreground whitespace-pre-line">
+        <div className="mt-5 space-y-2">
+          <div className="text-sm font-semibold leading-snug tracking-tight text-white whitespace-pre-line drop-shadow">
             {slide.headline}
           </div>
-          <div className="text-xs leading-relaxed text-muted-foreground line-clamp-5">{slide.summary}</div>
+          <div className="text-xs leading-relaxed text-white/80 line-clamp-5 drop-shadow">{slide.summary}</div>
         </div>
 
-        <div className="mt-auto">
-          <div className="h-16 w-full overflow-hidden rounded-xl bg-gradient-to-br from-black/5 to-black/0 dark:from-white/10 dark:to-white/0">
-            {slide.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={slide.imageUrl} alt="" className="h-full w-full object-cover opacity-90" />
-            ) : null}
+        {!slide.imageUrl ? (
+          <div className="mt-auto">
+            <div className="h-16 w-full rounded-xl bg-white/10" />
+            <div className="mt-2 text-[10px] text-white/60">Image placeholder</div>
           </div>
-          <div className="mt-2 text-[10px] text-muted-foreground/80">
-            {slide.imageUrl ? 'Generated image' : 'Image placeholder'}
-          </div>
-        </div>
+        ) : null}
       </div>
     </button>
   );
@@ -169,6 +171,12 @@ export function InstagramCarouselPanel({
             <Switch checked={enabled} onCheckedChange={onEnabledChange} />
           </div>
         </div>
+
+        {isGenerating ? (
+          <div className="mt-3 text-xs text-muted-foreground">
+            Generating carousel images… this may take a moment.
+          </div>
+        ) : null}
 
         <div className={cn('mt-4 space-y-2', !enabled && 'opacity-50 pointer-events-none')}>
           <div className="flex items-center justify-between">

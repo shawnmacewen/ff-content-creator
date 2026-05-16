@@ -50,6 +50,7 @@ export default function GeneratePage() {
   const [instagramCarouselSlidesData, setInstagramCarouselSlidesData] = useState<any[] | null>(null);
   const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
   const [isGeneratingCarouselImages, setIsGeneratingCarouselImages] = useState(false);
+  const [carouselProgress, setCarouselProgress] = useState<{ total: number; done: number; activeSlide: number } | null>(null);
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -99,9 +100,12 @@ export default function GeneratePage() {
     }
 
     setIsGeneratingCarouselImages(true);
+    setInstagramCarouselSlidesData(null);
+    setInstagramCarouselCaption('');
 
     try {
-      const res = await fetch('/api/generate/instagram-carousel', {
+      // 1) Get plan + shared theme once
+      const planRes = await fetch('/api/generate/instagram-carousel/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,23 +113,65 @@ export default function GeneratePage() {
           slideCount: instagramCarouselSlides,
         }),
       });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || `Carousel generation failed (${res.status})`);
+      const plan = await planRes.json().catch(() => ({}));
+      if (!planRes.ok) throw new Error(plan?.error || `Carousel plan failed (${planRes.status})`);
 
-      const slides = Array.isArray(payload?.slides) ? payload.slides : [];
-      const images = Array.isArray(payload?.images) ? payload.images : [];
-      const caption = String(payload?.caption || '');
+      const slides = Array.isArray(plan?.slides) ? plan.slides : [];
+      const caption = String(plan?.caption || '');
+      const theme = plan?.theme;
 
-      const byId = new Map(images.map((i: any) => [i.slideId, i.imageUrl]));
-      const merged = slides.map((s: any) => ({ ...s, imageUrl: byId.get(s.id) ?? null }));
-
-      setInstagramCarouselSlidesData(merged);
+      // Initialize UI with slide text immediately
+      const seeded = slides.map((s: any) => ({ ...s, imageUrl: null }));
+      setInstagramCarouselSlidesData(seeded);
       setInstagramCarouselCaption(caption);
+
+      // 2) Generate cover first, then parallelize the rest and progressively update
+      const total = slides.length;
+      setCarouselProgress({ total, done: 0, activeSlide: 0 });
+
+      const beats = ['Hook/Cover', 'Core Problem', 'Supporting Insight/Data', 'Market Impact', 'Broader Implications', 'CTA/What to Watch'];
+
+      const runSlide = async (i: number, quality: 'cover' | 'fast') => {
+        setCarouselProgress((p) => (p ? { ...p, activeSlide: i } : p));
+        const s = slides[i];
+        const r = await fetch('/api/generate/instagram-carousel/slide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            theme,
+            slideId: s.id,
+            index: i,
+            total,
+            beat: beats[i] || 'Story Beat',
+            quality,
+          }),
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out?.error || `Slide ${i + 1} failed (${r.status})`);
+
+        const imageUrl = out?.imageUrl ?? null;
+        setInstagramCarouselSlidesData((prev) => {
+          if (!prev) return prev;
+          return prev.map((x: any) => (x.id === s.id ? { ...x, imageUrl } : x));
+        });
+
+        setCarouselProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
+      };
+
+      // Cover first
+      await runSlide(0, 'cover');
+
+      // Remaining in parallel (fast)
+      await Promise.allSettled(
+        slides.slice(1).map((_: any, idx: number) => runSlide(idx + 1, 'fast'))
+      );
+
       toast.success('Carousel images generated');
     } catch (err: any) {
       console.error(err);
       toast.error(err?.message || 'Failed to generate carousel images');
     } finally {
+      setCarouselProgress(null);
       setIsGeneratingCarouselImages(false);
     }
   }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
