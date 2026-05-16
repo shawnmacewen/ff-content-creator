@@ -21,7 +21,7 @@ const presets = [
   { label: 'Image Test (POST)', method: 'POST', path: '/api/generate/image-test', body: JSON.stringify({ prompt: 'a simple cute cat illustration, flat colors' }, null, 2) },
 ];
 
-export default function ApiLabPage() {
+export default function ContentApiExplorerPage() {
   const [method, setMethod] = useState('GET');
   const [path, setPath] = useState('/api/source-content/provider-metadata');
   const [body, setBody] = useState('');
@@ -67,7 +67,7 @@ export default function ApiLabPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">API Lab</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Content API Explorer</h1>
         <p className="text-muted-foreground">Run provider and app API calls and inspect raw JSON responses.</p>
       </div>
 

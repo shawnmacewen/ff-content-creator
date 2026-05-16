@@ -61,11 +61,6 @@ const mainNavItems = [
     href: '/echo-write',
     icon: PenSquare,
   },
-  {
-    title: 'API Lab',
-    href: '/api-lab',
-    icon: Bug,
-  },
 ];
 
 const contentTypeItems = [
