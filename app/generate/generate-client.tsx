@@ -13,7 +13,7 @@ import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function GeneratePage() {
@@ -266,21 +266,6 @@ export default function GeneratePage() {
         </div>
       )}
 
-      <div className="rounded-2xl border bg-card p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold">Source Content</div>
-            <div className="text-xs text-muted-foreground">Select an article to generate from (existing component, will be restyled).</div>
-          </div>
-          <Button variant="outline" className="gap-2 rounded-2xl" onClick={() => {}}>
-            <Sparkles className="h-4 w-4" />
-            Use selection
-          </Button>
-        </div>
-        <div className="mt-4">
-          <SourceSelector selectedIds={selectedSourceIds} onSelectionChange={setSelectedSourceIds} />
-        </div>
-      </div>
     </div>
   );
 }
