@@ -93,7 +93,8 @@ export async function POST(req: Request) {
         summary: z.string().min(1),
       })
     ),
-    caption: z.string().default(''),
+    // Must be present to satisfy OpenAI response_format json-schema requirements
+    caption: z.string(),
   });
 
   const result = await generateObject({
