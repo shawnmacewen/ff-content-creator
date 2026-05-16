@@ -7,7 +7,6 @@ import { ContentTypeSelector } from '@/components/generator/content-type-selecto
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
-import { InstagramGenerateWorkflow } from '@/components/generator/instagram-workflow';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { generateId } from '@/lib/storage/local-storage';
@@ -246,11 +245,6 @@ export default function GeneratePage() {
               </div>
             </div>
           </div>
-
-          {/* Instagram premium workflow stays available when Instagram is the chosen type */}
-          {selectedContentTypes[0] === 'social-instagram' ? (
-            <InstagramGenerateWorkflow selectedSourceIds={selectedSourceIds} setSelectedSourceIds={setSelectedSourceIds} />
-          ) : null}
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
