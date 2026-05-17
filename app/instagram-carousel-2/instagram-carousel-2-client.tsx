@@ -29,6 +29,7 @@ export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('Canadian housing market');
   const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('prompt');
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
@@ -51,6 +52,7 @@ export default function InstagramCarousel2Client() {
     'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).',
     // Overlap-zone support (Option 1: prompt-only)
     'OVERLAP ZONE REQUIREMENT: Reserve a soft 20–40px continuation zone at the far left edge and far right edge of the masterplate. Do not place critical text in these edge zones; use them only for background/texture/colour flow/horizon/motion/environmental continuation.',
+    'NO NUMBERING: Do NOT render any explicit slide numbering, counters, fractions, or sequence markers anywhere (no "1/3", no "Slide 1", no "1.", no "1 of 10", no digits used as counters).',
     'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
     'No logos or watermarks.',
   ].join(' ');
@@ -134,8 +136,7 @@ export default function InstagramCarousel2Client() {
     const systemPrefix = `Create an Instagram carousel of ${args.totalSlides} slides about`;
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
 
-    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere. Do NOT render any explicit slide numbering at all (no "Slide 1", no "1.", no "1/10", no counters).`;
-
+    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive).`;
     const slotsUsed = args.slideEnd - args.slideStart + 1;
     const slotMap = [
       `Panel 1 (x=0..512) = slide ${args.slideStart}`,
@@ -148,7 +149,7 @@ export default function InstagramCarousel2Client() {
       : `PANEL MAP: ${slotMap}`;
 
     const continuationLine =
-      args.plateIndex === 0
+      args.plateIndex === 0 || cohesionMethod !== 'prompt'
         ? ''
         : [
             'CONTINUATION REQUIREMENT:',
@@ -300,6 +301,17 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
 
+                <label className="ml-2 text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                <select
+                  className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                  value={cohesionMethod}
+                  onChange={(e) => setCohesionMethod(e.target.value as any)}
+                  disabled={isLoading}
+                >
+                  <option value="prompt">Prompt Based Cohesion</option>
+                  <option value="image-ref" disabled>Image Reference Cohesion (coming soon)</option>
+                </select>
+
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
                   onClick={runCarouselGeneration}
@@ -395,6 +407,17 @@ export default function InstagramCarousel2Client() {
                 >
                   <option value="gpt-image-2">gpt-image-2 (default)</option>
                   <option value="gpt-image-1">gpt-image-1</option>
+                </select>
+
+                <label className="ml-2 text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                <select
+                  className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                  value={cohesionMethod}
+                  onChange={(e) => setCohesionMethod(e.target.value as any)}
+                  disabled={isLoading}
+                >
+                  <option value="prompt">Prompt Based Cohesion</option>
+                  <option value="image-ref" disabled>Image Reference Cohesion (coming soon)</option>
                 </select>
 
                 <Button
