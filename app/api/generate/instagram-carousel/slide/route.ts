@@ -76,10 +76,11 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template = 'standard', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
+    template?: 'intro' | 'standard' | 'outro';
     slideId: string;
     index: number;
     total: number;
@@ -127,6 +128,13 @@ export async function POST(req: Request) {
   }
 
   // Fallback: Derive prompt via model so we can keep the art direction consistent and concise.
+  const templateHint =
+    template === 'intro'
+      ? 'Template: INTRO/COVER. Strongest establishing image, clear focal shape, clean negative space in lower third.'
+      : template === 'outro'
+        ? 'Template: OUTRO/CTA. Cleanest negative space, minimal texture, calm composition, designed for CTA overlays.'
+        : 'Template: STANDARD. Balanced editorial background with generous negative space for overlays.';
+
   const promptRes = await generateObject({
     model: openai(env.OPENAI_MODEL),
     schema: Schema,
@@ -134,6 +142,8 @@ export async function POST(req: Request) {
       'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
       'Format: 4:5 portrait (1080x1350).',
       `Style variant: ${style}.`,
+      `Template variant: ${template}.`,
+      templateHint,
       style === 'frost'
         ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
         : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays.',

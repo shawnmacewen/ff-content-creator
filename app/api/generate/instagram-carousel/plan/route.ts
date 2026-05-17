@@ -106,13 +106,17 @@ export async function POST(req: Request) {
     ].join('\n'),
   });
 
-  const slides = (planRes.object.slides || []).slice(0, count).map((s, idx) => ({
-    id: `slide-${idx + 1}`,
-    headline: String(s.headline || `Slide ${idx + 1}`),
-    summary: String(s.summary || ''),
-    motif: String((s as any).motif || 'abstract icon'),
-    placement: String((s as any).placement || 'right'),
-  }));
+  const slides = (planRes.object.slides || []).slice(0, count).map((s, idx) => {
+    const template = idx === 0 ? 'intro' : idx === count - 1 ? 'outro' : 'standard';
+    return {
+      id: `slide-${idx + 1}`,
+      headline: String(s.headline || `Slide ${idx + 1}`),
+      summary: String(s.summary || ''),
+      motif: String((s as any).motif || 'abstract icon'),
+      placement: String((s as any).placement || 'right'),
+      template,
+    };
+  });
 
   // Generate ONE master background plate (landscape) used to create connected slide pans.
   // Best-effort: if this fails, we still return theme+slides so the UI can proceed.
@@ -161,6 +165,7 @@ export async function POST(req: Request) {
       slides,
       caption: String(planRes.object.caption || '').trim(),
       masterPlate,
+      style,
     }),
     { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );

@@ -18,6 +18,7 @@ export type CarouselSlide = {
   cropX?: number | null;
   motifUrl?: string | null;
   placement?: string | null;
+  template?: 'intro' | 'standard' | 'outro' | null;
   promptUsed?: string | null;
 };
 

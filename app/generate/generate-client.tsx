@@ -223,7 +223,11 @@ export default function GeneratePage() {
       setInstagramCarouselMasterPlate(masterPlate);
 
       // Initialize UI with slide text immediately
-      const seeded = slides.map((s: any) => ({ ...s, imageUrl: null }));
+      const seeded = slides.map((s: any, idx: number) => ({
+        ...s,
+        template: s.template || (idx === 0 ? 'intro' : idx === slides.length - 1 ? 'outro' : 'standard'),
+        imageUrl: null,
+      }));
       setInstagramCarouselSlidesData(seeded);
       setInstagramCarouselCaption(caption);
       setInstagramCarouselPromptLog('');
@@ -245,6 +249,7 @@ export default function GeneratePage() {
             theme,
             masterPlate,
             style: instagramCarouselStyle,
+            template: s.template || (i === 0 ? 'intro' : i === total - 1 ? 'outro' : 'standard'),
             slideId: s.id,
             index: i,
             total,
