@@ -14,7 +14,6 @@ export default function InstagramCarousel2Client() {
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
   const [lastMode, setLastMode] = React.useState<'raw' | 'split-friendly' | null>(null);
-  const [splitView, setSplitView] = React.useState<'split' | 'master'>('split');
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -36,7 +35,6 @@ export default function InstagramCarousel2Client() {
     setImageUrl(null);
     setPanelUrls([]);
     setLastMode(mode);
-    setSplitView(mode === 'split-friendly' ? 'split' : 'master');
 
     const promptToSend = mode === 'split-friendly'
       ? `${prompt}\n\n${splitFriendlySpec}`.trim()
@@ -300,42 +298,11 @@ export default function InstagramCarousel2Client() {
 
           {imageUrl ? (
             <Card className="rounded-2xl">
-              <CardHeader className="space-y-2">
-                <CardTitle className="text-base">Output</CardTitle>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-xs text-muted-foreground">View</div>
-                  <Button
-                    variant={splitView === 'split' ? 'default' : 'outline'}
-                    size="sm"
-                    className="rounded-2xl"
-                    onClick={() => setSplitView('split')}
-                    disabled={isLoading}
-                  >
-                    Split (3 panels)
-                  </Button>
-                  <Button
-                    variant={splitView === 'master' ? 'default' : 'outline'}
-                    size="sm"
-                    className="rounded-2xl"
-                    onClick={() => setSplitView('master')}
-                    disabled={isLoading}
-                  >
-                    Master image
-                  </Button>
-
-                  {panelUrls.length !== 3 ? (
-                    <div className="ml-2 text-xs text-muted-foreground">
-                      (If panels don’t show, it’s likely a CORS issue with the image URL.)
-                    </div>
-                  ) : null}
-                </div>
+              <CardHeader>
+                <CardTitle className="text-base">Output (3 panels)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {splitView === 'master' ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
-                ) : panelUrls.length === 3 ? (
+                {panelUrls.length === 3 ? (
                   <div className="space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Cropped panels (y=0..512, 512..1024, 1024..1536)</div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -349,8 +316,13 @@ export default function InstagramCarousel2Client() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-muted-foreground">
-                    Cropping pending… (generate again, or we may need to proxy the image URL to avoid CORS)
+                  <div className="space-y-3">
+                    <div className="text-sm text-muted-foreground">
+                      Cropping pending… (if this never resolves, it’s usually a CORS/canvas issue)
+                    </div>
+                    {/* Fallback: still show the master image so you can see what was generated */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
                   </div>
                 )}
               </CardContent>
