@@ -5,10 +5,11 @@ import useSWR from 'swr';
 import { Database, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
+import KnowledgeBase from '@/components/settings/knowledge-base';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type SettingsTab = 'content-sync' | 'content-api-explorer';
+type SettingsTab = 'content-sync' | 'content-api-explorer' | 'knowledge-base';
 
 function TabButton({
   active,
@@ -161,6 +162,9 @@ export default function SettingsPage() {
         <TabButton active={tab === 'content-api-explorer'} onClick={() => setTab('content-api-explorer')}>
           Content API Explorer
         </TabButton>
+        <TabButton active={tab === 'knowledge-base'} onClick={() => setTab('knowledge-base')}>
+          Knowledge Base
+        </TabButton>
       </div>
 
       {tab === 'content-sync' ? (
@@ -243,8 +247,10 @@ export default function SettingsPage() {
             </div>
           </div>
         </>
-      ) : (
+      ) : tab === 'content-api-explorer' ? (
         <ContentApiExplorer />
+      ) : (
+        <KnowledgeBase />
       )}
     </div>
   );
