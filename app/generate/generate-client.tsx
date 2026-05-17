@@ -264,13 +264,18 @@ export default function GeneratePage() {
         setCarouselProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
       };
 
-      // Cover first
-      await runSlide(0, 'cover');
-
-      // Remaining in parallel (fast)
-      await Promise.allSettled(
-        slides.slice(1).map((_: any, idx: number) => runSlide(idx + 1, 'fast'))
-      );
+      if (instagramCarouselGenerationMode === 'sequential') {
+        // True sequential: generate one slide, render it, then move to the next.
+        for (let i = 0; i < slides.length; i += 1) {
+          // cover quality for first slide only
+          // eslint-disable-next-line no-await-in-loop
+          await runSlide(i, i === 0 ? 'cover' : 'fast');
+        }
+      } else {
+        // Master plate mode: cover first, then parallelize the rest.
+        await runSlide(0, 'cover');
+        await Promise.allSettled(slides.slice(1).map((_: any, idx: number) => runSlide(idx + 1, 'fast')));
+      }
 
       toast.success('Carousel images generated');
     } catch (err: any) {
@@ -280,7 +285,7 @@ export default function GeneratePage() {
       setCarouselProgress(null);
       setIsGeneratingCarouselImages(false);
     }
-  }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides]);
+  }, [mode, selectedContentTypes, kitTypes, selectedSourceIds, instagramCarouselSlides, instagramCarouselGenerationMode]);
 
   const handleGenerateKit = useCallback(async () => {
     if (!kitTypes.length) {
@@ -573,6 +578,7 @@ export default function GeneratePage() {
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
                 onSample={handleSampleInstagramCarousel}
+                progress={carouselProgress}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />
@@ -637,6 +643,7 @@ export default function GeneratePage() {
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
                 onSample={handleSampleInstagramCarousel}
+                progress={carouselProgress}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />

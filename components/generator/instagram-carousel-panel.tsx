@@ -119,6 +119,7 @@ export function InstagramCarouselPanel({
   onCaptionChange,
   onGenerate,
   onSample,
+  progress,
   isGenerating,
   canGenerate = true,
 }: {
@@ -132,6 +133,7 @@ export function InstagramCarouselPanel({
   onCaptionChange?: (v: string) => void;
   onGenerate?: () => void;
   onSample?: () => void;
+  progress?: { total: number; done: number; activeSlide: number } | null;
   isGenerating?: boolean;
   canGenerate?: boolean;
 }) {
@@ -204,7 +206,13 @@ export function InstagramCarouselPanel({
 
         {isGenerating ? (
           <div className="mt-3 text-xs text-muted-foreground">
-            Generating carousel images… this may take a moment.
+            {progress ? (
+              <span>
+                Generating slide {Math.min(progress.activeSlide + 1, progress.total)} of {progress.total}… ({progress.done}/{progress.total} complete)
+              </span>
+            ) : (
+              <span>Generating carousel images… this may take a moment.</span>
+            )}
           </div>
         ) : null}
 
