@@ -20,24 +20,13 @@ export type CarouselSlide = {
   placement?: string | null;
 };
 
-function mockSlides(count: number): CarouselSlide[] {
-  const base = [
-    { headline: '1\nKey takeaway', summary: 'A crisp, branded summary pulled from the article.' },
-    { headline: '2\nWhat changed', summary: 'Highlight the main driver in plain language.' },
-    { headline: '3\nWhy it matters', summary: 'Explain implications without hype or promises.' },
-    { headline: '4\nWhat to watch', summary: 'List a few signals readers can track.' },
-    { headline: '5\nCommon questions', summary: 'Answer likely objections succinctly.' },
-    { headline: '6\nBottom line', summary: 'A calm, practical wrap-up + next step.' },
-  ];
+function emptySlides(count: number): CarouselSlide[] {
   return Array.from({ length: count }).map((_, i) => ({
     id: `slide-${i + 1}`,
-    headline: base[i]?.headline ?? `${i + 1}`,
-    summary: base[i]?.summary ?? 'Slide summary',
+    headline: '',
+    summary: '',
+    imageUrl: null,
   }));
-}
-
-function mockCaption(slideCount: number) {
-  return `Here are ${slideCount} key takeaways — swipe through.\n\nWhat’s your takeaway? Drop a comment below.\n\n#Investing #Markets #FinancialPlanning`;
 }
 
 function SlideCard({
@@ -45,11 +34,13 @@ function SlideCard({
   index,
   active,
   onClick,
+  isGenerating,
 }: {
   slide: CarouselSlide;
   index: number;
   active?: boolean;
   onClick?: () => void;
+  isGenerating?: boolean;
 }) {
   return (
     <button
@@ -72,12 +63,20 @@ function SlideCard({
       }
     >
       {/* full-bleed visual composition */}
-      <div className={cn(
-        'absolute inset-0',
-        slide.imageUrl ? 'bg-black/20' : 'bg-gradient-to-br from-violet-600/25 via-fuchsia-600/10 to-slate-950/10'
-      )} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.18),transparent_50%)]" />
+      <div
+        className={cn(
+          'absolute inset-0',
+          slide.imageUrl
+            ? 'bg-transparent'
+            : 'bg-gradient-to-br from-violet-500/14 via-violet-200/18 to-white/70'
+        )}
+      />
+      {slide.imageUrl ? (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/0" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.16),transparent_55%)]" />
+        </>
+      ) : null}
 
       <div className="relative flex h-full flex-col p-7 text-left">
         {/* minimal chrome: no admin badges */}
@@ -86,16 +85,23 @@ function SlideCard({
           <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
-        <div className="mt-auto space-y-3 pb-1">
-          <div className="text-3xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-sm">
-            {slide.headline}
+        {(slide.headline || slide.summary) ? (
+          <div className="mt-auto space-y-3 pb-1">
+            <div className="text-3xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-sm">
+              {slide.headline}
+            </div>
+            <div className="max-w-[90%] text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">
+              {slide.summary}
+            </div>
           </div>
-          <div className="max-w-[90%] text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">
-            {slide.summary}
+        ) : (
+          <div className="mt-auto pb-1">
+            <div className="h-8 w-2/3 rounded-xl bg-white/10" />
+            <div className="mt-3 h-4 w-4/5 rounded-xl bg-white/10" />
           </div>
-        </div>
+        )}
 
-        {!slide.imageUrl ? (
+        {isGenerating && !slide.imageUrl ? (
           <div className="absolute inset-0">
             <div className="absolute inset-0 animate-pulse bg-white/5" />
             <div className="absolute bottom-8 left-7 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70 backdrop-blur">
@@ -138,16 +144,15 @@ export function InstagramCarouselPanel({
   canGenerate?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const localSlides = React.useMemo(() => mockSlides(slideCount), [slideCount]);
+  const localSlides = React.useMemo(() => emptySlides(slideCount), [slideCount]);
   const effectiveSlides = slides?.length ? slides : localSlides;
 
-  const [localCaption, setLocalCaption] = React.useState(() => mockCaption(slideCount));
+  const [localCaption, setLocalCaption] = React.useState('');
   const effectiveCaption = caption ?? localCaption;
 
   React.useEffect(() => {
     setActiveIndex((i) => Math.min(i, slideCount - 1));
-    if (!caption) setLocalCaption(mockCaption(slideCount));
-  }, [slideCount, caption]);
+  }, [slideCount]);
 
   const canPrev = activeIndex > 0;
   const canNext = activeIndex < slideCount - 1;
@@ -261,6 +266,7 @@ export function InstagramCarouselPanel({
                         index={idx}
                         active={idx === activeIndex}
                         onClick={() => setActiveIndex(idx)}
+                        isGenerating={isGenerating}
                       />
                     </div>
                   ))}
