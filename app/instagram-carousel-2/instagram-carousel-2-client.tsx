@@ -355,22 +355,32 @@ export default function InstagramCarousel2Client() {
     }
   };
 
+  const enabledSlideCounts = new Set([3, 6, 9]);
+
   const SlideCountSelect = (
-    <select
-      className="h-9 rounded-2xl border bg-background px-3 text-sm"
-      value={slideCount}
-      onChange={(e) => setSlideCount(parseInt(e.target.value, 10))}
-      disabled={isLoading}
-    >
-      {Array.from({ length: 9 }).map((_, i) => {
-        const v = i + 2;
-        return (
-          <option key={v} value={v}>
-            {v} slides
-          </option>
-        );
-      })}
-    </select>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <select
+          className="h-9 rounded-2xl border bg-background px-3 text-sm"
+          value={slideCount}
+          onChange={(e) => setSlideCount(parseInt(e.target.value, 10))}
+          disabled={isLoading}
+        >
+          {Array.from({ length: 9 }).map((_, i) => {
+            const v = i + 2;
+            const enabled = enabledSlideCounts.has(v);
+            return (
+              <option key={v} value={v} disabled={!enabled}>
+                {v} slides{enabled ? '' : ' (in progress)'}
+              </option>
+            );
+          })}
+        </select>
+      </TooltipTrigger>
+      <TooltipContent sideOffset={6} className="max-w-[260px]">
+        In progress for other slide counts.
+      </TooltipContent>
+    </Tooltip>
   );
 
   return (
