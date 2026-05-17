@@ -92,6 +92,7 @@ export async function POST(req: Request) {
   };
 
   const Schema = z.object({
+    // One compact prompt string to send to the image model.
     prompt: z.string(),
   });
 
@@ -141,6 +142,13 @@ export async function POST(req: Request) {
     model: openai(env.OPENAI_MODEL),
     schema: Schema,
     prompt: [
+      'You are writing a single, compact prompt for an image generation model.',
+      'Output format rules:',
+      '- Return ONLY the prompt text as one paragraph (no markdown, no headings, no bullet lists).',
+      '- Keep it consistent in density across slides; aim ~60–110 words.',
+      '- Be specific but not verbose.',
+      '',
+      'Image requirements:',
       'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
       'Format: 4:5 portrait (1080x1350).',
       `Style variant: ${style}.`,
@@ -152,15 +160,15 @@ export async function POST(req: Request) {
         : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays.',
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
-      'Avoid ultra-detailed photorealism; keep it cinematic, stylized, and fast to render.',
-      `Palette: ${style === 'frost' ? 'clean whites with very light pink OR very light ice blue accents (no purple/gold), airy high-key neutrals' : (theme?.palette || 'soft purples with warm gold accents and neutral grays')}.`,
-      `Lighting: ${style === 'frost' ? 'bright soft diffuse light, high-key, even edges (no vignette)' : (theme?.lighting || 'soft cinematic')}.`,
-      `Texture: ${style === 'frost' ? 'clean minimal grain, subtle matte' : (theme?.texture || 'subtle grain')}.`,
-      `Composition: ${style === 'frost' ? 'airy negative space, minimal clutter, clean horizon' : (theme?.composition || 'premium editorial negative space')}.`,
+      'Avoid ultra-detailed photorealism; keep it premium editorial, fast to render.',
+      `Palette: ${style === 'frost' ? 'clean whites + very light pink or ice blue accents' : (theme?.palette || 'soft purples with warm gold accents and neutral grays')}.`,
+      `Lighting: ${style === 'frost' ? 'bright soft diffuse, even edges' : (theme?.lighting || 'soft cinematic')}.`,
+      `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,
+      `Composition: ${style === 'frost' ? 'airy negative space, minimal clutter' : (theme?.composition || 'premium editorial negative space')}.`,
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
       `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
       style === 'frost'
-        ? 'Keep the lower third especially clean and light for DARK (black) headline/summary overlays.'
+        ? 'Keep the lower third clean and light for dark headline/summary overlays.'
         : 'Keep generous negative space for headline and summary overlays.',
     ].join(' '),
   });
