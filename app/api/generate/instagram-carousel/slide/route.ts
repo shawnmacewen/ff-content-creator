@@ -164,7 +164,15 @@ export async function POST(req: Request) {
       templateHint,
       imageStyleHint,
       style === 'frost'
-        ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
+        ? [
+            'IMPORTANT: Frost palette ONLY.',
+            'Background must be clean near-white with very light pink OR very light ice blue accents.',
+            'Do NOT use purple. Do NOT use gold. Do NOT use yellow/warm lighting.',
+            'Overall look: high-key, bright, crisp, minimal shadows; matte editorial paper feel.',
+            'Avoid moody/dim lighting, dark gradients, heavy texture, or dark vignettes.',
+            'Keep a large, clearly-defined negative-space block for BLACK text overlays.',
+            'No obvious finance charts/candlesticks as the main subject; keep any geometry minimal and abstract.',
+          ].join(' ')
         : template === 'standard'
           ? [
               'IMPORTANT: Purple+Gold palette, but LIGHT / near-white background (paper-white / frosted white).',
