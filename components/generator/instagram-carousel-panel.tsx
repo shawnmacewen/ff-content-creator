@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { CAROUSEL_TEMPLATES } from '@/lib/generator/carousel-templates';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -46,8 +47,17 @@ function SlideCard({
   isGenerating?: boolean;
   styleVariant?: 'purple-gold' | 'frost';
 }) {
-  const template = slide.template || 'standard';
-  const textPlacement = template === 'outro' ? 'top-left' : 'bottom-left';
+  const template = (slide.template || 'standard') as 'intro' | 'standard' | 'outro';
+  const templateSpec = CAROUSEL_TEMPLATES[template] || CAROUSEL_TEMPLATES.standard;
+  const ui = templateSpec.uiHint;
+
+  const textPlacement = ui.textPlacement || (template === 'outro' ? 'top-left' : 'bottom-left');
+  const padClass = template === 'intro' ? 'p-8' : template === 'outro' ? 'p-8' : 'p-7';
+
+  const headlineSizeClass = template === 'intro' ? 'text-[34px]' : template === 'outro' ? 'text-[30px]' : 'text-3xl';
+  const summarySizeClass = template === 'intro' ? 'text-[15px]' : 'text-sm';
+  const headlineClampClass = ui.headlineMaxLines === 2 ? 'line-clamp-2' : ui.headlineMaxLines === 3 ? 'line-clamp-3' : '';
+  const summaryClampClass = ui.summaryMaxLines === 2 ? 'line-clamp-2' : ui.summaryMaxLines === 3 ? 'line-clamp-3' : 'line-clamp-3';
 
   return (
     <button
@@ -82,7 +92,7 @@ function SlideCard({
       {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
       {slide.imageUrl ? null : null}
 
-      <div className={cn('relative flex h-full flex-col p-7 text-left', textPlacement === 'top-left' ? 'justify-start' : 'justify-end')}>
+      <div className={cn('relative flex h-full flex-col text-left', padClass, textPlacement === 'top-left' ? 'justify-start' : 'justify-end')}>
         {/* minimal chrome: no admin badges */}
         <div className="flex items-center justify-between">
           <div className="text-[11px] font-medium tracking-wide text-white/70">Slide {index + 1}</div>
@@ -93,15 +103,20 @@ function SlideCard({
           <div className="mt-auto space-y-3 pb-1">
             <div
               className={cn(
-                'text-3xl font-semibold leading-[1.05] tracking-tight drop-shadow-sm',
-                styleVariant === 'frost' ? 'text-slate-950' : 'text-white'
+                headlineSizeClass,
+                'font-semibold leading-[1.05] tracking-tight drop-shadow-sm',
+                headlineClampClass,
+                styleVariant === 'frost' ? 'text-slate-950' : 'text-white',
+                ui.headlineWeight === 'bold' && 'font-bold'
               )}
             >
               {slide.headline}
             </div>
             <div
               className={cn(
-                'max-w-[90%] text-sm leading-relaxed line-clamp-3 drop-shadow-sm',
+                'max-w-[90%] leading-relaxed drop-shadow-sm',
+                summarySizeClass,
+                summaryClampClass,
                 styleVariant === 'frost' ? 'text-slate-800' : 'text-white/80'
               )}
             >
