@@ -44,7 +44,7 @@ function placementToXY(args: { placement: string; canvasW: number; canvasH: numb
   }
 }
 
-async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '768x1024' | '1024x1024') {
+async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '1536x1024' | '1024x1024') {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -134,7 +134,9 @@ export async function POST(req: Request) {
     ].join(' '),
   });
 
-  const size = quality === 'cover' ? '1024x1536' : '768x1024';
+  // gpt-image-1 supported sizes: 1024x1024, 1024x1536, 1536x1024 (and "auto").
+  // 4:5 portrait is best approximated by 1024x1536, then the client can crop/fit to 1080x1350.
+  const size = '1024x1536';
   const img = await generateImage(env.OPENAI_API_KEY, promptRes.object.prompt, size);
 
   return new Response(
