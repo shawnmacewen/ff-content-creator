@@ -36,6 +36,7 @@ export default function InstagramCarousel2Client() {
   const [slides, setSlides] = React.useState<Slide[]>([]);
 
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
+  const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
 
   const [isLoading, setIsLoading] = React.useState(false);
@@ -176,6 +177,7 @@ export default function InstagramCarousel2Client() {
     setError(null);
     setMasterplates([]);
     setSlides([]);
+    setPromptLog('');
 
     try {
       const count = Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3)));
@@ -190,6 +192,10 @@ export default function InstagramCarousel2Client() {
 
         const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count });
         setLastPromptUsed(promptToSend);
+        setPromptLog((prev) => {
+          const header = `--- Masterplate ${plateIndex + 1} (slides ${slideStart}-${slideEnd}) prompt ---`;
+          return [prev, `${header}\n${promptToSend}`].filter(Boolean).join('\n\n');
+        });
 
         const referenceUrl =
           cohesionMethod === 'image-ref' && plateIndex > 0
@@ -308,7 +314,7 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
 
-                <label className="ml-2 text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                <label className="ml-2 text-xs text-muted-foreground" title="Prompt Based Cohesion: uses text-only continuation instructions across masterplates.\n\nImage Reference Cohesion: for masterplates after the first, sends a prior masterplate image back to the image model as a reference via image edits to improve visual continuity (experimental).">MasterPlate Cohesion Method</label>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
                   value={cohesionMethod}
@@ -321,7 +327,7 @@ export default function InstagramCarousel2Client() {
 
                 {cohesionMethod === 'image-ref' ? (
                   <>
-                    <label className="ml-2 text-xs text-muted-foreground">Image Ref Uses</label>
+                    <label className="ml-2 text-xs text-muted-foreground" title="Choose which prior masterplate to use as the reference image for generating the next masterplate.">Image Ref Uses</label>
                     <select
                       className="h-9 rounded-2xl border bg-background px-3 text-sm"
                       value={imageRefMode}
@@ -349,21 +355,21 @@ export default function InstagramCarousel2Client() {
                       variant="outline"
                       size="icon"
                       className="h-9 w-9 rounded-2xl"
-                      disabled={!lastPromptUsed}
-                      title="View last prompt used"
+                      disabled={!(promptLog || lastPromptUsed)}
+                      title="View generation prompt log"
                     >
                       <ScrollText className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
                     <DialogHeader>
-                      <DialogTitle>Last prompt used</DialogTitle>
+                      <DialogTitle>Prompt log (this run)</DialogTitle>
                     </DialogHeader>
                     <textarea
                       readOnly
                       className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                      value={(lastPromptUsed || '').trim()}
-                      placeholder="Generate an image to populate the prompt log…"
+                      value={(promptLog || lastPromptUsed || '').trim()}
+                      placeholder="Generate a carousel to populate the prompt log…"
                     />
                   </DialogContent>
                 </Dialog>
@@ -472,21 +478,21 @@ export default function InstagramCarousel2Client() {
                       variant="outline"
                       size="icon"
                       className="h-9 w-9 rounded-2xl"
-                      disabled={!lastPromptUsed}
-                      title="View last prompt used"
+                      disabled={!(promptLog || lastPromptUsed)}
+                      title="View generation prompt log"
                     >
                       <ScrollText className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
                     <DialogHeader>
-                      <DialogTitle>Last prompt used</DialogTitle>
+                      <DialogTitle>Prompt log (this run)</DialogTitle>
                     </DialogHeader>
                     <textarea
                       readOnly
                       className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                      value={(lastPromptUsed || '').trim()}
-                      placeholder="Generate an image to populate the prompt log…"
+                      value={(promptLog || lastPromptUsed || '').trim()}
+                      placeholder="Generate a carousel to populate the prompt log…"
                     />
                   </DialogContent>
                 </Dialog>
