@@ -36,12 +36,14 @@ function SlideCard({
   active,
   onClick,
   isGenerating,
+  styleVariant = 'purple-gold',
 }: {
   slide: CarouselSlide;
   index: number;
   active?: boolean;
   onClick?: () => void;
   isGenerating?: boolean;
+  styleVariant?: 'purple-gold' | 'frost';
 }) {
   return (
     <button
@@ -318,6 +320,7 @@ export function InstagramCarouselPanel({
                         active={idx === activeIndex}
                         onClick={() => setActiveIndex(idx)}
                         isGenerating={isGenerating}
+                        styleVariant={styleVariant}
                       />
                     </div>
                   ))}
