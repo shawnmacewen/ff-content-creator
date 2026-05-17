@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollText } from 'lucide-react';
+import { Info, ScrollText } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Masterplate = {
   id: string;
@@ -321,7 +322,28 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
 
-                <label className="ml-2 text-xs text-muted-foreground" title="Prompt Based Cohesion: uses text-only continuation instructions across masterplates.\n\nImage Reference Cohesion: for masterplates after the first, sends a prior masterplate image back to the image model as a reference via image edits to improve visual continuity (experimental).">MasterPlate Cohesion Method</label>
+                <div className="ml-2 flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+                        aria-label="MasterPlate Cohesion Method help"
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="max-w-[340px]">
+                      <div className="space-y-1">
+                        <div className="font-medium">Prompt Based Cohesion</div>
+                        <div>Uses text-only continuation instructions across masterplates.</div>
+                        <div className="mt-2 font-medium">Image Reference Cohesion</div>
+                        <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
                   value={cohesionMethod}
@@ -444,7 +466,28 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
 
-                <label className="ml-2 text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                <div className="ml-2 flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+                        aria-label="MasterPlate Cohesion Method help"
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="max-w-[340px]">
+                      <div className="space-y-1">
+                        <div className="font-medium">Prompt Based Cohesion</div>
+                        <div>Uses text-only continuation instructions across masterplates.</div>
+                        <div className="mt-2 font-medium">Image Reference Cohesion</div>
+                        <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
                   value={cohesionMethod}
