@@ -84,12 +84,14 @@ function SlideCard({
         </div>
 
         {(slide.headline || slide.summary) ? (
-          <div className="mt-auto space-y-3 pb-1">
-            <div className="text-3xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-sm">
-              {slide.headline}
-            </div>
-            <div className="max-w-[90%] text-sm leading-relaxed text-white/80 line-clamp-3 drop-shadow-sm">
-              {slide.summary}
+          <div className="mt-auto pb-1">
+            <div className="max-w-[92%] rounded-2xl border border-white/40 bg-white/80 p-5 shadow-sm backdrop-blur-md">
+              <div className="text-2xl font-semibold leading-[1.1] tracking-tight text-slate-900">
+                {slide.headline}
+              </div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-700 line-clamp-3">
+                {slide.summary}
+              </div>
             </div>
           </div>
         ) : (
