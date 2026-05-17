@@ -157,10 +157,13 @@ export async function POST(req: Request) {
       imageStyleHint,
       style === 'frost'
         ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
-        : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays.',
+        : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays. Make it moodier/darker (deeper midtones), high-contrast, and crisp so white overlay text is readable.',
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it premium editorial, fast to render.',
+      style === 'frost'
+        ? ''
+        : 'For purple-gold: avoid haze, glow fog, gaussian blur, soft-focus, overexposure, or blown highlights. Keep edges clean; avoid overly abstract swirls that reduce legibility.',
       `Palette: ${style === 'frost' ? 'clean whites + very light pink or ice blue accents' : (theme?.palette || 'soft purples with warm gold accents and neutral grays')}.`,
       `Lighting: ${style === 'frost' ? 'bright soft diffuse, even edges' : (theme?.lighting || 'soft cinematic')}.`,
       `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,

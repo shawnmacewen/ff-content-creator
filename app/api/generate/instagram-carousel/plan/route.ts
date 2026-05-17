@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       '- texture',
       '- composition (grid/margins/hierarchy)',
       '- imageryTheme (consistent motif: e.g., cinematic abstract markets, macro textures, stylized finance photography)',
-      'If style variant is "purple-gold": palette = soft purples + warm gold accents + neutral grays.',
+      'If style variant is "purple-gold": palette = soft purples + warm gold accents + neutral grays. Keep it moody/low-key (deeper midtones), with clear contrast so white overlay text stays readable.',
       'If style variant is "frost": palette = clean whites + very light pink OR very light ice blue accents (NO purple, NO gold).',
       'For frost: airy negative space, high-key lighting, minimal grain, designed for dark (black) text overlays.',
       'Keep it consistent and easy to apply.',
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     try {
       const masterPrompt = [
         'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
-        'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
+        'Landscape orientation. Cinematic, moody gradients (soft purples), deeper exposure (avoid washed-out highlights), subtle texture/grain, restrained abstract market motifs (not blurry).',
         'No readable text, no logos, no watermarks.',
         'Must have a continuous horizon/flow that can be panned across multiple slides.',
         `Palette: ${themeRes.object.palette}.`,
