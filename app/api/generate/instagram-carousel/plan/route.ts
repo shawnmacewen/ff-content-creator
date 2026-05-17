@@ -161,7 +161,12 @@ export async function POST(req: Request) {
           ? 'Create ONE master panoramic background plate for a premium high-key editorial Instagram carousel campaign (Frost style).'
           : 'Create ONE master panoramic background plate for a premium editorial Instagram carousel campaign (Purple+Gold style).',
         style === 'frost'
-          ? 'Landscape orientation. Near-white / frosted paper base with very light ice blue or very light pink accents, crisp edges, minimal shadows, clean matte texture. No purple, no gold, no warm/yellow lighting.'
+          ? [
+              'Landscape orientation. Near-white / frosted paper base with ice-blue or very light pink accents (make them visible, not imperceptible).',
+              'Add a DISTINCT but clean editorial pattern system across the plate: subtle topo lines / grid / contour lines / geometric shapes.',
+              'Use slightly stronger contrast than before so crops still read (avoid pure-white washout).',
+              'Crisp edges, minimal shadows, clean matte texture. No purple, no gold, no warm/yellow lighting.',
+            ].join(' ')
           : 'Landscape orientation. Cinematic, moody gradients (soft purples), deeper exposure (avoid washed-out highlights), subtle texture/grain, restrained abstract motifs (not blurry).',
         'No readable text, no logos, no watermarks.',
         'Must have a continuous horizon/flow that can be panned across multiple slides.',
