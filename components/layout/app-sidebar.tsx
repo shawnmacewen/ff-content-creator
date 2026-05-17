@@ -42,6 +42,11 @@ const mainNavItems = [
     icon: Sparkles,
   },
   {
+    title: 'Instagram Carousel 2.0',
+    href: '/instagram-carousel-2',
+    icon: Bug,
+  },
+  {
     title: 'Source Content',
     href: '/source-content',
     icon: FolderOpen,
