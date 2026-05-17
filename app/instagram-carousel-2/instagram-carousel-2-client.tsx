@@ -24,7 +24,9 @@ export default function InstagramCarousel2Client() {
     'Canvas: 1536x512 (3:1 landscape).',
     'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).',
     'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536.',
-    'Nothing important may cross panel boundaries (keep each panel self-contained).',
+    'SEAMLESS REQUIREMENT: treat the full 1536x512 as ONE continuous panorama/scene. The background, lighting, color palette, texture, and horizon lines must flow smoothly across the 512px boundaries.',
+    'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
+    'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).',
     'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
     'No logos or watermarks.',
   ].join(' ');
