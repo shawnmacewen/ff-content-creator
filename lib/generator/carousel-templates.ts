@@ -37,10 +37,10 @@ export const CAROUSEL_TEMPLATES: Record<CarouselTemplateKey, CarouselTemplateSpe
     promptHints: {
       imageStyle: 'abstract',
       background: [
-        'Template: INTRO/COVER.',
-        'Make this the strongest establishing image.',
-        'Higher visual contrast than standard, clear focal shape, clean negative space in lower third for headline + summary.',
-        'Slightly more "hero" composition; avoid clutter; keep edges clean.',
+        'Template: INTRO/COVER (dark hero).',
+        'Make this the strongest establishing image and mood-setter.',
+        'Full-bleed hero background, heavier gradient, clear focal element tied to the source gist (not generic finance).',
+        'Keep negative space clear (lower third) for headline + subhead overlays; avoid clutter; keep edges clean.',
       ].join(' '),
     },
   },
@@ -58,8 +58,9 @@ export const CAROUSEL_TEMPLATES: Record<CarouselTemplateKey, CarouselTemplateSpe
     promptHints: {
       imageStyle: 'abstract',
       background: [
-        'Template: STANDARD.',
-        'Balanced editorial background with generous negative space for overlays.',
+        'Template: STANDARD (light reading slides).',
+        'Mostly-white/near-white background with subtle style accents.',
+        'Reserve a clean top text zone; the lower portion carries the visual payload (diagram/chart/photo/icon/texture) based on the slide variant.',
         'Keep composition simple and consistent across slides.',
       ].join(' '),
     },
@@ -78,8 +79,9 @@ export const CAROUSEL_TEMPLATES: Record<CarouselTemplateKey, CarouselTemplateSpe
     promptHints: {
       imageStyle: 'abstract',
       background: [
-        'Template: OUTRO/CTA.',
-        'Cleanest negative space of the set; minimal texture; very readable overlay area.',
+        'Template: OUTRO/CTA (dark hero CTA).',
+        'Return to a dark full-bleed hero background to close the set (cohesive with intro).',
+        'Keep the top area readable for headline + bullets; keep bottom area readable for a short CTA line.',
         'Slightly calmer composition; avoid busy focal elements.',
       ].join(' '),
     },
