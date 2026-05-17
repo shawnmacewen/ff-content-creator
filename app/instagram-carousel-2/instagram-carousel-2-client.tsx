@@ -212,6 +212,9 @@ export default function InstagramCarousel2Client() {
   };
 
   const runCarouselGeneration = async () => {
+    // eslint-disable-next-line no-console
+    console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, topic });
+
     setIsLoading(true);
     setError(null);
     setMasterplates([]);
@@ -232,11 +235,16 @@ export default function InstagramCarousel2Client() {
         platePlan.push({ plateIndex, slideStart, slideEnd, size, panels });
       }
 
+      // eslint-disable-next-line no-console
+      console.log('runCarouselGeneration:platePlan', { count, platesNeeded, platePlan });
+
       const newMasterplates: Masterplate[] = [];
       const newSlides: Slide[] = [];
 
       for (const plate of platePlan) {
         const { plateIndex, slideStart, slideEnd, size, panels } = plate;
+        // eslint-disable-next-line no-console
+        console.log('runCarouselGeneration:plateLoop', { plateIndex, slideStart, slideEnd, size, panels });
 
         let promptToSend = '';
         try {
