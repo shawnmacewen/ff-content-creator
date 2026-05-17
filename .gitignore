@@ -35,5 +35,13 @@ IDENTITY.md
 SOUL.md
 TOOLS.md
 USER.md
+
+# local notes/state (do not commit)
+memory/
+docs/STATUS.md
+skills/
+samples/
+
 # Ignore local audit saved runtime artifacts
 app/api/audit/saved/
+artifacts/

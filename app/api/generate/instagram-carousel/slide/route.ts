@@ -134,8 +134,15 @@ export async function POST(req: Request) {
 
   // Fallback: Derive prompt via model so we can keep the art direction consistent and concise.
   const templateHint = templateSpec.promptHints.background;
-  const imageStyleHint = templateSpec.promptHints.imageStyle === 'realistic'
-    ? 'Image style: more realistic (but still premium editorial).'
+
+  // Style-level override: purple-gold benefits from a slightly more concrete/editorial look
+  // to avoid drifting into pastel gradients/haze.
+  const effectiveImageStyle = style === 'purple-gold'
+    ? 'realistic'
+    : (templateSpec.promptHints.imageStyle || 'abstract');
+
+  const imageStyleHint = effectiveImageStyle === 'realistic'
+    ? 'Image style: semi-realistic premium editorial (not photorealistic; crisp detail; recognizable fintech cues).'
     : 'Image style: stylized/abstract editorial (not photorealistic).';
 
   const promptRes = await generateObject({
@@ -157,13 +164,20 @@ export async function POST(req: Request) {
       imageStyleHint,
       style === 'frost'
         ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
-        : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays. Make it moodier/darker (deeper midtones), high-contrast, and crisp so white overlay text is readable.',
+        : [
+            'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
+            'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
+            'Contrast: higher contrast so white overlay text stays readable.',
+            'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
+            'Imagery: subtle but recognizable finance elements (e.g., chart line, candlesticks, coins, bars) — keep it tasteful and editorial.',
+            'Composition: preserve a clean negative-space block for text, but keep the non-text areas detailed enough to feel premium (not an amorphous gradient).',
+          ].join(' '),
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it premium editorial, fast to render.',
       style === 'frost'
         ? ''
-        : 'For purple-gold: avoid haze, glow fog, gaussian blur, soft-focus, overexposure, or blown highlights. Keep edges clean; avoid overly abstract swirls that reduce legibility.',
+        : 'For purple-gold: avoid overexposure, blown highlights, pastel gradients, lens bloom, volumetric light, vignette-y edge burn, and any smeary/airbrushed look. Keep edges clean; avoid overly abstract swirls that reduce legibility.',
       `Palette: ${style === 'frost' ? 'clean whites + very light pink or ice blue accents' : (theme?.palette || 'soft purples with warm gold accents and neutral grays')}.`,
       `Lighting: ${style === 'frost' ? 'bright soft diffuse, even edges' : (theme?.lighting || 'soft cinematic')}.`,
       `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,
