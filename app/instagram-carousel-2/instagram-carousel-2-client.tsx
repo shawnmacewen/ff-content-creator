@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollText } from 'lucide-react';
 
 export default function InstagramCarousel2Client() {
-  const [prompt, setPrompt] = React.useState<string>('Create a set of 3 Instagram carousel posts about the Canadian housing market from the lens of a financial advisor.');
+  const [topic, setTopic] = React.useState<string>('Canadian housing market');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
@@ -18,6 +18,9 @@ export default function InstagramCarousel2Client() {
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const systemPrefix = 'Create a set of 3 Instagram carousel posts about';
+  const systemSuffix = 'from the lens of a financial advisor.';
 
   const splitFriendlySpec = [
     'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
@@ -38,7 +41,11 @@ export default function InstagramCarousel2Client() {
     setPanelUrls([]);
     setLastMode(mode);
 
-    const promptToSend = `${prompt}\n\n${splitFriendlySpec}`.trim();
+    const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
+    const userTopic = topicClean || 'Canadian housing market';
+    const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
+
+    const promptToSend = `${userPrompt}\n\n${splitFriendlySpec}`.trim();
 
     setLastPromptUsed(promptToSend);
 
@@ -158,14 +165,14 @@ export default function InstagramCarousel2Client() {
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Prompt (Masterplate)</CardTitle>
+              <CardTitle className="text-base">Topic (Masterplate)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
                 className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Type a prompt like ChatGPT…"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
               />
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-muted-foreground">Model</label>
@@ -182,7 +189,7 @@ export default function InstagramCarousel2Client() {
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
                   onClick={() => runImageTest('masterplate')}
-                  disabled={isLoading || !prompt.trim()}
+                  disabled={isLoading || !topic.trim()}
                 >
                   Generate Image
                 </Button>
@@ -243,14 +250,14 @@ export default function InstagramCarousel2Client() {
         <TabsContent value="carousel" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Prompt (Carousel)</CardTitle>
+              <CardTitle className="text-base">Topic (Carousel)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
                 className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Type a prompt like ChatGPT…"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
               />
               <div className="text-xs text-muted-foreground">
                 Carousel mode generates a 3:1 masterplate (1536×512) that we deterministically crop into 3 square slides.
@@ -270,7 +277,7 @@ export default function InstagramCarousel2Client() {
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
                   onClick={() => runImageTest('carousel')}
-                  disabled={isLoading || !prompt.trim()}
+                  disabled={isLoading || !topic.trim()}
                 >
                   Generate Image
                 </Button>
