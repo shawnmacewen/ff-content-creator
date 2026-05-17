@@ -60,9 +60,10 @@ function SlideCard({
   const textPlacement = ui.textPlacement || (template === 'outro' ? 'top-left' : 'bottom-left');
   const padClass = template === 'intro' ? 'p-8' : template === 'outro' ? 'p-8' : 'p-7';
 
-  // Standard slides now use lighter backgrounds + dark text (more like Frost),
-  // regardless of style variant.
-  const useDarkText = template === 'standard' || styleVariant === 'frost';
+  // Text color defaults:
+  // - Standard slides are light/near-white reading slides → dark text.
+  // - Frost intro/outro can be darker hero slides → allow light text there.
+  const useDarkText = template === 'standard' || (styleVariant === 'frost' && template === 'standard');
 
   const headlineSizeClass = template === 'intro' ? 'text-[34px]' : template === 'outro' ? 'text-[30px]' : 'text-3xl';
   const summarySizeClass = template === 'intro' ? 'text-[15px]' : 'text-sm';

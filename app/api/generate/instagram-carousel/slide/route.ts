@@ -165,15 +165,24 @@ export async function POST(req: Request) {
       templateHint,
       imageStyleHint,
       style === 'frost'
-        ? [
-            'IMPORTANT: Frost palette ONLY.',
-            'Background must be clean near-white with very light pink OR very light ice blue accents.',
-            'Do NOT use purple. Do NOT use gold. Do NOT use yellow/warm lighting.',
-            'Overall look: high-key, bright, crisp, minimal shadows; matte editorial paper feel.',
-            'Avoid moody/dim lighting, dark gradients, heavy texture, or dark vignettes.',
-            'Keep a large, clearly-defined negative-space block for BLACK text overlays.',
-            'No obvious finance charts/candlesticks as the main subject; keep any geometry minimal and abstract.',
-          ].join(' ')
+        ? template === 'standard'
+          ? [
+              'IMPORTANT: Frost palette ONLY.',
+              'Background must be clean near-white with very light pink OR very light ice blue accents.',
+              'Do NOT use purple. Do NOT use gold. Do NOT use yellow/warm lighting.',
+              'Overall look: high-key, brighter (but not washed out), crisp, minimal shadows; matte editorial paper feel.',
+              'Keep a large, clearly-defined negative-space block for BLACK text overlays (top portion).',
+              'Avoid moody/dim lighting, dark vignettes, or heavy foggy glow.',
+              'No obvious finance charts/candlesticks as the main subject; keep geometry minimal and abstract.',
+            ].join(' ')
+          : [
+              'IMPORTANT: Frost palette ONLY (cool neutrals + ice blue / very light pink accents).',
+              'Do NOT use purple. Do NOT use gold. Do NOT use warm/yellow lighting.',
+              'Intro/Outro should be a darker hero treatment in Frost: deep navy/charcoal base with icy highlights (still Frost).',
+              'Contrast: ensure WHITE overlay text is readable.',
+              'Sharpness: crisp, clean edges; no haze; no soft-focus.',
+              'Composition: hero mood-setter; keep overlay zones clean (intro: lower third clean; outro: top readable for bullets, bottom readable for CTA).',
+            ].join(' ')
         : template === 'standard'
           ? [
               'IMPORTANT: Purple+Gold palette, but LIGHT / near-white background (paper-white / frosted white).',
