@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 export default function InstagramCarousel2Client() {
   const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
-  const [splitFriendly, setSplitFriendly] = React.useState<boolean>(false);
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -24,12 +23,12 @@ export default function InstagramCarousel2Client() {
     'No readable text, logos, or watermarks.',
   ].join(' ');
 
-  const runImageTest = async () => {
+  const runImageTest = async (mode: 'raw' | 'split-friendly') => {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
 
-    const promptToSend = splitFriendly
+    const promptToSend = mode === 'split-friendly'
       ? `${prompt}\n\n${splitFriendlySpec}`.trim()
       : prompt;
 
@@ -60,9 +59,10 @@ export default function InstagramCarousel2Client() {
         </p>
       </div>
 
-      <Tabs defaultValue="image-test" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 rounded-2xl">
+      <Tabs defaultValue="split-friendly" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 rounded-2xl">
           <TabsTrigger value="image-test" className="rounded-2xl">Image Test</TabsTrigger>
+          <TabsTrigger value="split-friendly" className="rounded-2xl">Split-friendly</TabsTrigger>
           <TabsTrigger value="carousel" className="rounded-2xl">Carousel</TabsTrigger>
         </TabsList>
 
@@ -90,20 +90,71 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
 
-                <label className="ml-2 inline-flex items-center gap-2 text-xs text-muted-foreground select-none">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border"
-                    checked={splitFriendly}
-                    onChange={(e) => setSplitFriendly(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                  Split-friendly
-                </label>
+                <Button
+                  className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                  onClick={() => runImageTest('raw')}
+                  disabled={isLoading || !prompt.trim()}
+                >
+                  Generate Image
+                </Button>
+
+                {isLoading ? (
+                  <div className="ml-2 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.2s]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.1s]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce" />
+                    <span className="text-xs font-medium text-slate-600">Generating</span>
+                  </div>
+                ) : null}
+
+                {error ? <div className="text-sm text-red-600">{error}</div> : null}
+              </div>
+            </CardContent>
+          </Card>
+
+          {imageUrl ? (
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-base">Output</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
+              </CardContent>
+            </Card>
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value="split-friendly" className="mt-4 space-y-4">
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-base">Prompt (Split-friendly)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <textarea
+                className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Type a prompt like ChatGPT…"
+              />
+              <div className="text-xs text-muted-foreground">
+                Split-friendly mode appends strict layout rules (3 equal panels + clean gutters) so we can crop into 3 posts reliably.
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs text-muted-foreground">Model</label>
+                <select
+                  className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value as any)}
+                  disabled={isLoading}
+                >
+                  <option value="gpt-image-2">gpt-image-2 (default)</option>
+                  <option value="gpt-image-1">gpt-image-1</option>
+                </select>
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  onClick={runImageTest}
+                  onClick={() => runImageTest('split-friendly')}
                   disabled={isLoading || !prompt.trim()}
                 >
                   Generate Image
