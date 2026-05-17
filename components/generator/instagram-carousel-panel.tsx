@@ -355,7 +355,7 @@ export function InstagramCarouselPanel({
             <div className="rounded-2xl border bg-muted/30 p-4 overflow-visible">
               <div className="relative">
                 <div
-                  className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pt-2 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+                  className="flex w-full gap-4 overflow-x-auto overflow-y-visible scroll-smooth px-1 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
                   aria-label="Instagram carousel preview"
                 >
                   <div className="w-[12%] shrink-0" aria-hidden />
