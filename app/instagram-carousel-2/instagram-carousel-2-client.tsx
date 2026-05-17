@@ -212,11 +212,12 @@ export default function InstagramCarousel2Client() {
   };
 
   const runCarouselGeneration = async () => {
+    const startDebug = `runCarouselGeneration:start slideCount=${slideCount} cohesion=${cohesionMethod} imageRefMode=${imageRefMode} model=${model}`;
     // eslint-disable-next-line no-console
-    console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, topic });
+    console.log(startDebug, { slideCount, cohesionMethod, imageRefMode, model, topic });
 
     setIsLoading(true);
-    setError(null);
+    setError(startDebug);
     setMasterplates([]);
     setSlides([]);
     setPromptLog('');
@@ -235,8 +236,10 @@ export default function InstagramCarousel2Client() {
         platePlan.push({ plateIndex, slideStart, slideEnd, size, panels });
       }
 
+      const planDebug = `runCarouselGeneration:platePlan count=${count} platesNeeded=${platesNeeded} sizes=${platePlan.map(p=>p.size).join(',')}`;
       // eslint-disable-next-line no-console
-      console.log('runCarouselGeneration:platePlan', { count, platesNeeded, platePlan });
+      console.log(planDebug, { count, platesNeeded, platePlan });
+      setError(planDebug);
 
       const newMasterplates: Masterplate[] = [];
       const newSlides: Slide[] = [];
