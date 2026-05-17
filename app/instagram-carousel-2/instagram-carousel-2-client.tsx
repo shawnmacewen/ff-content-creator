@@ -131,8 +131,7 @@ export default function InstagramCarousel2Client() {
     const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
     const userTopic = topicClean || 'Canadian housing market';
 
-    // Keep this system-controlled for now. Later we’ll swap “3” for slideCount with better per-slide copy injection.
-    const systemPrefix = 'Create a set of 3 Instagram carousel posts about';
+    const systemPrefix = `Create an Instagram carousel of ${args.totalSlides} slides about`;
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
 
     const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere.`;
@@ -147,8 +146,8 @@ export default function InstagramCarousel2Client() {
           ].join(' ');
 
     const outroLine = args.slideEnd === args.totalSlides
-      ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} a strong closing slide with a clear CTA and summary bullets. Slides ${args.slideStart}–${Math.max(args.slideStart, args.totalSlides - 1)} should be informational (avoid CTA).`
-      : '';
+      ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
+      : `NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT include any outro, conclusion language, "wrap-up", or CTA on slides ${args.slideStart}–${args.slideEnd}. Save the CTA for the final slide ${args.totalSlides}.`;
 
     const promptToSend = [userPrompt, slideRangeLine, outroLine, continuationLine, baseLayoutSpec]
       .filter(Boolean)
