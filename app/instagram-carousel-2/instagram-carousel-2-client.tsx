@@ -45,22 +45,43 @@ export default function InstagramCarousel2Client() {
 
   const systemSuffix = 'from the lens of a financial advisor.';
 
-  const baseLayoutSpec = [
-    'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
-    'Canvas: 1536x512 (3:1 landscape).',
-    'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).',
-    'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536.',
-    'SEAMLESS REQUIREMENT: treat the full 1536x512 as ONE continuous panorama/scene. The background, lighting, color palette, texture, and horizon lines must flow smoothly across the 512px boundaries.',
-    'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
-    'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).',
-    // Overlap-zone support (Option 1: prompt-only)
-    'OVERLAP ZONE REQUIREMENT: Reserve a soft 20–40px continuation zone at the far left edge and far right edge of the masterplate. Do not place critical text in these edge zones; use them only for background/texture/colour flow/horizon/motion/environmental continuation.',
-    'NO NUMBERING: Do NOT render any explicit slide numbering, counters, fractions, or sequence markers anywhere (no "1/3", no "Slide 1", no "1.", no "1 of 10", no digits used as counters).',
-    'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
-    'No logos or watermarks.',
-  ].join(' ');
+  const buildLayoutSpec = (opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1 }) => {
+    const W = opts.size === '1536x512' ? 1536 : opts.size === '1024x512' ? 1024 : 512;
+    const seamText = opts.panels === 3
+      ? 'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).'
+      : opts.panels === 2
+        ? 'Avoid placing faces, key objects, or readable text on or near the seam line (x≈512).'
+        : 'No internal seams (single panel).';
 
-  const cropMasterplateIntoThree = React.useCallback(async (src: string) => {
+    const cropLine = opts.panels === 3
+      ? 'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536.'
+      : opts.panels === 2
+        ? 'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024.'
+        : 'CRITICAL: there must be NO padding; this is a single 512x512 slide.';
+
+    const splitLine = opts.panels === 3
+      ? 'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).'
+      : opts.panels === 2
+        ? 'Split into exactly TWO equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).'
+        : 'This is a SINGLE square slide (512x512).';
+
+    return [
+      'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
+      `Canvas: ${opts.size}.`,
+      splitLine,
+      cropLine,
+      `SEAMLESS REQUIREMENT: treat the full ${W}x512 as ONE continuous panorama/scene where applicable. The background, lighting, color palette, texture, and horizon lines must flow smoothly across any panel boundaries.`,
+      'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
+      seamText,
+      // Overlap-zone support (Option 1: prompt-only)
+      'OVERLAP ZONE REQUIREMENT: Reserve a soft 20–40px continuation zone at the far left edge and far right edge of the image. Do not place critical text in these edge zones; use them only for background/texture/colour flow/horizon/motion/environmental continuation.',
+      'NO NUMBERING: Do NOT render any explicit slide numbering, counters, fractions, or sequence markers anywhere (no "1/3", no "Slide 1", no "1.", no "1 of 10", no digits used as counters).',
+      'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
+      'No logos or watermarks.',
+    ].join(' ');
+  };
+
+  const cropPlate = React.useCallback(async (src: string, opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1 }) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
@@ -73,7 +94,7 @@ export default function InstagramCarousel2Client() {
     img.src = src;
     await load;
 
-    const W = 1536;
+    const W = opts.size === '1536x512' ? 1536 : opts.size === '1024x512' ? 1024 : 512;
     const H = 512;
     const panelW = 512;
 
@@ -86,24 +107,30 @@ export default function InstagramCarousel2Client() {
     if (!ctx) throw new Error('Canvas not supported');
 
     const urls: string[] = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < opts.panels; i++) {
       canvas.width = panelW;
       canvas.height = H;
       ctx.clearRect(0, 0, panelW, H);
       ctx.drawImage(img, i * panelW, 0, panelW, H, 0, 0, panelW, H);
       urls.push(canvas.toDataURL('image/png'));
     }
+
+    // For a single 512x512 slide, just return 1.
     return urls;
   }, []);
 
-  const generateOneMasterplate = async (promptToSend: string, referenceImageUrl?: string) => {
+  const generateOneMasterplate = async (
+    promptToSend: string,
+    opts: { size: '1536x512' | '1024x512' | '512x512' },
+    referenceImageUrl?: string
+  ) => {
     const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: promptToSend,
         model,
-        size: '1536x512',
+        size: opts.size,
         referenceImageUrl: referenceImageUrl || undefined,
       }),
     });
@@ -133,6 +160,8 @@ export default function InstagramCarousel2Client() {
     slideStart: number;
     slideEnd: number;
     totalSlides: number;
+    size: '1536x512' | '1024x512' | '512x512';
+    panels: 3 | 2 | 1;
   }) => {
     const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
     const userTopic = topicClean || 'Canadian housing market';
@@ -172,7 +201,9 @@ export default function InstagramCarousel2Client() {
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
       : `NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT include any outro, conclusion language, "wrap-up", or CTA on slides ${args.slideStart}–${args.slideEnd}. Save the CTA for the final slide ${args.totalSlides}.`;
 
-    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, outroLine, continuationLine, baseLayoutSpec]
+    const layoutSpec = buildLayoutSpec({ size: args.size, panels: args.panels });
+
+    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, outroLine, continuationLine, layoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();
@@ -191,14 +222,23 @@ export default function InstagramCarousel2Client() {
       const count = Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3)));
       const platesNeeded = Math.ceil(count / 3);
 
-      const newMasterplates: Masterplate[] = [];
-      const newSlides: Slide[] = [];
-
+      const platePlan: Array<{ plateIndex: number; slideStart: number; slideEnd: number; size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1 }> = [];
       for (let plateIndex = 0; plateIndex < platesNeeded; plateIndex++) {
         const slideStart = plateIndex * 3 + 1;
         const slideEnd = Math.min(slideStart + 2, count);
+        const remaining = slideEnd - slideStart + 1;
+        const panels = (remaining === 3 ? 3 : remaining === 2 ? 2 : 1) as 3 | 2 | 1;
+        const size = (panels === 3 ? '1536x512' : panels === 2 ? '1024x512' : '512x512') as '1536x512' | '1024x512' | '512x512';
+        platePlan.push({ plateIndex, slideStart, slideEnd, size, panels });
+      }
 
-        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count });
+      const newMasterplates: Masterplate[] = [];
+      const newSlides: Slide[] = [];
+
+      for (const plate of platePlan) {
+        const { plateIndex, slideStart, slideEnd, size, panels } = plate;
+
+        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count, size, panels });
         setLastPromptUsed(promptToSend);
         setPromptLog((prev) => {
           const header = `--- Masterplate ${plateIndex + 1} (slides ${slideStart}-${slideEnd}) prompt ---`;
@@ -210,7 +250,19 @@ export default function InstagramCarousel2Client() {
             ? (imageRefMode === 'first' ? newMasterplates[0]?.imageUrl : newMasterplates[newMasterplates.length - 1]?.imageUrl)
             : undefined;
 
-        const out = await generateOneMasterplate(promptToSend, referenceUrl);
+        let out: { imageUrl: string; promptUsed: string };
+        try {
+          out = await generateOneMasterplate(promptToSend, { size }, referenceUrl);
+        } catch (e: any) {
+          // If image-ref edits fail (often due to size/aspect constraints), fall back to prompt-only generation.
+          if (referenceUrl && cohesionMethod === 'image-ref') {
+            const msg = typeof e?.message === 'string' ? e.message : 'Image reference cohesion failed; retrying without reference.';
+            toast.error(`${msg} (fallback: prompt-only)`);
+            out = await generateOneMasterplate(promptToSend, { size }, undefined);
+          } else {
+            throw e;
+          }
+        }
 
         const plate: Masterplate = {
           id: `plate-${Date.now()}-${plateIndex}`,
@@ -224,7 +276,7 @@ export default function InstagramCarousel2Client() {
         newMasterplates.push(plate);
         setMasterplates([...newMasterplates]);
 
-        const cropped = await cropMasterplateIntoThree(out.imageUrl);
+        const cropped = await cropPlate(out.imageUrl, { size, panels });
         const neededFromThisPlate = slideEnd - slideStart + 1;
 
         for (let i = 0; i < neededFromThisPlate; i++) {
