@@ -72,8 +72,8 @@ export async function POST(req: Request) {
     model: openai(env.OPENAI_MODEL),
     schema: ThemeSchema,
     prompt: [
-      'Create ONE master visual direction for a premium editorial Instagram carousel.'
-      `Style variant: ${style}.`,
+      'Create ONE master visual direction for a premium editorial Instagram carousel.',
+      `Style variant: ${style}.`, 
       'Goal: cohesive Apple/Bloomberg-style editorial story across slides.',
       'Return a compact JSON style guide fields:',
       '- title',
@@ -94,8 +94,8 @@ export async function POST(req: Request) {
     model: openai(env.OPENAI_MODEL),
     schema: OutSchema,
     prompt: [
-      'You are an expert editorial social strategist for a modern brand.'
-      `Generate an Instagram carousel plan with exactly ${count} slides that builds narratively:`,
+      'You are an expert editorial social strategist for a modern brand.',
+      `Generate an Instagram carousel plan with exactly ${count} slides that builds narratively:`, 
       'Hook/Cover → Core Problem → Supporting Insight/Data → Market Impact → Broader Implications → CTA/What to Watch.',
       'Each slide must include:',
       '- headline: max 7 words (editorial headline)',
