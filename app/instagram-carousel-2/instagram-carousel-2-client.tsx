@@ -20,10 +20,10 @@ export default function InstagramCarousel2Client() {
   const [error, setError] = React.useState<string | null>(null);
 
   const splitFriendlySpec = [
-    'SPLIT-FRIENDLY LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
-    'Canvas: 1024x1536 portrait.',
-    'Split into exactly THREE equal horizontal panels stacked vertically (each panel height = 512px).',
-    'CRITICAL: there must be NO gutters and NO extra padding between panels, so the image can be cropped deterministically at y=0..512, 512..1024, 1024..1536.',
+    'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
+    'Canvas: 1536x512 (3:1 landscape).',
+    'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).',
+    'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536.',
     'Nothing important may cross panel boundaries (keep each panel self-contained).',
     'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
     'No logos or watermarks.',
@@ -46,7 +46,11 @@ export default function InstagramCarousel2Client() {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptToSend, model, size: '1024x1536' }),
+        body: JSON.stringify({
+          prompt: promptToSend,
+          model,
+          size: mode === 'split-friendly' ? '1536x512' : '1024x1536',
+        }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
@@ -74,9 +78,9 @@ export default function InstagramCarousel2Client() {
     img.src = src;
     await load;
 
-    const W = 1024;
-    const H = 1536;
-    const panelH = 512;
+    const W = 1536;
+    const H = 512;
+    const panelW = 512;
 
     // Defensive: if we ever change size, keep the crop logic honest.
     if (img.naturalWidth !== W || img.naturalHeight !== H) {
@@ -89,10 +93,10 @@ export default function InstagramCarousel2Client() {
 
     const urls: string[] = [];
     for (let i = 0; i < 3; i++) {
-      canvas.width = W;
-      canvas.height = panelH;
-      ctx.clearRect(0, 0, W, panelH);
-      ctx.drawImage(img, 0, i * panelH, W, panelH, 0, 0, W, panelH);
+      canvas.width = panelW;
+      canvas.height = H;
+      ctx.clearRect(0, 0, panelW, H);
+      ctx.drawImage(img, i * panelW, 0, panelW, H, 0, 0, panelW, H);
       urls.push(canvas.toDataURL('image/png'));
     }
 
@@ -234,7 +238,7 @@ export default function InstagramCarousel2Client() {
                 placeholder="Type a prompt like ChatGPT…"
               />
               <div className="text-xs text-muted-foreground">
-                Carousel mode appends strict 3-panel layout rules so we can crop into 3 posts reliably.
+                Carousel mode generates a 3:1 masterplate (1536×512) that we deterministically crop into 3 square slides.
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-muted-foreground">Model</label>
@@ -299,18 +303,18 @@ export default function InstagramCarousel2Client() {
           {imageUrl ? (
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-base">Output (3 panels)</CardTitle>
+                <CardTitle className="text-base">Output (3 slides)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {panelUrls.length === 3 ? (
                   <div className="space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">Cropped panels (y=0..512, 512..1024, 1024..1536)</div>
+                    <div className="text-xs font-medium text-muted-foreground">Cropped slides (x=0..512, 512..1024, 1024..1536)</div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       {panelUrls.map((u, i) => (
                         <div key={i} className="space-y-2">
-                          <div className="text-xs text-muted-foreground">Panel {i + 1}</div>
+                          <div className="text-xs text-muted-foreground">Slide {i + 1}</div>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={u} alt={`Panel ${i + 1}`} className="w-full rounded-2xl border" />
+                          <img src={u} alt={`Slide ${i + 1}`} className="w-full rounded-2xl border" />
                         </div>
                       ))}
                     </div>
@@ -320,9 +324,9 @@ export default function InstagramCarousel2Client() {
                     <div className="text-sm text-muted-foreground">
                       Cropping pending… (if this never resolves, it’s usually a CORS/canvas issue)
                     </div>
-                    {/* Fallback: still show the master image so you can see what was generated */}
+                    {/* Fallback: still show the masterplate so you can see what was generated */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
+                    <img src={imageUrl} alt="Generated" className="w-full max-w-[640px] rounded-2xl border" />
                   </div>
                 )}
               </CardContent>
