@@ -244,8 +244,15 @@ export default function InstagramCarousel2Client() {
       const newMasterplates: Masterplate[] = [];
       const newSlides: Slide[] = [];
 
-      for (const plate of platePlan) {
-        const { plateIndex, slideStart, slideEnd, size, panels } = plate;
+      // Iterate by index to avoid any weirdness with destructuring/iterators in production bundles.
+      for (let i = 0; i < platePlan.length; i++) {
+        const plate = platePlan[i]!;
+        const plateIndex = plate.plateIndex;
+        const slideStart = plate.slideStart;
+        const slideEnd = plate.slideEnd;
+        const size = plate.size;
+        const panels = plate.panels;
+
         // eslint-disable-next-line no-console
         console.log('runCarouselGeneration:plateLoop', { plateIndex, slideStart, slideEnd, size, panels });
         setError(`runCarouselGeneration:plateLoop plate=${plateIndex + 1} slides=${slideStart}-${slideEnd} size=${size} panels=${panels}`);
@@ -286,7 +293,7 @@ export default function InstagramCarousel2Client() {
           }
         }
 
-        const plate: Masterplate = {
+        const plateOut: Masterplate = {
           id: `plate-${Date.now()}-${plateIndex}`,
           plateIndex,
           slideStart,
@@ -295,7 +302,7 @@ export default function InstagramCarousel2Client() {
           promptUsed: out.promptUsed,
         };
 
-        newMasterplates.push(plate);
+        newMasterplates.push(plateOut);
         setMasterplates([...newMasterplates]);
 
         const cropped = await cropPlate(out.imageUrl, { size, panels });
