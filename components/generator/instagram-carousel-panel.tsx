@@ -46,6 +46,9 @@ function SlideCard({
   isGenerating?: boolean;
   styleVariant?: 'purple-gold' | 'frost';
 }) {
+  const template = slide.template || 'standard';
+  const textPlacement = template === 'outro' ? 'top-left' : 'bottom-left';
+
   return (
     <button
       type="button"
@@ -79,7 +82,7 @@ function SlideCard({
       {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
       {slide.imageUrl ? null : null}
 
-      <div className="relative flex h-full flex-col p-7 text-left">
+      <div className={cn('relative flex h-full flex-col p-7 text-left', textPlacement === 'top-left' ? 'justify-start' : 'justify-end')}>
         {/* minimal chrome: no admin badges */}
         <div className="flex items-center justify-between">
           <div className="text-[11px] font-medium tracking-wide text-white/70">Slide {index + 1}</div>

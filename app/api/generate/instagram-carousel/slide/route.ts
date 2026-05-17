@@ -2,6 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import { CAROUSEL_TEMPLATES, pickCarouselTemplate } from '@/lib/generator/carousel-templates';
 
 
 function pickVariantSeed(text: string): number {
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', template = 'standard', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
@@ -127,13 +128,14 @@ export async function POST(req: Request) {
     );
   }
 
+  const template = pickCarouselTemplate(index, total) || templateIn;
+  const templateSpec = CAROUSEL_TEMPLATES[template] || CAROUSEL_TEMPLATES.standard;
+
   // Fallback: Derive prompt via model so we can keep the art direction consistent and concise.
-  const templateHint =
-    template === 'intro'
-      ? 'Template: INTRO/COVER. Strongest establishing image, clear focal shape, clean negative space in lower third.'
-      : template === 'outro'
-        ? 'Template: OUTRO/CTA. Cleanest negative space, minimal texture, calm composition, designed for CTA overlays.'
-        : 'Template: STANDARD. Balanced editorial background with generous negative space for overlays.';
+  const templateHint = templateSpec.promptHints.background;
+  const imageStyleHint = templateSpec.promptHints.imageStyle === 'realistic'
+    ? 'Image style: more realistic (but still premium editorial).'
+    : 'Image style: stylized/abstract editorial (not photorealistic).';
 
   const promptRes = await generateObject({
     model: openai(env.OPENAI_MODEL),
@@ -144,6 +146,7 @@ export async function POST(req: Request) {
       `Style variant: ${style}.`,
       `Template variant: ${template}.`,
       templateHint,
+      imageStyleHint,
       style === 'frost'
         ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
         : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays.',
