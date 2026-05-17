@@ -4,9 +4,13 @@ import { getServerEnv } from '@/lib/env';
 const BodySchema = z.object({
   prompt: z.string().min(1),
   size: z.enum(['1024x1024', '1024x1536', '1536x1024']).optional(),
+  model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
 });
 
-async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '1536x1024' | '1024x1024') {
+async function generateImage(
+  apiKey: string,
+  args: { prompt: string; size: '1024x1536' | '1536x1024' | '1024x1024'; model: 'gpt-image-2' | 'gpt-image-1' }
+) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -14,9 +18,9 @@ async function generateImage(apiKey: string, prompt: string, size: '1024x1536' |
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-2',
-      prompt,
-      size,
+      model: args.model,
+      prompt: args.prompt,
+      size: args.size,
     }),
   });
 
@@ -50,7 +54,8 @@ export async function POST(req: Request) {
   }
 
   const size = parsed.data.size || '1024x1536';
-  const out = await generateImage(env.OPENAI_API_KEY, parsed.data.prompt, size);
+  const model = parsed.data.model || 'gpt-image-2';
+  const out = await generateImage(env.OPENAI_API_KEY, { prompt: parsed.data.prompt, size, model });
 
   return new Response(
     JSON.stringify({
@@ -58,6 +63,7 @@ export async function POST(req: Request) {
       error: out.error || null,
       promptUsed: parsed.data.prompt,
       sizeUsed: size,
+      modelUsed: model,
     }),
     { status: out.error ? 502 : 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );

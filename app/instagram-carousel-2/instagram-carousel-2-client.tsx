@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 export default function InstagramCarousel2Client() {
-  const [prompt, setPrompt] = React.useState<string>('Create a premium editorial background for an Instagram carousel slide. Frost style, near-white with visible ice-blue patterns, crisp, no text.');
+  const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
+  const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -21,7 +22,7 @@ export default function InstagramCarousel2Client() {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size: '1024x1536' }),
+        body: JSON.stringify({ prompt, model, size: '1024x1536' }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
@@ -62,10 +63,35 @@ export default function InstagramCarousel2Client() {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Type a prompt like ChatGPT…"
               />
-              <div className="flex items-center gap-2">
-                <Button className="rounded-2xl bg-violet-600 hover:bg-violet-600/90" onClick={runImageTest} disabled={isLoading || !prompt.trim()}>
-                  {isLoading ? 'Generating…' : 'Generate Image'}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs text-muted-foreground">Model</label>
+                <select
+                  className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value as any)}
+                  disabled={isLoading}
+                >
+                  <option value="gpt-image-2">gpt-image-2 (default)</option>
+                  <option value="gpt-image-1">gpt-image-1</option>
+                </select>
+
+                <Button
+                  className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                  onClick={runImageTest}
+                  disabled={isLoading || !prompt.trim()}
+                >
+                  Generate Image
                 </Button>
+
+                {isLoading ? (
+                  <div className="ml-2 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.2s]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.1s]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce" />
+                    <span className="text-xs font-medium text-slate-600">Generating</span>
+                  </div>
+                ) : null}
+
                 {error ? <div className="text-sm text-red-600">{error}</div> : null}
               </div>
             </CardContent>
