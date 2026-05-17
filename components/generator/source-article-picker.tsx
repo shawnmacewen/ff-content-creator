@@ -140,7 +140,14 @@ export function SourceArticlePicker({
                     )}
                   >
                     <div className="flex gap-4">
-                      <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent" />
+                      <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                        {(() => {
+                          const thumb = c?.metadata?.SocialMediaPlatformImages?.Thumbnail as string | undefined;
+                          if (!thumb) return null;
+                          // eslint-disable-next-line @next/next/no-img-element
+                          return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                        })()}
+                      </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
