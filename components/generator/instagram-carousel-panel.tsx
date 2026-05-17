@@ -107,7 +107,8 @@ function SlideCard({
           <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
-        {(slide.headline || slide.summary) ? (
+        {/* Hide text until the image has loaded; while generating, show a centered loader instead. */}
+        {!slide.imageUrl ? null : (slide.headline || slide.summary) ? (
           <div className={cn(isTopText ? 'mt-4' : 'mt-auto', 'space-y-3 pb-1')}>
             <div
               className={cn(
@@ -131,19 +132,24 @@ function SlideCard({
               {slide.summary}
             </div>
           </div>
-        ) : (
-          <div className="mt-auto pb-1">
-            <div className="h-8 w-2/3 rounded-xl bg-white/10" />
-            <div className="mt-3 h-4 w-4/5 rounded-xl bg-white/10" />
-          </div>
-        )}
+        ) : null}
 
         {isGenerating && !slide.imageUrl ? (
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 animate-pulse bg-white/5" />
-            <div className="absolute bottom-8 left-7 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70 backdrop-blur">
-              Generating…
+          <div className="absolute inset-0 grid place-items-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.2s]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.1s]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce" />
+              </div>
+              <div className="text-xs font-medium text-white/75">Generating</div>
             </div>
+          </div>
+        ) : !slide.imageUrl ? (
+          // Not generating yet: subtle skeletons
+          <div className={cn(isTopText ? 'mt-4' : 'mt-auto', 'pb-1')}>
+            <div className="h-8 w-2/3 rounded-xl bg-white/10" />
+            <div className="mt-3 h-4 w-4/5 rounded-xl bg-white/10" />
           </div>
         ) : null}
       </div>
