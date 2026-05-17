@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollText } from 'lucide-react';
 
 export default function InstagramCarousel2Client() {
-  const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
+  const [prompt, setPrompt] = React.useState<string>('Create a set of 3 Instagram carousel posts about the Canadian housing market from the lens of a financial advisor.');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
