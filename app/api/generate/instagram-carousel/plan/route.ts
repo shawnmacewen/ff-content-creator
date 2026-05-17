@@ -53,7 +53,8 @@ export async function POST(req: Request) {
         summary: z.string().min(1),
         // Fast, consistent foreground motif per slide (e.g. "cargo ship silhouette", "country flag")
         motif: z.string().min(1),
-        placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']).default('right'),
+        // Must be required (no defaults) to satisfy OpenAI json-schema requirements
+        placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']),
       })
     ),
     caption: z.string(),
