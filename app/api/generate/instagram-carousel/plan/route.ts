@@ -5,35 +5,36 @@ import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { sourceContentIds, slideCount = 6 } = body as { sourceContentIds: string[]; slideCount?: number };
+  try {
+    const body = await req.json();
+    const { sourceContentIds, slideCount = 6 } = body as { sourceContentIds: string[]; slideCount?: number };
 
-  const env = getServerEnv();
-  if (!env.OPENAI_API_KEY) {
-    return new Response(JSON.stringify({ error: 'Missing OPENAI_API_KEY on server' }), { status: 500 });
-  }
-
-  const supabase = getSupabaseServerClient();
-  let sourceText = '';
-
-  if (sourceContentIds?.length) {
-    const { data, error } = await supabase
-      .from('source_content')
-      .select('id,title,author,body')
-      .in('id', sourceContentIds);
-
-    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-    if (data?.length) {
-      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${c.body}`).join('\n\n---\n\n');
+    const env = getServerEnv();
+    if (!env.OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Missing OPENAI_API_KEY on server' }), { status: 500 });
     }
-  }
 
-  if (!sourceText) {
-    return new Response(JSON.stringify({ error: 'No source content selected' }), { status: 400 });
-  }
+    const supabase = getSupabaseServerClient();
+    let sourceText = '';
 
-  const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-  const count = Math.min(6, Math.max(3, Number(slideCount) || 6));
+    if (sourceContentIds?.length) {
+      const { data, error } = await supabase
+        .from('source_content')
+        .select('id,title,author,body')
+        .in('id', sourceContentIds);
+
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      if (data?.length) {
+        sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${c.body}`).join('\n\n---\n\n');
+      }
+    }
+
+    if (!sourceText) {
+      return new Response(JSON.stringify({ error: 'No source content selected' }), { status: 400 });
+    }
+
+    const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+    const count = Math.min(6, Math.max(3, Number(slideCount) || 6));
 
   const ThemeSchema = z.object({
     title: z.string(),
@@ -103,41 +104,44 @@ export async function POST(req: Request) {
     placement: String((s as any).placement || 'right'),
   }));
 
-  // Generate ONE master background plate (landscape) used to create connected slide crops
-  const masterPrompt = [
-    'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
-    'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
-    'No readable text, no logos, no watermarks.',
-    'Must have a continuous horizon/flow that can be panned/cropped across multiple slides.',
-    `Palette: ${themeRes.object.palette}.`,
-    `Lighting: ${themeRes.object.lighting}.`,
-    `Texture: ${themeRes.object.texture}.`,
-    `Imagery theme: ${themeRes.object.imageryTheme}.`,
-  ].join(' ');
+  // Generate ONE master background plate (landscape) used to create connected slide pans.
+  // Best-effort: if this fails, we still return theme+slides so the UI can proceed.
+  let masterPlate: string | null = null;
+  try {
+    const masterPrompt = [
+      'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
+      'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
+      'No readable text, no logos, no watermarks.',
+      'Must have a continuous horizon/flow that can be panned across multiple slides.',
+      `Palette: ${themeRes.object.palette}.`,
+      `Lighting: ${themeRes.object.lighting}.`,
+      `Texture: ${themeRes.object.texture}.`,
+      `Imagery theme: ${themeRes.object.imageryTheme}.`,
+    ].join(' ');
 
-  const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-image-1',
-      prompt: masterPrompt,
-      size: '1536x1024',
-    }),
-  });
+    const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-1',
+        prompt: masterPrompt,
+        size: '1536x1024',
+      }),
+    });
 
-  const imgData = await imgRes.json().catch(() => ({}));
-  if (!imgRes.ok) {
-    return new Response(
-      JSON.stringify({ error: imgData?.error?.message || `Master plate image API error (${imgRes.status})` }),
-      { status: 500 }
-    );
+    const imgData = await imgRes.json().catch(() => ({}));
+    if (imgRes.ok) {
+      const first = imgData?.data?.[0];
+      masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
+    } else {
+      console.error('master plate generation failed', imgData?.error?.message || imgRes.status);
+    }
+  } catch (e) {
+    console.error('master plate generation exception', e);
   }
-
-  const first = imgData?.data?.[0];
-  const masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
 
   return new Response(
     JSON.stringify({
@@ -148,4 +152,11 @@ export async function POST(req: Request) {
     }),
     { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );
+  } catch (err: any) {
+    console.error('instagram-carousel plan error', err);
+    return new Response(
+      JSON.stringify({ error: err?.message || 'Internal error in carousel plan' }),
+      { status: 500, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
+    );
+  }
 }
