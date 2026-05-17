@@ -4,13 +4,13 @@ import { getServerEnv } from '@/lib/env';
 const BodySchema = z.object({
   prompt: z.string().min(1),
   // NOTE: OpenAI Images sizes must be divisible by 16.
-  size: z.enum(['1024x1024', '1024x1536', '1536x1024']).optional(),
+  size: z.enum(['1024x1024', '1024x1536', '1536x1024', '1536x512']).optional(),
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
 });
 
 async function generateImage(
   apiKey: string,
-  args: { prompt: string; size: '1024x1536' | '1536x1024' | '1024x1024'; model: 'gpt-image-2' | 'gpt-image-1' }
+  args: { prompt: string; size: '1024x1536' | '1536x1024' | '1024x1024' | '1536x512'; model: 'gpt-image-2' | 'gpt-image-1' }
 ) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
