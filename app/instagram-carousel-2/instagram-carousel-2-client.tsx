@@ -189,13 +189,19 @@ export default function InstagramCarousel2Client() {
               'CONTINUATION REQUIREMENT:',
               'Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone.',
               'The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.',
+              'PRIORITIZE EDGE CONTINUITY: the left 40px must visually match/continue from the previous masterplate’s right 40px (colour flow, gradients, horizon lines, textures).',
             ].join(' ')
           : [
               'IMAGE-REFERENCE CONTINUATION REQUIREMENT:',
               'Use the provided reference image ONLY to match the visual universe (style, palette, typography treatment, lighting direction, rendering style) and to align the left edge continuation zone with the previous masterplate’s right edge.',
-              'Do NOT copy/paste or recreate the exact same scene/scenery. Create a NEW composition and new background details that feel like the next moment/location in the same story/world.',
-              'Change camera framing slightly (pan/zoom/angle), introduce new background elements, and vary the scenery while keeping seamless edge continuity and consistent art direction.',
+              'PRIORITIZE EDGE CONTINUITY: make the left 40px of this masterplate visually continue from the reference image’s right 40px (colour flow, gradients, horizon lines, textures).',
+              'Do NOT copy/paste or recreate the exact same scene/scenery or the exact same slide text. Create a NEW composition and new background details that feel like the next moment/location in the same story/world.',
+              'Change camera framing slightly (pan/zoom/angle) and introduce new background elements, but keep the same art direction and seamless edge continuity.',
             ].join(' ');
+
+    const contentUniquenessRule = args.plateIndex === 0
+      ? `CONTENT RULE: Ensure slides ${args.slideStart}–${args.slideEnd} each have distinct, non-overlapping messaging (no repeated headlines/bullets). Maintain consistent formatting style, but vary the actual wording and points across slides.`
+      : `CONTENT UNIQUENESS + CONTINUATION RULE: Slides ${args.slideStart}–${args.slideEnd} MUST introduce new information and MUST NOT repeat the same headline, bullets, or CTA from earlier slides (${1}–${args.slideStart - 1}). Keep formatting consistent, but change the actual message and examples. Assume earlier slides already exist and avoid restating them.`;
 
     const outroLine = args.slideEnd === args.totalSlides
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
@@ -203,7 +209,7 @@ export default function InstagramCarousel2Client() {
 
     const layoutSpec = buildLayoutSpec({ size: args.size, panels: args.panels });
 
-    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, outroLine, continuationLine, layoutSpec]
+    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, layoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();
