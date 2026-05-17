@@ -25,7 +25,7 @@ export default function GeneratePage() {
   const router = useRouter();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<GenerationMode>('single');
+  const [mode, setMode] = useState<GenerationMode>('kit');
 
   // SINGLE state
   const [selectedContentTypes, setSelectedContentTypes] = useState<ContentType[]>(['social-instagram']);
@@ -38,17 +38,22 @@ export default function GeneratePage() {
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [imageStatus, setImageStatus] = useState<string | null>(null);
   // Instagram image toggles
-  const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
+  // Defaults for KIT Instagram multipost workflow:
+  // - images enabled
+  // - carousel mode
+  // - 3 slides
+  // - sequential generation (for now)
+  const [includeInstagramImage, setIncludeInstagramImage] = useState(true);
   const [instagramImageModalOpen, setInstagramImageModalOpen] = useState(false);
-  const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
-  const [instagramCarouselGenerationMode, setInstagramCarouselGenerationMode] = useState<'sequential' | 'master-plate'>('master-plate');
+  const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('carousel');
+  const [instagramCarouselGenerationMode, setInstagramCarouselGenerationMode] = useState<'sequential' | 'master-plate'>('sequential');
   const [instagramCarouselStyle, setInstagramCarouselStyle] = useState<'purple-gold' | 'frost'>('purple-gold');
-  const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
+  const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(3);
 
   // New: separate toggles for single vs carousel chips (KIT UX)
-  const [instagramKitVariant, setInstagramKitVariant] = useState<'single' | 'carousel' | null>('single');
+  const [instagramKitVariant, setInstagramKitVariant] = useState<'single' | 'carousel' | null>('carousel');
   const [includeInstagramSingleImages, setIncludeInstagramSingleImages] = useState(false);
-  const [includeInstagramCarouselImages, setIncludeInstagramCarouselImages] = useState(false);
+  const [includeInstagramCarouselImages, setIncludeInstagramCarouselImages] = useState(true);
 
   const [instagramCarouselSlidesData, setInstagramCarouselSlidesData] = useState<any[] | null>(null);
   const [instagramCarouselCaption, setInstagramCarouselCaption] = useState<string>('');
@@ -60,7 +65,8 @@ export default function GeneratePage() {
   const [instagramCarouselLastPrompt, setInstagramCarouselLastPrompt] = useState<string>('');
 
   // KIT state
-  const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
+  // Default kit: Campaign (Instagram only) first.
+  const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram']);
   const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
 

@@ -300,14 +300,6 @@ export function InstagramCarouselPanel({
           </div>
         ) : null}
 
-        <div className={cn('mt-4 space-y-2', !enabled && 'opacity-50 pointer-events-none')}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold">Slides</div>
-            </div>
-            <div className="text-sm font-semibold tabular-nums">{slideCount}</div>
-          </div>
-        </div>
       </CardHeader>
 
       <CardContent className={cn('space-y-4', !enabled && 'opacity-50')}>
