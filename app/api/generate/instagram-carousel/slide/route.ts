@@ -138,7 +138,7 @@ export async function POST(req: Request) {
   // Style-level override: purple-gold benefits from a slightly more concrete/editorial look
   // to avoid drifting into pastel gradients/haze.
   const effectiveImageStyle = style === 'purple-gold'
-    ? 'realistic'
+    ? (template === 'standard' ? 'abstract' : 'realistic')
     : (templateSpec.promptHints.imageStyle || 'abstract');
 
   const imageStyleHint = effectiveImageStyle === 'realistic'
@@ -174,14 +174,23 @@ export async function POST(req: Request) {
               'Imagery: subtle but recognizable finance elements (fine line chart, faint candlestick pattern, minimal coin/bar silhouettes), tasteful and editorial.',
               'Composition: preserve a clean negative-space block in the TOP portion for text; keep the rest cohesive and premium (not an amorphous gradient).',
             ].join(' ')
-          : [
-              'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
-              'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
-              'Contrast: higher contrast so white overlay text stays readable.',
-              'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
-              'Imagery: subtle but recognizable finance elements (e.g., chart line, candlesticks, coins, bars) — keep it tasteful and editorial.',
-              'Composition: preserve a clean negative-space block for text, but keep the non-text areas detailed enough to feel premium (not an amorphous gradient).',
-            ].join(' '),
+          : template === 'intro'
+            ? [
+                'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
+                'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
+                'Contrast: higher contrast so white overlay text stays readable (lower third stays clean).',
+                'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
+                'Imagery: strongest establishing finance focal element (tasteful editorial).',
+                'Composition: hero/cover composition; clear focal point; maintain clean lower third for overlays.',
+              ].join(' ')
+            : [
+                'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
+                'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
+                'Contrast: high, but keep the TOP portion cleaner for overlays.',
+                'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
+                'Imagery: calmer CTA-friendly finance cues; avoid busy focal elements.',
+                'Composition: cleanest overlay area; slightly calmer; avoid clutter.',
+              ].join(' '),
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it premium editorial, fast to render.',
@@ -198,7 +207,9 @@ export async function POST(req: Request) {
         ? 'Keep the lower third clean and light for dark headline/summary overlays.'
         : template === 'standard'
           ? 'Keep the TOP portion clean and light for dark headline/summary overlays.'
-          : 'Keep generous negative space for headline and summary overlays.',
+          : template === 'intro'
+            ? 'Keep the lower third clean for headline and summary overlays.'
+            : 'Keep the TOP portion cleaner for headline and summary overlays.',
     ].join(' '),
   });
 
