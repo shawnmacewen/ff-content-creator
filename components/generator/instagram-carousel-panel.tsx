@@ -57,11 +57,9 @@ function SlideCard({
           ? {
               backgroundImage: `url(${slide.imageUrl})`,
               backgroundRepeat: 'no-repeat',
-              // Pan across one master plate to create connected slides.
-              // Use auto/100% so the plate can pan horizontally; prevent tiling via no-repeat.
-              backgroundSize: 'auto 100%',
+              // Fill the tile without letterboxing; keep horizontal panning via backgroundPosition.
+              backgroundSize: 'cover',
               backgroundPosition: `${slide.cropX ?? 50}% center`,
-              backgroundColor: '#000',
             }
           : undefined
       }
