@@ -13,7 +13,7 @@ export default function InstagramCarousel2Client() {
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
-  const [lastMode, setLastMode] = React.useState<'raw' | 'split-friendly' | null>(null);
+  const [lastMode, setLastMode] = React.useState<'masterplate' | 'carousel' | null>(null);
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -29,16 +29,14 @@ export default function InstagramCarousel2Client() {
     'No logos or watermarks.',
   ].join(' ');
 
-  const runImageTest = async (mode: 'raw' | 'split-friendly') => {
+  const runImageTest = async (mode: 'masterplate' | 'carousel') => {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
     setPanelUrls([]);
     setLastMode(mode);
 
-    const promptToSend = mode === 'split-friendly'
-      ? `${prompt}\n\n${splitFriendlySpec}`.trim()
-      : prompt;
+    const promptToSend = `${prompt}\n\n${splitFriendlySpec}`.trim();
 
     setLastPromptUsed(promptToSend);
 
@@ -49,7 +47,7 @@ export default function InstagramCarousel2Client() {
         body: JSON.stringify({
           prompt: promptToSend,
           model,
-          size: mode === 'split-friendly' ? '1536x512' : '1024x1536',
+          size: '1536x512',
         }),
       });
       const outText = await r.text().catch(() => '');
@@ -120,7 +118,7 @@ export default function InstagramCarousel2Client() {
 
   React.useEffect(() => {
     if (!imageUrl) return;
-    if (lastMode !== 'split-friendly') return;
+    if (lastMode !== 'carousel') return;
 
     let cancelled = false;
     (async () => {
@@ -181,7 +179,7 @@ export default function InstagramCarousel2Client() {
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  onClick={() => runImageTest('raw')}
+                  onClick={() => runImageTest('masterplate')}
                   disabled={isLoading || !prompt.trim()}
                 >
                   Generate Image
@@ -269,7 +267,7 @@ export default function InstagramCarousel2Client() {
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  onClick={() => runImageTest('split-friendly')}
+                  onClick={() => runImageTest('carousel')}
                   disabled={isLoading || !prompt.trim()}
                 >
                   Generate Image
