@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, visualType, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, visualType, scene, focalPoint, compositionNotes, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
@@ -89,6 +89,9 @@ export async function POST(req: Request) {
     motif?: string;
     imageryMotif?: string;
     visualType?: 'diagram' | 'chart' | 'photo' | 'icon' | 'texture';
+    scene?: string;
+    focalPoint?: string;
+    compositionNotes?: string;
     placement?: 'left' | 'right' | 'center' | 'bottom-left' | 'bottom-right';
     quality?: 'fast' | 'cover';
   };
@@ -221,7 +224,11 @@ export async function POST(req: Request) {
       `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,
       `Composition: ${style === 'frost' ? 'airy negative space, minimal clutter' : (theme?.composition || 'premium editorial negative space')}.`,
       `Source gist: ${theme?.sourceGist || ''}.`,
+      theme?.creativeDirection ? `Campaign creative direction: ${JSON.stringify(theme.creativeDirection)}.` : '',
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
+      scene ? `Scene: ${scene}.` : '',
+      focalPoint ? `Focal point: ${focalPoint}.` : '',
+      compositionNotes ? `Composition notes: ${compositionNotes}.` : '',
       imageryMotif ? `Topic imagery motif (use these concrete elements): ${imageryMotif}.` : '',
       visualType ? `Background visual payload type: ${visualType}.` : '',
       // Visual payload guidance: increase distinctness + recognizability while staying cohesive.

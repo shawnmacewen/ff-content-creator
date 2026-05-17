@@ -224,8 +224,9 @@ export default function GeneratePage() {
       const slides = Array.isArray(plan?.slides) ? plan.slides : [];
       const caption = String(plan?.caption || '');
       const theme = plan?.theme;
+      const creativeDirection = (plan as any)?.creativeDirection;
       const masterPlate = plan?.masterPlate || null;
-      setInstagramCarouselTheme(theme || null);
+      setInstagramCarouselTheme({ ...(theme || {}), creativeDirection } || null);
       setInstagramCarouselMasterPlate(masterPlate);
 
       // Initialize UI with slide text immediately
@@ -259,10 +260,13 @@ export default function GeneratePage() {
             slideId: s.id,
             index: i,
             total,
-            beat: beats[i] || 'Story Beat',
+            beat: beats[i] || (s as any).role || 'Story Beat',
             motif: s.motif,
             imageryMotif: (s as any).imageryMotif,
             visualType: (s as any).visualType,
+            scene: (s as any).scene,
+            focalPoint: (s as any).focalPoint,
+            compositionNotes: (s as any).compositionNotes,
             placement: s.placement,
             quality,
           }),

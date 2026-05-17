@@ -53,26 +53,47 @@ export async function POST(req: Request) {
     imageryTheme: z.string(),
   });
 
+  // New: campaign-level art direction object (single cohesive creative direction)
+  const CreativeDirectionSchema = z.object({
+    theme: z.string(),
+    palette: z.array(z.string().min(1)),
+    typography: z.string(),
+    overlayStyle: z.string(),
+    imageryStyle: z.string(),
+    layoutLanguage: z.string(),
+    mood: z.string(),
+    textures: z.string(),
+    branding: z.object({
+      logoMode: z.enum(['none', 'mark', 'wordmark']),
+      placement: z.enum(['bottom-left', 'bottom-right', 'top-left', 'top-right']),
+    }),
+  });
+
+  const SlideSchema = z.object({
+    // Storyboard fields
+    role: z.enum(['hook', 'context', 'insight', 'evidence', 'example', 'impact', 'cta']),
+    headline: z.string().min(1),
+    summary: z.string().min(1),
+    // Outro fields: must be present for schema compliance.
+    // For non-outro slides: bullets = [] and ctaLine = "".
+    bullets: z.array(z.string().min(1)),
+    ctaLine: z.string(),
+
+    // Unique scene direction (drives non-repetitive imagery)
+    scene: z.string().min(1),
+    focalPoint: z.string().min(1),
+    compositionNotes: z.string().min(1),
+
+    // Foreground motif (optional in concept, but required in schema for consistency)
+    motif: z.string().min(1),
+    imageryMotif: z.string().min(1),
+    visualType: z.enum(['diagram', 'chart', 'photo', 'icon', 'texture']),
+    placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']),
+  });
+
   const OutSchema = z.object({
-    slides: z.array(
-      z.object({
-        headline: z.string().min(1),
-        summary: z.string().min(1),
-        // Outro fields: must be present for schema compliance.
-        // For non-outro slides: bullets = [] and ctaLine = "".
-        bullets: z.array(z.string().min(1)),
-        ctaLine: z.string(),
-        // Fast, consistent foreground motif per slide (e.g. "cargo ship silhouette", "country flag")
-        motif: z.string().min(1),
-        // Concrete, topic-specific visual nouns for background (NOT just finance charts).
-        // Example: "oil rig silhouette, desert heat haze, refinery pipes".
-        imageryMotif: z.string().min(1),
-        // Background visual payload type (keeps variety without creating many templates).
-        visualType: z.enum(['diagram', 'chart', 'photo', 'icon', 'texture']),
-        // Must be required (no defaults) to satisfy OpenAI json-schema requirements
-        placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']),
-      })
-    ),
+    creativeDirection: CreativeDirectionSchema,
+    slides: z.array(SlideSchema),
     caption: z.string(),
   });
 
@@ -81,7 +102,7 @@ export async function POST(req: Request) {
     schema: ThemeSchema,
     prompt: [
       'Create ONE master visual direction for a premium editorial Instagram carousel.',
-      `Style variant: ${style}.`, 
+      `Style variant: ${style}.`,
       'Goal: cohesive Apple/Bloomberg-style editorial story across slides.',
       'Return a compact JSON style guide fields:',
       '- title',
@@ -93,8 +114,8 @@ export async function POST(req: Request) {
       '- composition (grid/margins/hierarchy)',
       '- imageryTheme (consistent motif system derived from the source topic; avoid generic finance/market imagery unless the source is explicitly about that)',
       'If style variant is "purple-gold": palette = soft purples + warm gold accents + neutral grays. Keep it moody/low-key (deeper midtones), with clear contrast so white overlay text stays readable.',
-      'If style variant is "frost": palette = clean whites + very light pink OR very light ice blue accents (NO purple, NO gold).',
-      'For frost: airy negative space, high-key lighting, minimal grain, designed for dark (black) text overlays.',
+      'If style variant is "frost": palette = cool neutrals + ice blue or very light pink accents (NO purple, NO gold).',
+      'For frost: airy negative space, crisp edges, minimal grain, designed for dark (black) text overlays on standard slides.',
       'Keep it consistent and easy to apply.',
       'SOURCE:\n' + sourceText.slice(0, 4000),
     ].join('\n'),
@@ -104,31 +125,39 @@ export async function POST(req: Request) {
     model: openai(env.OPENAI_MODEL),
     schema: OutSchema,
     prompt: [
-      'You are an expert editorial social strategist for a modern brand.',
-      `Generate an Instagram carousel plan with exactly ${count} slides that builds narratively:`,
-      'Hook/Cover → Context → Evidence → Real-world example → More evidence → Broader impact → CTA/What to Watch.',
+      'You are an expert campaign art director and editorial social strategist.',
+      'Goal: create a cohesive Instagram carousel campaign that feels professionally art-directed.',
+      'Avoid dashboard cards, repeated placeholder layouts, and repeated visuals.',
+      'Each slide must have a unique scene, unique composition, and unique focal point — while all slides share one visual identity.',
       '',
-      'Each slide must include:',
-      '- headline: max 7 words (editorial headline)',
-      '- summary: max 22 words (minimal, impactful; for outro can be minimal)',
-      '- motif: ONE simple foreground symbol/object that represents the slide context (simple editorial icon; not photorealistic).',
-      '- imageryMotif: 2–5 concrete visual nouns/scene elements derived from the SOURCE topic (not generic finance). Keep it cohesive across the set.',
-      '- visualType: choose ONE: diagram | chart | photo | icon | texture (controls the background “visual payload”).',
-      '- placement: where the motif should sit (left/right/center/bottom-left/bottom-right).',
+      'First, create ONE master campaign creativeDirection object (visual identity) that all slides share.',
+      'Then, create a storyboard with exactly ' + String(count) + ' slides.',
       '',
-      'Template/variant mapping (aim for variety + cohesion):',
-      '- Slide 1 (intro/cover): visualType = photo or texture; dark hero mood; establish theme.',
-      '- Slide 2 (standard/context): visualType = diagram; mostly-white; map/diagram feel; optional small locator/pin motif.',
-      '- Slide 3 (standard/evidence): visualType = chart; clean readable chart as supporting element (not full-screen).',
-      '- Slide 4 (standard/real-world): visualType = photo; concrete example imagery tied to source gist.',
-      '- Slide 5 (standard/more evidence): visualType = chart; keep system consistent but vary crop/shape.',
-      '- Slide 6 (standard/broader impact): visualType = icon or diagram; “system” visual like globe/network/supply chain map.',
-      '- Slide 7 (outro/CTA): provide headline + bullets + ctaLine; visualType = photo or texture; dark hero CTA mood.',
+      'For each slide include:',
+      '- role (hook|context|insight|evidence|example|impact|cta)',
+      '- headline (max 7 words)',
+      '- summary (max 22 words; for outro can be minimal)',
+      '- scene (1 sentence describing the unique scene/background concept)',
+      '- focalPoint (what the eye should land on)',
+      '- compositionNotes (camera angle, negative space zone, layout guidance)',
+      '- imageryMotif (2–5 concrete visual nouns derived from the SOURCE topic)',
+      '- visualType (diagram|chart|photo|icon|texture) as the background payload type',
+      '- motif (one simple foreground icon concept; not photorealistic)',
+      '- placement (left|right|center|bottom-left|bottom-right)',
       '',
-      'For the final slide (outro/CTA) also include:',
+      'Storyboard guidance (reference arc):',
+      '- Slide 1 role=hook (dark hero mood, strongest establishing scene)',
+      '- Slide 2 role=context (diagram/map/schematic feel)',
+      '- Slide 3 role=evidence (supporting chart element)',
+      '- Slide 4 role=example (real-world photo-like scene)',
+      '- Slide 5 role=evidence (another distinct evidence scene)',
+      '- Slide 6 role=impact (system/globe/network visual)',
+      '- Slide 7 role=cta (outro CTA list)',
+      '',
+      'For the final slide (role=cta) also include:',
       '- bullets: 3 short bullet points (each max 6 words)',
       '- ctaLine: one short closing line (max 6 words)',
-      'For non-outro slides: set bullets = [] and ctaLine = "".',
+      'For non-cta slides: set bullets=[] and ctaLine="".',
       '',
       'Also return caption (max 1200 chars) with optional hashtag line.',
       'SOURCE:\n' + sourceText.slice(0, 12000),
@@ -139,8 +168,12 @@ export async function POST(req: Request) {
     const template = idx === 0 ? 'intro' : idx === count - 1 ? 'outro' : 'standard';
     return {
       id: `slide-${idx + 1}`,
+      role: String((s as any).role || (idx === 0 ? 'hook' : idx === count - 1 ? 'cta' : 'insight')),
       headline: String(s.headline || `Slide ${idx + 1}`),
       summary: String(s.summary || ''),
+      scene: String((s as any).scene || ''),
+      focalPoint: String((s as any).focalPoint || ''),
+      compositionNotes: String((s as any).compositionNotes || ''),
       motif: String((s as any).motif || 'abstract icon'),
       imageryMotif: String((s as any).imageryMotif || ''),
       visualType: String((s as any).visualType || 'texture'),
@@ -205,6 +238,7 @@ export async function POST(req: Request) {
   return new Response(
     JSON.stringify({
       theme: themeRes.object,
+      creativeDirection: (planRes.object as any).creativeDirection,
       slides,
       caption: String(planRes.object.caption || '').trim(),
       masterPlate,
