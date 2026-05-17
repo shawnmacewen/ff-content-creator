@@ -30,7 +30,7 @@ export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('Canadian housing market');
   const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
-  const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('prompt');
+  const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
@@ -230,9 +230,10 @@ export default function InstagramCarousel2Client() {
       for (let plateIndex = 0; plateIndex < platesNeeded; plateIndex++) {
         const slideStart = plateIndex * 3 + 1;
         const slideEnd = Math.min(slideStart + 2, count);
-        const remaining = slideEnd - slideStart + 1;
-        const panels = (remaining === 3 ? 3 : remaining === 2 ? 2 : 1) as 3 | 2 | 1;
-        const size = (panels === 3 ? '1536x512' : panels === 2 ? '1024x512' : '512x512') as '1536x512' | '1024x512' | '512x512';
+        // NOTE: OpenAI Images API currently rejects 1024x512 (below minimum pixel budget),
+        // so we always generate 1536x512 masterplates and use UNUSED PANEL RULE for partial final plates.
+        const panels = 3 as const;
+        const size = '1536x512' as const;
         platePlan.push({ plateIndex, slideStart, slideEnd, size, panels });
       }
 
