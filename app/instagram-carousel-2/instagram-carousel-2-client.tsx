@@ -30,6 +30,7 @@ export default function InstagramCarousel2Client() {
   const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('prompt');
+  const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
@@ -93,7 +94,7 @@ export default function InstagramCarousel2Client() {
     return urls;
   }, []);
 
-  const generateOneMasterplate = async (promptToSend: string) => {
+  const generateOneMasterplate = async (promptToSend: string, referenceImageUrl?: string) => {
     const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,6 +102,7 @@ export default function InstagramCarousel2Client() {
         prompt: promptToSend,
         model,
         size: '1536x512',
+        referenceImageUrl: referenceImageUrl || undefined,
       }),
     });
 
@@ -189,7 +191,12 @@ export default function InstagramCarousel2Client() {
         const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count });
         setLastPromptUsed(promptToSend);
 
-        const out = await generateOneMasterplate(promptToSend);
+        const referenceUrl =
+          cohesionMethod === 'image-ref' && plateIndex > 0
+            ? (imageRefMode === 'first' ? newMasterplates[0]?.imageUrl : newMasterplates[newMasterplates.length - 1]?.imageUrl)
+            : undefined;
+
+        const out = await generateOneMasterplate(promptToSend, referenceUrl);
 
         const plate: Masterplate = {
           id: `plate-${Date.now()}-${plateIndex}`,
@@ -309,8 +316,23 @@ export default function InstagramCarousel2Client() {
                   disabled={isLoading}
                 >
                   <option value="prompt">Prompt Based Cohesion</option>
-                  <option value="image-ref" disabled>Image Reference Cohesion (coming soon)</option>
+                  <option value="image-ref">Image Reference Cohesion</option>
                 </select>
+
+                {cohesionMethod === 'image-ref' ? (
+                  <>
+                    <label className="ml-2 text-xs text-muted-foreground">Image Ref Uses</label>
+                    <select
+                      className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                      value={imageRefMode}
+                      onChange={(e) => setImageRefMode(e.target.value as any)}
+                      disabled={isLoading}
+                    >
+                      <option value="previous">Previous masterplate</option>
+                      <option value="first">First masterplate</option>
+                    </select>
+                  </>
+                ) : null}
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
@@ -417,8 +439,23 @@ export default function InstagramCarousel2Client() {
                   disabled={isLoading}
                 >
                   <option value="prompt">Prompt Based Cohesion</option>
-                  <option value="image-ref" disabled>Image Reference Cohesion (coming soon)</option>
+                  <option value="image-ref">Image Reference Cohesion</option>
                 </select>
+
+                {cohesionMethod === 'image-ref' ? (
+                  <>
+                    <label className="ml-2 text-xs text-muted-foreground">Image Ref Uses</label>
+                    <select
+                      className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                      value={imageRefMode}
+                      onChange={(e) => setImageRefMode(e.target.value as any)}
+                      disabled={isLoading}
+                    >
+                      <option value="previous">Previous masterplate</option>
+                      <option value="first">First masterplate</option>
+                    </select>
+                  </>
+                ) : null}
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
