@@ -80,8 +80,9 @@ export async function POST(req: Request) {
       '- texture',
       '- composition (grid/margins/hierarchy)',
       '- imageryTheme (consistent motif: e.g., cinematic abstract markets, macro textures, stylized finance photography)',
-      'If style variant is "purple-gold": bias toward soft purples + warm gold accents, premium fintech editorial.',
-      'If style variant is "frost": bias toward icy whites + cool lavenders/blues, airy negative space, minimal grain, high legibility for dark text overlays.',
+      'If style variant is "purple-gold": palette = soft purples + warm gold accents + neutral grays.',
+      'If style variant is "frost": palette = clean whites + very light pink OR very light ice blue accents (NO purple, NO gold).',
+      'For frost: airy negative space, high-key lighting, minimal grain, designed for dark (black) text overlays.',
       'Keep it consistent and easy to apply.',
     ].join('\n'),
   });
