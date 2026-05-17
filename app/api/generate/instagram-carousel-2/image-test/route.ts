@@ -3,8 +3,9 @@ import { getServerEnv } from '@/lib/env';
 
 const BodySchema = z.object({
   prompt: z.string().min(1),
-  size: z.enum(['1024x1024', '1024x1536', '1536x1024']).optional(),
+  size: z.enum(['1024x1024', '1024x1536', '1536x1024', '1080x1440']).optional(),
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
+  panelCount: z.enum(['2', '3']).optional(),
 });
 
 async function generateImage(
@@ -53,17 +54,43 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: parsed.error.flatten() }), { status: 400 });
   }
 
-  const size = parsed.data.size || '1024x1536';
+  const size = parsed.data.size || '1080x1440';
   const model = parsed.data.model || 'gpt-image-2';
-  const out = await generateImage(env.OPENAI_API_KEY, { prompt: parsed.data.prompt, size, model });
+  const panelCount = (parsed.data.panelCount || '3') as '2' | '3';
+
+  const panelSpec = panelCount === '3'
+    ? [
+        'Layout spec: split the canvas into exactly three equal horizontal panels stacked vertically (each panel height = 480px).',
+        'Add two solid divider lines between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
+      ].join(' ')
+    : [
+        'Layout spec: split the canvas into exactly two equal horizontal panels stacked vertically (each panel height = 720px).',
+        'Add one solid divider line between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
+      ].join(' ');
+
+  const consistencySpec = [
+    'Canvas: 1080x1440 portrait.',
+    panelSpec,
+    'Inside each panel, keep 48px padding; no elements crossing divider lines.',
+    'Each panel must be a self-contained background with a clear focal point.',
+    'Maintain the same art direction across all panels (palette/texture/lighting), but vary the scene content.',
+    'Do NOT use device mockups, tilted frames, collage layouts, or rounded-corner cards inside the image.',
+    'Do NOT include any readable text, letters, numbers, logos, or watermarks.',
+    'Do not place grain/noise on divider lines; keep dividers crisp and high-contrast for machine splitting.',
+  ].join(' ');
+
+  const promptWithLayout = `${parsed.data.prompt}\n\n${consistencySpec}`.trim();
+
+  const out = await generateImage(env.OPENAI_API_KEY, { prompt: promptWithLayout, size, model });
 
   return new Response(
     JSON.stringify({
       imageUrl: out.imageUrl,
       error: out.error || null,
-      promptUsed: parsed.data.prompt,
+      promptUsed: promptWithLayout,
       sizeUsed: size,
       modelUsed: model,
+      panelCount,
     }),
     { status: out.error ? 502 : 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );

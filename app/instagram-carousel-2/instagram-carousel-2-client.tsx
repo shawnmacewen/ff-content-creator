@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 export default function InstagramCarousel2Client() {
   const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [panelCount, setPanelCount] = React.useState<'2' | '3'>('3');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function InstagramCarousel2Client() {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model, size: '1024x1536' }),
+        body: JSON.stringify({ prompt, model, panelCount, size: '1080x1440' }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
@@ -64,6 +65,17 @@ export default function InstagramCarousel2Client() {
                 placeholder="Type a prompt like ChatGPT…"
               />
               <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs text-muted-foreground">Panels</label>
+                <select
+                  className="h-9 rounded-2xl border bg-background px-3 text-sm"
+                  value={panelCount}
+                  onChange={(e) => setPanelCount(e.target.value as any)}
+                  disabled={isLoading}
+                >
+                  <option value="3">3 (default)</option>
+                  <option value="2">2</option>
+                </select>
+
                 <label className="text-xs text-muted-foreground">Model</label>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
