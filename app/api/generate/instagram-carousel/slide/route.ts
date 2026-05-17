@@ -134,6 +134,9 @@ export async function POST(req: Request) {
       'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
       'Format: 4:5 portrait (1080x1350).',
       `Style variant: ${style}.`,
+      style === 'frost'
+        ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
+        : 'IMPORTANT: Purple+Gold palette. Use soft purples with warm gold accents and neutral grays.',
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it cinematic, stylized, and fast to render.',
