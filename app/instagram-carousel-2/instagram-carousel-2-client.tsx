@@ -248,7 +248,9 @@ export default function InstagramCarousel2Client() {
         const { plateIndex, slideStart, slideEnd, size, panels } = plate;
         // eslint-disable-next-line no-console
         console.log('runCarouselGeneration:plateLoop', { plateIndex, slideStart, slideEnd, size, panels });
+        setError(`runCarouselGeneration:plateLoop plate=${plateIndex + 1} slides=${slideStart}-${slideEnd} size=${size} panels=${panels}`);
 
+        setError(`runCarouselGeneration:beforeBuildPlatePrompt plate=${plateIndex + 1}`);
         let promptToSend = '';
         try {
           promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count, size, panels });
@@ -257,6 +259,8 @@ export default function InstagramCarousel2Client() {
           console.error('buildPlatePrompt failed', { plateIndex, slideStart, slideEnd, size, panels }, e);
           throw e;
         }
+
+        setError(`runCarouselGeneration:afterBuildPlatePrompt plate=${plateIndex + 1}`);
         setLastPromptUsed(promptToSend);
         setPromptLog((prev) => {
           const header = `--- Masterplate ${plateIndex + 1} (slides ${slideStart}-${slideEnd}) prompt ---`;
