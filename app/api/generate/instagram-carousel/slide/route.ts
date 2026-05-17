@@ -53,7 +53,7 @@ async function generateImage(apiKey: string, prompt: string, size: '1024x1536' |
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2',
       prompt,
       size,
     }),

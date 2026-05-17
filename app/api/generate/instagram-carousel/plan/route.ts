@@ -178,7 +178,7 @@ export async function POST(req: Request) {
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-image-1',
+          model: 'gpt-image-2',
           prompt: masterPrompt,
           size: '1536x1024',
         }),
