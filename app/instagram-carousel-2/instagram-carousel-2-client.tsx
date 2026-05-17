@@ -205,7 +205,8 @@ export default function InstagramCarousel2Client() {
           });
         }
 
-        setSlides([...newSlides]);
+        // Defensive: never keep more than the requested slide count.
+        setSlides(newSlides.slice(0, count));
       }
 
       toast.success('Carousel generated');
@@ -444,6 +445,7 @@ export default function InstagramCarousel2Client() {
                     .filter((s) => s.slideNumber <= slideCount)
                     .slice()
                     .sort((a, b) => a.slideNumber - b.slideNumber)
+                    .slice(0, slideCount)
                     .map((s) => (
                       <div key={s.id} className="space-y-2">
                         <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
