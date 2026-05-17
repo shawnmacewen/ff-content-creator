@@ -210,6 +210,7 @@ export async function POST(req: Request) {
       `Lighting: ${style === 'frost' ? 'bright soft diffuse, even edges' : (theme?.lighting || 'soft cinematic')}.`,
       `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,
       `Composition: ${style === 'frost' ? 'airy negative space, minimal clutter' : (theme?.composition || 'premium editorial negative space')}.`,
+      `Source gist: ${theme?.sourceGist || ''}.`,
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
       imageryMotif ? `Topic imagery motif (use these concrete elements): ${imageryMotif}.` : '',
       // Keep fintech cues present but subordinate to the topic; do not force charts every time.

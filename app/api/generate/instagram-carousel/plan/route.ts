@@ -43,6 +43,8 @@ export async function POST(req: Request) {
 
   const ThemeSchema = z.object({
     title: z.string(),
+    // 1–2 sentence plain-English gist of the source content (to feed into image prompts)
+    sourceGist: z.string(),
     palette: z.string(),
     typography: z.string(),
     lighting: z.string(),
@@ -77,16 +79,18 @@ export async function POST(req: Request) {
       'Goal: cohesive Apple/Bloomberg-style editorial story across slides.',
       'Return a compact JSON style guide fields:',
       '- title',
+      '- sourceGist (1–2 sentence summary of what the source content is about; plain English; no jargon)',
       '- palette',
       '- typography (headline style, font vibe, sizing rules)',
       '- lighting',
       '- texture',
       '- composition (grid/margins/hierarchy)',
-      '- imageryTheme (consistent motif: e.g., cinematic abstract markets, macro textures, stylized finance photography)',
+      '- imageryTheme (consistent motif system derived from the source topic; avoid generic finance/market imagery unless the source is explicitly about that)',
       'If style variant is "purple-gold": palette = soft purples + warm gold accents + neutral grays. Keep it moody/low-key (deeper midtones), with clear contrast so white overlay text stays readable.',
       'If style variant is "frost": palette = clean whites + very light pink OR very light ice blue accents (NO purple, NO gold).',
       'For frost: airy negative space, high-key lighting, minimal grain, designed for dark (black) text overlays.',
       'Keep it consistent and easy to apply.',
+      'SOURCE:\n' + sourceText.slice(0, 4000),
     ].join('\n'),
   });
 
