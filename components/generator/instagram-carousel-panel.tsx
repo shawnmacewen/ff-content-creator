@@ -138,18 +138,18 @@ function SlideCard({
           <div className="absolute inset-0 grid place-items-center">
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.2s]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.1s]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/70 animate-bounce" />
+                <span className={cn('h-2.5 w-2.5 rounded-full animate-bounce [animation-delay:-0.2s]', useDarkText ? 'bg-slate-500/70' : 'bg-white/70')} />
+                <span className={cn('h-2.5 w-2.5 rounded-full animate-bounce [animation-delay:-0.1s]', useDarkText ? 'bg-slate-500/70' : 'bg-white/70')} />
+                <span className={cn('h-2.5 w-2.5 rounded-full animate-bounce', useDarkText ? 'bg-slate-500/70' : 'bg-white/70')} />
               </div>
-              <div className="text-xs font-medium text-white/75">Generating</div>
+              <div className={cn('text-xs font-medium', useDarkText ? 'text-slate-600' : 'text-white/75')}>Generating</div>
             </div>
           </div>
         ) : !slide.imageUrl ? (
           // Not generating yet: subtle skeletons
           <div className={cn(isTopText ? 'mt-4' : 'mt-auto', 'pb-1')}>
-            <div className="h-8 w-2/3 rounded-xl bg-white/10" />
-            <div className="mt-3 h-4 w-4/5 rounded-xl bg-white/10" />
+            <div className={cn('h-8 w-2/3 rounded-xl', useDarkText ? 'bg-black/10' : 'bg-white/10')} />
+            <div className={cn('mt-3 h-4 w-4/5 rounded-xl', useDarkText ? 'bg-black/10' : 'bg-white/10')} />
           </div>
         ) : null}
       </div>
