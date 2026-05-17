@@ -296,6 +296,10 @@ export default function InstagramCarousel2Client() {
 
       toast.success('Carousel generated');
     } catch (e: any) {
+      // Surface full details during development/testing.
+      // eslint-disable-next-line no-console
+      console.error('Carousel generation failed:', e);
+
       const msg =
         typeof e?.message === 'string'
           ? e.message
@@ -304,7 +308,11 @@ export default function InstagramCarousel2Client() {
             : e
               ? JSON.stringify(e)
               : 'Failed to generate carousel';
-      setError(msg);
+
+      const stack = typeof e?.stack === 'string' ? e.stack : '';
+      const combined = stack ? `${msg}\n\n${stack}` : msg;
+
+      setError(combined);
       toast.error(msg);
     } finally {
       setIsLoading(false);
