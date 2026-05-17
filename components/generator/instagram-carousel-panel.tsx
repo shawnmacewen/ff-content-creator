@@ -356,6 +356,7 @@ export function InstagramCarouselPanel({
                           />
                           <div className="px-1 text-[11px] font-medium tracking-wide text-muted-foreground">
                             Slide {idx + 1} - {template}
+                            {template === 'standard' && (s as any).visualType ? ` (${String((s as any).visualType)})` : ''}
                           </div>
                         </div>
                       </div>
