@@ -3,10 +3,9 @@ import { getServerEnv } from '@/lib/env';
 
 const BodySchema = z.object({
   prompt: z.string().min(1),
-  // NOTE: OpenAI Images sizes must be divisible by 16. We use 1024x1536 as the closest to 1080x1440.
+  // NOTE: OpenAI Images sizes must be divisible by 16.
   size: z.enum(['1024x1024', '1024x1536', '1536x1024']).optional(),
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
-  panelCount: z.enum(['2', '3']).optional(),
 });
 
 async function generateImage(
@@ -57,41 +56,15 @@ export async function POST(req: Request) {
 
   const size = parsed.data.size || '1024x1536';
   const model = parsed.data.model || 'gpt-image-2';
-  const panelCount = (parsed.data.panelCount || '3') as '2' | '3';
-
-  const panelSpec = panelCount === '3'
-    ? [
-        'Layout spec: split the canvas into exactly three equal horizontal panels stacked vertically (each panel height = 512px).',
-        'Add two solid divider lines between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
-      ].join(' ')
-    : [
-        'Layout spec: split the canvas into exactly two equal horizontal panels stacked vertically (each panel height = 768px).',
-        'Add one solid divider line between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
-      ].join(' ');
-
-  const consistencySpec = [
-    'Canvas: 1024x1536 portrait (closest supported size to 1080x1440; divisible by 16).',
-    panelSpec,
-    'Inside each panel, keep 48px padding; no elements crossing divider lines.',
-    'Each panel must be a self-contained background with a clear focal point.',
-    'Maintain the same art direction across all panels (palette/texture/lighting), but vary the scene content.',
-    'Do NOT use device mockups, tilted frames, collage layouts, or rounded-corner cards inside the image.',
-    'Do NOT include any readable text, letters, numbers, logos, or watermarks.',
-    'Do not place grain/noise on divider lines; keep dividers crisp and high-contrast for machine splitting.',
-  ].join(' ');
-
-  const promptWithLayout = `${parsed.data.prompt}\n\n${consistencySpec}`.trim();
-
-  const out = await generateImage(env.OPENAI_API_KEY, { prompt: promptWithLayout, size, model });
+  const out = await generateImage(env.OPENAI_API_KEY, { prompt: parsed.data.prompt, size, model });
 
   return new Response(
     JSON.stringify({
       imageUrl: out.imageUrl,
       error: out.error || null,
-      promptUsed: promptWithLayout,
+      promptUsed: parsed.data.prompt,
       sizeUsed: size,
       modelUsed: model,
-      panelCount,
     }),
     { status: out.error ? 502 : 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );
