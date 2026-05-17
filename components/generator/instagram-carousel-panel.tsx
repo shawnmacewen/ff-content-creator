@@ -84,14 +84,22 @@ function SlideCard({
         </div>
 
         {(slide.headline || slide.summary) ? (
-          <div className="mt-auto pb-1">
-            <div className="max-w-[92%] rounded-2xl border border-white/40 bg-white/80 p-5 shadow-sm backdrop-blur-md">
-              <div className="text-2xl font-semibold leading-[1.1] tracking-tight text-slate-900">
-                {slide.headline}
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-700 line-clamp-3">
-                {slide.summary}
-              </div>
+          <div className="mt-auto space-y-3 pb-1">
+            <div
+              className={cn(
+                'text-3xl font-semibold leading-[1.05] tracking-tight drop-shadow-sm',
+                styleVariant === 'frost' ? 'text-slate-950' : 'text-white'
+              )}
+            >
+              {slide.headline}
+            </div>
+            <div
+              className={cn(
+                'max-w-[90%] text-sm leading-relaxed line-clamp-3 drop-shadow-sm',
+                styleVariant === 'frost' ? 'text-slate-800' : 'text-white/80'
+              )}
+            >
+              {slide.summary}
             </div>
           </div>
         ) : (
@@ -130,6 +138,7 @@ export function InstagramCarouselPanel({
   canGenerate = true,
   promptLog,
   lastPrompt,
+  styleVariant = 'purple-gold',
 }: {
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
@@ -146,6 +155,7 @@ export function InstagramCarouselPanel({
   canGenerate?: boolean;
   promptLog?: string;
   lastPrompt?: string;
+  styleVariant?: 'purple-gold' | 'frost';
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const localSlides = React.useMemo(() => emptySlides(slideCount), [slideCount]);

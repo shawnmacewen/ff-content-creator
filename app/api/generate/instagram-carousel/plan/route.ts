@@ -7,7 +7,12 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { sourceContentIds, slideCount = 6, generationMode = 'master-plate' } = body as { sourceContentIds: string[]; slideCount?: number; generationMode?: 'master-plate' | 'sequential' };
+    const { sourceContentIds, slideCount = 6, generationMode = 'master-plate', style = 'purple-gold' } = body as {
+      sourceContentIds: string[];
+      slideCount?: number;
+      generationMode?: 'master-plate' | 'sequential';
+      style?: 'purple-gold' | 'frost';
+    };
 
     const env = getServerEnv();
     if (!env.OPENAI_API_KEY) {
@@ -65,15 +70,18 @@ export async function POST(req: Request) {
     schema: ThemeSchema,
     prompt: [
       'Create ONE master visual direction for a premium fintech/editorial Instagram carousel.',
+      `Style variant: ${style}.`,
       'Goal: cohesive Apple/Bloomberg-style editorial story across slides.',
       'Return a compact JSON style guide fields:',
       '- title',
-      '- palette (moody gradients, soft purples, neutrals)',
+      '- palette',
       '- typography (headline style, font vibe, sizing rules)',
       '- lighting',
       '- texture',
       '- composition (grid/margins/hierarchy)',
       '- imageryTheme (consistent motif: e.g., cinematic abstract markets, macro textures, stylized finance photography)',
+      'If style variant is "purple-gold": bias toward soft purples + warm gold accents, premium fintech editorial.',
+      'If style variant is "frost": bias toward icy whites + cool lavenders/blues, airy negative space, minimal grain, high legibility for dark text overlays.',
       'Keep it consistent and easy to apply.',
     ].join('\n'),
   });

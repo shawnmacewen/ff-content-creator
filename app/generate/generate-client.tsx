@@ -16,6 +16,7 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { InstagramCarouselPanel } from '@/components/generator/instagram-carousel-panel';
 import { InstagramImageModal } from '@/components/generator/instagram-image-modal';
 
@@ -41,6 +42,7 @@ export default function GeneratePage() {
   const [instagramImageModalOpen, setInstagramImageModalOpen] = useState(false);
   const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
   const [instagramCarouselGenerationMode, setInstagramCarouselGenerationMode] = useState<'sequential' | 'master-plate'>('master-plate');
+  const [instagramCarouselStyle, setInstagramCarouselStyle] = useState<'purple-gold' | 'frost'>('purple-gold');
   const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
 
   // New: separate toggles for single vs carousel chips (KIT UX)
@@ -207,6 +209,7 @@ export default function GeneratePage() {
           sourceContentIds: selectedSourceIds,
           slideCount: instagramCarouselSlides,
           generationMode: instagramCarouselGenerationMode,
+          style: instagramCarouselStyle,
         }),
       });
       const plan = await planRes.json().catch(() => ({}));
@@ -241,6 +244,7 @@ export default function GeneratePage() {
           body: JSON.stringify({
             theme,
             masterPlate,
+            style: instagramCarouselStyle,
             slideId: s.id,
             index: i,
             total,
@@ -585,6 +589,32 @@ export default function GeneratePage() {
           {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="text-xs font-medium text-muted-foreground">Style</div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={instagramCarouselStyle === 'purple-gold' ? 'default' : 'outline'}
+                  className={cn(
+                    'rounded-2xl',
+                    instagramCarouselStyle === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90'
+                  )}
+                  onClick={() => setInstagramCarouselStyle('purple-gold')}
+                  disabled={!!isGeneratingCarouselImages}
+                >
+                  Purple + Gold
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={instagramCarouselStyle === 'frost' ? 'default' : 'outline'}
+                  className={cn('rounded-2xl', instagramCarouselStyle === 'frost' && 'bg-slate-900 hover:bg-slate-900/90')}
+                  onClick={() => setInstagramCarouselStyle('frost')}
+                  disabled={!!isGeneratingCarouselImages}
+                >
+                  Frost
+                </Button>
+              </div>
               <InstagramCarouselPanel
                 enabled={true}
                 onEnabledChange={() => {}}
@@ -601,6 +631,7 @@ export default function GeneratePage() {
                 canGenerate={!!selectedSourceIds.length}
                 promptLog={instagramCarouselPromptLog}
                 lastPrompt={instagramCarouselLastPrompt}
+                styleVariant={instagramCarouselStyle}
               />
             </div>
           ) : null}
@@ -652,6 +683,32 @@ export default function GeneratePage() {
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="text-xs font-medium text-muted-foreground">Style</div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={instagramCarouselStyle === 'purple-gold' ? 'default' : 'outline'}
+                  className={cn(
+                    'rounded-2xl',
+                    instagramCarouselStyle === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90'
+                  )}
+                  onClick={() => setInstagramCarouselStyle('purple-gold')}
+                  disabled={!!isGeneratingCarouselImages}
+                >
+                  Purple + Gold
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={instagramCarouselStyle === 'frost' ? 'default' : 'outline'}
+                  className={cn('rounded-2xl', instagramCarouselStyle === 'frost' && 'bg-slate-900 hover:bg-slate-900/90')}
+                  onClick={() => setInstagramCarouselStyle('frost')}
+                  disabled={!!isGeneratingCarouselImages}
+                >
+                  Frost
+                </Button>
+              </div>
               <InstagramCarouselPanel
                 enabled={true}
                 onEnabledChange={() => {}}
@@ -668,6 +725,7 @@ export default function GeneratePage() {
                 canGenerate={!!selectedSourceIds.length}
                 promptLog={instagramCarouselPromptLog}
                 lastPrompt={instagramCarouselLastPrompt}
+                styleVariant={instagramCarouselStyle}
               />
             </div>
           ) : null}

@@ -76,9 +76,10 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
+    style?: 'purple-gold' | 'frost';
     slideId: string;
     index: number;
     total: number;
@@ -132,15 +133,19 @@ export async function POST(req: Request) {
     prompt: [
       'Create a lightweight editorial BACKGROUND image for an Instagram carousel slide.',
       'Format: 4:5 portrait (1080x1350).',
+      `Style variant: ${style}.`,
       'Do NOT include any readable text, letters, numbers, or logos.',
+      'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it cinematic, stylized, and fast to render.',
-      `Palette: ${theme?.palette || ''}.`,
-      `Lighting: ${theme?.lighting || ''}.`,
-      `Texture: ${theme?.texture || ''}.`,
-      `Composition: ${theme?.composition || ''}.`,
+      `Palette: ${theme?.palette || (style === 'frost' ? 'icy whites, cool lavender, pale blue neutrals' : 'soft purples, warm gold accents, neutral grays')}.`,
+      `Lighting: ${theme?.lighting || (style === 'frost' ? 'bright soft diffuse light, even edges' : 'soft cinematic')}.`,
+      `Texture: ${theme?.texture || (style === 'frost' ? 'minimal grain, clean' : 'subtle grain')}.`,
+      `Composition: ${theme?.composition || (style === 'frost' ? 'airy negative space, clean horizon, minimal clutter' : 'premium editorial negative space')}.`,
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
       `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
-      'Keep generous negative space for headline and summary overlays.',
+      style === 'frost'
+        ? 'Keep the lower third especially clean and light for DARK (black) headline/summary overlays.'
+        : 'Keep generous negative space for headline and summary overlays.',
     ].join(' '),
   });
 
