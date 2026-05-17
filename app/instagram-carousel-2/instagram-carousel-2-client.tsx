@@ -21,9 +21,9 @@ export default function InstagramCarousel2Client() {
 
   const splitFriendlySpec = [
     'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
-    'Canvas: 1536x1024 (landscape).',
-    'Split into exactly THREE equal vertical panels arranged LEFT-TO-RIGHT (each panel = 512x1024).',
-    'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536 (full height).',
+    'Canvas: 1536x512 (3:1 landscape).',
+    'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).',
+    'CRITICAL: there must be NO gutters and NO padding between panels, so the image can be cropped deterministically at x=0..512, 512..1024, 1024..1536.',
     'Nothing important may cross panel boundaries (keep each panel self-contained).',
     'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
     'No logos or watermarks.',
@@ -47,7 +47,7 @@ export default function InstagramCarousel2Client() {
         body: JSON.stringify({
           prompt: promptToSend,
           model,
-          size: '1536x1024',
+          size: '1536x512',
         }),
       });
       const outText = await r.text().catch(() => '');
@@ -92,7 +92,7 @@ export default function InstagramCarousel2Client() {
     await load;
 
     const W = 1536;
-    const H = 1024;
+    const H = 512;
     const panelW = 512;
 
     // Defensive: if we ever change size, keep the crop logic honest.
@@ -251,7 +251,7 @@ export default function InstagramCarousel2Client() {
                 placeholder="Type a prompt like ChatGPT…"
               />
               <div className="text-xs text-muted-foreground">
-                Carousel mode generates a masterplate (1536×1024) that we deterministically crop into 3 slides.
+                Carousel mode generates a 3:1 masterplate (1536×512) that we deterministically crop into 3 square slides.
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-muted-foreground">Model</label>
