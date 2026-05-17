@@ -48,7 +48,8 @@ export const CAROUSEL_TEMPLATES: Record<CarouselTemplateKey, CarouselTemplateSpe
     key: 'standard',
     label: 'Standard',
     uiHint: {
-      textPlacement: 'bottom-left',
+      // Standard slides read better with headline-first composition.
+      textPlacement: 'top-left',
       headlineWeight: 'semibold',
       headlineMaxLines: 3,
       summaryMaxLines: 3,

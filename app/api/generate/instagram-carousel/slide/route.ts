@@ -164,14 +164,24 @@ export async function POST(req: Request) {
       imageStyleHint,
       style === 'frost'
         ? 'IMPORTANT: Frost palette only. Use clean whites with very light pink OR very light ice blue accents. Do NOT use purple. Do NOT use gold. Avoid warm/yellow lighting.'
-        : [
-            'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
-            'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
-            'Contrast: higher contrast so white overlay text stays readable.',
-            'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
-            'Imagery: subtle but recognizable finance elements (e.g., chart line, candlesticks, coins, bars) — keep it tasteful and editorial.',
-            'Composition: preserve a clean negative-space block for text, but keep the non-text areas detailed enough to feel premium (not an amorphous gradient).',
-          ].join(' '),
+        : template === 'standard'
+          ? [
+              'IMPORTANT: Purple+Gold palette, but LIGHT / near-white background (paper-white / frosted white).',
+              'Use subtle purple and warm gold accents only (no heavy dark fields).',
+              'Overall look: bright, clean, airy, minimal shadows — inspired by Frost, but with purple+gold accents.',
+              'Contrast: ensure BLACK overlay text will be readable (keep the main text area very light and uncluttered).',
+              'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
+              'Imagery: subtle but recognizable finance elements (fine line chart, faint candlestick pattern, minimal coin/bar silhouettes), tasteful and editorial.',
+              'Composition: preserve a clean negative-space block in the TOP portion for text; keep the rest cohesive and premium (not an amorphous gradient).',
+            ].join(' ')
+          : [
+              'IMPORTANT: Purple+Gold palette only (deep royal purple + warm gold accents + neutral grays).',
+              'Overall look: low-key / darker exposure with deep navy/purple shadows (NOT pastel).',
+              'Contrast: higher contrast so white overlay text stays readable.',
+              'Sharpness: crisp detail; no haze; no soft-focus; no gaussian blur; no foggy glow.',
+              'Imagery: subtle but recognizable finance elements (e.g., chart line, candlesticks, coins, bars) — keep it tasteful and editorial.',
+              'Composition: preserve a clean negative-space block for text, but keep the non-text areas detailed enough to feel premium (not an amorphous gradient).',
+            ].join(' '),
       'Do NOT include any readable text, letters, numbers, or logos.',
       'No watermarks. No frames. No borders. No vignettes. No dark edge banding.',
       'Avoid ultra-detailed photorealism; keep it premium editorial, fast to render.',
@@ -186,7 +196,9 @@ export async function POST(req: Request) {
       `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
       style === 'frost'
         ? 'Keep the lower third clean and light for dark headline/summary overlays.'
-        : 'Keep generous negative space for headline and summary overlays.',
+        : template === 'standard'
+          ? 'Keep the TOP portion clean and light for dark headline/summary overlays.'
+          : 'Keep generous negative space for headline and summary overlays.',
     ].join(' '),
   });
 

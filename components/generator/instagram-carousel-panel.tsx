@@ -54,6 +54,10 @@ function SlideCard({
   const textPlacement = ui.textPlacement || (template === 'outro' ? 'top-left' : 'bottom-left');
   const padClass = template === 'intro' ? 'p-8' : template === 'outro' ? 'p-8' : 'p-7';
 
+  // Standard slides now use lighter backgrounds + dark text (more like Frost),
+  // regardless of style variant.
+  const useDarkText = template === 'standard' || styleVariant === 'frost';
+
   const headlineSizeClass = template === 'intro' ? 'text-[34px]' : template === 'outro' ? 'text-[30px]' : 'text-3xl';
   const summarySizeClass = template === 'intro' ? 'text-[15px]' : 'text-sm';
   const headlineClampClass = ui.headlineMaxLines === 2 ? 'line-clamp-2' : ui.headlineMaxLines === 3 ? 'line-clamp-3' : '';
@@ -86,7 +90,9 @@ function SlideCard({
           'absolute inset-0',
           slide.imageUrl
             ? 'bg-transparent'
-            : 'bg-gradient-to-br from-violet-500/14 via-violet-200/18 to-white/70'
+            : template === 'standard'
+              ? 'bg-gradient-to-br from-white via-white/80 to-violet-500/8'
+              : 'bg-gradient-to-br from-violet-500/14 via-violet-200/18 to-white/70'
         )}
       />
       {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
@@ -106,7 +112,7 @@ function SlideCard({
                 headlineSizeClass,
                 'font-semibold leading-[1.05] tracking-tight drop-shadow-sm',
                 headlineClampClass,
-                styleVariant === 'frost' ? 'text-slate-950' : 'text-white',
+                useDarkText ? 'text-slate-950' : 'text-white',
                 ui.headlineWeight === 'bold' && 'font-bold'
               )}
             >
@@ -117,7 +123,7 @@ function SlideCard({
                 'max-w-[90%] leading-relaxed drop-shadow-sm',
                 summarySizeClass,
                 summaryClampClass,
-                styleVariant === 'frost' ? 'text-slate-800' : 'text-white/80'
+                useDarkText ? 'text-slate-800' : 'text-white/80'
               )}
             >
               {slide.summary}
