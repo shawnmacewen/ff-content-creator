@@ -163,8 +163,9 @@ export async function POST(req: Request) {
         style === 'frost'
           ? [
               'Landscape orientation. Near-white / frosted paper base with ice-blue or very light pink accents (make them visible, not imperceptible).',
-              'Add a DISTINCT but clean editorial pattern system across the plate: subtle topo lines / grid / contour lines / geometric shapes.',
-              'Use slightly stronger contrast than before so crops still read (avoid pure-white washout).',
+              'Add a DISTINCT but clean editorial pattern system across the plate: topo lines / grid / contour lines / geometric shapes.',
+              'Pattern lines may use medium-contrast navy/charcoal outlines (still Frost) so the pattern is visible after cropping.',
+              'Use stronger contrast than before so crops still read (avoid pure-white washout).',
               'Crisp edges, minimal shadows, clean matte texture. No purple, no gold, no warm/yellow lighting.',
             ].join(' ')
           : 'Landscape orientation. Cinematic, moody gradients (soft purples), deeper exposure (avoid washed-out highlights), subtle texture/grain, restrained abstract motifs (not blurry).',
