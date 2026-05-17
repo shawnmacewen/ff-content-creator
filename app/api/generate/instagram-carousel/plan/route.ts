@@ -157,8 +157,12 @@ export async function POST(req: Request) {
   if (generationMode === 'master-plate') {
     try {
       const masterPrompt = [
-        'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
-        'Landscape orientation. Cinematic, moody gradients (soft purples), deeper exposure (avoid washed-out highlights), subtle texture/grain, restrained abstract market motifs (not blurry).',
+        style === 'frost'
+          ? 'Create ONE master panoramic background plate for a premium high-key editorial Instagram carousel campaign (Frost style).'
+          : 'Create ONE master panoramic background plate for a premium editorial Instagram carousel campaign (Purple+Gold style).',
+        style === 'frost'
+          ? 'Landscape orientation. Near-white / frosted paper base with very light ice blue or very light pink accents, crisp edges, minimal shadows, clean matte texture. No purple, no gold, no warm/yellow lighting.'
+          : 'Landscape orientation. Cinematic, moody gradients (soft purples), deeper exposure (avoid washed-out highlights), subtle texture/grain, restrained abstract motifs (not blurry).',
         'No readable text, no logos, no watermarks.',
         'Must have a continuous horizon/flow that can be panned across multiple slides.',
         `Palette: ${themeRes.object.palette}.`,

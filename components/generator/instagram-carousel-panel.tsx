@@ -151,11 +151,9 @@ function SlideCard({
               </div>
             )}
 
-            {template === 'outro' && slide.ctaLine ? (
-              <div className={cn('pt-2 text-xs font-semibold', useDarkText ? 'text-slate-700' : 'text-white/80')}>
-                {slide.ctaLine}
-              </div>
-            ) : null}
+            {/* NOTE: we generate ctaLine in the plan, but we do NOT render it on the card.
+                The CTA line is intended to be inserted by the caller as separate HTML outside the image area. */}
+            {null}
           </div>
         ) : null}
 
