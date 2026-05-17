@@ -238,7 +238,14 @@ export default function InstagramCarousel2Client() {
       for (const plate of platePlan) {
         const { plateIndex, slideStart, slideEnd, size, panels } = plate;
 
-        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count, size, panels });
+        let promptToSend = '';
+        try {
+          promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count, size, panels });
+        } catch (e: any) {
+          // eslint-disable-next-line no-console
+          console.error('buildPlatePrompt failed', { plateIndex, slideStart, slideEnd, size, panels }, e);
+          throw e;
+        }
         setLastPromptUsed(promptToSend);
         setPromptLog((prev) => {
           const header = `--- Masterplate ${plateIndex + 1} (slides ${slideStart}-${slideEnd}) prompt ---`;
