@@ -95,7 +95,7 @@ function SlideCard({
       <div className={cn('relative flex h-full flex-col text-left', padClass, textPlacement === 'top-left' ? 'justify-start' : 'justify-end')}>
         {/* minimal chrome: no admin badges */}
         <div className="flex items-center justify-between">
-          <div className="text-[11px] font-medium tracking-wide text-white/70">Slide {index + 1}</div>
+          <div className="h-7 w-7" aria-hidden />
           <div className="h-7 w-7 rounded-full bg-white/10 backdrop-blur" aria-hidden />
         </div>
 
@@ -328,21 +328,33 @@ export function InstagramCarouselPanel({
                 >
                   <div className="w-[12%] shrink-0" aria-hidden />
 
-                  {effectiveSlides.map((s, idx) => (
-                    <div
-                      key={s.id}
-                      className="w-[68%] shrink-0 sm:w-[46%] lg:w-[52%] max-w-[360px]"
-                    >
-                      <SlideCard
-                        slide={s}
-                        index={idx}
-                        active={idx === activeIndex}
-                        onClick={() => setActiveIndex(idx)}
-                        isGenerating={isGenerating}
-                        styleVariant={styleVariant}
-                      />
-                    </div>
-                  ))}
+                  {effectiveSlides.map((s, idx) => {
+                    const template = (s.template || (idx === 0 ? 'intro' : idx === slideCount - 1 ? 'outro' : 'standard')) as
+                      | 'intro'
+                      | 'standard'
+                      | 'outro';
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="w-[68%] shrink-0 sm:w-[46%] lg:w-[52%] max-w-[360px]"
+                      >
+                        <div className="space-y-2">
+                          <SlideCard
+                            slide={s}
+                            index={idx}
+                            active={idx === activeIndex}
+                            onClick={() => setActiveIndex(idx)}
+                            isGenerating={isGenerating}
+                            styleVariant={styleVariant}
+                          />
+                          <div className="px-1 text-[11px] font-medium tracking-wide text-muted-foreground">
+                            Slide {idx + 1} - {template}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
 
                   <div className="w-[12%] shrink-0" aria-hidden />
                 </div>
