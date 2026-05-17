@@ -126,6 +126,7 @@ export default function InstagramCarousel2Client() {
     platesNeeded: number;
     slideStart: number;
     slideEnd: number;
+    totalSlides: number;
   }) => {
     const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
     const userTopic = topicClean || 'Canadian housing market';
@@ -134,7 +135,7 @@ export default function InstagramCarousel2Client() {
     const systemPrefix = 'Create a set of 3 Instagram carousel posts about';
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
 
-    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Ensure any slide numbering in text matches this range.`;
+    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere.`;
 
     const continuationLine =
       args.plateIndex === 0
@@ -145,7 +146,11 @@ export default function InstagramCarousel2Client() {
             'The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.',
           ].join(' ');
 
-    const promptToSend = [userPrompt, slideRangeLine, continuationLine, baseLayoutSpec]
+    const outroLine = args.slideEnd === args.totalSlides
+      ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} a strong closing slide with a clear CTA and summary bullets. Slides ${args.slideStart}–${Math.max(args.slideStart, args.totalSlides - 1)} should be informational (avoid CTA).`
+      : '';
+
+    const promptToSend = [userPrompt, slideRangeLine, outroLine, continuationLine, baseLayoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();
@@ -170,7 +175,7 @@ export default function InstagramCarousel2Client() {
         const slideStart = plateIndex * 3 + 1;
         const slideEnd = Math.min(slideStart + 2, count);
 
-        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd });
+        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count });
         setLastPromptUsed(promptToSend);
 
         const out = await generateOneMasterplate(promptToSend);
@@ -437,6 +442,7 @@ export default function InstagramCarousel2Client() {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {slides
+                    .filter((s) => s.slideNumber <= slideCount)
                     .slice()
                     .sort((a, b) => a.slideNumber - b.slideNumber)
                     .map((s) => (
