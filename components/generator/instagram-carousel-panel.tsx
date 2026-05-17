@@ -159,7 +159,7 @@ function SlideCard({
         ) : null}
 
         {isGenerating && !slide.imageUrl ? (
-          <div className="absolute inset-0 grid place-items-center">
+          <div className="absolute inset-0 grid place-items-center z-10">
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className={cn('h-2.5 w-2.5 rounded-full animate-bounce [animation-delay:-0.2s]', useDarkText ? 'bg-slate-500/70' : 'bg-white/70')} />
@@ -350,7 +350,7 @@ export function InstagramCarouselPanel({
             </div>
 
             {/* Instagram-like stage */}
-            <div className="rounded-2xl border bg-muted/30 p-4 max-h-[520px] overflow-hidden">
+            <div className="rounded-2xl border bg-muted/30 p-4 max-h-[520px] overflow-x-hidden overflow-y-visible">
               <div className="relative">
                 <div
                   className="flex w-full gap-4 overflow-x-auto scroll-smooth px-1 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
