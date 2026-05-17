@@ -136,6 +136,17 @@ export default function InstagramCarousel2Client() {
 
     const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere.`;
 
+    const slotsUsed = args.slideEnd - args.slideStart + 1;
+    const slotMap = [
+      `Panel 1 (x=0..512) = slide ${args.slideStart}`,
+      slotsUsed >= 2 ? `Panel 2 (x=512..1024) = slide ${args.slideStart + 1}` : `Panel 2 (x=512..1024) = UNUSED`,
+      slotsUsed >= 3 ? `Panel 3 (x=1024..1536) = slide ${args.slideStart + 2}` : `Panel 3 (x=1024..1536) = UNUSED`,
+    ].join(' | ');
+
+    const unusedPanelsRule = slotsUsed < 3
+      ? `UNUSED PANEL RULE: This masterplate has only ${slotsUsed} real slide(s). Any UNUSED panel(s) must contain ONLY seamless background/texture/visual continuation with NO readable text, NO CTA, and NO new messaging. (${slotMap})`
+      : `PANEL MAP: ${slotMap}`;
+
     const continuationLine =
       args.plateIndex === 0
         ? ''
@@ -149,7 +160,7 @@ export default function InstagramCarousel2Client() {
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
       : `NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT include any outro, conclusion language, "wrap-up", or CTA on slides ${args.slideStart}–${args.slideEnd}. Save the CTA for the final slide ${args.totalSlides}.`;
 
-    const promptToSend = [userPrompt, slideRangeLine, outroLine, continuationLine, baseLayoutSpec]
+    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, outroLine, continuationLine, baseLayoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();
