@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
@@ -87,6 +87,7 @@ export async function POST(req: Request) {
     total: number;
     beat: string;
     motif?: string;
+    imageryMotif?: string;
     placement?: 'left' | 'right' | 'center' | 'bottom-left' | 'bottom-right';
     quality?: 'fast' | 'cover';
   };
@@ -202,6 +203,11 @@ export async function POST(req: Request) {
       `Texture: ${style === 'frost' ? 'minimal grain, clean matte' : (theme?.texture || 'subtle grain')}.`,
       `Composition: ${style === 'frost' ? 'airy negative space, minimal clutter' : (theme?.composition || 'premium editorial negative space')}.`,
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
+      imageryMotif ? `Topic imagery motif (use these concrete elements): ${imageryMotif}.` : '',
+      // Keep fintech cues present but subordinate to the topic; do not force charts every time.
+      style === 'frost'
+        ? ''
+        : 'Fintech accent (subtle, optional): one small finance cue only if it fits (tiny chart line, subtle candlestick texture, or minimal ticker-like geometry) — do not make the whole image a chart.',
       `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
       style === 'frost'
         ? 'Keep the lower third clean and light for dark headline/summary overlays.'
@@ -210,7 +216,7 @@ export async function POST(req: Request) {
           : template === 'intro'
             ? 'Keep the lower third clean for headline and summary overlays.'
             : 'Keep the TOP portion cleaner for headline and summary overlays.',
-    ].join(' '),
+    ].filter(Boolean).join(' '),
   });
 
   // gpt-image-1 supported sizes: 1024x1024, 1024x1536, 1536x1024 (and "auto").

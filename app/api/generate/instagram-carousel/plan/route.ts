@@ -58,6 +58,9 @@ export async function POST(req: Request) {
         summary: z.string().min(1),
         // Fast, consistent foreground motif per slide (e.g. "cargo ship silhouette", "country flag")
         motif: z.string().min(1),
+        // Concrete, topic-specific visual nouns for background (NOT just finance charts).
+        // Example: "oil rig silhouette, desert heat haze, refinery pipes".
+        imageryMotif: z.string().min(1),
         // Must be required (no defaults) to satisfy OpenAI json-schema requirements
         placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']),
       })
@@ -97,7 +100,8 @@ export async function POST(req: Request) {
       'Each slide must include:',
       '- headline: max 7 words (editorial headline)',
       '- summary: max 22 words (minimal, impactful)',
-      '- motif: ONE simple visual symbol/object that represents the slide context (e.g., cargo ship, flag, oil rig, chart line, gavel).',
+      '- motif: ONE simple foreground symbol/object that represents the slide context (e.g., cargo ship, flag, oil rig, chart line, gavel).',
+      '- imageryMotif: 2–5 concrete visual nouns/scene elements derived from the SOURCE topic (not generic finance). Keep it cohesive across the set.',
       '- placement: where the motif should sit (left/right/center/bottom-left/bottom-right).',
       'Motifs must be fast + consistent: simple editorial icon/illustration, not photorealism.',
       'Final slide summary must include a CTA (no guarantees).',
@@ -113,6 +117,7 @@ export async function POST(req: Request) {
       headline: String(s.headline || `Slide ${idx + 1}`),
       summary: String(s.summary || ''),
       motif: String((s as any).motif || 'abstract icon'),
+      imageryMotif: String((s as any).imageryMotif || ''),
       placement: String((s as any).placement || 'right'),
       template,
     };
