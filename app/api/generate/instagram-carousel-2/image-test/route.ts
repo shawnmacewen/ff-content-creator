@@ -3,7 +3,8 @@ import { getServerEnv } from '@/lib/env';
 
 const BodySchema = z.object({
   prompt: z.string().min(1),
-  size: z.enum(['1024x1024', '1024x1536', '1536x1024', '1080x1440']).optional(),
+  // NOTE: OpenAI Images sizes must be divisible by 16. We use 1024x1536 as the closest to 1080x1440.
+  size: z.enum(['1024x1024', '1024x1536', '1536x1024']).optional(),
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
   panelCount: z.enum(['2', '3']).optional(),
 });
@@ -54,22 +55,22 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: parsed.error.flatten() }), { status: 400 });
   }
 
-  const size = parsed.data.size || '1080x1440';
+  const size = parsed.data.size || '1024x1536';
   const model = parsed.data.model || 'gpt-image-2';
   const panelCount = (parsed.data.panelCount || '3') as '2' | '3';
 
   const panelSpec = panelCount === '3'
     ? [
-        'Layout spec: split the canvas into exactly three equal horizontal panels stacked vertically (each panel height = 480px).',
+        'Layout spec: split the canvas into exactly three equal horizontal panels stacked vertically (each panel height = 512px).',
         'Add two solid divider lines between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
       ].join(' ')
     : [
-        'Layout spec: split the canvas into exactly two equal horizontal panels stacked vertically (each panel height = 720px).',
+        'Layout spec: split the canvas into exactly two equal horizontal panels stacked vertically (each panel height = 768px).',
         'Add one solid divider line between panels: full-width, perfectly straight, thickness 8px, color #111111 at 70% opacity.',
       ].join(' ');
 
   const consistencySpec = [
-    'Canvas: 1080x1440 portrait.',
+    'Canvas: 1024x1536 portrait (closest supported size to 1080x1440; divisible by 16).',
     panelSpec,
     'Inside each panel, keep 48px padding; no elements crossing divider lines.',
     'Each panel must be a self-contained background with a clear focal point.',

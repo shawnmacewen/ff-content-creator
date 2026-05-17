@@ -23,7 +23,7 @@ export default function InstagramCarousel2Client() {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model, panelCount, size: '1080x1440' }),
+        body: JSON.stringify({ prompt, model, panelCount, size: '1024x1536' }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
