@@ -152,13 +152,20 @@ export default function InstagramCarousel2Client() {
       : `PANEL MAP: ${slotMap}`;
 
     const continuationLine =
-      args.plateIndex === 0 || cohesionMethod !== 'prompt'
+      args.plateIndex === 0
         ? ''
-        : [
-            'CONTINUATION REQUIREMENT:',
-            'Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone.',
-            'The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.',
-          ].join(' ');
+        : cohesionMethod === 'prompt'
+          ? [
+              'CONTINUATION REQUIREMENT:',
+              'Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone.',
+              'The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.',
+            ].join(' ')
+          : [
+              'IMAGE-REFERENCE CONTINUATION REQUIREMENT:',
+              'Use the provided reference image ONLY to match the visual universe (style, palette, typography treatment, lighting direction, rendering style) and to align the left edge continuation zone with the previous masterplate’s right edge.',
+              'Do NOT copy/paste or recreate the exact same scene/scenery. Create a NEW composition and new background details that feel like the next moment/location in the same story/world.',
+              'Change camera framing slightly (pan/zoom/angle), introduce new background elements, and vary the scenery while keeping seamless edge continuity and consistent art direction.',
+            ].join(' ');
 
     const outroLine = args.slideEnd === args.totalSlides
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
