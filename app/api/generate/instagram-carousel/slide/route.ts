@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, visualType, placement = 'right', quality = 'fast' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     beat: string;
     motif?: string;
     imageryMotif?: string;
+    visualType?: 'diagram' | 'chart' | 'photo' | 'icon' | 'texture';
     placement?: 'left' | 'right' | 'center' | 'bottom-left' | 'bottom-right';
     quality?: 'fast' | 'cover';
   };
@@ -213,10 +214,21 @@ export async function POST(req: Request) {
       `Source gist: ${theme?.sourceGist || ''}.`,
       `Imagery theme: ${theme?.imageryTheme || ''}.`,
       imageryMotif ? `Topic imagery motif (use these concrete elements): ${imageryMotif}.` : '',
+      visualType ? `Background visual payload type: ${visualType}.` : '',
+      // Visual payload guidance: increase distinctness + recognizability while staying cohesive.
+      visualType === 'photo'
+        ? 'If visualType is photo: use a real-world editorial photograph feel (but no logos/text), with the subject matching the source gist and imagery motif.'
+        : visualType === 'chart'
+          ? 'If visualType is chart: use ONE simple chart as a supporting element (not the whole background), styled as clean editorial graphic, lightly integrated.'
+          : visualType === 'diagram'
+            ? 'If visualType is diagram: use a clean map/diagram/technical schematic vibe (subtle, minimal), tied to the source gist; avoid finance tickers.'
+            : visualType === 'icon'
+              ? 'If visualType is icon: use a large simple symbolic shape/illustration (sticker-like silhouette) integrated into the background.'
+              : 'If visualType is texture: use a distinctive but clean texture/pattern (paper grain, topo lines, soft abstract shapes) related to the source gist.',
       // Keep fintech cues present but subordinate to the topic; do not force charts every time.
       style === 'frost'
         ? ''
-        : 'Fintech accent (subtle, optional): one small finance cue only if it fits (tiny chart line, subtle candlestick texture, or minimal ticker-like geometry) — do not make the whole image a chart.',
+        : 'Fintech accent (subtle, optional): one small finance cue only if it fits — do not make the whole image a chart.',
       `Slide ${index + 1}/${total} narrative beat: ${beat}.`,
       style === 'frost'
         ? 'Keep the lower third clean and light for dark headline/summary overlays.'

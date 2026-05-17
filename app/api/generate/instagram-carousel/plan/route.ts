@@ -63,6 +63,8 @@ export async function POST(req: Request) {
         // Concrete, topic-specific visual nouns for background (NOT just finance charts).
         // Example: "oil rig silhouette, desert heat haze, refinery pipes".
         imageryMotif: z.string().min(1),
+        // Background visual payload type (keeps variety without creating many templates).
+        visualType: z.enum(['diagram', 'chart', 'photo', 'icon', 'texture']),
         // Must be required (no defaults) to satisfy OpenAI json-schema requirements
         placement: z.enum(['left', 'right', 'center', 'bottom-left', 'bottom-right']),
       })
@@ -104,8 +106,9 @@ export async function POST(req: Request) {
       'Each slide must include:',
       '- headline: max 7 words (editorial headline)',
       '- summary: max 22 words (minimal, impactful)',
-      '- motif: ONE simple foreground symbol/object that represents the slide context (e.g., cargo ship, flag, oil rig, chart line, gavel).',
+      '- motif: ONE simple foreground symbol/object that represents the slide context (e.g., cargo ship, flag, oil rig, gavel, lightbulb).',
       '- imageryMotif: 2–5 concrete visual nouns/scene elements derived from the SOURCE topic (not generic finance). Keep it cohesive across the set.',
+      '- visualType: choose ONE: diagram | chart | photo | icon | texture (this controls the background visual payload).',
       '- placement: where the motif should sit (left/right/center/bottom-left/bottom-right).',
       'Motifs must be fast + consistent: simple editorial icon/illustration, not photorealism.',
       'Final slide summary must include a CTA (no guarantees).',
@@ -122,6 +125,7 @@ export async function POST(req: Request) {
       summary: String(s.summary || ''),
       motif: String((s as any).motif || 'abstract icon'),
       imageryMotif: String((s as any).imageryMotif || ''),
+      visualType: String((s as any).visualType || 'texture'),
       placement: String((s as any).placement || 'right'),
       template,
     };

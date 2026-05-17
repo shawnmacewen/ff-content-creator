@@ -261,6 +261,8 @@ export default function GeneratePage() {
             total,
             beat: beats[i] || 'Story Beat',
             motif: s.motif,
+            imageryMotif: (s as any).imageryMotif,
+            visualType: (s as any).visualType,
             placement: s.placement,
             quality,
           }),
