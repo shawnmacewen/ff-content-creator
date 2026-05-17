@@ -18,6 +18,7 @@ export type CarouselSlide = {
   cropX?: number | null;
   motifUrl?: string | null;
   placement?: string | null;
+  promptUsed?: string | null;
 };
 
 function emptySlides(count: number): CarouselSlide[] {
@@ -71,12 +72,8 @@ function SlideCard({
             : 'bg-gradient-to-br from-violet-500/14 via-violet-200/18 to-white/70'
         )}
       />
-      {slide.imageUrl ? (
-        <>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/0" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.16),transparent_55%)]" />
-        </>
-      ) : null}
+      {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
+      {slide.imageUrl ? null : null}
 
       <div className="relative flex h-full flex-col p-7 text-left">
         {/* minimal chrome: no admin badges */}
@@ -128,6 +125,8 @@ export function InstagramCarouselPanel({
   progress,
   isGenerating,
   canGenerate = true,
+  promptLog,
+  lastPrompt,
 }: {
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
@@ -142,6 +141,8 @@ export function InstagramCarouselPanel({
   progress?: { total: number; done: number; activeSlide: number } | null;
   isGenerating?: boolean;
   canGenerate?: boolean;
+  promptLog?: string;
+  lastPrompt?: string;
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const localSlides = React.useMemo(() => emptySlides(slideCount), [slideCount]);
@@ -161,6 +162,15 @@ export function InstagramCarouselPanel({
     try {
       await navigator.clipboard.writeText(effectiveCaption);
       toast.success('Caption copied');
+    } catch {
+      toast.error('Copy failed');
+    }
+  };
+
+  const handleCopyPrompts = async () => {
+    try {
+      await navigator.clipboard.writeText(promptLog || lastPrompt || '');
+      toast.success('Prompts copied');
     } catch {
       toast.error('Copy failed');
     }
@@ -233,9 +243,10 @@ export function InstagramCarouselPanel({
 
       <CardContent className={cn('space-y-4', !enabled && 'opacity-50')}>
         <Tabs defaultValue="preview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 rounded-2xl">
+          <TabsList className="grid w-full grid-cols-3 rounded-2xl">
             <TabsTrigger value="preview" className="rounded-2xl">Preview</TabsTrigger>
             <TabsTrigger value="caption" className="rounded-2xl">Caption</TabsTrigger>
+            <TabsTrigger value="prompts" className="rounded-2xl">Prompts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="preview" className="mt-4 space-y-4">
@@ -324,6 +335,25 @@ export function InstagramCarouselPanel({
               onChange={(e) => setCaption(e.target.value)}
             />
             <div className="text-[11px] text-muted-foreground">AI-generated content. Review and edit before posting.</div>
+          </TabsContent>
+
+          <TabsContent value="prompts" className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">Image Generation Prompts</div>
+              <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopyPrompts}>
+                <Copy className="h-4 w-4" />
+                Copy
+              </Button>
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              This is a client-side log of prompts returned by the slide endpoint during the most recent carousel run.
+            </div>
+            <textarea
+              readOnly
+              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              value={(promptLog || lastPrompt || '').trim()}
+              placeholder="Run a carousel generation to populate prompt logs…"
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

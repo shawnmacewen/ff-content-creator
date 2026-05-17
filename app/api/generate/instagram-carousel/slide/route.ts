@@ -110,7 +110,17 @@ export async function POST(req: Request) {
     const x = Math.round((index / denom) * 100);
 
     return new Response(
-      JSON.stringify({ slideId, imageUrl: masterPlate, cropX: x, motifUrl, placement, error: null }),
+      JSON.stringify({
+        slideId,
+        imageUrl: masterPlate,
+        cropX: x,
+        motifUrl,
+        placement,
+        error: null,
+        promptUsed: null,
+        motifPromptUsed: motif ? buildForegroundPrompt({ theme, motif, placement, index, total }) : null,
+        sizeUsed: null,
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
     );
   }
@@ -137,10 +147,18 @@ export async function POST(req: Request) {
   // gpt-image-1 supported sizes: 1024x1024, 1024x1536, 1536x1024 (and "auto").
   // 4:5 portrait is best approximated by 1024x1536, then the client can crop/fit to 1080x1350.
   const size = '1024x1536';
-  const img = await generateImage(env.OPENAI_API_KEY, promptRes.object.prompt, size);
+  const promptUsed = promptRes.object.prompt;
+  const img = await generateImage(env.OPENAI_API_KEY, promptUsed, size);
 
   return new Response(
-    JSON.stringify({ slideId, imageUrl: img.imageUrl, error: img.error || null }),
+    JSON.stringify({
+      slideId,
+      imageUrl: img.imageUrl,
+      error: img.error || null,
+      promptUsed,
+      motifPromptUsed: null,
+      sizeUsed: size,
+    }),
     { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
   );
 }

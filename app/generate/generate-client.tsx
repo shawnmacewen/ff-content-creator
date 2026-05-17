@@ -54,6 +54,8 @@ export default function GeneratePage() {
   const [carouselProgress, setCarouselProgress] = useState<{ total: number; done: number; activeSlide: number } | null>(null);
   const [instagramCarouselTheme, setInstagramCarouselTheme] = useState<any | null>(null);
   const [instagramCarouselMasterPlate, setInstagramCarouselMasterPlate] = useState<string | null>(null);
+  const [instagramCarouselPromptLog, setInstagramCarouselPromptLog] = useState<string>('');
+  const [instagramCarouselLastPrompt, setInstagramCarouselLastPrompt] = useState<string>('');
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -221,6 +223,8 @@ export default function GeneratePage() {
       const seeded = slides.map((s: any) => ({ ...s, imageUrl: null }));
       setInstagramCarouselSlidesData(seeded);
       setInstagramCarouselCaption(caption);
+      setInstagramCarouselPromptLog('');
+      setInstagramCarouselLastPrompt('');
 
       // 2) Generate cover first, then parallelize the rest and progressively update
       const total = slides.length;
@@ -253,11 +257,25 @@ export default function GeneratePage() {
         const cropX = typeof out?.cropX === 'number' ? out.cropX : null;
         const motifUrl = out?.motifUrl ?? null;
         const placementOut = out?.placement ?? null;
+        const promptUsed = typeof out?.promptUsed === 'string' ? out.promptUsed : '';
+        const motifPromptUsed = typeof out?.motifPromptUsed === 'string' ? out.motifPromptUsed : '';
+
+        if (promptUsed) {
+          setInstagramCarouselLastPrompt(promptUsed);
+          setInstagramCarouselPromptLog((prev) =>
+            [prev, `--- Slide ${i + 1} (${s.id}) prompt ---\n${promptUsed}`].filter(Boolean).join('\n\n')
+          );
+        }
+        if (motifPromptUsed) {
+          setInstagramCarouselPromptLog((prev) =>
+            [prev, `--- Slide ${i + 1} (${s.id}) motif prompt ---\n${motifPromptUsed}`].filter(Boolean).join('\n\n')
+          );
+        }
 
         setInstagramCarouselSlidesData((prev) => {
           if (!prev) return prev;
           return prev.map((x: any) =>
-            x.id === s.id ? { ...x, imageUrl, cropX, motifUrl, placement: placementOut } : x
+            x.id === s.id ? { ...x, imageUrl, cropX, motifUrl, placement: placementOut, promptUsed } : x
           );
         });
 
@@ -581,6 +599,8 @@ export default function GeneratePage() {
                 progress={carouselProgress}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
+                promptLog={instagramCarouselPromptLog}
+                lastPrompt={instagramCarouselLastPrompt}
               />
             </div>
           ) : null}
@@ -646,6 +666,8 @@ export default function GeneratePage() {
                 progress={carouselProgress}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
+                promptLog={instagramCarouselPromptLog}
+                lastPrompt={instagramCarouselLastPrompt}
               />
             </div>
           ) : null}
