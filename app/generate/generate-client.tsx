@@ -16,7 +16,7 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
 import { InstagramCarouselPanel } from '@/components/generator/instagram-carousel-panel';
 import { InstagramImageModal } from '@/components/generator/instagram-image-modal';
 
@@ -589,32 +589,6 @@ export default function GeneratePage() {
           {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Style</div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={instagramCarouselStyle === 'purple-gold' ? 'default' : 'outline'}
-                  className={cn(
-                    'rounded-2xl',
-                    instagramCarouselStyle === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90'
-                  )}
-                  onClick={() => setInstagramCarouselStyle('purple-gold')}
-                  disabled={!!isGeneratingCarouselImages}
-                >
-                  Purple + Gold
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={instagramCarouselStyle === 'frost' ? 'default' : 'outline'}
-                  className={cn('rounded-2xl', instagramCarouselStyle === 'frost' && 'bg-slate-900 hover:bg-slate-900/90')}
-                  onClick={() => setInstagramCarouselStyle('frost')}
-                  disabled={!!isGeneratingCarouselImages}
-                >
-                  Frost
-                </Button>
-              </div>
               <InstagramCarouselPanel
                 enabled={true}
                 onEnabledChange={() => {}}
@@ -632,6 +606,7 @@ export default function GeneratePage() {
                 promptLog={instagramCarouselPromptLog}
                 lastPrompt={instagramCarouselLastPrompt}
                 styleVariant={instagramCarouselStyle}
+                onStyleVariantChange={setInstagramCarouselStyle}
               />
             </div>
           ) : null}
@@ -683,32 +658,6 @@ export default function GeneratePage() {
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <div className="text-xs font-medium text-muted-foreground">Style</div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={instagramCarouselStyle === 'purple-gold' ? 'default' : 'outline'}
-                  className={cn(
-                    'rounded-2xl',
-                    instagramCarouselStyle === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90'
-                  )}
-                  onClick={() => setInstagramCarouselStyle('purple-gold')}
-                  disabled={!!isGeneratingCarouselImages}
-                >
-                  Purple + Gold
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={instagramCarouselStyle === 'frost' ? 'default' : 'outline'}
-                  className={cn('rounded-2xl', instagramCarouselStyle === 'frost' && 'bg-slate-900 hover:bg-slate-900/90')}
-                  onClick={() => setInstagramCarouselStyle('frost')}
-                  disabled={!!isGeneratingCarouselImages}
-                >
-                  Frost
-                </Button>
-              </div>
               <InstagramCarouselPanel
                 enabled={true}
                 onEnabledChange={() => {}}
@@ -726,6 +675,7 @@ export default function GeneratePage() {
                 promptLog={instagramCarouselPromptLog}
                 lastPrompt={instagramCarouselLastPrompt}
                 styleVariant={instagramCarouselStyle}
+                onStyleVariantChange={setInstagramCarouselStyle}
               />
             </div>
           ) : null}

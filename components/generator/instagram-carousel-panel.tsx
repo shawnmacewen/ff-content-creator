@@ -139,6 +139,7 @@ export function InstagramCarouselPanel({
   promptLog,
   lastPrompt,
   styleVariant = 'purple-gold',
+  onStyleVariantChange,
 }: {
   enabled: boolean;
   onEnabledChange: (v: boolean) => void;
@@ -156,6 +157,7 @@ export function InstagramCarouselPanel({
   promptLog?: string;
   lastPrompt?: string;
   styleVariant?: 'purple-gold' | 'frost';
+  onStyleVariantChange?: (v: 'purple-gold' | 'frost') => void;
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const localSlides = React.useMemo(() => emptySlides(slideCount), [slideCount]);
@@ -230,6 +232,31 @@ export function InstagramCarouselPanel({
             <Label className="text-xs text-muted-foreground">Carousel</Label>
             <Switch checked={enabled} onCheckedChange={onEnabledChange} />
           </div>
+        </div>
+
+        {/* Style selector: placed directly under Generate Images button row */}
+        <div className={cn('mt-3 flex flex-wrap items-center gap-2', !enabled && 'opacity-50 pointer-events-none')}>
+          <div className="text-xs font-medium text-muted-foreground">Style</div>
+          <Button
+            type="button"
+            size="sm"
+            variant={styleVariant === 'purple-gold' ? 'default' : 'outline'}
+            className={cn('rounded-2xl', styleVariant === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90')}
+            onClick={() => onStyleVariantChange?.('purple-gold')}
+            disabled={!!isGenerating || !onStyleVariantChange}
+          >
+            Purple + Gold
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={styleVariant === 'frost' ? 'default' : 'outline'}
+            className={cn('rounded-2xl', styleVariant === 'frost' && 'bg-slate-900 hover:bg-slate-900/90')}
+            onClick={() => onStyleVariantChange?.('frost')}
+            disabled={!!isGenerating || !onStyleVariantChange}
+          >
+            Frost
+          </Button>
         </div>
 
         {isGenerating ? (
