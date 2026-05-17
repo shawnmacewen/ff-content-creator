@@ -9,20 +9,35 @@ import { toast } from 'sonner';
 export default function InstagramCarousel2Client() {
   const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [splitFriendly, setSplitFriendly] = React.useState<boolean>(false);
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const splitFriendlySpec = [
+    'SPLIT-FRIENDLY LAYOUT REQUIREMENTS (do not mention these in output):',
+    'Canvas: 1024x1536 portrait.',
+    'Split into exactly THREE equal horizontal panels stacked vertically (each panel height = 512px).',
+    'Add two clean gutters between panels: full-width, perfectly straight, 12px tall, pure white (#FFFFFF).',
+    'Do NOT place any subject, shapes, or texture inside the gutters; keep gutters completely blank.',
+    'Keep composition and focal points inside each panel (nothing crossing panel boundaries).',
+    'No readable text, logos, or watermarks.',
+  ].join(' ');
 
   const runImageTest = async () => {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
 
+    const promptToSend = splitFriendly
+      ? `${prompt}\n\n${splitFriendlySpec}`.trim()
+      : prompt;
+
     try {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model, size: '1024x1536' }),
+        body: JSON.stringify({ prompt: promptToSend, model, size: '1024x1536' }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
@@ -74,6 +89,17 @@ export default function InstagramCarousel2Client() {
                   <option value="gpt-image-2">gpt-image-2 (default)</option>
                   <option value="gpt-image-1">gpt-image-1</option>
                 </select>
+
+                <label className="ml-2 inline-flex items-center gap-2 text-xs text-muted-foreground select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border"
+                    checked={splitFriendly}
+                    onChange={(e) => setSplitFriendly(e.target.checked)}
+                    disabled={isLoading}
+                  />
+                  Split-friendly
+                </label>
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
