@@ -63,6 +63,8 @@ function SlideCard({
   const headlineClampClass = ui.headlineMaxLines === 2 ? 'line-clamp-2' : ui.headlineMaxLines === 3 ? 'line-clamp-3' : '';
   const summaryClampClass = ui.summaryMaxLines === 2 ? 'line-clamp-2' : ui.summaryMaxLines === 3 ? 'line-clamp-3' : 'line-clamp-3';
 
+  const isTopText = textPlacement.startsWith('top');
+
   return (
     <button
       type="button"
@@ -98,7 +100,7 @@ function SlideCard({
       {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
       {slide.imageUrl ? null : null}
 
-      <div className={cn('relative flex h-full flex-col text-left', padClass, textPlacement === 'top-left' ? 'justify-start' : 'justify-end')}>
+      <div className={cn('relative flex h-full flex-col text-left', padClass, isTopText ? 'justify-start' : 'justify-end')}>
         {/* minimal chrome: no admin badges */}
         <div className="flex items-center justify-between">
           <div className="h-7 w-7" aria-hidden />
@@ -106,7 +108,7 @@ function SlideCard({
         </div>
 
         {(slide.headline || slide.summary) ? (
-          <div className="mt-auto space-y-3 pb-1">
+          <div className={cn(isTopText ? 'mt-4' : 'mt-auto', 'space-y-3 pb-1')}>
             <div
               className={cn(
                 headlineSizeClass,

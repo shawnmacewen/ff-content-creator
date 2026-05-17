@@ -68,6 +68,7 @@ export const CAROUSEL_TEMPLATES: Record<CarouselTemplateKey, CarouselTemplateSpe
     key: 'outro',
     label: 'Outro',
     uiHint: {
+      // Outro should read like a clean CTA banner across the top.
       textPlacement: 'top-left',
       headlineWeight: 'bold',
       headlineMaxLines: 2,
