@@ -8,21 +8,40 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollText } from 'lucide-react';
 
+type Masterplate = {
+  id: string;
+  plateIndex: number;
+  slideStart: number;
+  slideEnd: number;
+  imageUrl: string;
+  promptUsed: string;
+};
+
+type Slide = {
+  id: string;
+  slideNumber: number;
+  plateIndex: number;
+  cropIndex: number; // 0..2 within the plate
+  imageUrl: string;
+};
+
 export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('Canadian housing market');
+  const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
-  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
-  const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
-  const [lastMode, setLastMode] = React.useState<'masterplate' | 'carousel' | null>(null);
+
+  const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
+  const [slides, setSlides] = React.useState<Slide[]>([]);
+
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const systemPrefix = 'Create a set of 3 Instagram carousel posts about';
   const systemSuffix = 'from the lens of a financial advisor.';
 
-  const splitFriendlySpec = [
+  const baseLayoutSpec = [
     'CAROUSEL MASTERPLATE LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
     'Canvas: 1536x512 (3:1 landscape).',
     'Split into exactly THREE equal square panels arranged LEFT-TO-RIGHT (each panel = 512x512).',
@@ -30,65 +49,14 @@ export default function InstagramCarousel2Client() {
     'SEAMLESS REQUIREMENT: treat the full 1536x512 as ONE continuous panorama/scene. The background, lighting, color palette, texture, and horizon lines must flow smoothly across the 512px boundaries.',
     'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
     'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).',
+    // Overlap-zone support (Option 1: prompt-only)
+    'OVERLAP ZONE REQUIREMENT: Reserve a soft 20–40px continuation zone at the far left edge and far right edge of the masterplate. Do not place critical text in these edge zones; use them only for background/texture/colour flow/horizon/motion/environmental continuation.',
     'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
     'No logos or watermarks.',
   ].join(' ');
 
-  const runImageTest = async (mode: 'masterplate' | 'carousel') => {
-    setIsLoading(true);
-    setError(null);
-    setImageUrl(null);
-    setPanelUrls([]);
-    setLastMode(mode);
-
-    const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
-    const userTopic = topicClean || 'Canadian housing market';
-    const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
-
-    const promptToSend = `${userPrompt}\n\n${splitFriendlySpec}`.trim();
-
-    setLastPromptUsed(promptToSend);
-
-    try {
-      const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptToSend,
-          model,
-          size: '1536x512',
-        }),
-      });
-      const outText = await r.text().catch(() => '');
-      const out = (() => {
-        try {
-          return outText ? JSON.parse(outText) : {};
-        } catch {
-          return { raw: outText };
-        }
-      })();
-      if (!r.ok) {
-        const detail = typeof out?.error === 'string' ? out.error : outText || '';
-        throw new Error(detail || `Request failed (${r.status})`);
-      }
-      setImageUrl(out?.imageUrl || null);
-      toast.success('Image generated');
-    } catch (e: any) {
-      const msg =
-        typeof e?.message === 'string' ? e.message :
-        typeof e === 'string' ? e :
-        e ? JSON.stringify(e) :
-        'Failed to generate image';
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const cropSplitFriendlyPanels = React.useCallback(async (src: string) => {
+  const cropMasterplateIntoThree = React.useCallback(async (src: string) => {
     const img = new Image();
-    // Attempt to keep canvas untainted for toDataURL(); this requires the image host to send CORS headers.
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
 
@@ -104,7 +72,6 @@ export default function InstagramCarousel2Client() {
     const H = 512;
     const panelW = 512;
 
-    // Defensive: if we ever change size, keep the crop logic honest.
     if (img.naturalWidth !== W || img.naturalHeight !== H) {
       throw new Error(`Unexpected image size ${img.naturalWidth}x${img.naturalHeight}; expected ${W}x${H}`);
     }
@@ -121,61 +88,192 @@ export default function InstagramCarousel2Client() {
       ctx.drawImage(img, i * panelW, 0, panelW, H, 0, 0, panelW, H);
       urls.push(canvas.toDataURL('image/png'));
     }
-
     return urls;
   }, []);
 
-  React.useEffect(() => {
-    if (!imageUrl) return;
-    if (lastMode !== 'carousel') return;
+  const generateOneMasterplate = async (promptToSend: string) => {
+    const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: promptToSend,
+        model,
+        size: '1536x512',
+      }),
+    });
 
-    let cancelled = false;
-    (async () => {
+    const outText = await r.text().catch(() => '');
+    const out = (() => {
       try {
-        const urls = await cropSplitFriendlyPanels(imageUrl);
-        if (!cancelled) setPanelUrls(urls);
-      } catch (e: any) {
-        if (!cancelled) {
-          setPanelUrls([]);
-          toast.error(e?.message || 'Failed to crop panels');
-        }
+        return outText ? JSON.parse(outText) : {};
+      } catch {
+        return { raw: outText };
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [imageUrl, lastMode, cropSplitFriendlyPanels]);
+    if (!r.ok) {
+      const detail = typeof out?.error === 'string' ? out.error : outText || '';
+      throw new Error(detail || `Request failed (${r.status})`);
+    }
+
+    const url = out?.imageUrl as string | undefined;
+    if (!url) throw new Error('API returned no imageUrl');
+    return { imageUrl: url, promptUsed: promptToSend };
+  };
+
+  const buildPlatePrompt = (args: {
+    plateIndex: number;
+    platesNeeded: number;
+    slideStart: number;
+    slideEnd: number;
+  }) => {
+    const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
+    const userTopic = topicClean || 'Canadian housing market';
+
+    // Keep this system-controlled for now. Later we’ll swap “3” for slideCount with better per-slide copy injection.
+    const systemPrefix = 'Create a set of 3 Instagram carousel posts about';
+    const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
+
+    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Ensure any slide numbering in text matches this range.`;
+
+    const continuationLine =
+      args.plateIndex === 0
+        ? ''
+        : [
+            'CONTINUATION REQUIREMENT:',
+            'Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone.',
+            'The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.',
+          ].join(' ');
+
+    const promptToSend = [userPrompt, slideRangeLine, continuationLine, baseLayoutSpec]
+      .filter(Boolean)
+      .join('\n\n')
+      .trim();
+
+    return promptToSend;
+  };
+
+  const runCarouselGeneration = async () => {
+    setIsLoading(true);
+    setError(null);
+    setMasterplates([]);
+    setSlides([]);
+
+    try {
+      const count = Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3)));
+      const platesNeeded = Math.ceil(count / 3);
+
+      const newMasterplates: Masterplate[] = [];
+      const newSlides: Slide[] = [];
+
+      for (let plateIndex = 0; plateIndex < platesNeeded; plateIndex++) {
+        const slideStart = plateIndex * 3 + 1;
+        const slideEnd = Math.min(slideStart + 2, count);
+
+        const promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd });
+        setLastPromptUsed(promptToSend);
+
+        const out = await generateOneMasterplate(promptToSend);
+
+        const plate: Masterplate = {
+          id: `plate-${Date.now()}-${plateIndex}`,
+          plateIndex,
+          slideStart,
+          slideEnd,
+          imageUrl: out.imageUrl,
+          promptUsed: out.promptUsed,
+        };
+
+        newMasterplates.push(plate);
+        setMasterplates([...newMasterplates]);
+
+        const cropped = await cropMasterplateIntoThree(out.imageUrl);
+        const neededFromThisPlate = slideEnd - slideStart + 1;
+
+        for (let i = 0; i < neededFromThisPlate; i++) {
+          const slideNumber = slideStart + i;
+          newSlides.push({
+            id: `slide-${Date.now()}-${plateIndex}-${i}`,
+            slideNumber,
+            plateIndex,
+            cropIndex: i,
+            imageUrl: cropped[i]!,
+          });
+        }
+
+        setSlides([...newSlides]);
+      }
+
+      toast.success('Carousel generated');
+    } catch (e: any) {
+      const msg =
+        typeof e?.message === 'string'
+          ? e.message
+          : typeof e === 'string'
+            ? e
+            : e
+              ? JSON.stringify(e)
+              : 'Failed to generate carousel';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const SlideCountSelect = (
+    <select
+      className="h-9 rounded-2xl border bg-background px-3 text-sm"
+      value={slideCount}
+      onChange={(e) => setSlideCount(parseInt(e.target.value, 10))}
+      disabled={isLoading}
+    >
+      {Array.from({ length: 9 }).map((_, i) => {
+        const v = i + 2;
+        return (
+          <option key={v} value={v}>
+            {v} slides
+          </option>
+        );
+      })}
+    </select>
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Instagram Carousel 2.0</h1>
-        <p className="text-muted-foreground">
-          Fresh implementation area for next-gen carousel prompts + APIs.
-        </p>
+        <p className="text-muted-foreground">Fresh implementation area for next-gen carousel prompts + APIs.</p>
       </div>
 
       <Tabs defaultValue="carousel" className="w-full">
         <TabsList className="grid w-full grid-cols-2 rounded-2xl">
-          <TabsTrigger value="image-test" className="rounded-2xl">Masterplate Image</TabsTrigger>
-          <TabsTrigger value="carousel" className="rounded-2xl">Carousel</TabsTrigger>
+          <TabsTrigger value="image-test" className="rounded-2xl">
+            Masterplate Image
+          </TabsTrigger>
+          <TabsTrigger value="carousel" className="rounded-2xl">
+            Carousel
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Topic (Masterplate)</CardTitle>
+              <CardTitle className="text-base">Inputs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
-                className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
               />
+
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-muted-foreground">Model</label>
+                <label className="text-xs text-muted-foreground">Slides</label>
+                {SlideCountSelect}
+
+                <label className="ml-2 text-xs text-muted-foreground">Model</label>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
                   value={model}
@@ -188,10 +286,10 @@ export default function InstagramCarousel2Client() {
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  onClick={() => runImageTest('masterplate')}
+                  onClick={runCarouselGeneration}
                   disabled={isLoading || !topic.trim()}
                 >
-                  Generate Image
+                  Generate Carousel
                 </Button>
 
                 <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
@@ -234,14 +332,19 @@ export default function InstagramCarousel2Client() {
             </CardContent>
           </Card>
 
-          {imageUrl ? (
+          {masterplates.length ? (
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-base">Output</CardTitle>
+                <CardTitle className="text-base">Masterplates</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
+              <CardContent className="space-y-4">
+                {masterplates.map((p) => (
+                  <div key={p.id} className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Masterplate {p.plateIndex + 1} (slides {p.slideStart}–{p.slideEnd})</div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.imageUrl} alt={`Masterplate ${p.plateIndex + 1}`} className="w-full max-w-[720px] rounded-2xl border" />
+                  </div>
+                ))}
               </CardContent>
             </Card>
           ) : null}
@@ -250,20 +353,24 @@ export default function InstagramCarousel2Client() {
         <TabsContent value="carousel" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Topic (Carousel)</CardTitle>
+              <CardTitle className="text-base">Inputs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
-                className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
               />
               <div className="text-xs text-muted-foreground">
-                Carousel mode generates a 3:1 masterplate (1536×512) that we deterministically crop into 3 square slides.
+                Generates one or more 1536×512 masterplates (3 slides per plate) and crops into individual 512×512 slides.
               </div>
+
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-muted-foreground">Model</label>
+                <label className="text-xs text-muted-foreground">Slides</label>
+                {SlideCountSelect}
+
+                <label className="ml-2 text-xs text-muted-foreground">Model</label>
                 <select
                   className="h-9 rounded-2xl border bg-background px-3 text-sm"
                   value={model}
@@ -276,10 +383,10 @@ export default function InstagramCarousel2Client() {
 
                 <Button
                   className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                  onClick={() => runImageTest('carousel')}
+                  onClick={runCarouselGeneration}
                   disabled={isLoading || !topic.trim()}
                 >
-                  Generate Image
+                  Generate Carousel
                 </Button>
 
                 <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
@@ -322,40 +429,28 @@ export default function InstagramCarousel2Client() {
             </CardContent>
           </Card>
 
-          {imageUrl ? (
+          {slides.length ? (
             <Card className="rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-base">Output (3 slides)</CardTitle>
+                <CardTitle className="text-base">Carousel slides</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {panelUrls.length === 3 ? (
-                  <div className="space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">Cropped slides (x=0..512, 512..1024, 1024..1536)</div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      {panelUrls.map((u, i) => (
-                        <div key={i} className="space-y-2">
-                          <div className="text-xs text-muted-foreground">Slide {i + 1}</div>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={u} alt={`Slide ${i + 1}`} className="w-full rounded-2xl border" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground">
-                      Cropping pending… (if this never resolves, it’s usually a CORS/canvas issue)
-                    </div>
-                    {/* Fallback: still show the masterplate so you can see what was generated */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageUrl} alt="Generated" className="w-full max-w-[640px] rounded-2xl border" />
-                  </div>
-                )}
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {slides
+                    .slice()
+                    .sort((a, b) => a.slideNumber - b.slideNumber)
+                    .map((s) => (
+                      <div key={s.id} className="space-y-2">
+                        <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
+                      </div>
+                    ))}
+                </div>
               </CardContent>
             </Card>
           ) : null}
         </TabsContent>
-
       </Tabs>
     </div>
   );
