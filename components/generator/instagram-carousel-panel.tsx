@@ -15,6 +15,12 @@ export type CarouselSlide = {
   id: string;
   headline: string;
   summary: string;
+  // Outro-specific
+  bullets?: string[] | null;
+  ctaLine?: string | null;
+  // Standard variant metadata
+  visualType?: 'diagram' | 'chart' | 'photo' | 'icon' | 'texture' | null;
+
   imageUrl?: string | null;
   cropX?: number | null;
   motifUrl?: string | null;
@@ -121,16 +127,34 @@ function SlideCard({
             >
               {slide.headline}
             </div>
-            <div
-              className={cn(
-                'max-w-[90%] leading-relaxed drop-shadow-sm',
-                summarySizeClass,
-                summaryClampClass,
-                useDarkText ? 'text-slate-800' : 'text-white/80'
-              )}
-            >
-              {slide.summary}
-            </div>
+
+            {template === 'outro' && Array.isArray(slide.bullets) && slide.bullets.length ? (
+              <ul className={cn('space-y-1.5 text-sm', useDarkText ? 'text-slate-800' : 'text-white/85')}>
+                {slide.bullets.slice(0, 5).map((b, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className={cn('mt-[6px] h-1.5 w-1.5 rounded-full shrink-0', useDarkText ? 'bg-slate-500/70' : 'bg-white/70')} />
+                    <span className="leading-snug">{b}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div
+                className={cn(
+                  'max-w-[90%] leading-relaxed drop-shadow-sm',
+                  summarySizeClass,
+                  summaryClampClass,
+                  useDarkText ? 'text-slate-800' : 'text-white/80'
+                )}
+              >
+                {slide.summary}
+              </div>
+            )}
+
+            {template === 'outro' && slide.ctaLine ? (
+              <div className={cn('pt-2 text-xs font-semibold', useDarkText ? 'text-slate-700' : 'text-white/80')}>
+                {slide.ctaLine}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
