@@ -5,32 +5,44 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollText } from 'lucide-react';
 
 export default function InstagramCarousel2Client() {
   const [prompt, setPrompt] = React.useState<string>('Create a set of 3 instagram carousel posts based on ESG investing');
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+  const [panelUrls, setPanelUrls] = React.useState<string[]>([]);
+  const [lastMode, setLastMode] = React.useState<'raw' | 'split-friendly' | null>(null);
+  const [splitView, setSplitView] = React.useState<'split' | 'master'>('split');
+  const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
+  const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const splitFriendlySpec = [
-    'SPLIT-FRIENDLY LAYOUT REQUIREMENTS (do not mention these in output):',
+    'SPLIT-FRIENDLY LAYOUT REQUIREMENTS (do not mention these requirements explicitly):',
     'Canvas: 1024x1536 portrait.',
     'Split into exactly THREE equal horizontal panels stacked vertically (each panel height = 512px).',
-    'Add two clean gutters between panels: full-width, perfectly straight, 12px tall, pure white (#FFFFFF).',
-    'Do NOT place any subject, shapes, or texture inside the gutters; keep gutters completely blank.',
-    'Keep composition and focal points inside each panel (nothing crossing panel boundaries).',
-    'No readable text, logos, or watermarks.',
+    'CRITICAL: there must be NO gutters and NO extra padding between panels, so the image can be cropped deterministically at y=0..512, 512..1024, 1024..1536.',
+    'Nothing important may cross panel boundaries (keep each panel self-contained).',
+    'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
+    'No logos or watermarks.',
   ].join(' ');
 
   const runImageTest = async (mode: 'raw' | 'split-friendly') => {
     setIsLoading(true);
     setError(null);
     setImageUrl(null);
+    setPanelUrls([]);
+    setLastMode(mode);
+    setSplitView(mode === 'split-friendly' ? 'split' : 'master');
 
     const promptToSend = mode === 'split-friendly'
       ? `${prompt}\n\n${splitFriendlySpec}`.trim()
       : prompt;
+
+    setLastPromptUsed(promptToSend);
 
     try {
       const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
@@ -49,6 +61,67 @@ export default function InstagramCarousel2Client() {
       setIsLoading(false);
     }
   };
+
+  const cropSplitFriendlyPanels = React.useCallback(async (src: string) => {
+    const img = new Image();
+    // Attempt to keep canvas untainted for toDataURL(); this requires the image host to send CORS headers.
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+
+    const load = new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image for cropping (CORS or network issue)'));
+    });
+
+    img.src = src;
+    await load;
+
+    const W = 1024;
+    const H = 1536;
+    const panelH = 512;
+
+    // Defensive: if we ever change size, keep the crop logic honest.
+    if (img.naturalWidth !== W || img.naturalHeight !== H) {
+      throw new Error(`Unexpected image size ${img.naturalWidth}x${img.naturalHeight}; expected ${W}x${H}`);
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas not supported');
+
+    const urls: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      canvas.width = W;
+      canvas.height = panelH;
+      ctx.clearRect(0, 0, W, panelH);
+      ctx.drawImage(img, 0, i * panelH, W, panelH, 0, 0, W, panelH);
+      urls.push(canvas.toDataURL('image/png'));
+    }
+
+    return urls;
+  }, []);
+
+  React.useEffect(() => {
+    if (!imageUrl) return;
+    if (lastMode !== 'split-friendly') return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const urls = await cropSplitFriendlyPanels(imageUrl);
+        if (!cancelled) setPanelUrls(urls);
+      } catch (e: any) {
+        if (!cancelled) {
+          setPanelUrls([]);
+          toast.error(e?.message || 'Failed to crop panels');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imageUrl, lastMode, cropSplitFriendlyPanels]);
 
   return (
     <div className="space-y-6">
@@ -98,6 +171,32 @@ export default function InstagramCarousel2Client() {
                   Generate Image
                 </Button>
 
+                <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-2xl"
+                      disabled={!lastPromptUsed}
+                      title="View last prompt used"
+                    >
+                      <ScrollText className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>Last prompt used</DialogTitle>
+                    </DialogHeader>
+                    <textarea
+                      readOnly
+                      className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      value={(lastPromptUsed || '').trim()}
+                      placeholder="Generate an image to populate the prompt log…"
+                    />
+                  </DialogContent>
+                </Dialog>
+
                 {isLoading ? (
                   <div className="ml-2 flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.2s]" />
@@ -138,7 +237,7 @@ export default function InstagramCarousel2Client() {
                 placeholder="Type a prompt like ChatGPT…"
               />
               <div className="text-xs text-muted-foreground">
-                Split-friendly mode appends strict layout rules (3 equal panels + clean gutters) so we can crop into 3 posts reliably.
+                Split-friendly mode appends strict layout rules (3 equal panels; no gutters) so we can crop into 3 posts reliably.
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-muted-foreground">Model</label>
@@ -160,6 +259,32 @@ export default function InstagramCarousel2Client() {
                   Generate Image
                 </Button>
 
+                <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-2xl"
+                      disabled={!lastPromptUsed}
+                      title="View last prompt used"
+                    >
+                      <ScrollText className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>Last prompt used</DialogTitle>
+                    </DialogHeader>
+                    <textarea
+                      readOnly
+                      className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      value={(lastPromptUsed || '').trim()}
+                      placeholder="Generate an image to populate the prompt log…"
+                    />
+                  </DialogContent>
+                </Dialog>
+
                 {isLoading ? (
                   <div className="ml-2 flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.2s]" />
@@ -176,12 +301,59 @@ export default function InstagramCarousel2Client() {
 
           {imageUrl ? (
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="space-y-2">
                 <CardTitle className="text-base">Output</CardTitle>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-xs text-muted-foreground">View</div>
+                  <Button
+                    variant={splitView === 'split' ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => setSplitView('split')}
+                    disabled={isLoading}
+                  >
+                    Split (3 panels)
+                  </Button>
+                  <Button
+                    variant={splitView === 'master' ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => setSplitView('master')}
+                    disabled={isLoading}
+                  >
+                    Master image
+                  </Button>
+
+                  {panelUrls.length !== 3 ? (
+                    <div className="ml-2 text-xs text-muted-foreground">
+                      (If panels don’t show, it’s likely a CORS issue with the image URL.)
+                    </div>
+                  ) : null}
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
+              <CardContent className="space-y-4">
+                {splitView === 'master' ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imageUrl} alt="Generated" className="w-full max-w-[420px] rounded-2xl border" />
+                ) : panelUrls.length === 3 ? (
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Cropped panels (y=0..512, 512..1024, 1024..1536)</div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {panelUrls.map((u, i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="text-xs text-muted-foreground">Panel {i + 1}</div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={u} alt={`Panel ${i + 1}`} className="w-full rounded-2xl border" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Cropping pending… (generate again, or we may need to proxy the image URL to avoid CORS)
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : null}
