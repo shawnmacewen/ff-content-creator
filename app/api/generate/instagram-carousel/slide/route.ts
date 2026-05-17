@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import sharp from 'sharp';
+
 
 function pickVariantSeed(text: string): number {
   let hash = 0;
@@ -94,62 +94,25 @@ export async function POST(req: Request) {
 
   const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
-  // If we have a master plate, crop a connected slice for this slide (fast + cohesive)
+  // Fast path: if we have a master plate, avoid server-side image processing.
+  // Return the master plate + a crop position hint. The client renders it as a full-bleed background
+  // using background-position-x so slides feel connected (pan across one plate).
   if (masterPlate && masterPlate.startsWith('data:image')) {
-    try {
-      const b64 = masterPlate.split(',')[1] || '';
-      const buf = Buffer.from(b64, 'base64');
-
-      // Create a 4:5 slide by resizing master plate to height=1280 then cropping a 1024x1280 window
-      const targetH = 1280;
-      const targetW = 1024;
-
-      const resized = sharp(buf).resize({ height: targetH });
-      const meta = await resized.metadata();
-      const width = meta.width || 1920;
-      const maxLeft = Math.max(0, width - targetW);
-      const denom = Math.max(1, (total - 1));
-      const left = Math.round((index / denom) * maxLeft);
-
-      // Optional: generate a simple foreground motif and composite it on top
-      let base = resized.extract({ left, top: 0, width: Math.min(targetW, width), height: targetH });
-
-      if (motif) {
-        const fgPrompt = buildForegroundPrompt({ theme, motif, placement, index, total });
-        const fg = await generateImage(env.OPENAI_API_KEY, fgPrompt, '1024x1024');
-        if (fg.imageUrl && fg.imageUrl.startsWith('data:image')) {
-          try {
-            const fgB64 = fg.imageUrl.split(',')[1] || '';
-            const fgBuf = Buffer.from(fgB64, 'base64');
-            // scale motif asset down for compositing
-            const fgSized = await sharp(fgBuf)
-              .resize({ width: 520 })
-              .png()
-              .toBuffer();
-            const fgMeta = await sharp(fgSized).metadata();
-            const fgW = fgMeta.width || 520;
-            const fgH = fgMeta.height || 520;
-            const { left: x, top: y } = placementToXY({ placement, canvasW: targetW, canvasH: targetH, fgW, fgH });
-
-            base = base.composite([{ input: fgSized, left: x, top: y, blend: 'over' }]);
-          } catch (e) {
-            // ignore motif failures
-            console.error('motif composite failed', e);
-          }
-        }
-      }
-
-      const outBuf = await base.png().toBuffer();
-      const outB64 = outBuf.toString('base64');
-
-      return new Response(
-        JSON.stringify({ slideId, imageUrl: `data:image/png;base64,${outB64}`, error: null }),
-        { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
-      );
-    } catch (e: any) {
-      // fall through to per-slide generation
-      console.error('masterPlate crop failed', e);
+    // optional lightweight motif generation (no compositing)
+    let motifUrl: string | null = null;
+    if (motif) {
+      const fgPrompt = buildForegroundPrompt({ theme, motif, placement, index, total });
+      const fg = await generateImage(env.OPENAI_API_KEY, fgPrompt, '1024x1024');
+      motifUrl = fg.imageUrl;
     }
+
+    const denom = Math.max(1, total - 1);
+    const x = Math.round((index / denom) * 100);
+
+    return new Response(
+      JSON.stringify({ slideId, imageUrl: masterPlate, cropX: x, motifUrl, placement, error: null }),
+      { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
+    );
   }
 
   // Fallback: Derive prompt via model so we can keep the art direction consistent and concise.

@@ -15,6 +15,9 @@ export type CarouselSlide = {
   headline: string;
   summary: string;
   imageUrl?: string | null;
+  cropX?: number | null;
+  motifUrl?: string | null;
+  placement?: string | null;
 };
 
 function mockSlides(count: number): CarouselSlide[] {
@@ -59,7 +62,12 @@ function SlideCard({
       )}
       style={
         slide.imageUrl
-          ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          ? {
+              backgroundImage: `url(${slide.imageUrl})`,
+              // Pan across one master plate to create connected slides.
+              backgroundSize: 'auto 100%',
+              backgroundPosition: `${slide.cropX ?? 50}% center`,
+            }
           : undefined
       }
     >

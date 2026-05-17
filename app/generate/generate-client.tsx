@@ -156,9 +156,15 @@ export default function GeneratePage() {
         if (!r.ok) throw new Error(out?.error || `Slide ${i + 1} failed (${r.status})`);
 
         const imageUrl = out?.imageUrl ?? null;
+        const cropX = typeof out?.cropX === 'number' ? out.cropX : null;
+        const motifUrl = out?.motifUrl ?? null;
+        const placementOut = out?.placement ?? null;
+
         setInstagramCarouselSlidesData((prev) => {
           if (!prev) return prev;
-          return prev.map((x: any) => (x.id === s.id ? { ...x, imageUrl } : x));
+          return prev.map((x: any) =>
+            x.id === s.id ? { ...x, imageUrl, cropX, motifUrl, placement: placementOut } : x
+          );
         });
 
         setCarouselProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
