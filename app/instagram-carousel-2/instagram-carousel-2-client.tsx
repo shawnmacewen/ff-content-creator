@@ -52,13 +52,28 @@ export default function InstagramCarousel2Client() {
           size: mode === 'split-friendly' ? '1536x512' : '1024x1536',
         }),
       });
-      const out = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(out?.error || `Request failed (${r.status})`);
+      const outText = await r.text().catch(() => '');
+      const out = (() => {
+        try {
+          return outText ? JSON.parse(outText) : {};
+        } catch {
+          return { raw: outText };
+        }
+      })();
+      if (!r.ok) {
+        const detail = typeof out?.error === 'string' ? out.error : outText || '';
+        throw new Error(detail || `Request failed (${r.status})`);
+      }
       setImageUrl(out?.imageUrl || null);
       toast.success('Image generated');
     } catch (e: any) {
-      setError(e?.message || 'Failed to generate image');
-      toast.error('Image generation failed');
+      const msg =
+        typeof e?.message === 'string' ? e.message :
+        typeof e === 'string' ? e :
+        e ? JSON.stringify(e) :
+        'Failed to generate image';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
