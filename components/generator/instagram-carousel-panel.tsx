@@ -77,8 +77,9 @@ function SlideCard({
       onClick={onClick}
       className={cn(
         'group relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden rounded-[28px] transition-all',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500/40',
-        active ? 'ring-2 ring-violet-500/50' : 'hover:brightness-[1.02]'
+        // Use outline instead of ring so the active border stays visually even on all sides.
+        'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500/40 focus-visible:outline-offset-2',
+        active ? 'outline outline-2 outline-violet-500/50 outline-offset-2' : 'hover:brightness-[1.02]'
       )}
       style={
         slide.imageUrl
