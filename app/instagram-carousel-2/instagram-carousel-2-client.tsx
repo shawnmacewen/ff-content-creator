@@ -134,7 +134,7 @@ export default function InstagramCarousel2Client() {
     const systemPrefix = `Create an Instagram carousel of ${args.totalSlides} slides about`;
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
 
-    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere.`;
+    const slideRangeLine = `This masterplate represents carousel slides ${args.slideStart}–${args.slideEnd} (inclusive). Do NOT render fractional labels like "1/3", "2/3", "3/3" anywhere. Do NOT render any explicit slide numbering at all (no "Slide 1", no "1.", no "1/10", no counters).`;
 
     const slotsUsed = args.slideEnd - args.slideStart + 1;
     const slotMap = [
