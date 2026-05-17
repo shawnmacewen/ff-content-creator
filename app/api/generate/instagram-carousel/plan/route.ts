@@ -58,9 +58,10 @@ export async function POST(req: Request) {
       z.object({
         headline: z.string().min(1),
         summary: z.string().min(1),
-        // Outro-specific optional fields (shown when template=outro)
-        bullets: z.array(z.string().min(1)).optional(),
-        ctaLine: z.string().min(1).optional(),
+        // Outro fields: must be present for schema compliance.
+        // For non-outro slides: bullets = [] and ctaLine = "".
+        bullets: z.array(z.string().min(1)),
+        ctaLine: z.string(),
         // Fast, consistent foreground motif per slide (e.g. "cargo ship silhouette", "country flag")
         motif: z.string().min(1),
         // Concrete, topic-specific visual nouns for background (NOT just finance charts).
@@ -127,6 +128,7 @@ export async function POST(req: Request) {
       'For the final slide (outro/CTA) also include:',
       '- bullets: 3 short bullet points (each max 6 words)',
       '- ctaLine: one short closing line (max 6 words)',
+      'For non-outro slides: set bullets = [] and ctaLine = "".',
       '',
       'Also return caption (max 1200 chars) with optional hashtag line.',
       'SOURCE:\n' + sourceText.slice(0, 12000),
@@ -142,8 +144,8 @@ export async function POST(req: Request) {
       motif: String((s as any).motif || 'abstract icon'),
       imageryMotif: String((s as any).imageryMotif || ''),
       visualType: String((s as any).visualType || 'texture'),
-      bullets: Array.isArray((s as any).bullets) ? (s as any).bullets.map((x: any) => String(x)) : undefined,
-      ctaLine: typeof (s as any).ctaLine === 'string' ? String((s as any).ctaLine) : undefined,
+      bullets: Array.isArray((s as any).bullets) ? (s as any).bullets.map((x: any) => String(x)).filter(Boolean) : [],
+      ctaLine: typeof (s as any).ctaLine === 'string' ? String((s as any).ctaLine) : '',
       placement: String((s as any).placement || 'right'),
       template,
     };
