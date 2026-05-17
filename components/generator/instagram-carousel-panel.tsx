@@ -118,6 +118,7 @@ export function InstagramCarouselPanel({
   caption,
   onCaptionChange,
   onGenerate,
+  onSample,
   isGenerating,
   canGenerate = true,
 }: {
@@ -130,6 +131,7 @@ export function InstagramCarouselPanel({
   caption?: string;
   onCaptionChange?: (v: string) => void;
   onGenerate?: () => void;
+  onSample?: () => void;
   isGenerating?: boolean;
   canGenerate?: boolean;
 }) {
@@ -171,6 +173,17 @@ export function InstagramCarouselPanel({
             <CardTitle className="text-base">Preview Your Instagram Post</CardTitle>
           </div>
           <div className="flex items-center gap-2">
+            {onSample ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-2xl"
+                onClick={onSample}
+                disabled={!!isGenerating}
+              >
+                Sample Generation
+              </Button>
+            ) : null}
             {onGenerate ? (
               <Button
                 size="sm"

@@ -53,6 +53,7 @@ export default function GeneratePage() {
   const [isGeneratingCarouselImages, setIsGeneratingCarouselImages] = useState(false);
   const [carouselProgress, setCarouselProgress] = useState<{ total: number; done: number; activeSlide: number } | null>(null);
   const [instagramCarouselTheme, setInstagramCarouselTheme] = useState<any | null>(null);
+  const [instagramCarouselMasterPlate, setInstagramCarouselMasterPlate] = useState<string | null>(null);
 
   // KIT state
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram', 'social-linkedin']);
@@ -85,6 +86,67 @@ export default function GeneratePage() {
     // single asset → choose exactly one
     setSelectedContentTypes([t]);
   };
+
+  const handleSampleInstagramCarousel = useCallback(() => {
+    const slideCount = 6;
+    const theme = {
+      title: 'Sample Editorial Theme',
+      palette: 'Violet/indigo gradients with neutral charcoal',
+      typography: 'Bold editorial headline + minimal supporting line',
+      lighting: 'Soft cinematic',
+      texture: 'Subtle grain',
+      composition: 'Large hero area, bottom text-safe zone',
+      imageryTheme: 'Abstract markets, charts, and travel/trade motifs',
+    };
+
+    const mkSvg = (label: string, accent: string) => {
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b1a78"/>
+      <stop offset="0.55" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#1f2a44"/>
+    </linearGradient>
+    <radialGradient id="r" cx="25%" cy="15%" r="70%">
+      <stop offset="0" stop-color="${accent}" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1536" height="1024" fill="url(#g)"/>
+  <rect width="1536" height="1024" fill="url(#r)"/>
+  <path d="M0,760 C240,690 420,720 640,680 C880,635 1040,520 1240,520 C1400,520 1480,560 1536,590 L1536,1024 L0,1024 Z" fill="#ffffff" fill-opacity="0.06"/>
+  <path d="M0,820 C260,760 420,790 660,740 C940,680 1080,560 1260,560 C1400,560 1480,610 1536,640 L1536,1024 L0,1024 Z" fill="#ffffff" fill-opacity="0.04"/>
+  <circle cx="1240" cy="210" r="260" fill="#ffffff" fill-opacity="0.03"/>
+  <text x="80" y="120" font-family="Inter,system-ui" font-size="40" fill="#ffffff" fill-opacity="0.35">${label}</text>
+</svg>`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    };
+
+    const masterPlate = mkSvg('SAMPLE MASTER PLATE', '#a855f7');
+
+    const slides = [
+      { id: 'slide-1', headline: 'Locked out of\nHomeownership?', summary: 'Many young people find housing inaccessible due to high costs and limited supply.', motif: 'house', placement: 'right' },
+      { id: 'slide-2', headline: 'Rates stayed\nhigher longer', summary: 'Borrowing costs rose fast — affordability moved with it.', motif: 'chart line', placement: 'right' },
+      { id: 'slide-3', headline: 'Supply\nstill tight', summary: 'Inventory constraints keep prices sticky in many regions.', motif: 'building', placement: 'right' },
+      { id: 'slide-4', headline: 'What it means\nfor buyers', summary: 'Budgeting, timelines, and expectations shift in this environment.', motif: 'calendar', placement: 'right' },
+      { id: 'slide-5', headline: 'Watch these\nsignals next', summary: 'Inflation prints, jobs data, and guidance can move rate expectations.', motif: 'binoculars', placement: 'right' },
+      { id: 'slide-6', headline: 'Next steps', summary: 'Save this, share with a friend, and follow for more market explainers.', motif: 'arrow', placement: 'bottom-right' },
+    ];
+
+    const outputs = slides.map((s, idx) => ({
+      ...s,
+      imageUrl: masterPlate,
+      cropX: Math.round((idx / Math.max(1, slideCount - 1)) * 100),
+      motifUrl: null,
+    }));
+
+    setInstagramCarouselTheme(theme);
+    setInstagramCarouselMasterPlate(masterPlate);
+    setInstagramCarouselSlidesData(outputs);
+    setInstagramCarouselCaption('Here are 6 key takeaways — swipe through.\n\nSave this for later.\n\n#Markets #Investing');
+    toast.success('Loaded sample carousel');
+  }, []);
 
   const handleGenerateInstagramCarousel = useCallback(async () => {
     const instagramSelected = mode === 'single'
@@ -124,6 +186,7 @@ export default function GeneratePage() {
       const theme = plan?.theme;
       const masterPlate = plan?.masterPlate || null;
       setInstagramCarouselTheme(theme || null);
+      setInstagramCarouselMasterPlate(masterPlate);
 
       // Initialize UI with slide text immediately
       const seeded = slides.map((s: any) => ({ ...s, imageUrl: null }));
@@ -480,6 +543,7 @@ export default function GeneratePage() {
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
+                onSample={handleSampleInstagramCarousel}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />
@@ -543,6 +607,7 @@ export default function GeneratePage() {
                 caption={instagramCarouselCaption}
                 onCaptionChange={setInstagramCarouselCaption}
                 onGenerate={handleGenerateInstagramCarousel}
+                onSample={handleSampleInstagramCarousel}
                 isGenerating={isGeneratingCarouselImages}
                 canGenerate={!!selectedSourceIds.length}
               />
