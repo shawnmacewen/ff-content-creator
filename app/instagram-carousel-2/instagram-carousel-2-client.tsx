@@ -132,17 +132,16 @@ export default function InstagramCarousel2Client() {
         </p>
       </div>
 
-      <Tabs defaultValue="split-friendly" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 rounded-2xl">
-          <TabsTrigger value="image-test" className="rounded-2xl">Image Test</TabsTrigger>
-          <TabsTrigger value="split-friendly" className="rounded-2xl">Split-friendly</TabsTrigger>
+      <Tabs defaultValue="carousel" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 rounded-2xl">
+          <TabsTrigger value="image-test" className="rounded-2xl">Masterplate Image</TabsTrigger>
           <TabsTrigger value="carousel" className="rounded-2xl">Carousel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Prompt</CardTitle>
+              <CardTitle className="text-base">Prompt (Masterplate)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
@@ -224,10 +223,10 @@ export default function InstagramCarousel2Client() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="split-friendly" className="mt-4 space-y-4">
+        <TabsContent value="carousel" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Prompt (Split-friendly)</CardTitle>
+              <CardTitle className="text-base">Prompt (Carousel)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
@@ -237,7 +236,7 @@ export default function InstagramCarousel2Client() {
                 placeholder="Type a prompt like ChatGPT…"
               />
               <div className="text-xs text-muted-foreground">
-                Split-friendly mode appends strict layout rules (3 equal panels; no gutters) so we can crop into 3 posts reliably.
+                Carousel mode appends strict 3-panel layout rules so we can crop into 3 posts reliably.
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-muted-foreground">Model</label>
@@ -359,16 +358,6 @@ export default function InstagramCarousel2Client() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="carousel" className="mt-4">
-          <Card className="rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-base">Carousel (coming next)</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              This tab will host the new storyboard/campaign art-direction carousel flow.
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
