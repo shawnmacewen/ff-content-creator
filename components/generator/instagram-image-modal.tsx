@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export type InstagramImageMode = 'single' | 'carousel';
+export type InstagramCarouselGenerationMode = 'master-plate' | 'sequential';
 
 export function InstagramImageModal({
   open,
@@ -14,6 +15,8 @@ export function InstagramImageModal({
   setMode,
   slideCount,
   setSlideCount,
+  generationMode,
+  setGenerationMode,
   onConfirm,
 }: {
   open: boolean;
@@ -22,6 +25,8 @@ export function InstagramImageModal({
   setMode: (m: InstagramImageMode) => void;
   slideCount: number;
   setSlideCount: (n: number) => void;
+  generationMode: InstagramCarouselGenerationMode;
+  setGenerationMode: (m: InstagramCarouselGenerationMode) => void;
   onConfirm: () => void;
 }) {
   return (
@@ -79,6 +84,34 @@ export function InstagramImageModal({
                 ))}
               </div>
               <div className="text-xs text-muted-foreground">Summarizes key points into multiple visual slides</div>
+            </div>
+
+            <div className={cn('mt-4 space-y-2', mode !== 'carousel' && 'opacity-50 pointer-events-none')}>
+              <div className="text-sm font-semibold">Generation Mode</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGenerationMode('sequential')}
+                  className={cn(
+                    'w-full rounded-2xl border p-3 text-left shadow-sm transition-all hover:shadow-md',
+                    generationMode === 'sequential' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                  )}
+                >
+                  <div className="text-sm font-semibold">Sequential</div>
+                  <div className="text-xs text-muted-foreground">Generate slide images one-by-one</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGenerationMode('master-plate')}
+                  className={cn(
+                    'w-full rounded-2xl border p-3 text-left shadow-sm transition-all hover:shadow-md',
+                    generationMode === 'master-plate' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                  )}
+                >
+                  <div className="text-sm font-semibold">Master Plate</div>
+                  <div className="text-xs text-muted-foreground">One shared plate + slide crops (cohesive)</div>
+                </button>
+              </div>
             </div>
           </div>
 

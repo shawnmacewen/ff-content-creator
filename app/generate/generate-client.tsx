@@ -40,6 +40,7 @@ export default function GeneratePage() {
   const [includeInstagramImage, setIncludeInstagramImage] = useState(false);
   const [instagramImageModalOpen, setInstagramImageModalOpen] = useState(false);
   const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
+  const [instagramCarouselGenerationMode, setInstagramCarouselGenerationMode] = useState<'sequential' | 'master-plate'>('master-plate');
   const [instagramCarouselSlides, setInstagramCarouselSlides] = useState<number>(6);
 
   // New: separate toggles for single vs carousel chips (KIT UX)
@@ -112,6 +113,7 @@ export default function GeneratePage() {
         body: JSON.stringify({
           sourceContentIds: selectedSourceIds,
           slideCount: instagramCarouselSlides,
+          generationMode: instagramCarouselGenerationMode,
         }),
       });
       const plan = await planRes.json().catch(() => ({}));
@@ -449,6 +451,8 @@ export default function GeneratePage() {
             setMode={setInstagramImageMode}
             slideCount={instagramCarouselSlides}
             setSlideCount={setInstagramCarouselSlides}
+            generationMode={instagramCarouselGenerationMode}
+            setGenerationMode={setInstagramCarouselGenerationMode}
             onConfirm={() => setInstagramImageModalOpen(false)}
           />
 
@@ -555,6 +559,8 @@ export default function GeneratePage() {
             setMode={setInstagramImageMode}
             slideCount={instagramCarouselSlides}
             setSlideCount={setInstagramCarouselSlides}
+            generationMode={instagramCarouselGenerationMode}
+            setGenerationMode={setInstagramCarouselGenerationMode}
             onConfirm={() => {
               setInstagramImageModalOpen(false);
               if (instagramImageMode === 'carousel') {

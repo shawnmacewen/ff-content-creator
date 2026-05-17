@@ -7,7 +7,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { sourceContentIds, slideCount = 6 } = body as { sourceContentIds: string[]; slideCount?: number };
+    const { sourceContentIds, slideCount = 6, generationMode = 'master-plate' } = body as { sourceContentIds: string[]; slideCount?: number; generationMode?: 'master-plate' | 'sequential' };
 
     const env = getServerEnv();
     if (!env.OPENAI_API_KEY) {
@@ -107,40 +107,42 @@ export async function POST(req: Request) {
   // Generate ONE master background plate (landscape) used to create connected slide pans.
   // Best-effort: if this fails, we still return theme+slides so the UI can proceed.
   let masterPlate: string | null = null;
-  try {
-    const masterPrompt = [
-      'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
-      'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
-      'No readable text, no logos, no watermarks.',
-      'Must have a continuous horizon/flow that can be panned across multiple slides.',
-      `Palette: ${themeRes.object.palette}.`,
-      `Lighting: ${themeRes.object.lighting}.`,
-      `Texture: ${themeRes.object.texture}.`,
-      `Imagery theme: ${themeRes.object.imageryTheme}.`,
-    ].join(' ');
+  if (generationMode === 'master-plate') {
+    try {
+      const masterPrompt = [
+        'Create ONE master panoramic background plate for a premium fintech/editorial Instagram carousel campaign.',
+        'Landscape orientation. Cinematic, moody gradients (soft purples), subtle texture/grain, abstract market motifs.',
+        'No readable text, no logos, no watermarks.',
+        'Must have a continuous horizon/flow that can be panned across multiple slides.',
+        `Palette: ${themeRes.object.palette}.`,
+        `Lighting: ${themeRes.object.lighting}.`,
+        `Texture: ${themeRes.object.texture}.`,
+        `Imagery theme: ${themeRes.object.imageryTheme}.`,
+      ].join(' ');
 
-    const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: masterPrompt,
-        size: '1536x1024',
-      }),
-    });
+      const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-1',
+          prompt: masterPrompt,
+          size: '1536x1024',
+        }),
+      });
 
-    const imgData = await imgRes.json().catch(() => ({}));
-    if (imgRes.ok) {
-      const first = imgData?.data?.[0];
-      masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
-    } else {
-      console.error('master plate generation failed', imgData?.error?.message || imgRes.status);
+      const imgData = await imgRes.json().catch(() => ({}));
+      if (imgRes.ok) {
+        const first = imgData?.data?.[0];
+        masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
+      } else {
+        console.error('master plate generation failed', imgData?.error?.message || imgRes.status);
+      }
+    } catch (e) {
+      console.error('master plate generation exception', e);
     }
-  } catch (e) {
-    console.error('master plate generation exception', e);
   }
 
   return new Response(
