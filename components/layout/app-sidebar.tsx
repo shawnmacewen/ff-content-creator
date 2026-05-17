@@ -11,7 +11,7 @@ import {
   FileText,
   Mail,
   Share2,
-  Bug,
+  Images,
   SearchCheck,
   PenSquare,
 } from 'lucide-react';
@@ -44,7 +44,7 @@ const mainNavItems = [
   {
     title: 'Instagram Carousel 2.0',
     href: '/instagram-carousel-2',
-    icon: Bug,
+    icon: Images,
   },
   {
     title: 'Source Content',
