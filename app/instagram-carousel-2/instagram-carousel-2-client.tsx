@@ -413,7 +413,26 @@ export default function InstagramCarousel2Client() {
               />
 
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-muted-foreground">Slides</label>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground">Slides</label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+                        aria-label="Slides help"
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="max-w-[320px]">
+                      <div className="space-y-1">
+                        <div>We generate 1536×512 masterplates (3 slides per plate) and crop into 512×512 slides.</div>
+                        <div>Only 3 / 6 / 9 are enabled right now.</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 {SlideCountSelect}
 
                 <label className="ml-2 text-xs text-muted-foreground">Model</label>
@@ -563,12 +582,28 @@ export default function InstagramCarousel2Client() {
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
               />
-              <div className="text-xs text-muted-foreground">
-                Generates one or more 1536×512 masterplates (3 slides per plate) and crops into individual 512×512 slides.
-              </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-muted-foreground">Slides</label>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground">Slides</label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+                        aria-label="Slides help"
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="max-w-[320px]">
+                      <div className="space-y-1">
+                        <div>We generate 1536×512 masterplates (3 slides per plate) and crop into 512×512 slides.</div>
+                        <div>Only 3 / 6 / 9 are enabled right now.</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 {SlideCountSelect}
 
                 <label className="ml-2 text-xs text-muted-foreground">Model</label>
