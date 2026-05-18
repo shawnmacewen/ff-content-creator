@@ -74,7 +74,7 @@ export default function InstagramCarousel2Client() {
       cropLine,
       `SEAMLESS REQUIREMENT: treat the full ${W}x512 as ONE continuous panorama/scene where applicable. The background, lighting, color palette, texture, and horizon lines must flow smoothly across any panel boundaries.`,
       opts.moreSeamlessBackground
-        ? 'MORE SEAMLESS BACKGROUND: prioritize an abstract/ambient background that can connect perfectly across seams and between masterplates (soft gradients, subtle textures, clean shapes). Avoid complex literal scenery backgrounds that are hard to continue.'
+        ? 'MORE SEAMLESS BACKGROUND: increase the seamlessness of the background across panel seams and between masterplates. Keep the same overall art direction; do not change style because of this instruction.'
         : '',
       'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
       seamText,
@@ -472,7 +472,7 @@ export default function InstagramCarousel2Client() {
                       <option value="first">First masterplate</option>
                     </select>
 
-                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, the prompt favors simpler ambient backgrounds that connect more cleanly across seams/masterplates.">
+                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, adds a minimal instruction to make backgrounds more seamless across seams/masterplates (no style change).">
                       <input
                         type="checkbox"
                         className="h-4 w-4 accent-violet-600"
@@ -627,7 +627,7 @@ export default function InstagramCarousel2Client() {
                       <option value="first">First masterplate</option>
                     </select>
 
-                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, the prompt favors simpler ambient backgrounds that connect more cleanly across seams/masterplates.">
+                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, adds a minimal instruction to make backgrounds more seamless across seams/masterplates (no style change).">
                       <input
                         type="checkbox"
                         className="h-4 w-4 accent-violet-600"
