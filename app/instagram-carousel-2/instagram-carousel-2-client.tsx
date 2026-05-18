@@ -39,6 +39,7 @@ export default function InstagramCarousel2Client() {
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
+  const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -392,11 +393,11 @@ export default function InstagramCarousel2Client() {
 
       <Tabs defaultValue="carousel" className="w-full">
         <TabsList className="grid w-full grid-cols-2 rounded-2xl">
-          <TabsTrigger value="image-test" className="rounded-2xl">
-            Masterplate Image
-          </TabsTrigger>
           <TabsTrigger value="carousel" className="rounded-2xl">
             Carousel
+          </TabsTrigger>
+          <TabsTrigger value="image-test" className="rounded-2xl">
+            MasterPlates Images
           </TabsTrigger>
         </TabsList>
 
@@ -669,24 +670,85 @@ export default function InstagramCarousel2Client() {
 
           {slides.length ? (
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="space-y-2">
                 <CardTitle className="text-base">Carousel slides</CardTitle>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-xs text-muted-foreground">View</div>
+                  <Button
+                    type="button"
+                    variant={slidesView === 'tile' ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => setSlidesView('tile')}
+                    disabled={isLoading}
+                  >
+                    Tile
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={slidesView === 'compact' ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => setSlidesView('compact')}
+                    disabled={isLoading}
+                  >
+                    Compact
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={slidesView === 'swipe' ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => setSlidesView('swipe')}
+                    disabled={isLoading}
+                  >
+                    Swipe
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {slides
+                {(() => {
+                  const ordered = slides
                     .filter((s) => s.slideNumber <= slideCount)
                     .slice()
                     .sort((a, b) => a.slideNumber - b.slideNumber)
-                    .slice(0, slideCount)
-                    .map((s) => (
-                      <div key={s.id} className="space-y-2">
-                        <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
+                    .slice(0, slideCount);
+
+                  if (slidesView === 'swipe') {
+                    return (
+                      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+                        {ordered.map((s) => (
+                          <div key={s.id} className="min-w-[260px] w-[260px] sm:min-w-[320px] sm:w-[320px] snap-start space-y-2">
+                            <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                </div>
+                    );
+                  }
+
+                  const gridClass = slidesView === 'compact'
+                    ? 'grid grid-cols-2 gap-3 sm:grid-cols-4'
+                    : 'grid grid-cols-1 gap-3 sm:grid-cols-3';
+
+                  const imgClass = slidesView === 'compact'
+                    ? 'w-full rounded-xl border'
+                    : 'w-full rounded-2xl border';
+
+                  return (
+                    <div className={gridClass}>
+                      {ordered.map((s) => (
+                        <div key={s.id} className="space-y-2">
+                          <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className={imgClass} />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           ) : null}
