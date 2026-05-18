@@ -441,9 +441,9 @@ export default function InstagramCarousel2Client() {
                     </TooltipTrigger>
                     <TooltipContent sideOffset={6} className="max-w-[340px]">
                       <div className="space-y-1">
-                        <div className="font-medium">Prompt Based Cohesion</div>
+                        <div className="font-medium">Prompt Based</div>
                         <div>Uses text-only continuation instructions across masterplates.</div>
-                        <div className="mt-2 font-medium">Image Reference Cohesion</div>
+                        <div className="mt-2 font-medium">Image Reference</div>
                         <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
                       </div>
                     </TooltipContent>
@@ -455,13 +455,13 @@ export default function InstagramCarousel2Client() {
                   onChange={(e) => setCohesionMethod(e.target.value as any)}
                   disabled={isLoading}
                 >
-                  <option value="prompt">Prompt Based Cohesion</option>
-                  <option value="image-ref">Image Reference Cohesion</option>
+                  <option value="prompt">Prompt Based</option>
+                  <option value="image-ref">Image Reference</option>
                 </select>
 
                 {cohesionMethod === 'image-ref' ? (
                   <>
-                    <label className="ml-2 text-xs text-muted-foreground" title="Choose which prior masterplate to use as the reference image for generating the next masterplate.">Image Ref Uses</label>
+                    <label className="ml-2 text-xs text-muted-foreground" title="Choose which prior masterplate to use as the reference image for generating the next masterplate.">Image Ref</label>
                     <select
                       className="h-9 rounded-2xl border bg-background px-3 text-sm"
                       value={imageRefMode}
@@ -596,9 +596,9 @@ export default function InstagramCarousel2Client() {
                     </TooltipTrigger>
                     <TooltipContent sideOffset={6} className="max-w-[340px]">
                       <div className="space-y-1">
-                        <div className="font-medium">Prompt Based Cohesion</div>
+                        <div className="font-medium">Prompt Based</div>
                         <div>Uses text-only continuation instructions across masterplates.</div>
-                        <div className="mt-2 font-medium">Image Reference Cohesion</div>
+                        <div className="mt-2 font-medium">Image Reference</div>
                         <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
                       </div>
                     </TooltipContent>
@@ -610,13 +610,13 @@ export default function InstagramCarousel2Client() {
                   onChange={(e) => setCohesionMethod(e.target.value as any)}
                   disabled={isLoading}
                 >
-                  <option value="prompt">Prompt Based Cohesion</option>
-                  <option value="image-ref">Image Reference Cohesion</option>
+                  <option value="prompt">Prompt Based</option>
+                  <option value="image-ref">Image Reference</option>
                 </select>
 
                 {cohesionMethod === 'image-ref' ? (
                   <>
-                    <label className="ml-2 text-xs text-muted-foreground">Image Ref Uses</label>
+                    <label className="ml-2 text-xs text-muted-foreground">Image Ref</label>
                     <select
                       className="h-9 rounded-2xl border bg-background px-3 text-sm"
                       value={imageRefMode}
