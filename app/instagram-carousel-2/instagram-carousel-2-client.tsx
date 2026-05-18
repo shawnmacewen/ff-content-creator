@@ -779,43 +779,45 @@ export default function InstagramCarousel2Client() {
 
                   if (slidesView === 'swipe') {
                     return (
-                      <div
-                        ref={swipeRef}
-                        className="w-full max-w-full min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none overscroll-x-contain"
-                        style={{ WebkitOverflowScrolling: 'touch' }}
-                        onPointerDown={(e) => {
-                          const el = swipeRef.current;
-                          if (!el) return;
-                          swipeDrag.current.isDown = true;
-                          swipeDrag.current.startX = e.clientX;
-                          swipeDrag.current.scrollLeft = el.scrollLeft;
-                          (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
-                        }}
-                        onPointerUp={(e) => {
-                          swipeDrag.current.isDown = false;
-                          (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId);
-                        }}
-                        onPointerCancel={() => {
-                          swipeDrag.current.isDown = false;
-                        }}
-                        onPointerLeave={() => {
-                          swipeDrag.current.isDown = false;
-                        }}
-                        onPointerMove={(e) => {
-                          if (!swipeDrag.current.isDown) return;
-                          const el = swipeRef.current;
-                          if (!el) return;
-                          const dx = e.clientX - swipeDrag.current.startX;
-                          el.scrollLeft = swipeDrag.current.scrollLeft - dx;
-                        }}
-                      >
-                        {ordered.map((s) => (
-                          <div key={s.id} className="min-w-[260px] w-[260px] sm:min-w-[320px] sm:w-[320px] snap-start space-y-2 pointer-events-none">
-                            <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
-                          </div>
-                        ))}
+                      <div className="w-full max-w-full overflow-hidden">
+                        <div
+                          ref={swipeRef}
+                          className="w-full max-w-full min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none overscroll-x-contain"
+                          style={{ WebkitOverflowScrolling: 'touch' }}
+                          onPointerDown={(e) => {
+                            const el = swipeRef.current;
+                            if (!el) return;
+                            swipeDrag.current.isDown = true;
+                            swipeDrag.current.startX = e.clientX;
+                            swipeDrag.current.scrollLeft = el.scrollLeft;
+                            (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
+                          }}
+                          onPointerUp={(e) => {
+                            swipeDrag.current.isDown = false;
+                            (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId);
+                          }}
+                          onPointerCancel={() => {
+                            swipeDrag.current.isDown = false;
+                          }}
+                          onPointerLeave={() => {
+                            swipeDrag.current.isDown = false;
+                          }}
+                          onPointerMove={(e) => {
+                            if (!swipeDrag.current.isDown) return;
+                            const el = swipeRef.current;
+                            if (!el) return;
+                            const dx = e.clientX - swipeDrag.current.startX;
+                            el.scrollLeft = swipeDrag.current.scrollLeft - dx;
+                          }}
+                        >
+                          {ordered.map((s) => (
+                            <div key={s.id} className="shrink-0 w-[260px] sm:w-[320px] snap-start space-y-2 pointer-events-none">
+                              <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     );
                   }
