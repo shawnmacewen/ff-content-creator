@@ -2,7 +2,7 @@
 
 This file captures the **exact prompt architecture** used for our best results so far, including the system-controlled instructions and the per-masterplate prompt template.
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 ---
 
@@ -63,8 +63,12 @@ For a carousel with totalSlides = **N** (2–10), and for a given masterplate wi
 ### 1) System prefix + topic + suffix (system-controlled wrapper)
 
 ```
-Create an Instagram carousel of {totalSlides} slides about {topic} from the lens of a financial advisor.
+Create an Instagram carousel of {totalSlides} slides about {topic} {optional_suffix}
 ```
+
+Where:
+- `optional_suffix` is normally `from the lens of a financial advisor.`
+- (If/when enabled in UI) the advisor lens can be removed by setting `optional_suffix` to an empty string.
 
 ### 2) Slide range line
 
@@ -92,7 +96,18 @@ Otherwise:
 PANEL MAP: {slotMap}
 ```
 
-### 4) Outro rule (always present)
+### 4) Content rule + outro rule
+
+#### Content rule (always present)
+
+```
+CONTENT RULE: Ensure slides {slideStart}–{slideEnd} each have distinct, non-overlapping messaging (no repeated headlines/bullets). Maintain consistent formatting style, but vary the actual wording and points across slides.
+LAYOUT VARIETY: do not use the same template on every slide—mix structures (e.g., one big headline-only slide, 2-bullet slide, checklist, myth vs fact, do/don’t, mini scale/ladder, or one key takeaway).
+```
+
+(For plate 2+, we also instruct that the current slides MUST introduce new information and MUST NOT repeat earlier slides’ headline/bullets/CTA.)
+
+#### Outro rule (always present)
 
 If this masterplate includes the final slide:
 
@@ -111,13 +126,13 @@ NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT inclu
 #### Prompt Based Cohesion (plateIndex > 0)
 
 ```
-CONTINUATION REQUIREMENT: Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone. The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story.
+CONTINUATION REQUIREMENT: Continue seamlessly from the previous masterplate. Maintain the same visual universe, illustration style, typography treatment, colour palette, lighting direction, composition, and financial-advisor tone. The left edge of this new masterplate should visually continue from the right edge of the previous masterplate, as if the carousel is moving left-to-right through one connected visual story. PRIORITIZE EDGE CONTINUITY: the left 40px must visually match/continue from the previous masterplate’s right 40px (colour flow, gradients, horizon lines, textures).
 ```
 
 #### Image Reference Cohesion (plateIndex > 0)
 
 ```
-IMAGE-REFERENCE CONTINUATION REQUIREMENT: Use the provided reference image ONLY to match the visual universe (style, palette, typography treatment, lighting direction, rendering style) and to align the left edge continuation zone with the previous masterplate’s right edge. Do NOT copy/paste or recreate the exact same scene/scenery. Create a NEW composition and new background details that feel like the next moment/location in the same story/world. Change camera framing slightly (pan/zoom/angle), introduce new background elements, and vary the scenery while keeping seamless edge continuity and consistent art direction.
+IMAGE-REFERENCE CONTINUATION REQUIREMENT: Use the provided reference image ONLY to match the visual universe (style, palette, typography treatment, lighting direction, rendering style) and to align the left edge continuation zone with the previous masterplate’s right edge. PRIORITIZE EDGE CONTINUITY: make the left 40px of this masterplate visually continue from the reference image’s right 40px (colour flow, gradients, horizon lines, textures). Do NOT copy/paste or recreate the exact same scene/scenery or the exact same slide text. Create a NEW composition and new background details that feel like the next moment/location in the same story/world. Change camera framing slightly (pan/zoom/angle) and introduce new background elements, but keep the same art direction and seamless edge continuity.
 ```
 
 ### 6) Layout spec (appended)
@@ -128,7 +143,8 @@ Append the **Masterplate layout spec** block shown above.
 
 ## Notes (why this version performed well)
 - Fixes “plate looks like its own mini-carousel” by telling the model the carousel has **{totalSlides}** slides.
+- Forces more template diversity via explicit **LAYOUT VARIETY** instruction (reduces always-3-bullets look).
 - Prevents accidental “extra CTA” on slide 3 of plate 1 for longer carousels.
 - Forces unused panels on partial final plates to be **background-only**.
 - Strong anti-numbering constraints (still not perfect, but materially improved).
-- Image Reference Cohesion improves cross-plate continuity; prompt explicitly discourages copying the exact same scenery.
+- Image Reference Cohesion improves cross-plate continuity; prompt explicitly discourages copying the exact same scenery and enforces edge continuity (40px rule).
