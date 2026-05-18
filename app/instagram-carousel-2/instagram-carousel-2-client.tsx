@@ -212,8 +212,8 @@ export default function InstagramCarousel2Client() {
             ].join(' ');
 
     const contentUniquenessRule = args.plateIndex === 0
-      ? `CONTENT RULE: Ensure slides ${args.slideStart}–${args.slideEnd} each have distinct, non-overlapping messaging (no repeated headlines/bullets). Maintain consistent formatting style, but vary the actual wording and points across slides.`
-      : `CONTENT UNIQUENESS + CONTINUATION RULE: Slides ${args.slideStart}–${args.slideEnd} MUST introduce new information and MUST NOT repeat the same headline, bullets, or CTA from earlier slides (${1}–${args.slideStart - 1}). Keep formatting consistent, but change the actual message and examples. Assume earlier slides already exist and avoid restating them.`;
+      ? `CONTENT RULE: Ensure slides ${args.slideStart}–${args.slideEnd} each have distinct, non-overlapping messaging (no repeated headlines/bullets). Maintain consistent formatting style, but vary the actual wording and points across slides. LAYOUT VARIETY: do not use the same template on every slide—mix structures (e.g., one big headline-only slide, 2-bullet slide, checklist, myth vs fact, do/don’t, mini scale/ladder, or one key takeaway).`
+      : `CONTENT UNIQUENESS + CONTINUATION RULE: Slides ${args.slideStart}–${args.slideEnd} MUST introduce new information and MUST NOT repeat the same headline, bullets, or CTA from earlier slides (${1}–${args.slideStart - 1}). Keep formatting consistent, but change the actual message and examples. LAYOUT VARIETY: vary the text layout templates across slides (not every slide should be 3 bullets). Assume earlier slides already exist and avoid restating them.`;
 
     const outroLine = args.slideEnd === args.totalSlides
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
