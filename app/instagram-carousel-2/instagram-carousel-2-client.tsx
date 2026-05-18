@@ -42,6 +42,13 @@ export default function InstagramCarousel2Client() {
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
 
+  const swipeRef = React.useRef<HTMLDivElement | null>(null);
+  const swipeDrag = React.useRef<{ isDown: boolean; startX: number; scrollLeft: number }>({
+    isDown: false,
+    startX: 0,
+    scrollLeft: 0,
+  });
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -772,9 +779,38 @@ export default function InstagramCarousel2Client() {
 
                   if (slidesView === 'swipe') {
                     return (
-                      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+                      <div
+                        ref={swipeRef}
+                        className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onPointerDown={(e) => {
+                          const el = swipeRef.current;
+                          if (!el) return;
+                          swipeDrag.current.isDown = true;
+                          swipeDrag.current.startX = e.clientX;
+                          swipeDrag.current.scrollLeft = el.scrollLeft;
+                          (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
+                        }}
+                        onPointerUp={(e) => {
+                          swipeDrag.current.isDown = false;
+                          (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId);
+                        }}
+                        onPointerCancel={() => {
+                          swipeDrag.current.isDown = false;
+                        }}
+                        onPointerLeave={() => {
+                          swipeDrag.current.isDown = false;
+                        }}
+                        onPointerMove={(e) => {
+                          if (!swipeDrag.current.isDown) return;
+                          const el = swipeRef.current;
+                          if (!el) return;
+                          const dx = e.clientX - swipeDrag.current.startX;
+                          el.scrollLeft = swipeDrag.current.scrollLeft - dx;
+                        }}
+                      >
                         {ordered.map((s) => (
-                          <div key={s.id} className="min-w-[260px] w-[260px] sm:min-w-[320px] sm:w-[320px] snap-start space-y-2">
+                          <div key={s.id} className="min-w-[260px] w-[260px] sm:min-w-[320px] sm:w-[320px] snap-start space-y-2 pointer-events-none">
                             <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
