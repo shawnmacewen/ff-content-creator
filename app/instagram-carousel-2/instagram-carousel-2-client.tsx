@@ -28,11 +28,11 @@ type Slide = {
 
 export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('Canadian housing market');
-  const [slideCount, setSlideCount] = React.useState<number>(3);
+  const [slideCount, setSlideCount] = React.useState<number>(9);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
-  const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(false);
+  const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(true);
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
