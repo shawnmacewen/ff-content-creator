@@ -781,7 +781,7 @@ export default function InstagramCarousel2Client() {
                     return (
                       <div
                         ref={swipeRef}
-                        className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+                        className="w-full max-w-full min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none overscroll-x-contain"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                         onPointerDown={(e) => {
                           const el = swipeRef.current;
