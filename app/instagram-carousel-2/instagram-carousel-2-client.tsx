@@ -32,6 +32,7 @@ export default function InstagramCarousel2Client() {
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
+  const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(false);
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
@@ -46,7 +47,7 @@ export default function InstagramCarousel2Client() {
 
   const systemSuffix = 'from the lens of a financial advisor.';
 
-  const buildLayoutSpec = (opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1 }) => {
+  const buildLayoutSpec = (opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1; moreSeamlessBackground?: boolean }) => {
     const W = opts.size === '1536x512' ? 1536 : opts.size === '1024x512' ? 1024 : 512;
     const seamText = opts.panels === 3
       ? 'Avoid placing faces, key objects, or readable text on or near the seam lines (x≈512 and x≈1024).'
@@ -72,6 +73,9 @@ export default function InstagramCarousel2Client() {
       splitLine,
       cropLine,
       `SEAMLESS REQUIREMENT: treat the full ${W}x512 as ONE continuous panorama/scene where applicable. The background, lighting, color palette, texture, and horizon lines must flow smoothly across any panel boundaries.`,
+      opts.moreSeamlessBackground
+        ? 'MORE SEAMLESS BACKGROUND: prioritize an abstract/ambient background that can connect perfectly across seams and between masterplates (soft gradients, subtle textures, clean shapes). Avoid complex literal scenery backgrounds that are hard to continue.'
+        : '',
       'Do NOT add borders, frames, separators, hard edges, or visible seams at the panel boundaries.',
       seamText,
       // Overlap-zone support (Option 1: prompt-only)
@@ -79,7 +83,7 @@ export default function InstagramCarousel2Client() {
       'NO NUMBERING: Do NOT render any explicit slide numbering, counters, fractions, or sequence markers anywhere (no "1/3", no "Slide 1", no "1.", no "1 of 10", no digits used as counters).',
       'Text is allowed (headline + short bullets + CTA), but must be large, high-contrast, and fully contained within a single panel (do not straddle boundaries).',
       'No logos or watermarks.',
-    ].join(' ');
+    ].filter(Boolean).join(' ');
   };
 
   const cropPlate = React.useCallback(async (src: string, opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1 }) => {
@@ -208,7 +212,7 @@ export default function InstagramCarousel2Client() {
       ? `OUTRO REQUIREMENT: Make slide ${args.totalSlides} (the FINAL slide of the entire carousel) a strong closing slide with a clear CTA and summary bullets. Do not create any other outro/CTA on earlier slides.`
       : `NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT include any outro, conclusion language, "wrap-up", or CTA on slides ${args.slideStart}–${args.slideEnd}. Save the CTA for the final slide ${args.totalSlides}.`;
 
-    const layoutSpec = buildLayoutSpec({ size: args.size, panels: args.panels });
+    const layoutSpec = buildLayoutSpec({ size: args.size, panels: args.panels, moreSeamlessBackground });
 
     const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, layoutSpec]
       .filter(Boolean)
@@ -473,6 +477,17 @@ export default function InstagramCarousel2Client() {
                       <option value="previous">Previous masterplate</option>
                       <option value="first">First masterplate</option>
                     </select>
+
+                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, the prompt favors simpler ambient backgrounds that connect more cleanly across seams/masterplates.">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-violet-600"
+                        checked={moreSeamlessBackground}
+                        onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                      More Seamless background
+                    </label>
                   </>
                 ) : null}
 
@@ -617,6 +632,17 @@ export default function InstagramCarousel2Client() {
                       <option value="previous">Previous masterplate</option>
                       <option value="first">First masterplate</option>
                     </select>
+
+                    <label className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground" title="When enabled, the prompt favors simpler ambient backgrounds that connect more cleanly across seams/masterplates.">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-violet-600"
+                        checked={moreSeamlessBackground}
+                        onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                      More Seamless background
+                    </label>
                   </>
                 ) : null}
 
