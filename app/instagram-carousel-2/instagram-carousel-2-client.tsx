@@ -44,12 +44,29 @@ export default function InstagramCarousel2Client() {
   const selectedSourceTitle: string | null = selectedSource?.data?.title ?? selectedSource?.title ?? null;
   const selectedSourceBodyRaw: string = selectedSource?.data?.body ?? selectedSource?.body ?? '';
   const selectedSourceBodyText: string = React.useMemo(() => {
-    const s = String(selectedSourceBodyRaw || '');
-    // Strip HTML/XML tags and collapse whitespace.
-    return s
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const raw = String(selectedSourceBodyRaw || '');
+
+    // 1) Decode HTML entities so things like "&lt;article&gt;" become real tags.
+    //    (Works in-browser; this is a client component.)
+    let decoded = raw;
+    try {
+      const ta = document.createElement('textarea');
+      ta.innerHTML = raw;
+      decoded = ta.value;
+    } catch {
+      decoded = raw;
+    }
+
+    // 2) Strip tags, but keep their text content.
+    const noTags = decoded.replace(/<[^>]*>/g, ' ');
+
+    // 3) Remove common XML header noise if present.
+    const noXmlHeader = noTags
+      .replace(/\bxml\s+version\b/gi, ' ')
+      .replace(/xsi:noNamespaceSchemaLocation\s*=\s*"[^"]*"/gi, ' ');
+
+    // 4) Collapse whitespace.
+    return noXmlHeader.replace(/\s+/g, ' ').trim();
   }, [selectedSourceBodyRaw]);
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
