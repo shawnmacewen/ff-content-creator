@@ -51,6 +51,10 @@ export default function InstagramCarousel2Client() {
   const selectedSourceTagsRaw: string[] = selectedSource?.data?.tags ?? selectedSource?.tags ?? [];
   const selectedSourceType: string | null = selectedSource?.data?.type ?? selectedSource?.type ?? null;
   const selectedSourceFilename: string | null =
+    selectedSource?.data?.base_content_id ??
+    selectedSource?.base_content_id ??
+    selectedSource?.data?.baseContentId ??
+    selectedSource?.baseContentId ??
     selectedSource?.data?.filename ??
     selectedSource?.data?.fileName ??
     selectedSource?.filename ??
