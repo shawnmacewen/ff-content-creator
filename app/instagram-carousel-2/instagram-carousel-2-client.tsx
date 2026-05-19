@@ -41,7 +41,34 @@ export default function InstagramCarousel2Client() {
     fetcher
   );
 
-  const selectedSourceTitle: string | null = selectedSource?.data?.title ?? selectedSource?.title ?? null;
+  const selectedSourceTitleRaw: string | null = selectedSource?.data?.title ?? selectedSource?.title ?? null;
+  const selectedSourceExcerptRaw: string | null = selectedSource?.data?.excerpt ?? selectedSource?.excerpt ?? null;
+  const selectedSourcePublishedAt: string | null = selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt ?? null;
+  const selectedSourceMetadata: any = selectedSource?.data?.metadata ?? selectedSource?.metadata ?? null;
+  const selectedSourceImageUrl: string | null = selectedSource?.data?.imageUrl ?? selectedSource?.imageUrl ?? null;
+
+  const selectedSourceTitle: string | null = React.useMemo(() => {
+    if (!selectedSourceTitleRaw) return null;
+    try {
+      const ta = document.createElement('textarea');
+      ta.innerHTML = String(selectedSourceTitleRaw);
+      return ta.value;
+    } catch {
+      return String(selectedSourceTitleRaw);
+    }
+  }, [selectedSourceTitleRaw]);
+
+  const selectedSourceExcerpt: string | null = React.useMemo(() => {
+    if (!selectedSourceExcerptRaw) return null;
+    try {
+      const ta = document.createElement('textarea');
+      ta.innerHTML = String(selectedSourceExcerptRaw);
+      return ta.value;
+    } catch {
+      return String(selectedSourceExcerptRaw);
+    }
+  }, [selectedSourceExcerptRaw]);
+
   const selectedSourceBodyRaw: string = selectedSource?.data?.body ?? selectedSource?.body ?? '';
   const selectedSourceBodyText: string = React.useMemo(() => {
     const raw = String(selectedSourceBodyRaw || '');
@@ -463,12 +490,47 @@ export default function InstagramCarousel2Client() {
                 <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
 
                 <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground">
-                    Selected content:{' '}
-                    <span className="font-medium text-foreground">
-                      {selectedSourceTitle || (selectedSourceId ? selectedSourceId : 'None')}
-                    </span>
-                  </div>
+                  {selectedSourceId ? (
+                    <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
+                      <div className="flex gap-4">
+                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                          {(() => {
+                            let meta: any = selectedSourceMetadata;
+                            if (typeof meta === 'string') {
+                              try {
+                                meta = JSON.parse(meta);
+                              } catch {
+                                meta = null;
+                              }
+                            }
+
+                            const thumb =
+                              meta?.SocialMediaPlatformImages?.Thumbnail ||
+                              meta?.SocialMediaPlatformImages?.thumbnail ||
+                              meta?.socialMediaPlatformImages?.Thumbnail ||
+                              meta?.socialMediaPlatformImages?.thumbnail ||
+                              selectedSourceImageUrl;
+
+                            if (!thumb) return null;
+                            // eslint-disable-next-line @next/next/no-img-element
+                            return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                          })()}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
+                          {selectedSourceExcerpt ? <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div> : null}
+                          {selectedSourcePublishedAt ? (
+                            <div className="mt-2 text-[11px] text-muted-foreground">Published: {selectedSourcePublishedAt}</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      Selected content: <span className="font-medium text-foreground">None</span>
+                    </div>
+                  )}
 
                   {showAdvancedPromptInput ? (
                     <textarea
@@ -678,12 +740,47 @@ export default function InstagramCarousel2Client() {
                 <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
 
                 <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground">
-                    Selected content:{' '}
-                    <span className="font-medium text-foreground">
-                      {selectedSourceTitle || (selectedSourceId ? selectedSourceId : 'None')}
-                    </span>
-                  </div>
+                  {selectedSourceId ? (
+                    <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
+                      <div className="flex gap-4">
+                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                          {(() => {
+                            let meta: any = selectedSourceMetadata;
+                            if (typeof meta === 'string') {
+                              try {
+                                meta = JSON.parse(meta);
+                              } catch {
+                                meta = null;
+                              }
+                            }
+
+                            const thumb =
+                              meta?.SocialMediaPlatformImages?.Thumbnail ||
+                              meta?.SocialMediaPlatformImages?.thumbnail ||
+                              meta?.socialMediaPlatformImages?.Thumbnail ||
+                              meta?.socialMediaPlatformImages?.thumbnail ||
+                              selectedSourceImageUrl;
+
+                            if (!thumb) return null;
+                            // eslint-disable-next-line @next/next/no-img-element
+                            return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                          })()}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
+                          {selectedSourceExcerpt ? <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div> : null}
+                          {selectedSourcePublishedAt ? (
+                            <div className="mt-2 text-[11px] text-muted-foreground">Published: {selectedSourcePublishedAt}</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      Selected content: <span className="font-medium text-foreground">None</span>
+                    </div>
+                  )}
 
                   {showAdvancedPromptInput ? (
                     <textarea
