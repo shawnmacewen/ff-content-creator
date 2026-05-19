@@ -3,6 +3,7 @@
 import * as React from 'react';
 import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -46,6 +47,8 @@ export default function InstagramCarousel2Client() {
   const selectedSourcePublishedAt: string | null = selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt ?? null;
   const selectedSourceMetadata: any = selectedSource?.data?.metadata ?? selectedSource?.metadata ?? null;
   const selectedSourceImageUrl: string | null = selectedSource?.data?.imageUrl ?? selectedSource?.imageUrl ?? null;
+  const selectedSourceTags: string[] = selectedSource?.data?.tags ?? selectedSource?.tags ?? [];
+  const selectedSourceType: string | null = selectedSource?.data?.type ?? selectedSource?.type ?? null;
 
   const selectedSourceTitle: string | null = React.useMemo(() => {
     if (!selectedSourceTitleRaw) return null;
@@ -486,10 +489,12 @@ export default function InstagramCarousel2Client() {
               <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
+                <div className="min-w-0">
+                  <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 min-w-0">
                   {selectedSourceId ? (
                     <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
                       <div className="flex gap-4">
@@ -519,7 +524,20 @@ export default function InstagramCarousel2Client() {
 
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
-                          {selectedSourceExcerpt ? <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div> : null}
+
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {selectedSourceType ? <Badge variant="secondary">{selectedSourceType}</Badge> : null}
+                            {(selectedSourceTags || []).slice(0, 6).map((t) => (
+                              <Badge key={t} variant="outline">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          {selectedSourceExcerpt ? (
+                            <div className="mt-2 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div>
+                          ) : null}
+
                           {selectedSourcePublishedAt ? (
                             <div className="mt-2 text-[11px] text-muted-foreground">Published: {selectedSourcePublishedAt}</div>
                           ) : null}
@@ -736,10 +754,12 @@ export default function InstagramCarousel2Client() {
               <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
+                <div className="min-w-0">
+                  <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 min-w-0">
                   {selectedSourceId ? (
                     <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
                       <div className="flex gap-4">
@@ -769,7 +789,20 @@ export default function InstagramCarousel2Client() {
 
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
-                          {selectedSourceExcerpt ? <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div> : null}
+
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {selectedSourceType ? <Badge variant="secondary">{selectedSourceType}</Badge> : null}
+                            {(selectedSourceTags || []).slice(0, 6).map((t) => (
+                              <Badge key={t} variant="outline">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          {selectedSourceExcerpt ? (
+                            <div className="mt-2 line-clamp-2 text-xs text-muted-foreground">{selectedSourceExcerpt}</div>
+                          ) : null}
+
                           {selectedSourcePublishedAt ? (
                             <div className="mt-2 text-[11px] text-muted-foreground">Published: {selectedSourcePublishedAt}</div>
                           ) : null}
