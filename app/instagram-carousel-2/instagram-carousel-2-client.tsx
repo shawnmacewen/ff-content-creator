@@ -86,8 +86,12 @@ export default function InstagramCarousel2Client() {
 
   const selectedSourcePublishedDate: string | null = React.useMemo(() => {
     if (!selectedSourcePublishedAt) return null;
-    const d = new Date(selectedSourcePublishedAt);
-    if (Number.isNaN(d.getTime())) return String(selectedSourcePublishedAt);
+    const s = String(selectedSourcePublishedAt);
+    // Fast path for ISO strings.
+    if (s.includes('T')) return s.split('T')[0];
+
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return s;
     // YYYY-MM-DD
     return d.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
   }, [selectedSourcePublishedAt]);
