@@ -411,18 +411,18 @@ export default function InstagramCarousel2Client() {
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Inputs</CardTitle>
+              <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+
                 <textarea
                   className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
                 />
-
-                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -586,18 +586,18 @@ export default function InstagramCarousel2Client() {
         <TabsContent value="carousel" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-base">Inputs</CardTitle>
+              <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+
                 <textarea
                   className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
                 />
-
-                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
