@@ -33,7 +33,7 @@ type Slide = {
 };
 
 export default function InstagramCarousel2Client() {
-  const [topic, setTopic] = React.useState<string>('Canadian housing market');
+  const [topic, setTopic] = React.useState<string>('');
   const [slideCount, setSlideCount] = React.useState<number>(9);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [selectedSourceId, setSelectedSourceId] = React.useState<string | null>(null);
@@ -268,13 +268,15 @@ export default function InstagramCarousel2Client() {
     const manualTopicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
 
     // If a source article is selected, we inject its body text (plain text, no markup) into the prompt.
-    // The manual topic textarea becomes an Advanced override.
+    // If the user types anything into the Advanced prompt box, we concatenate it AFTER the article body.
     const injectedSourceText = selectedSourceId ? selectedSourceBodyText : '';
     const injected = injectedSourceText && injectedSourceText.length > 0;
 
+    const advancedAddon = manualTopicClean;
+
     const userTopic = injected
-      ? injectedSourceText.slice(0, 1800)
-      : (manualTopicClean || 'Canadian housing market');
+      ? [injectedSourceText.slice(0, 1800), advancedAddon].filter(Boolean).join('\n\n')
+      : advancedAddon;
 
     const systemPrefix = `Create an Instagram carousel of ${args.totalSlides} slides about`;
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
