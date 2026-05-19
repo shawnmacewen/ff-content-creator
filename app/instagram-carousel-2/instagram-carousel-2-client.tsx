@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Info, ScrollText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type Masterplate = {
   id: string;
@@ -32,6 +35,22 @@ export default function InstagramCarousel2Client() {
   const [slideCount, setSlideCount] = React.useState<number>(9);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [selectedSourceId, setSelectedSourceId] = React.useState<string | null>(null);
+
+  const { data: selectedSource } = useSWR<any>(
+    selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
+    fetcher
+  );
+
+  const selectedSourceTitle: string | null = selectedSource?.data?.title ?? selectedSource?.title ?? null;
+  const selectedSourceBodyRaw: string = selectedSource?.data?.body ?? selectedSource?.body ?? '';
+  const selectedSourceBodyText: string = React.useMemo(() => {
+    const s = String(selectedSourceBodyRaw || '');
+    // Strip HTML/XML tags and collapse whitespace.
+    return s
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }, [selectedSourceBodyRaw]);
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
   const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(true);
@@ -42,7 +61,7 @@ export default function InstagramCarousel2Client() {
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
-  const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const [showAdvancedPromptInput, setShowAdvancedPromptInput] = React.useState(false);
   const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
 
   const swipeRef = React.useRef<HTMLDivElement | null>(null);
@@ -178,8 +197,16 @@ export default function InstagramCarousel2Client() {
     size: '1536x512' | '1024x512' | '512x512';
     panels: 3 | 2 | 1;
   }) => {
-    const topicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
-    const userTopic = topicClean || 'Canadian housing market';
+    const manualTopicClean = topic.trim().replace(/^about\s+/i, '').replace(/\.*$/, '');
+
+    // If a source article is selected, we inject its body text (plain text, no markup) into the prompt.
+    // The manual topic textarea becomes an Advanced override.
+    const injectedSourceText = selectedSourceId ? selectedSourceBodyText : '';
+    const injected = injectedSourceText && injectedSourceText.length > 0;
+
+    const userTopic = injected
+      ? injectedSourceText.slice(0, 1800)
+      : (manualTopicClean || 'Canadian housing market');
 
     const systemPrefix = `Create an Instagram carousel of ${args.totalSlides} slides about`;
     const userPrompt = `${systemPrefix} ${userTopic} ${systemSuffix}`.replace(/\s+/g, ' ').trim();
@@ -419,12 +446,21 @@ export default function InstagramCarousel2Client() {
                 <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
 
                 <div className="space-y-3">
-                  <textarea
-                    className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
-                  />
+                  <div className="text-sm text-muted-foreground">
+                    Selected content:{' '}
+                    <span className="font-medium text-foreground">
+                      {selectedSourceTitle || (selectedSourceId ? selectedSourceId : 'None')}
+                    </span>
+                  </div>
+
+                  {showAdvancedPromptInput ? (
+                    <textarea
+                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
+                    />
+                  ) : null}
 
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
@@ -544,16 +580,16 @@ export default function InstagramCarousel2Client() {
 
                       <Button
                         type="button"
-                        variant={showAdvanced ? 'default' : 'outline'}
+                        variant={showAdvancedPromptInput ? 'default' : 'outline'}
                         className="rounded-2xl"
-                        onClick={() => setShowAdvanced((v) => !v)}
+                        onClick={() => setShowAdvancedPromptInput((v) => !v)}
                         disabled={isLoading}
                       >
                         Advanced
                       </Button>
 
-                      {showAdvanced ? (
-                        <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
+                      
+                      <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
                           <DialogTrigger asChild>
                             <Button
                               type="button"
@@ -578,7 +614,7 @@ export default function InstagramCarousel2Client() {
                             />
                           </DialogContent>
                         </Dialog>
-                      ) : null}
+                      
 
                       {isLoading ? (
                         <div className="ml-2 flex items-center gap-2">
@@ -625,12 +661,21 @@ export default function InstagramCarousel2Client() {
                 <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
 
                 <div className="space-y-3">
-                  <textarea
-                    className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
-                  />
+                  <div className="text-sm text-muted-foreground">
+                    Selected content:{' '}
+                    <span className="font-medium text-foreground">
+                      {selectedSourceTitle || (selectedSourceId ? selectedSourceId : 'None')}
+                    </span>
+                  </div>
+
+                  {showAdvancedPromptInput ? (
+                    <textarea
+                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
+                    />
+                  ) : null}
 
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
@@ -745,16 +790,16 @@ export default function InstagramCarousel2Client() {
 
                       <Button
                         type="button"
-                        variant={showAdvanced ? 'default' : 'outline'}
+                        variant={showAdvancedPromptInput ? 'default' : 'outline'}
                         className="rounded-2xl"
-                        onClick={() => setShowAdvanced((v) => !v)}
+                        onClick={() => setShowAdvancedPromptInput((v) => !v)}
                         disabled={isLoading}
                       >
                         Advanced
                       </Button>
 
-                      {showAdvanced ? (
-                        <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
+                      
+                      <Dialog open={promptModalOpen} onOpenChange={setPromptModalOpen}>
                           <DialogTrigger asChild>
                             <Button
                               type="button"
@@ -779,7 +824,7 @@ export default function InstagramCarousel2Client() {
                             />
                           </DialogContent>
                         </Dialog>
-                      ) : null}
+                      
 
                       {isLoading ? (
                         <div className="ml-2 flex items-center gap-2">
