@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Info, ScrollText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 
 type Masterplate = {
   id: string;
@@ -30,6 +31,7 @@ export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('Canadian housing market');
   const [slideCount, setSlideCount] = React.useState<number>(9);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [selectedSourceId, setSelectedSourceId] = React.useState<string | null>(null);
   const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
   const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
   const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(true);
@@ -412,12 +414,16 @@ export default function InstagramCarousel2Client() {
               <CardTitle className="text-base">Inputs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <textarea
-                className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
-              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <textarea
+                  className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
+                />
+
+                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+              </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -583,12 +589,16 @@ export default function InstagramCarousel2Client() {
               <CardTitle className="text-base">Inputs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <textarea
-                className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
-              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <textarea
+                  className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Topic/focus (e.g. Canadian housing market, interest rates, TFSA vs RRSP…)"
+                />
+
+                <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+              </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1">
