@@ -34,7 +34,7 @@ type Slide = {
 
 export default function InstagramCarousel2Client() {
   const [topic, setTopic] = React.useState<string>('');
-  const [slideCount, setSlideCount] = React.useState<number>(9);
+  const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
   const [selectedSourceId, setSelectedSourceId] = React.useState<string | null>(null);
 
