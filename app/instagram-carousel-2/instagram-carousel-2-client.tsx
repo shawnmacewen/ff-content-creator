@@ -50,7 +50,12 @@ export default function InstagramCarousel2Client() {
   const selectedSourceImageUrl: string | null = selectedSource?.data?.imageUrl ?? selectedSource?.imageUrl ?? null;
   const selectedSourceTagsRaw: string[] = selectedSource?.data?.tags ?? selectedSource?.tags ?? [];
   const selectedSourceType: string | null = selectedSource?.data?.type ?? selectedSource?.type ?? null;
-  const selectedSourceFilename: string | null = selectedSource?.data?.filename ?? selectedSource?.filename ?? null;
+  const selectedSourceFilename: string | null =
+    selectedSource?.data?.filename ??
+    selectedSource?.data?.fileName ??
+    selectedSource?.filename ??
+    selectedSource?.fileName ??
+    null;
 
   const decodeEntities = React.useCallback((input: string) => {
     try {
