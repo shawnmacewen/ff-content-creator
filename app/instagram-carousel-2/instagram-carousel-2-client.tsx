@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Info, ScrollText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
+import { ContentDetail } from '@/components/source-content/content-detail';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -47,30 +48,49 @@ export default function InstagramCarousel2Client() {
   const selectedSourcePublishedAt: string | null = selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt ?? null;
   const selectedSourceMetadata: any = selectedSource?.data?.metadata ?? selectedSource?.metadata ?? null;
   const selectedSourceImageUrl: string | null = selectedSource?.data?.imageUrl ?? selectedSource?.imageUrl ?? null;
-  const selectedSourceTags: string[] = selectedSource?.data?.tags ?? selectedSource?.tags ?? [];
+  const selectedSourceTagsRaw: string[] = selectedSource?.data?.tags ?? selectedSource?.tags ?? [];
   const selectedSourceType: string | null = selectedSource?.data?.type ?? selectedSource?.type ?? null;
+  const selectedSourceFilename: string | null = selectedSource?.data?.filename ?? selectedSource?.filename ?? null;
+
+  const decodeEntities = React.useCallback((input: string) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.innerHTML = input;
+      return ta.value;
+    } catch {
+      return input;
+    }
+  }, []);
+
+  const stripTags = React.useCallback((input: string) => input.replace(/<[^>]*>/g, ' '), []);
+
+  const decodeAndStrip = React.useCallback(
+    (input: string) => stripTags(decodeEntities(String(input || ''))).replace(/\s+/g, ' ').trim(),
+    [decodeEntities, stripTags]
+  );
 
   const selectedSourceTitle: string | null = React.useMemo(() => {
     if (!selectedSourceTitleRaw) return null;
-    try {
-      const ta = document.createElement('textarea');
-      ta.innerHTML = String(selectedSourceTitleRaw);
-      return ta.value;
-    } catch {
-      return String(selectedSourceTitleRaw);
-    }
-  }, [selectedSourceTitleRaw]);
+    return decodeAndStrip(String(selectedSourceTitleRaw));
+  }, [selectedSourceTitleRaw, decodeAndStrip]);
 
   const selectedSourceExcerpt: string | null = React.useMemo(() => {
     if (!selectedSourceExcerptRaw) return null;
-    try {
-      const ta = document.createElement('textarea');
-      ta.innerHTML = String(selectedSourceExcerptRaw);
-      return ta.value;
-    } catch {
-      return String(selectedSourceExcerptRaw);
-    }
-  }, [selectedSourceExcerptRaw]);
+    return decodeAndStrip(String(selectedSourceExcerptRaw));
+  }, [selectedSourceExcerptRaw, decodeAndStrip]);
+
+  const selectedSourceTags: string[] = React.useMemo(
+    () => (selectedSourceTagsRaw || []).map((t) => decodeAndStrip(String(t))).filter(Boolean),
+    [selectedSourceTagsRaw, decodeAndStrip]
+  );
+
+  const selectedSourcePublishedDate: string | null = React.useMemo(() => {
+    if (!selectedSourcePublishedAt) return null;
+    const d = new Date(selectedSourcePublishedAt);
+    if (Number.isNaN(d.getTime())) return String(selectedSourcePublishedAt);
+    // YYYY-MM-DD
+    return d.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  }, [selectedSourcePublishedAt]);
 
   const selectedSourceBodyRaw: string = selectedSource?.data?.body ?? selectedSource?.body ?? '';
   const selectedSourceBodyText: string = React.useMemo(() => {
@@ -109,6 +129,7 @@ export default function InstagramCarousel2Client() {
   const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
   const [showAdvancedPromptInput, setShowAdvancedPromptInput] = React.useState(false);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
 
   const swipeRef = React.useRef<HTMLDivElement | null>(null);
