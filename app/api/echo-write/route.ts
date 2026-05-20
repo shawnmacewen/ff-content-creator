@@ -66,8 +66,20 @@ function styleInstruction(style: EchoWriteBody['writingStyle']) {
   return 'Use polished professional tone, concise business language, and confident CTA.';
 }
 
-function lengthInstruction(length: EchoWriteBody['length'], targetWordCount?: number) {
+function lengthInstruction(
+  length: EchoWriteBody['length'],
+  targetWordCount?: number,
+  contentType?: EchoWriteBody['contentType'],
+) {
   if (targetWordCount && targetWordCount > 0) return `Target about ${targetWordCount} words.`;
+
+  // Video scripts should be short, speakable, and doable in one take.
+  if (contentType === 'video-script') {
+    if (length === 'short') return 'Target ~150-250 words (about 45-75 seconds spoken).';
+    if (length === 'long') return 'Target ~500-750 words (about 2.5-4 minutes spoken).';
+    return 'Target ~300-450 words (about 1.5-2.5 minutes spoken).';
+  }
+
   if (length === 'short') return 'Target 350-500 words.';
   if (length === 'long') return 'Target 1100-1500 words.';
   return 'Target 700-950 words.';
@@ -124,14 +136,15 @@ export async function POST(req: Request) {
 
     const contentTypeInstruction = body.contentType === 'video-script'
       ? [
-          'Write as a self-recorded advisor-to-camera video script.',
-          'Formatting requirements:',
-          '- Use clear sections with headings (e.g., Opening Hook, Segment 1, Segment 2, CTA).',
-          '- Put a blank line between paragraphs/sections (use double newlines).',
-          '- Use short paragraphs and occasional bullet lists for clarity.',
-          '- Include light speaking cadence notes in parentheses only when helpful (e.g., (pause), (smile)).',
-          '- Do NOT include visual effects direction, shot lists, or production notes.',
-          'End with a concise CTA.',
+          'Write a simple, self-recorded advisor-to-camera video script a person can deliver in ONE TAKE.',
+          'No beat-by-beat formatting.',
+          'Output requirements:',
+          '- Write as natural spoken dialogue (first person is OK).',
+          '- Avoid section headings like "Hook", "Beat 1", "Segment 2", etc.',
+          '- Use short, speakable paragraphs with double newlines between them.',
+          '- Optional: include a few light cadence cues in parentheses only when helpful (e.g., (pause), (smile)).',
+          '- Do NOT include shot lists, b-roll ideas, on-screen text callouts, camera directions, or production notes.',
+          '- End with a single concise CTA line.',
         ].join('\n')
       : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
 
@@ -139,14 +152,14 @@ export async function POST(req: Request) {
       `User intent: ${body.prompt}`,
       contentTypeInstruction,
       styleInstruction(body.writingStyle),
-      lengthInstruction(body.length, body.targetWordCount),
+      lengthInstruction(body.length, body.targetWordCount, body.contentType),
       'Formatting requirements (strict):',
       '- Write in clearly separated paragraphs.',
       '- Use a blank line between paragraphs and between sections (double newlines).',
       '- Do not output one giant block of text.',
       '- Use short paragraphs (2–4 sentences).',
       body.contentType === 'video-script'
-        ? '- Use a clear headline, then section headings, then short spoken paragraphs under each heading.'
+        ? '- For video scripts: do NOT use section headings or beat labels; just write the spoken script with short paragraphs.'
         : '- Write like a readable editorial article a human would actually read: natural headline, subheadings only where helpful (don’t over-fragment), and longer coherent paragraphs when needed.' ,
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
       'Return publication-ready output only.',
