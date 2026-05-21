@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 
 import { InstagramCarouselPanel } from '@/components/generator/instagram-carousel-panel';
 import { InstagramImageModal } from '@/components/generator/instagram-image-modal';
+import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -606,25 +608,48 @@ export default function GeneratePage() {
           {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
-              <InstagramCarouselPanel
-                enabled={true}
-                onEnabledChange={() => {}}
-                slideCount={instagramCarouselSlides}
-                onSlideCountChange={setInstagramCarouselSlides}
-                slides={instagramCarouselSlidesData ?? undefined}
-                theme={instagramCarouselTheme ?? undefined}
-                caption={instagramCarouselCaption}
-                onCaptionChange={setInstagramCarouselCaption}
-                onGenerate={handleGenerateInstagramCarousel}
-                onSample={handleSampleInstagramCarousel}
-                progress={carouselProgress}
-                isGenerating={isGeneratingCarouselImages}
-                canGenerate={!!selectedSourceIds.length}
-                promptLog={instagramCarouselPromptLog}
-                lastPrompt={instagramCarouselLastPrompt}
-                styleVariant={instagramCarouselStyle}
-                onStyleVariantChange={setInstagramCarouselStyle}
-              />
+
+              <Tabs defaultValue="carousel-2" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="carousel-2">Carousel 2.0</TabsTrigger>
+                  <TabsTrigger value="archive">Archive</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="carousel-2" className="mt-3">
+                  {selectedSourceIds.length !== 1 ? (
+                    <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                      Select exactly 1 source article to generate carousel images.
+                    </div>
+                  ) : (
+                    <InstagramCarousel2Client
+                      selectedSourceId={selectedSourceIds[0] || null}
+                      hideSourcePicker
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="archive" className="mt-3">
+                  <InstagramCarouselPanel
+                    enabled={true}
+                    onEnabledChange={() => {}}
+                    slideCount={instagramCarouselSlides}
+                    onSlideCountChange={setInstagramCarouselSlides}
+                    slides={instagramCarouselSlidesData ?? undefined}
+                    theme={instagramCarouselTheme ?? undefined}
+                    caption={instagramCarouselCaption}
+                    onCaptionChange={setInstagramCarouselCaption}
+                    onGenerate={handleGenerateInstagramCarousel}
+                    onSample={handleSampleInstagramCarousel}
+                    progress={carouselProgress}
+                    isGenerating={isGeneratingCarouselImages}
+                    canGenerate={!!selectedSourceIds.length}
+                    promptLog={instagramCarouselPromptLog}
+                    lastPrompt={instagramCarouselLastPrompt}
+                    styleVariant={instagramCarouselStyle}
+                    onStyleVariantChange={setInstagramCarouselStyle}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           ) : null}
         </div>
@@ -675,25 +700,48 @@ export default function GeneratePage() {
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
-              <InstagramCarouselPanel
-                enabled={true}
-                onEnabledChange={() => {}}
-                slideCount={instagramCarouselSlides}
-                onSlideCountChange={setInstagramCarouselSlides}
-                slides={instagramCarouselSlidesData ?? undefined}
-                theme={instagramCarouselTheme ?? undefined}
-                caption={instagramCarouselCaption}
-                onCaptionChange={setInstagramCarouselCaption}
-                onGenerate={handleGenerateInstagramCarousel}
-                onSample={handleSampleInstagramCarousel}
-                progress={carouselProgress}
-                isGenerating={isGeneratingCarouselImages}
-                canGenerate={!!selectedSourceIds.length}
-                promptLog={instagramCarouselPromptLog}
-                lastPrompt={instagramCarouselLastPrompt}
-                styleVariant={instagramCarouselStyle}
-                onStyleVariantChange={setInstagramCarouselStyle}
-              />
+
+              <Tabs defaultValue="carousel-2" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="carousel-2">Carousel 2.0</TabsTrigger>
+                  <TabsTrigger value="archive">Archive</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="carousel-2" className="mt-3">
+                  {selectedSourceIds.length !== 1 ? (
+                    <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                      Select exactly 1 source article to generate carousel images.
+                    </div>
+                  ) : (
+                    <InstagramCarousel2Client
+                      selectedSourceId={selectedSourceIds[0] || null}
+                      hideSourcePicker
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="archive" className="mt-3">
+                  <InstagramCarouselPanel
+                    enabled={true}
+                    onEnabledChange={() => {}}
+                    slideCount={instagramCarouselSlides}
+                    onSlideCountChange={setInstagramCarouselSlides}
+                    slides={instagramCarouselSlidesData ?? undefined}
+                    theme={instagramCarouselTheme ?? undefined}
+                    caption={instagramCarouselCaption}
+                    onCaptionChange={setInstagramCarouselCaption}
+                    onGenerate={handleGenerateInstagramCarousel}
+                    onSample={handleSampleInstagramCarousel}
+                    progress={carouselProgress}
+                    isGenerating={isGeneratingCarouselImages}
+                    canGenerate={!!selectedSourceIds.length}
+                    promptLog={instagramCarouselPromptLog}
+                    lastPrompt={instagramCarouselLastPrompt}
+                    styleVariant={instagramCarouselStyle}
+                    onStyleVariantChange={setInstagramCarouselStyle}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           ) : null}
 

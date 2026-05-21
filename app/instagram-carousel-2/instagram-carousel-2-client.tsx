@@ -32,11 +32,30 @@ type Slide = {
   imageUrl: string;
 };
 
-export default function InstagramCarousel2Client() {
+export default function InstagramCarousel2Client(props: {
+  /**
+   * When provided, the component becomes controlled for source selection.
+   * Used to embed Carousel 2.0 in other pages (e.g. Generate Content Kit).
+   */
+  selectedSourceId?: string | null;
+  onSelectedSourceIdChange?: (id: string | null) => void;
+  /** Hide the built-in source picker UI (assumes parent controls selection). */
+  hideSourcePicker?: boolean;
+}) {
   const [topic, setTopic] = React.useState<string>('.');
   const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
-  const [selectedSourceId, setSelectedSourceId] = React.useState<string | null>(null);
+
+  const isSourceControlled = typeof props.selectedSourceId !== 'undefined';
+  const [selectedSourceIdState, setSelectedSourceIdState] = React.useState<string | null>(props.selectedSourceId ?? null);
+  const selectedSourceId = isSourceControlled ? (props.selectedSourceId ?? null) : selectedSourceIdState;
+  const setSelectedSourceId = React.useCallback(
+    (id: string | null) => {
+      props.onSelectedSourceIdChange?.(id);
+      if (!isSourceControlled) setSelectedSourceIdState(id);
+    },
+    [props, isSourceControlled]
+  );
 
   const { data: selectedSource } = useSWR<any>(
     selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
@@ -527,7 +546,9 @@ export default function InstagramCarousel2Client() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
                 <div className="min-w-0">
-                  <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                  {props.hideSourcePicker ? null : (
+                    <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                  )}
                 </div>
 
                 <div className="space-y-3 min-w-0">
@@ -792,7 +813,9 @@ export default function InstagramCarousel2Client() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
                 <div className="min-w-0">
-                  <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                  {props.hideSourcePicker ? null : (
+                    <SourceArticlePicker selectedId={selectedSourceId} onSelect={setSelectedSourceId} />
+                  )}
                 </div>
 
                 <div className="space-y-3 min-w-0">
