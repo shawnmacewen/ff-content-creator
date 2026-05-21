@@ -43,6 +43,8 @@ export default function InstagramCarousel2Client(props: {
   hideSourcePicker?: boolean;
   /** Default tab when rendering the internal Tabs. */
   defaultTab?: 'carousel' | 'image-test';
+  /** Override the primary action button label (defaults to "Generate Carousel"). */
+  generateLabel?: string;
 }) {
   const [topic, setTopic] = React.useState<string>('.');
   const [slideCount, setSlideCount] = React.useState<number>(3);
@@ -731,7 +733,7 @@ export default function InstagramCarousel2Client(props: {
                         onClick={runCarouselGeneration}
                         disabled={isLoading || !topic.trim()}
                       >
-                        Generate Carousel
+                        {props.generateLabel ?? 'Generate Carousel'}
                       </Button>
 
                       <Button
@@ -993,7 +995,7 @@ export default function InstagramCarousel2Client(props: {
                         onClick={runCarouselGeneration}
                         disabled={isLoading || !topic.trim()}
                       >
-                        Generate Carousel
+                        {props.generateLabel ?? 'Generate Carousel'}
                       </Button>
 
                       <Button

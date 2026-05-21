@@ -630,6 +630,7 @@ export default function GeneratePage() {
                         selectedSourceId={selectedSourceIds[0] || null}
                         hideSourcePicker
                         defaultTab="carousel"
+                        generateLabel="Generate Images"
                       />
                     )}
                   </TabsContent>
@@ -745,6 +746,7 @@ export default function GeneratePage() {
                         selectedSourceId={selectedSourceIds[0] || null}
                         hideSourcePicker
                         defaultTab="carousel"
+                        generateLabel="Generate Images"
                       />
                     )}
                   </TabsContent>
