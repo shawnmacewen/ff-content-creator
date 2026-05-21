@@ -87,7 +87,11 @@ export default function GeneratePage() {
       setSelectedContentTypes(['article']);
     }
 
-    if (sourceIdsParam) setSelectedSourceIds(sourceIdsParam.split(',').filter(Boolean));
+    if (sourceIdsParam) {
+      const ids = sourceIdsParam.split(',').filter(Boolean);
+      // Generate page image generation expects a single selected source.
+      setSelectedSourceIds(ids.length ? [ids[0] as string] : []);
+    }
   }, [searchParams]);
 
   const toggleKitType = (t: ContentType) => {
@@ -625,6 +629,7 @@ export default function GeneratePage() {
                       <InstagramCarousel2Client
                         selectedSourceId={selectedSourceIds[0] || null}
                         hideSourcePicker
+                        defaultTab="carousel"
                       />
                     )}
                   </TabsContent>
@@ -739,6 +744,7 @@ export default function GeneratePage() {
                       <InstagramCarousel2Client
                         selectedSourceId={selectedSourceIds[0] || null}
                         hideSourcePicker
+                        defaultTab="carousel"
                       />
                     )}
                   </TabsContent>

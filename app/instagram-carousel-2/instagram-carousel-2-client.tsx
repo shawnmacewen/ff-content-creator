@@ -41,6 +41,8 @@ export default function InstagramCarousel2Client(props: {
   onSelectedSourceIdChange?: (id: string | null) => void;
   /** Hide the built-in source picker UI (assumes parent controls selection). */
   hideSourcePicker?: boolean;
+  /** Default tab when rendering the internal Tabs. */
+  defaultTab?: 'carousel' | 'image-test';
 }) {
   const [topic, setTopic] = React.useState<string>('.');
   const [slideCount, setSlideCount] = React.useState<number>(3);
@@ -528,7 +530,7 @@ export default function InstagramCarousel2Client(props: {
         <p className="text-muted-foreground">Fresh implementation area for next-gen carousel prompts + APIs.</p>
       </div>
 
-      <Tabs defaultValue="carousel" className="w-full">
+      <Tabs defaultValue={props.defaultTab || "carousel"} className="w-full">
         <TabsList className="grid w-full grid-cols-2 rounded-2xl">
           <TabsTrigger value="carousel" className="rounded-2xl">
             Carousel
