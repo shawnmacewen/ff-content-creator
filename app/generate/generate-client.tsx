@@ -553,8 +553,6 @@ export default function GeneratePage() {
                           }
 
                           const thumb =
-
-                          const thumb =
                             // Prefer LinkedIn URL from CMS metadata
                             meta?.SocialMediaPlatformImages?.LinkedIn ||
                             meta?.SocialMediaPlatformImages?.linkedIn ||
