@@ -51,7 +51,7 @@ export function ToneControls({
                 />
                 <Label
                   htmlFor={option.value}
-                  className="flex flex-col w-full cursor-pointer rounded-lg border border-border p-3 hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-colors"
+                  className="flex flex-col w-full cursor-pointer rounded-lg border border-border p-3 hover:bg-muted/50 peer-data-[state=checked]:border-violet-500/60 peer-data-[state=checked]:bg-violet-500/10 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-violet-500/20 transition-colors"
                 >
                   <span className="text-sm font-medium">{option.label}</span>
                   <span className="text-xs text-muted-foreground">{option.description}</span>
