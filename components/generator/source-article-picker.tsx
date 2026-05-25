@@ -135,7 +135,7 @@ export function SourceArticlePicker({
                     type="button"
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
-                      'relative w-full rounded-2xl border bg-background/60 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                      'relative w-full max-w-full overflow-hidden rounded-2xl border bg-background/60 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
                       selected && 'border-violet-500/60 ring-2 ring-violet-500/30 bg-violet-500/5'
                     )}
                   >

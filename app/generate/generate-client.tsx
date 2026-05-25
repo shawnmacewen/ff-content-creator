@@ -560,7 +560,7 @@ export default function GeneratePage() {
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
                     <div className="flex items-start gap-3">
-                      <div className="h-32 w-56 overflow-hidden rounded-xl bg-muted shrink-0">
+                      <div className="h-64 w-[28rem] overflow-hidden rounded-xl bg-muted shrink-0">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
@@ -821,7 +821,7 @@ export default function GeneratePage() {
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
                     <div className="flex items-start gap-3">
-                      <div className="h-32 w-56 overflow-hidden rounded-xl bg-muted shrink-0">
+                      <div className="h-64 w-[28rem] overflow-hidden rounded-xl bg-muted shrink-0">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
