@@ -166,7 +166,7 @@ export function ContentDetail({
       .map((s) => String(s || '').trim())
       .filter(Boolean)
       // Avoid highlighting tiny fragments.
-      .filter((s) => s.length >= 18);
+      .filter((s) => s.length >= 10);
 
     // Dedupe while preserving order.
     const seen = new Set<string>();
@@ -252,7 +252,7 @@ export function ContentDetail({
                         return (
                           <mark
                             key={i}
-                            className="rounded px-1 py-0.5 bg-yellow-400/25 text-foreground ring-1 ring-yellow-400/30"
+                            className="rounded px-1 py-0.5 bg-[#f3e8ff] dark:bg-purple-950/50 text-foreground ring-1 ring-violet-500/25"
                           >
                             {part.text}
                           </mark>
