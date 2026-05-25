@@ -49,11 +49,33 @@ export function SourceArticlePicker({
   const filtered = React.useMemo(() => {
     const items = data?.data ?? [];
     if (topic === 'All Topics') return items;
-    // best-effort filtering via tags/type/title
-    const needle = topic.toLowerCase();
+
+    const decodeLite = (s: string) =>
+      String(s || '')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'");
+
+    const topicNeedles: Record<Topic, string[]> = {
+      'All Topics': [],
+      Markets: ['markets', 'market', 'stocks', 'equities', 'bonds', 'fixed income'],
+      Economy: ['economy', 'economic', 'inflation', 'gdp', 'jobs', 'labor'],
+      Energy: ['energy', 'oil', 'crude', 'petroleum', 'gas', 'opec'],
+      'AI & Tech': ['ai', 'tech', 'technology', 'crypto', 'digital assets', 'blockchain'],
+      Banking: ['bank', 'banking', 'credit', 'lending', 'rates'],
+      Geopolitics: ['geopolitics', 'war', 'conflict', 'sanctions', 'election'],
+      ESG: ['esg', 'sustainable', 'sustainability', 'responsible', 'impact', 'investing'],
+    };
+
+    const needles = (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
+
     return items.filter((c) => {
-      const hay = `${c.type} ${c.title} ${(c.tags || []).join(' ')}`.toLowerCase();
-      return hay.includes(needle);
+      const tagText = (c.tags || []).map((t) => decodeLite(String(t))).join(' ');
+      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${tagText}`.toLowerCase();
+      return needles.some((n) => hay.includes(n));
     });
   }, [data, topic]);
 

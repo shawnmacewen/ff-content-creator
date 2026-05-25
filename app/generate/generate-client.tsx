@@ -666,7 +666,7 @@ export default function GeneratePage() {
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
                             <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
-                              {tag}
+                              {decodeEntitiesLite(String(tag))}
                             </Badge>
                           ))}
                         </div>
@@ -916,7 +916,7 @@ export default function GeneratePage() {
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
                             <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
-                              {tag}
+                              {decodeEntitiesLite(String(tag))}
                             </Badge>
                           ))}
                         </div>
