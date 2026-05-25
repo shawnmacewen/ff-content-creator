@@ -543,7 +543,7 @@ export default function GeneratePage() {
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2 items-stretch">
               <div>
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
@@ -817,7 +817,7 @@ export default function GeneratePage() {
 
           <div>
             <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2 items-stretch">
               <div>
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}

@@ -110,7 +110,7 @@ export function SourceArticlePicker({
       </CardHeader>
 
       <CardContent>
-        <ScrollArea className="h-[360px]">
+        <ScrollArea className="h-[520px]">
           {isLoading && (
             <div className="space-y-3 pr-4">
               {[1, 2, 3, 4].map((i) => (
