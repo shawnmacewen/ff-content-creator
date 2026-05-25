@@ -419,9 +419,8 @@ export default function GeneratePage() {
                   setIncludeInstagramCarouselImages((v) => !v);
                 }}
               />
-            </div>
-
-            {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+            
+              {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                 <Card className="mt-4 rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
@@ -527,8 +526,7 @@ export default function GeneratePage() {
                   </CardContent>
                 </Card>
               ) : null}
-
-
+            </div>
 
             <div>
               <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
