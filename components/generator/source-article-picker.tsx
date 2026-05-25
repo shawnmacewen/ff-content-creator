@@ -160,7 +160,7 @@ export function SourceArticlePicker({
                       selected && 'border-violet-500/60 ring-2 ring-violet-500/30 bg-violet-500/5'
                     )}
                   >
-                    <div className="flex gap-4">
+                    <div className="flex w-full min-w-0 gap-4">
                       <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
                         {(() => {
                           let meta: any = c?.metadata;
@@ -223,8 +223,8 @@ export function SourceArticlePicker({
                             <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{c.excerpt}</div>
                           </div>
 
-                          <div className="flex items-center gap-3">
-                            <div className="text-right text-[11px] text-muted-foreground">
+                          <div className="flex shrink-0 items-center gap-3">
+                            <div className="text-right text-[11px] text-muted-foreground whitespace-nowrap">
                               <div>{formatDate(c.publishedAt) || '—'}</div>
                               <div>{words ? `${words.toLocaleString()} words` : ''}</div>
                             </div>
