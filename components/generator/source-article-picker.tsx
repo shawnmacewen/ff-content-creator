@@ -219,8 +219,8 @@ export function SourceArticlePicker({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold">{c.title}</div>
-                            <div className="mt-1 line-clamp-1 text-xs text-muted-foreground">{c.excerpt}</div>
+                            <div className="text-sm font-semibold leading-snug line-clamp-2">{c.title}</div>
+                            <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{c.excerpt}</div>
                           </div>
 
                           <div className="flex shrink-0 items-center gap-3">
