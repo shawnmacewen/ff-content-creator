@@ -745,8 +745,6 @@ export default function GeneratePage() {
               <KitGeneratedOutput
                 selectedTypes={kitTypes}
                 outputs={kitOutputs}
-                isGenerating={isGeneratingKit}
-                onGenerate={handleGenerateKit}
               />
             </div>
 

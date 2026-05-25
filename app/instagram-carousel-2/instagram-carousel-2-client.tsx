@@ -616,8 +616,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Instagram Carousel 2.0</h1>
-        <p className="text-muted-foreground">Fresh implementation area for next-gen carousel prompts + APIs.</p>
+        {props.hideSettingsControls ? null : (
+          <>
+            <h1 className="text-2xl font-bold tracking-tight">Instagram Carousel 2.0</h1>
+            <p className="text-muted-foreground">Fresh implementation area for next-gen carousel prompts + APIs.</p>
+          </>
+        )}
       </div>
 
       <Tabs defaultValue={props.defaultTab || "carousel"} className="w-full">

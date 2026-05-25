@@ -4,8 +4,7 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { Sparkles } from 'lucide-react';
 import type { ContentType } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
@@ -41,21 +40,13 @@ export function KitGeneratedOutput({
   const content = activeOutput?.content || '';
   const hasAnyOutput = !!outputs?.some((o) => o.content && o.content.trim().length > 0);
 
-  const handleCopy = async () => {
-    if (!content) return;
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success('Copied');
-    } catch {
-      toast.error('Copy failed');
-    }
-  };
+
 
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">Generated Output (Preview)</CardTitle>
+          <CardTitle className="text-base">Generated Output</CardTitle>
           <div className="flex items-center gap-2">
             {onGenerate ? (
               <Button
@@ -67,10 +58,6 @@ export function KitGeneratedOutput({
                 {isGenerating ? 'Generating…' : 'Generate'}
               </Button>
             ) : null}
-            <Button variant="outline" size="sm" className="rounded-2xl gap-2" onClick={handleCopy} disabled={!content}>
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
           </div>
         </div>
       </CardHeader>
