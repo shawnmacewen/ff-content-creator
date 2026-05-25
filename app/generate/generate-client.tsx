@@ -315,46 +315,46 @@ export default function GeneratePage() {
 
       {mode === 'kit' ? (
         <div className="space-y-6">
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">1. Select KIT Content Types</h2>
-            <KitContentTypeSelector
-              selected={kitTypes}
-              onToggle={(t) => {
-                // Base selection (multi-select)
-                toggleKitType(t);
-              }}
-              instagramVariant={instagramKitVariant}
-              setInstagramVariant={(v) => setInstagramKitVariant(v)}
-              includeInstagramSingleImages={includeInstagramSingleImages}
-              includeInstagramCarouselImages={includeInstagramCarouselImages}
-              onToggleInstagramSingleImages={() => {
-                // selecting single deselects carousel
-                setInstagramKitVariant('single');
-                setIncludeInstagramCarouselImages(false);
-
-                // ensure instagram is in kit types
-                setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
-
-                setInstagramImageMode('single');
-                setIncludeInstagramImage(true);
-                setIncludeInstagramSingleImages((v) => !v);
-              }}
-              onToggleInstagramCarouselImages={() => {
-                // selecting carousel deselects single
-                setInstagramKitVariant('carousel');
-                setIncludeInstagramSingleImages(false);
-
-                // ensure instagram is in kit types
-                setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
-
-                setInstagramImageMode('carousel');
-                setIncludeInstagramImage(true);
-                setIncludeInstagramCarouselImages((v) => !v);
-              }}
-            />
-          </div>
-
           <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">1. Select KIT Content Types</h2>
+              <KitContentTypeSelector
+                selected={kitTypes}
+                onToggle={(t) => {
+                  // Base selection (multi-select)
+                  toggleKitType(t);
+                }}
+                instagramVariant={instagramKitVariant}
+                setInstagramVariant={(v) => setInstagramKitVariant(v)}
+                includeInstagramSingleImages={includeInstagramSingleImages}
+                includeInstagramCarouselImages={includeInstagramCarouselImages}
+                onToggleInstagramSingleImages={() => {
+                  // selecting single deselects carousel
+                  setInstagramKitVariant('single');
+                  setIncludeInstagramCarouselImages(false);
+
+                  // ensure instagram is in kit types
+                  setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+
+                  setInstagramImageMode('single');
+                  setIncludeInstagramImage(true);
+                  setIncludeInstagramSingleImages((v) => !v);
+                }}
+                onToggleInstagramCarouselImages={() => {
+                  // selecting carousel deselects single
+                  setInstagramKitVariant('carousel');
+                  setIncludeInstagramSingleImages(false);
+
+                  // ensure instagram is in kit types
+                  setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+
+                  setInstagramImageMode('carousel');
+                  setIncludeInstagramImage(true);
+                  setIncludeInstagramCarouselImages((v) => !v);
+                }}
+              />
+            </div>
+
             <div>
               <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
               <ToneControls
@@ -365,17 +365,15 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
-
-
             </div>
+          </div>
 
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
-              <SourceArticlePicker
-                selectedId={selectedSourceIds[0] ?? null}
-                onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-              />
-            </div>
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
+            <SourceArticlePicker
+              selectedId={selectedSourceIds[0] ?? null}
+              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+            />
           </div>
 
 
