@@ -14,6 +14,7 @@ import { GenerationModeToggle, type GenerationMode } from '@/components/generato
 import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
+import { Badge } from '@/components/ui/badge';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
@@ -26,6 +27,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+function decodeEntitiesLite(input: string): string {
+  const s = String(input || '');
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -45,12 +57,7 @@ export default function GeneratePage() {
   const normalizedBodyPreview = (() => {
     const raw = String(detailContent?.body || '');
     // Best-effort XML-ish normalization (mirrors ContentDetail behavior, but safe for this page).
-    const decoded = raw
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
+    const decoded = decodeEntitiesLite(raw);
 
     const text = decoded
       .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
@@ -612,7 +619,35 @@ export default function GeneratePage() {
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold">Selected Content</div>
                         <div className="text-sm font-medium truncate">
-                          {selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}
+                          {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
+                        </div>
+<div className="mt-1 flex flex-wrap items-center gap-2">
+                          {(() => {
+                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                            if (typeof meta === 'string') {
+                              try { meta = JSON.parse(meta); } catch { meta = null; }
+                            }
+                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
+                            const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
+                            if (!designation) return null;
+                            return (
+                              <Badge variant="outline" className="rounded-full text-[11px]">
+                                {String(designation)}
+                              </Badge>
+                            );
+                          })()}
+                          {(() => {
+                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                            if (typeof meta === 'string') {
+                              try { meta = JSON.parse(meta); } catch { meta = null; }
+                            }
+                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
+                            const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
+                            if (!fn) return null;
+                            return (
+                              <span className="text-[11px] text-muted-foreground">{String(fn)}</span>
+                            );
+                          })()}
                         </div>
                         {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
                           <div className="text-[11px] text-muted-foreground">
@@ -628,7 +663,16 @@ export default function GeneratePage() {
                       </div>
                     ) : null}
 
-                    <div className="rounded-xl border bg-background/60 p-3 max-h-[220px] overflow-auto">
+                    <div className="rounded-xl border bg-background/60 p-3 max-h-[320px] overflow-auto">
+                      {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {detailContent.tags.slice(0, 8).map((tag: string) => (
+                            <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
                       <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
                       <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
                     </div>
@@ -814,7 +858,35 @@ export default function GeneratePage() {
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold">Selected Content</div>
                         <div className="text-sm font-medium truncate">
-                          {selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}
+                          {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
+                        </div>
+<div className="mt-1 flex flex-wrap items-center gap-2">
+                          {(() => {
+                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                            if (typeof meta === 'string') {
+                              try { meta = JSON.parse(meta); } catch { meta = null; }
+                            }
+                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
+                            const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
+                            if (!designation) return null;
+                            return (
+                              <Badge variant="outline" className="rounded-full text-[11px]">
+                                {String(designation)}
+                              </Badge>
+                            );
+                          })()}
+                          {(() => {
+                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                            if (typeof meta === 'string') {
+                              try { meta = JSON.parse(meta); } catch { meta = null; }
+                            }
+                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
+                            const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
+                            if (!fn) return null;
+                            return (
+                              <span className="text-[11px] text-muted-foreground">{String(fn)}</span>
+                            );
+                          })()}
                         </div>
                         {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
                           <div className="text-[11px] text-muted-foreground">
@@ -830,7 +902,16 @@ export default function GeneratePage() {
                       </div>
                     ) : null}
 
-                    <div className="rounded-xl border bg-background/60 p-3 max-h-[220px] overflow-auto">
+                    <div className="rounded-xl border bg-background/60 p-3 max-h-[320px] overflow-auto">
+                      {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {detailContent.tags.slice(0, 8).map((tag: string) => (
+                            <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
                       <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
                       <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
                     </div>
