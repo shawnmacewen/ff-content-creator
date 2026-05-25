@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import type { SourceContent } from '@/lib/types/content';
 import { format } from 'date-fns';
 import { ExternalLink, User, Calendar, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const designationToneClasses = [
   'bg-blue-500/12 text-blue-200 border-blue-500/30',
@@ -34,6 +34,35 @@ function designationToneClass(value?: string | null) {
   return designationToneClasses[hash % designationToneClasses.length];
 }
 
+function decodeEntitiesBrowser(input: string): string {
+  const raw = String(input || '');
+  try {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = raw;
+    return ta.value;
+  } catch {
+    return raw;
+  }
+}
+
+function normalizeXmlToTextBrowser(input: string): string {
+  const decoded = decodeEntitiesBrowser(String(input || ''));
+  return decoded
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+    // Strip any remaining tags.
+    .replace(/<[^>]+>/g, ' ')
+    // Collapse whitespace.
+    .replace(/\r/g, '')
+    .replace(/\t/g, ' ')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 interface ContentDetailProps {
   content: SourceContent | null;
   open: boolean;
@@ -51,8 +80,22 @@ export function ContentDetail({
 
   if (!content) return null;
 
+  const displayBodyText = useMemo(() => {
+    const raw = String(content.body || '');
+    // Many sources store body as XML (sometimes entity-encoded XML).
+    // Normalize it into readable text for display.
+    return normalizeXmlToTextBrowser(raw);
+  }, [content.body]);
+
+  const paragraphs = useMemo(() => {
+    return displayBodyText
+      .split(/\n\n+/g)
+      .map((p) => p.trim())
+      .filter(Boolean);
+  }, [displayBodyText]);
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content.body);
+    await navigator.clipboard.writeText(displayBodyText || '');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -111,7 +154,7 @@ export function ContentDetail({
           <div className="lg:col-span-2 min-h-0">
             <ScrollArea className="h-full pr-4">
               <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
-                {content.body.split('\n\n').map((paragraph, index) => (
+                {paragraphs.map((paragraph, index) => (
                   <p key={index} className="text-sm text-foreground/90 mb-4">
                     {paragraph}
                   </p>
@@ -140,7 +183,7 @@ export function ContentDetail({
                   <div className="text-xs font-semibold mb-2">Extra Properties (variable)</div>
                   <div className="space-y-1">
                     {Object.entries(content.metadata?.extraProperties || {}).length ? (
-                      Object.entries(content.metadata.extraProperties as Record<string, any>).map(([k, v]) => (
+                      Object.entries((content.metadata?.extraProperties || {}) as Record<string, any>).map(([k, v]) => (
                         <div key={k} className="break-words">
                           <span className="text-muted-foreground">{k}:</span> {String(v ?? '') || 'n/a'}
                         </div>
