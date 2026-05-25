@@ -82,9 +82,7 @@ export function SourceArticlePicker({
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
       <CardHeader className="pb-4">
-        <div>
-          <CardTitle className="text-base">Select Content</CardTitle>
-        </div>
+
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
