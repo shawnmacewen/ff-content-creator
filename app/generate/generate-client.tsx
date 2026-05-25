@@ -55,6 +55,7 @@ export default function GeneratePage() {
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram']);
   const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
+  const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
 
   const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
   const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
@@ -80,6 +81,32 @@ export default function GeneratePage() {
       setSelectedSourceIds(ids.length ? [ids[0] as string] : []);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    // If a KIT run requested carousel generation but the Carousel 2.0 component
+    // wasn't mounted yet, trigger it once it becomes available.
+    if (!pendingKitCarouselGenerate) return;
+
+    const shouldRun = kitTypes.includes('social-instagram') &&
+      instagramKitVariant === 'carousel' &&
+      includeInstagramCarouselImages;
+
+    if (!shouldRun) {
+      setPendingKitCarouselGenerate(false);
+      return;
+    }
+
+    const handle = kitCarousel2Ref.current;
+    if (!handle) return;
+
+    (async () => {
+      try {
+        await handle.generate();
+      } finally {
+        setPendingKitCarouselGenerate(false);
+      }
+    })();
+  }, [pendingKitCarouselGenerate, kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
   const toggleKitType = (t: ContentType) => {
     setKitTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
@@ -124,8 +151,13 @@ export default function GeneratePage() {
       setKitOutputs(outputs);
 
       // If KIT includes Instagram multipost images, generate carousel images too.
+      // Note: Section 5 may not be mounted/visible yet (ref can be null), so we support a pending trigger.
       if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
-        await kitCarousel2Ref.current?.generate();
+        if (kitCarousel2Ref.current) {
+          await kitCarousel2Ref.current.generate();
+        } else {
+          setPendingKitCarouselGenerate(true);
+        }
       }
 
       toast.success('KIT generated');
