@@ -34,7 +34,7 @@ export function ToneControls({
 
   return (
     <Card className="bg-card border-border">
-      <CardContent className="space-y-6 pt-6">
+      <CardContent className="space-y-6 pt-3">
         <div className="space-y-3">
           <Label className="text-sm font-medium">Tone</Label>
           <RadioGroup
