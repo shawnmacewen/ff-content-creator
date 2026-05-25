@@ -564,10 +564,21 @@ export default function GeneratePage() {
                             }
                           }
 
+                          const fromExtraPropertiesArray = (key: string): string | undefined => {
+                            const arr = meta?.raw?.extra_properties;
+                            if (!Array.isArray(arr)) return undefined;
+                            const hit = arr.find((x: any) => String(x?.key || '') === key);
+                            const v = hit?.stringValue ?? hit?.value ?? hit?.string_value;
+                            return typeof v === 'string' ? v : undefined;
+                          };
+
+                          const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+
                           const thumb =
                             // Prefer LinkedIn URL from CMS metadata
+                            extraMap?.['SocialMediaPlatformImages.LinkedIn'] ||
                             meta?.['SocialMediaPlatformImages.LinkedIn'] ||
-                            meta?.['SocialMediaPlatformImages.linkedin'] ||
+                            fromExtraPropertiesArray('SocialMediaPlatformImages.LinkedIn') ||
                             meta?.SocialMediaPlatformImages?.LinkedIn ||
                             meta?.SocialMediaPlatformImages?.linkedIn ||
                             meta?.SocialMediaPlatformImages?.linkedin ||
@@ -575,8 +586,9 @@ export default function GeneratePage() {
                             meta?.socialMediaPlatformImages?.linkedIn ||
                             meta?.socialMediaPlatformImages?.linkedin ||
                             // Fallbacks
+                            extraMap?.['SocialMediaPlatformImages.Thumbnail'] ||
                             meta?.['SocialMediaPlatformImages.Thumbnail'] ||
-                            meta?.['SocialMediaPlatformImages.thumbnail'] ||
+                            fromExtraPropertiesArray('SocialMediaPlatformImages.Thumbnail') ||
                             meta?.SocialMediaPlatformImages?.Thumbnail ||
                             meta?.SocialMediaPlatformImages?.thumbnail ||
                             meta?.socialMediaPlatformImages?.Thumbnail ||
