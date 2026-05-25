@@ -77,7 +77,7 @@ export default function GeneratePage() {
       .trim();
 
     if (!text) return '';
-    return text.length > 1000 ? text.slice(0, 1000).trimEnd() + '…' : text;
+    return text;
   })();
   const [mode, setMode] = useState<GenerationMode>('kit');
 
