@@ -100,7 +100,7 @@ export default function EchoWritePage() {
 
     // EchoWrite evidence: collect snippet strings already computed client-side.
     const snippets = spans
-      .filter((s) => s.sourceId === id && s.snippet)
+      .filter((s) => String(s.sourceId || '') === String(id) && s.snippet)
       .map((s) => String(s.snippet || ''));
     setDetailHighlightSnippets(snippets);
 
