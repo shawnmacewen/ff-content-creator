@@ -49,6 +49,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   defaultTab?: 'carousel' | 'image-test';
   /** Override the primary action button label (defaults to "Generate Carousel"). */
   generateLabel?: string;
+  /** Notify parent when internal loading state changes (useful when triggering via ref). */
+  onLoadingChange?: (loading: boolean) => void;
 }>(function InstagramCarousel2ClientInner(props, ref) {
   const [topic, setTopic] = React.useState<string>('.');
   const [slideCount, setSlideCount] = React.useState<number>(3);
@@ -180,6 +182,10 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   });
 
   const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    props.onLoadingChange?.(isLoading);
+  }, [isLoading, props]);
   const [error, setError] = React.useState<string | null>(null);
 
   const systemSuffix = 'from the lens of a financial advisor.';

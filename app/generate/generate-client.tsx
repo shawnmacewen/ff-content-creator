@@ -56,6 +56,7 @@ export default function GeneratePage() {
   const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
+  const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
 
   const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
   const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
@@ -127,8 +128,22 @@ export default function GeneratePage() {
     setIsGeneratingKit(true);
     setKitOutputs(null);
 
+    const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
+      instagramKitVariant === 'carousel' &&
+      includeInstagramCarouselImages;
+
+    // Start carousel generation in parallel (if possible).
+    let carouselPromise: Promise<void> | null = null;
+    if (shouldGenerateCarousel) {
+      if (kitCarousel2Ref.current) {
+        carouselPromise = kitCarousel2Ref.current.generate();
+      } else {
+        setPendingKitCarouselGenerate(true);
+      }
+    }
+
     try {
-      const response = await fetch('/api/generate', {
+      const kitPromise = fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -142,23 +157,14 @@ export default function GeneratePage() {
           tone,
           additionalContext,
         }),
+      }).then(async (response) => {
+        if (!response.ok) throw new Error('KIT generation failed');
+        const payload = await response.json().catch(() => ({}));
+        const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
+        setKitOutputs(outputs);
       });
 
-      if (!response.ok) throw new Error('KIT generation failed');
-
-      const payload = await response.json().catch(() => ({}));
-      const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
-      setKitOutputs(outputs);
-
-      // If KIT includes Instagram multipost images, generate carousel images too.
-      // Note: Section 5 may not be mounted/visible yet (ref can be null), so we support a pending trigger.
-      if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
-        if (kitCarousel2Ref.current) {
-          await kitCarousel2Ref.current.generate();
-        } else {
-          setPendingKitCarouselGenerate(true);
-        }
-      }
+      await Promise.allSettled([kitPromise, carouselPromise].filter(Boolean) as Promise<any>[]);
 
       toast.success('KIT generated');
     } catch (err) {
@@ -167,7 +173,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramImage, instagramImageMode, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramImage, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -298,7 +304,7 @@ export default function GeneratePage() {
           <Button
             className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
             onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
-            disabled={mode === 'single' ? isGenerating : isGeneratingKit}
+            disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
           >
             Generate
           </Button>
@@ -399,6 +405,7 @@ export default function GeneratePage() {
                   hideSourcePicker
                   defaultTab="carousel"
                   generateLabel="Generate Images"
+                  onLoadingChange={setIsGeneratingKitCarouselImages}
                 />
               )}
             </div>
