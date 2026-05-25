@@ -553,14 +553,22 @@ export default function GeneratePage() {
                           }
 
                           const thumb =
+
+                          const thumb =
+                            // Prefer LinkedIn URL from CMS metadata
+                            meta?.SocialMediaPlatformImages?.LinkedIn ||
+                            meta?.SocialMediaPlatformImages?.linkedIn ||
+                            meta?.SocialMediaPlatformImages?.linkedin ||
+                            meta?.socialMediaPlatformImages?.LinkedIn ||
+                            meta?.socialMediaPlatformImages?.linkedIn ||
+                            meta?.socialMediaPlatformImages?.linkedin ||
+                            // Fallbacks
                             meta?.SocialMediaPlatformImages?.Thumbnail ||
                             meta?.SocialMediaPlatformImages?.thumbnail ||
                             meta?.socialMediaPlatformImages?.Thumbnail ||
                             meta?.socialMediaPlatformImages?.thumbnail ||
                             selectedSource?.data?.imageUrl ||
-                            selectedSource?.imageUrl ||
-                            // TEMP default thumbnail for testing
-                            'https://www.broadridgeadvisor.com/images/SocialMediaImages/Twitter/100825CA_TW.jpg';
+                            selectedSource?.imageUrl;
 
                           if (!thumb) return null;
                           // eslint-disable-next-line @next/next/no-img-element

@@ -152,6 +152,15 @@ export function SourceArticlePicker({
                           }
 
                           const thumb =
+                            // Prefer LinkedIn URL from CMS metadata (full external URL)
+                            (meta?.SocialMediaPlatformImages?.LinkedIn as string | undefined) ||
+                            (meta?.SocialMediaPlatformImages?.linkedIn as string | undefined) ||
+                            (meta?.SocialMediaPlatformImages?.linkedin as string | undefined) ||
+                            (meta?.SocialMediaPlatformImages?.LINKEDIN as string | undefined) ||
+                            (meta?.socialMediaPlatformImages?.LinkedIn as string | undefined) ||
+                            (meta?.socialMediaPlatformImages?.linkedIn as string | undefined) ||
+                            (meta?.socialMediaPlatformImages?.linkedin as string | undefined) ||
+                            // Fallbacks
                             (meta?.SocialMediaPlatformImages?.Thumbnail as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.thumbnail as string | undefined) ||
                             (meta?.socialMediaPlatformImages?.Thumbnail as string | undefined) ||
