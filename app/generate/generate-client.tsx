@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
@@ -18,6 +19,9 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollText } from 'lucide-react';
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -57,6 +61,15 @@ export default function GeneratePage() {
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
+
+  // Carousel 2.0 settings (KIT multipost)
+  const [kitCarouselSlideCount, setKitCarouselSlideCount] = useState<number>(3);
+  const [kitCarouselModel, setKitCarouselModel] = useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [kitCarouselCohesionMethod, setKitCarouselCohesionMethod] = useState<'prompt' | 'image-ref'>('image-ref');
+  const [kitCarouselImageRefMode, setKitCarouselImageRefMode] = useState<'previous' | 'first'>('previous');
+  const [kitCarouselMoreSeamlessBackground, setKitCarouselMoreSeamlessBackground] = useState<boolean>(true);
+  const [kitCarouselAdvanced, setKitCarouselAdvanced] = useState<boolean>(false);
+  const [kitCarouselPrompt, setKitCarouselPrompt] = useState<string>('.');
 
   const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
   const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
@@ -365,6 +378,113 @@ export default function GeneratePage() {
                 additionalContext={additionalContext}
                 onAdditionalContextChange={setAdditionalContext}
               />
+
+              {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+                <Card className="mt-4 rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="text-base">Instagram Carousel</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="text-sm">
+                        <div className="text-xs text-muted-foreground mb-1">Slides</div>
+                        <select
+                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          value={kitCarouselSlideCount}
+                          onChange={(e) => setKitCarouselSlideCount(Number(e.target.value) || 3)}
+                        >
+                          <option value={3}>3</option>
+                          <option value={6}>6</option>
+                          <option value={9}>9</option>
+                        </select>
+                      </label>
+
+                      <label className="text-sm">
+                        <div className="text-xs text-muted-foreground mb-1">Model</div>
+                        <select
+                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          value={kitCarouselModel}
+                          onChange={(e) => setKitCarouselModel(e.target.value as any)}
+                        >
+                          <option value="gpt-image-2">gpt-image-2</option>
+                          <option value="gpt-image-1">gpt-image-1</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="text-sm">
+                        <div className="text-xs text-muted-foreground mb-1">Cohesion</div>
+                        <select
+                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          value={kitCarouselCohesionMethod}
+                          onChange={(e) => setKitCarouselCohesionMethod(e.target.value as any)}
+                        >
+                          <option value="prompt">Prompt Based</option>
+                          <option value="image-ref">Image Reference</option>
+                        </select>
+                      </label>
+
+                      <label className="text-sm">
+                        <div className="text-xs text-muted-foreground mb-1">Image Ref Mode</div>
+                        <select
+                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          value={kitCarouselImageRefMode}
+                          onChange={(e) => setKitCarouselImageRefMode(e.target.value as any)}
+                          disabled={kitCarouselCohesionMethod !== 'image-ref'}
+                        >
+                          <option value="previous">Previous</option>
+                          <option value="first">First</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={kitCarouselMoreSeamlessBackground}
+                          onChange={(e) => setKitCarouselMoreSeamlessBackground(e.target.checked)}
+                        />
+                        More Seamless background
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant={kitCarouselAdvanced ? 'default' : 'outline'}
+                          className="rounded-2xl"
+                          onClick={() => setKitCarouselAdvanced((v) => !v)}
+                        >
+                          Advanced
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 rounded-2xl"
+                          onClick={() => kitCarousel2Ref.current?.openPromptLog()}
+                          title="View generation prompt log"
+                        >
+                          <ScrollText className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {kitCarouselAdvanced ? (
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-muted-foreground">Carousel prompt (optional add-on)</div>
+                        <textarea
+                          className="w-full min-h-[84px] rounded-xl border bg-background px-3 py-2 text-sm"
+                          value={kitCarouselPrompt}
+                          onChange={(e) => setKitCarouselPrompt(e.target.value)}
+                        />
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           </div>
 
@@ -401,9 +521,24 @@ export default function GeneratePage() {
                   ref={kitCarousel2Ref}
                   selectedSourceId={selectedSourceIds[0] || null}
                   hideSourcePicker
+                  hideSettingsControls
                   defaultTab="carousel"
                   generateLabel="Generate Images"
                   onLoadingChange={setIsGeneratingKitCarouselImages}
+                  slideCount={kitCarouselSlideCount}
+                  onSlideCountChange={setKitCarouselSlideCount}
+                  model={kitCarouselModel}
+                  onModelChange={setKitCarouselModel}
+                  cohesionMethod={kitCarouselCohesionMethod}
+                  onCohesionMethodChange={setKitCarouselCohesionMethod}
+                  imageRefMode={kitCarouselImageRefMode}
+                  onImageRefModeChange={setKitCarouselImageRefMode}
+                  moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
+                  onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
+                  showAdvancedPromptInput={kitCarouselAdvanced}
+                  onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
+                  topic={kitCarouselPrompt}
+                  onTopicChange={setKitCarouselPrompt}
                 />
               )}
             </div>

@@ -34,7 +34,21 @@ type Slide = {
 
 export type InstagramCarousel2ClientHandle = {
   generate: () => Promise<void>;
+  openPromptLog: () => void;
 };
+
+function useControlledState<T>(controlled: T | undefined, defaultValue: T) {
+  const [uncontrolled, setUncontrolled] = React.useState<T>(defaultValue);
+  const isControlled = typeof controlled !== 'undefined';
+  const value = isControlled ? (controlled as T) : uncontrolled;
+  const setValue = React.useCallback(
+    (next: T) => {
+      if (!isControlled) setUncontrolled(next);
+    },
+    [isControlled]
+  );
+  return [value, setValue] as const;
+}
 
 const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle, {
   /**
@@ -51,10 +65,46 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   generateLabel?: string;
   /** Notify parent when internal loading state changes (useful when triggering via ref). */
   onLoadingChange?: (loading: boolean) => void;
+
+  // Controlled settings (used when embedding in Generate page)
+  slideCount?: number;
+  onSlideCountChange?: (n: number) => void;
+  model?: 'gpt-image-2' | 'gpt-image-1';
+  onModelChange?: (m: 'gpt-image-2' | 'gpt-image-1') => void;
+  cohesionMethod?: 'prompt' | 'image-ref';
+  onCohesionMethodChange?: (m: 'prompt' | 'image-ref') => void;
+  imageRefMode?: 'previous' | 'first';
+  onImageRefModeChange?: (m: 'previous' | 'first') => void;
+  moreSeamlessBackground?: boolean;
+  onMoreSeamlessBackgroundChange?: (v: boolean) => void;
+  showAdvancedPromptInput?: boolean;
+  onShowAdvancedPromptInputChange?: (v: boolean) => void;
+  topic?: string;
+  onTopicChange?: (t: string) => void;
+
+  /** Hide the settings controls UI (used when controls are rendered by parent). */
+  hideSettingsControls?: boolean;
 }>(function InstagramCarousel2ClientInner(props, ref) {
-  const [topic, setTopic] = React.useState<string>('.');
-  const [slideCount, setSlideCount] = React.useState<number>(3);
-  const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [topicLocal, setTopicLocal] = useControlledState<string>(props.topic, '.');
+  const topic = props.topic ?? topicLocal;
+  const setTopic = React.useCallback((t: string) => {
+    props.onTopicChange?.(t);
+    setTopicLocal(t);
+  }, [props, setTopicLocal]);
+
+  const [slideCountLocal, setSlideCountLocal] = useControlledState<number>(props.slideCount, 3);
+  const slideCount = typeof props.slideCount === 'number' ? props.slideCount : slideCountLocal;
+  const setSlideCount = React.useCallback((n: number) => {
+    props.onSlideCountChange?.(n);
+    setSlideCountLocal(n);
+  }, [props, setSlideCountLocal]);
+
+  const [modelLocal, setModelLocal] = useControlledState<'gpt-image-2' | 'gpt-image-1'>(props.model, 'gpt-image-2');
+  const model = props.model ?? modelLocal;
+  const setModel = React.useCallback((m: 'gpt-image-2' | 'gpt-image-1') => {
+    props.onModelChange?.(m);
+    setModelLocal(m);
+  }, [props, setModelLocal]);
 
   const isSourceControlled = typeof props.selectedSourceId !== 'undefined';
   const [selectedSourceIdState, setSelectedSourceIdState] = React.useState<string | null>(props.selectedSourceId ?? null);
@@ -160,9 +210,26 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     // 4) Collapse whitespace.
     return noXmlHeader.replace(/\s+/g, ' ').trim();
   }, [selectedSourceBodyRaw]);
-  const [cohesionMethod, setCohesionMethod] = React.useState<'prompt' | 'image-ref'>('image-ref');
-  const [imageRefMode, setImageRefMode] = React.useState<'previous' | 'first'>('previous');
-  const [moreSeamlessBackground, setMoreSeamlessBackground] = React.useState(true);
+  const [cohesionMethodLocal, setCohesionMethodLocal] = useControlledState<'prompt' | 'image-ref'>(props.cohesionMethod, 'image-ref');
+  const cohesionMethod = props.cohesionMethod ?? cohesionMethodLocal;
+  const setCohesionMethod = React.useCallback((m: 'prompt' | 'image-ref') => {
+    props.onCohesionMethodChange?.(m);
+    setCohesionMethodLocal(m);
+  }, [props, setCohesionMethodLocal]);
+
+  const [imageRefModeLocal, setImageRefModeLocal] = useControlledState<'previous' | 'first'>(props.imageRefMode, 'previous');
+  const imageRefMode = props.imageRefMode ?? imageRefModeLocal;
+  const setImageRefMode = React.useCallback((m: 'previous' | 'first') => {
+    props.onImageRefModeChange?.(m);
+    setImageRefModeLocal(m);
+  }, [props, setImageRefModeLocal]);
+
+  const [moreSeamlessBackgroundLocal, setMoreSeamlessBackgroundLocal] = useControlledState<boolean>(props.moreSeamlessBackground, true);
+  const moreSeamlessBackground = typeof props.moreSeamlessBackground === 'boolean' ? props.moreSeamlessBackground : moreSeamlessBackgroundLocal;
+  const setMoreSeamlessBackground = React.useCallback((v: boolean) => {
+    props.onMoreSeamlessBackgroundChange?.(v);
+    setMoreSeamlessBackgroundLocal(v);
+  }, [props, setMoreSeamlessBackgroundLocal]);
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
@@ -170,7 +237,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
-  const [showAdvancedPromptInput, setShowAdvancedPromptInput] = React.useState(false);
+  const [showAdvancedPromptInputLocal, setShowAdvancedPromptInputLocal] = useControlledState<boolean>(props.showAdvancedPromptInput, false);
+  const showAdvancedPromptInput = typeof props.showAdvancedPromptInput === 'boolean' ? props.showAdvancedPromptInput : showAdvancedPromptInputLocal;
+  const setShowAdvancedPromptInput = React.useCallback((v: boolean) => {
+    props.onShowAdvancedPromptInputChange?.(v);
+    setShowAdvancedPromptInputLocal(v);
+  }, [props, setShowAdvancedPromptInputLocal]);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
 
@@ -510,6 +582,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
   React.useImperativeHandle(ref, () => ({
     generate: runCarouselGeneration,
+    openPromptLog: () => setPromptModalOpen(true),
   }));
 
   const enabledSlideCounts = new Set([3, 6, 9]);
@@ -559,9 +632,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
+            {props.hideSettingsControls ? null : (
             <CardHeader>
               <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
+            )}
+            {props.hideSettingsControls ? null : (
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
                 <div className="min-w-0">
@@ -755,7 +831,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                         type="button"
                         variant={showAdvancedPromptInput ? 'default' : 'outline'}
                         className="rounded-2xl"
-                        onClick={() => setShowAdvancedPromptInput((v) => !v)}
+                        onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
                         Advanced
@@ -804,6 +880,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                 </div>
               </div>
             </CardContent>
+            )}
           </Card>
 
           {masterplates.length ? (
@@ -826,9 +903,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
         <TabsContent value="carousel" className="mt-4 space-y-4">
           <Card className="rounded-2xl">
+            {props.hideSettingsControls ? null : (
             <CardHeader>
               <CardTitle className="text-base">Generation Settings</CardTitle>
             </CardHeader>
+            )}
+            {props.hideSettingsControls ? null : (
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 min-w-0">
                 <div className="min-w-0">
@@ -1017,7 +1097,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                         type="button"
                         variant={showAdvancedPromptInput ? 'default' : 'outline'}
                         className="rounded-2xl"
-                        onClick={() => setShowAdvancedPromptInput((v) => !v)}
+                        onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
                         Advanced
@@ -1066,6 +1146,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                 </div>
               </div>
             </CardContent>
+            )}
           </Card>
 
           {slides.length ? (
