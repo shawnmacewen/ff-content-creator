@@ -35,6 +35,8 @@ type Slide = {
 export type InstagramCarousel2ClientHandle = {
   generate: () => Promise<void>;
   openPromptLog: () => void;
+  scrollToSlides: () => void;
+  scrollToMasterplates: () => void;
 };
 
 function useControlledState<T>(controlled: T | undefined, defaultValue: T) {
@@ -237,6 +239,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptLog, setPromptLog] = React.useState<string>('');
   const [promptModalOpen, setPromptModalOpen] = React.useState(false);
+
+  const slidesSectionRef = React.useRef<HTMLDivElement | null>(null);
+  const masterplatesSectionRef = React.useRef<HTMLDivElement | null>(null);
   const [showAdvancedPromptInputLocal, setShowAdvancedPromptInputLocal] = useControlledState<boolean>(props.showAdvancedPromptInput, false);
   const showAdvancedPromptInput = typeof props.showAdvancedPromptInput === 'boolean' ? props.showAdvancedPromptInput : showAdvancedPromptInputLocal;
   const setShowAdvancedPromptInput = React.useCallback((v: boolean) => {
@@ -583,6 +588,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   React.useImperativeHandle(ref, () => ({
     generate: runCarouselGeneration,
     openPromptLog: () => setPromptModalOpen(true),
+    scrollToSlides: () => slidesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    scrollToMasterplates: () => masterplatesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
   }));
 
   const enabledSlideCounts = new Set([3, 6, 9]);
@@ -889,6 +896,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
           {masterplates.length ? (
             <Card className="rounded-2xl">
+              <div ref={masterplatesSectionRef} />
               <CardHeader>
                 <CardTitle className="text-base">Masterplates</CardTitle>
               </CardHeader>
@@ -1155,6 +1163,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
           {slides.length ? (
             <Card className="rounded-2xl">
+              <div ref={slidesSectionRef} />
               <CardHeader className="space-y-2">
                 <CardTitle className="text-base">Carousel slides</CardTitle>
 

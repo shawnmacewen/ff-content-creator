@@ -13,6 +13,7 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
+
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { Badge } from '@/components/ui/badge';
 import { generateId } from '@/lib/storage/local-storage';
@@ -81,7 +82,7 @@ export default function GeneratePage() {
   })();
   const [mode, setMode] = useState<GenerationMode>('kit');
 
-  const [kitOutputTab, setKitOutputTab] = useState<'carousel' | 'kit'>('kit');
+  const [kitOutputTab, setKitOutputTab] = useState<'carousel' | 'masterplate' | ContentType | 'all'>('all');
 
   // SINGLE state
   const [selectedContentTypes, setSelectedContentTypes] = useState<ContentType[]>(['social-instagram']);
@@ -186,11 +187,13 @@ export default function GeneratePage() {
 
 
   useEffect(() => {
-    // Keep Instagram Carousel tab first and default-active when selected.
+    // Default output tab behavior:
+    // - If Instagram multipost images are enabled, start on Carousel.
+    // - Otherwise start on the last tab: All.
     if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
       setKitOutputTab('carousel');
     } else {
-      setKitOutputTab('kit');
+      setKitOutputTab('all');
     }
   }, [kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
@@ -724,7 +727,10 @@ export default function GeneratePage() {
                 {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                   <button
                     type="button"
-                    onClick={() => setKitOutputTab('carousel')}
+                    onClick={() => {
+                      setKitOutputTab('carousel');
+                      setTimeout(() => kitCarousel2Ref.current?.scrollToSlides(), 0);
+                    }}
                     className={cn(
                       'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === 'carousel'
@@ -736,29 +742,56 @@ export default function GeneratePage() {
                   </button>
                 ) : null}
 
+                {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKitOutputTab('masterplate');
+                      setTimeout(() => kitCarousel2Ref.current?.scrollToMasterplates(), 0);
+                    }}
+                    className={cn(
+                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                      kitOutputTab === 'masterplate'
+                        ? 'border-violet-500/60 bg-violet-500/10'
+                        : 'bg-background/60 hover:bg-background'
+                    )}
+                  >
+                    Masterplate
+                  </button>
+                ) : null}
+
+                {kitTypes.filter((t) => t !== 'social-instagram').map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setKitOutputTab(t)}
+                    className={cn(
+                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                      kitOutputTab === t
+                        ? 'border-violet-500/60 bg-violet-500/10'
+                        : 'bg-background/60 hover:bg-background'
+                    )}
+                  >
+                    {CONTENT_TYPE_MAP[t]?.label ?? t}
+                  </button>
+                ))}
+
                 <button
                   type="button"
-                  onClick={() => setKitOutputTab('kit')}
+                  onClick={() => setKitOutputTab('all')}
                   className={cn(
                     'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
-                    kitOutputTab === 'kit'
+                    kitOutputTab === 'all'
                       ? 'border-violet-500/60 bg-violet-500/10'
                       : 'bg-background/60 hover:bg-background'
                   )}
                 >
-                  Kit Content
+                  All
                 </button>
               </div>
             </div>
 
-            {/* Keep both mounted; switching tabs must not clear */}
-            <div className={cn('mt-3', kitOutputTab !== 'kit' && 'hidden')}>
-              <KitGeneratedOutput
-                selectedTypes={kitTypes}
-                outputs={kitOutputs}
-              />
-            </div>
-
+            {/* Keep all mounted; switching tabs must not clear */}
             <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
               {selectedSourceIds.length !== 1 ? (
                 <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
@@ -789,6 +822,47 @@ export default function GeneratePage() {
                   onTopicChange={setKitCarouselPrompt}
                 />
               )}
+            </div>
+
+            <div className={cn('mt-3', (kitOutputTab !== 'carousel' && kitOutputTab !== 'masterplate') && 'hidden')}>
+              {selectedSourceIds.length !== 1 ? (
+                <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                  Select exactly 1 source article to generate carousel images.
+                </div>
+              ) : (
+                <InstagramCarousel2Client
+                  ref={kitCarousel2Ref}
+                  selectedSourceId={selectedSourceIds[0] || null}
+                  hideSourcePicker
+                  hideSettingsControls
+                  defaultTab="carousel"
+                  generateLabel="Generate Images"
+                  onLoadingChange={setIsGeneratingKitCarouselImages}
+                  slideCount={kitCarouselSlideCount}
+                  onSlideCountChange={setKitCarouselSlideCount}
+                  model={kitCarouselModel}
+                  onModelChange={setKitCarouselModel}
+                  cohesionMethod={kitCarouselCohesionMethod}
+                  onCohesionMethodChange={setKitCarouselCohesionMethod}
+                  imageRefMode={kitCarouselImageRefMode}
+                  onImageRefModeChange={setKitCarouselImageRefMode}
+                  moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
+                  onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
+                  showAdvancedPromptInput={kitCarouselAdvanced}
+                  onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
+                  topic={kitCarouselPrompt}
+                  onTopicChange={setKitCarouselPrompt}
+                />
+              )}
+            </div>
+
+            <div className={cn('mt-3', (kitOutputTab === 'carousel' || kitOutputTab === 'masterplate') && 'hidden')}>
+              <KitGeneratedOutput
+                selectedTypes={kitTypes.filter((t) => t !== 'social-instagram')}
+                outputs={kitOutputs}
+                activeType={kitOutputTab === 'all' ? 'all' : (kitOutputTab as any)}
+                showTabs={false}
+              />
             </div>
           </div>
         </div>
