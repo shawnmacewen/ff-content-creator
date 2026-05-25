@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
@@ -68,6 +69,8 @@ export default function GeneratePage() {
     return text.length > 1000 ? text.slice(0, 1000).trimEnd() + '…' : text;
   })();
   const [mode, setMode] = useState<GenerationMode>('kit');
+
+  const [kitOutputTab, setKitOutputTab] = useState<'carousel' | 'kit'>('kit');
 
   // SINGLE state
   const [selectedContentTypes, setSelectedContentTypes] = useState<ContentType[]>(['social-instagram']);
@@ -170,6 +173,15 @@ export default function GeneratePage() {
     setSelectedContentTypes([t]);
   };
 
+
+  useEffect(() => {
+    // Keep Instagram Carousel tab first and default-active when selected.
+    if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
+      setKitOutputTab('carousel');
+    } else {
+      setKitOutputTab('kit');
+    }
+  }, [kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
   const handleGenerateKit = useCallback(async () => {
     if (!kitTypes.length) {
@@ -620,18 +632,50 @@ export default function GeneratePage() {
 
 <div>
             <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
-            <KitGeneratedOutput
-              selectedTypes={kitTypes}
-              outputs={kitOutputs}
-              isGenerating={isGeneratingKit}
-              onGenerate={handleGenerateKit}
-            />
-          </div>
 
-          {/* Instagram carousel image preview (KIT) */}
-          {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
+            <div className="rounded-2xl border bg-card p-3 shadow-sm">
+              <div className="flex flex-wrap gap-2">
+                {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+                  <button
+                    type="button"
+                    onClick={() => setKitOutputTab('carousel')}
+                    className={cn(
+                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                      kitOutputTab === 'carousel'
+                        ? 'border-violet-500/60 bg-violet-500/10'
+                        : 'bg-background/60 hover:bg-background'
+                    )}
+                  >
+                    Instagram Carousel
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => setKitOutputTab('kit')}
+                  className={cn(
+                    'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                    kitOutputTab === 'kit'
+                      ? 'border-violet-500/60 bg-violet-500/10'
+                      : 'bg-background/60 hover:bg-background'
+                  )}
+                >
+                  Kit Content
+                </button>
+              </div>
+            </div>
+
+            {/* Keep both mounted; switching tabs must not clear */}
+            <div className={cn('mt-3', kitOutputTab !== 'kit' && 'hidden')}>
+              <KitGeneratedOutput
+                selectedTypes={kitTypes}
+                outputs={kitOutputs}
+                isGenerating={isGeneratingKit}
+                onGenerate={handleGenerateKit}
+              />
+            </div>
+
+            <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
               {selectedSourceIds.length !== 1 ? (
                 <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
                   Select exactly 1 source article to generate carousel images.
@@ -662,7 +706,7 @@ export default function GeneratePage() {
                 />
               )}
             </div>
-          ) : null}
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
