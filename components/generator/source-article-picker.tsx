@@ -175,7 +175,14 @@ export function SourceArticlePicker({
 
                           if (!thumb) return null;
                           // eslint-disable-next-line @next/next/no-img-element
-                          return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                          return (
+                            <img
+                              src={String(thumb).trim()}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          );
                         })()}
                       </div>
 
