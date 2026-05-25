@@ -263,8 +263,21 @@ export function ContentDetail({
         <Separator className="my-3" />
 
         {highlightSnippetsClean.length ? (
-          <div className="text-xs text-muted-foreground">
-            Highlights: {highlightSnippetsClean.length} snippet{highlightSnippetsClean.length === 1 ? '' : 's'}
+          <div className="rounded-xl border bg-muted/10 p-3">
+            <div className="text-xs font-semibold text-foreground">Used in this output</div>
+            <div className="mt-2 space-y-2">
+              {highlightSnippetsClean.slice(0, 3).map((s, i) => (
+                <div
+                  key={i}
+                  className="text-xs leading-relaxed rounded px-2 py-1 bg-[#f3e8ff] dark:bg-purple-950/50 text-foreground ring-1 ring-violet-500/25"
+                >
+                  “{s}”
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-[11px] text-muted-foreground">
+              Note: this is best-effort evidence from EchoWrite’s client-side matching; it may be paraphrased.
+            </div>
           </div>
         ) : null}
 
@@ -273,20 +286,9 @@ export function ContentDetail({
             <ScrollArea className="h-full pr-4">
               <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
                 {paragraphs.map((paragraph, index) => {
-                  const parts = highlightText(paragraph, highlightSnippetsClean);
                   return (
                     <p key={index} className="text-sm text-foreground/90 mb-4">
-                      {parts.map((part, i) => {
-                        if (typeof part === 'string') return <span key={i}>{part}</span>;
-                        return (
-                          <mark
-                            key={i}
-                            className="rounded px-1 py-0.5 bg-[#f3e8ff] dark:bg-purple-950/50 text-foreground ring-1 ring-violet-500/25"
-                          >
-                            {part.text}
-                          </mark>
-                        );
-                      })}
+                      {paragraph}
                     </p>
                   );
                 })}
