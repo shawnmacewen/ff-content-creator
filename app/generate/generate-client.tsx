@@ -373,16 +373,7 @@ export default function GeneratePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="rounded-2xl" onClick={() => router.push('/library')} variant="outline">
-            Saved Drafts
-          </Button>
-          <Button
-            className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-            onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
-            disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
-          >
-            Generate
-          </Button>
+          {/* actions moved below Section 3 */}
         </div>
       </div>
 
@@ -699,6 +690,19 @@ export default function GeneratePage() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button className="rounded-2xl" onClick={() => router.push('/library')} variant="outline">
+              Saved Drafts
+            </Button>
+            <Button
+              className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+              onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
+              disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
+            >
+              Generate
+            </Button>
           </div>
 
 <div>
