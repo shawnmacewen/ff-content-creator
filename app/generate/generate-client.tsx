@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
@@ -17,7 +17,7 @@ import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
+import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 
 export default function GeneratePage() {
   const searchParams = useSearchParams();
@@ -55,6 +55,9 @@ export default function GeneratePage() {
   const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram']);
   const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
+
+  const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
+  const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
 
   // Parse URL params
   useEffect(() => {
@@ -120,6 +123,11 @@ export default function GeneratePage() {
       const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
       setKitOutputs(outputs);
 
+      // If KIT includes Instagram + images are enabled in carousel mode, generate carousel images too.
+      if (includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram')) {
+        await kitCarousel2Ref.current?.generate();
+      }
+
       toast.success('KIT generated');
     } catch (err) {
       console.error('KIT generation error:', err);
@@ -127,7 +135,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramImage, instagramImageMode, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -257,8 +265,8 @@ export default function GeneratePage() {
           </Button>
           <Button
             className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-            onClick={mode === 'single' ? handleGenerate : undefined}
-            disabled={mode === 'single' ? isGenerating : false}
+            onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
+            disabled={mode === 'single' ? isGenerating : isGeneratingKit}
           >
             Generate
           </Button>
@@ -354,6 +362,7 @@ export default function GeneratePage() {
                 </div>
               ) : (
                 <InstagramCarousel2Client
+                  ref={kitCarousel2Ref}
                   selectedSourceId={selectedSourceIds[0] || null}
                   hideSourcePicker
                   defaultTab="carousel"
@@ -412,6 +421,7 @@ export default function GeneratePage() {
                 </div>
               ) : (
                 <InstagramCarousel2Client
+                  ref={singleCarousel2Ref}
                   selectedSourceId={selectedSourceIds[0] || null}
                   hideSourcePicker
                   defaultTab="carousel"

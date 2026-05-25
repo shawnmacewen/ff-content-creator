@@ -32,7 +32,11 @@ type Slide = {
   imageUrl: string;
 };
 
-export default function InstagramCarousel2Client(props: {
+export type InstagramCarousel2ClientHandle = {
+  generate: () => Promise<void>;
+};
+
+const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle, {
   /**
    * When provided, the component becomes controlled for source selection.
    * Used to embed Carousel 2.0 in other pages (e.g. Generate Content Kit).
@@ -45,7 +49,7 @@ export default function InstagramCarousel2Client(props: {
   defaultTab?: 'carousel' | 'image-test';
   /** Override the primary action button label (defaults to "Generate Carousel"). */
   generateLabel?: string;
-}) {
+}>(function InstagramCarousel2ClientInner(props, ref) {
   const [topic, setTopic] = React.useState<string>('.');
   const [slideCount, setSlideCount] = React.useState<number>(3);
   const [model, setModel] = React.useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
@@ -366,6 +370,7 @@ export default function InstagramCarousel2Client(props: {
   };
 
   const runCarouselGeneration = async () => {
+
     // eslint-disable-next-line no-console
     console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, topic });
 
@@ -496,6 +501,10 @@ export default function InstagramCarousel2Client(props: {
       setIsLoading(false);
     }
   };
+
+  React.useImperativeHandle(ref, () => ({
+    generate: runCarouselGeneration,
+  }));
 
   const enabledSlideCounts = new Set([3, 6, 9]);
 
@@ -1172,4 +1181,8 @@ export default function InstagramCarousel2Client(props: {
       </Tabs>
     </div>
   );
-}
+});
+
+InstagramCarousel2Client.displayName = 'InstagramCarousel2Client';
+
+export default InstagramCarousel2Client;
