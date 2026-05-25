@@ -368,8 +368,8 @@ export default function GeneratePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Generate Social Content</h1>
-            <p className="text-muted-foreground">Transform your articles into engaging social media content.</p>
+            <h1 className="text-2xl font-bold tracking-tight">Generate Campaign Content</h1>
+            <p className="text-muted-foreground">Turn one source article into a coordinated content kit across channels.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -421,18 +421,7 @@ export default function GeneratePage() {
               />
             </div>
 
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
-              <ToneControls
-                tone={tone}
-                onToneChange={setTone}
-                customPrompt={customPrompt}
-                onCustomPromptChange={setCustomPrompt}
-                additionalContext={additionalContext}
-                onAdditionalContextChange={setAdditionalContext}
-              />
-
-              {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+            {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                 <Card className="mt-4 rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
@@ -538,6 +527,20 @@ export default function GeneratePage() {
                   </CardContent>
                 </Card>
               ) : null}
+
+
+
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
+              <ToneControls
+                tone={tone}
+                onToneChange={setTone}
+                customPrompt={customPrompt}
+                onCustomPromptChange={setCustomPrompt}
+                additionalContext={additionalContext}
+                onAdditionalContextChange={setAdditionalContext}
+              />
+
             </div>
           </div>
 

@@ -61,8 +61,7 @@ export function SourceArticlePicker({
     <Card className="rounded-2xl border bg-card shadow-sm">
       <CardHeader className="pb-4">
         <div>
-          <CardTitle className="text-base">Select a Source Article</CardTitle>
-          <div className="mt-1 text-sm text-muted-foreground">Choose an article to generate content from.</div>
+          <CardTitle className="text-base">Select Content</CardTitle>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
