@@ -69,12 +69,35 @@ function escapeRegex(s: string) {
 
 function buildLooseSnippetRegex(snippet: string) {
   const cleaned = String(snippet || '')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    // strip wrapping quotes that often appear in snippets
+    .replace(/^['"“”]+/, '')
+    .replace(/['"“”]+$/, '');
+
   if (!cleaned) return null;
 
-  // Replace spaces with a whitespace wildcard so we can match across formatting differences.
-  const pattern = escapeRegex(cleaned).replace(/\s+/g, '\\s+');
+  // Build a regex that is tolerant to whitespace, quote variants, and dash variants.
+  let pattern = '';
+  for (const ch of cleaned) {
+    if (/\s/.test(ch)) {
+      pattern += '\\s+';
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      pattern += "[\\\"'“”‘’]";
+      continue;
+    }
+    if (ch === '-') {
+      pattern += '[-–—]';
+      continue;
+    }
+    pattern += escapeRegex(ch);
+  }
+
   try {
     return new RegExp(pattern, 'gi');
   } catch {
