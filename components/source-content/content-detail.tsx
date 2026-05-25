@@ -63,11 +63,79 @@ function normalizeXmlToTextBrowser(input: string): string {
     .trim();
 }
 
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildLooseSnippetRegex(snippet: string) {
+  const cleaned = String(snippet || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return null;
+
+  // Replace spaces with a whitespace wildcard so we can match across formatting differences.
+  const pattern = escapeRegex(cleaned).replace(/\s+/g, '\\s+');
+  try {
+    return new RegExp(pattern, 'gi');
+  } catch {
+    return null;
+  }
+}
+
+function highlightText(text: string, snippets: string[]): Array<string | { __highlight: true; text: string }> {
+  const input = String(text || '');
+  if (!snippets?.length) return [input];
+
+  const regs = snippets
+    .map((s) => buildLooseSnippetRegex(s))
+    .filter(Boolean) as RegExp[];
+  if (!regs.length) return [input];
+
+  const ranges: Array<{ start: number; end: number }> = [];
+  for (const r of regs) {
+    // Reset lastIndex just in case.
+    r.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = r.exec(input))) {
+      if (!m[0]) break;
+      ranges.push({ start: m.index, end: m.index + m[0].length });
+      // Avoid infinite loops on zero-length matches.
+      if (m.index === r.lastIndex) r.lastIndex += 1;
+    }
+  }
+
+  if (!ranges.length) return [input];
+
+  // Merge overlapping ranges.
+  ranges.sort((a, b) => a.start - b.start);
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const rr of ranges) {
+    const last = merged[merged.length - 1];
+    if (!last || rr.start > last.end) merged.push({ ...rr });
+    else last.end = Math.max(last.end, rr.end);
+  }
+
+  const out: Array<string | { __highlight: true; text: string }> = [];
+  let cursor = 0;
+  for (const rr of merged) {
+    if (rr.start > cursor) out.push(input.slice(cursor, rr.start));
+    out.push({ __highlight: true, text: input.slice(rr.start, rr.end) });
+    cursor = rr.end;
+  }
+  if (cursor < input.length) out.push(input.slice(cursor));
+  return out;
+}
+
 interface ContentDetailProps {
   content: SourceContent | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUseForGeneration?: (content: SourceContent) => void;
+  /**
+   * Optional snippet strings to highlight inside the displayed body.
+   * Intended for EchoWrite “Used in this output” evidence.
+   */
+  highlightSnippets?: string[];
 }
 
 export function ContentDetail({
@@ -75,6 +143,7 @@ export function ContentDetail({
   open,
   onOpenChange,
   onUseForGeneration,
+  highlightSnippets,
 }: ContentDetailProps) {
   const [copied, setCopied] = useState(false);
 
@@ -91,6 +160,26 @@ export function ContentDetail({
       .map((p) => p.trim())
       .filter(Boolean);
   }, [displayBodyText]);
+
+  const highlightSnippetsClean = useMemo(() => {
+    const list = (highlightSnippets || [])
+      .map((s) => String(s || '').trim())
+      .filter(Boolean)
+      // Avoid highlighting tiny fragments.
+      .filter((s) => s.length >= 18);
+
+    // Dedupe while preserving order.
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of list) {
+      const key = s.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+      if (out.length >= 20) break; // cap for perf
+    }
+    return out;
+  }, [highlightSnippets]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(displayBodyText || '');
@@ -154,11 +243,24 @@ export function ContentDetail({
           <div className="lg:col-span-2 min-h-0">
             <ScrollArea className="h-full pr-4">
               <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
-                {paragraphs.map((paragraph, index) => (
-                  <p key={index} className="text-sm text-foreground/90 mb-4">
-                    {paragraph}
-                  </p>
-                ))}
+                {paragraphs.map((paragraph, index) => {
+                  const parts = highlightText(paragraph, highlightSnippetsClean);
+                  return (
+                    <p key={index} className="text-sm text-foreground/90 mb-4">
+                      {parts.map((part, i) => {
+                        if (typeof part === 'string') return <span key={i}>{part}</span>;
+                        return (
+                          <mark
+                            key={i}
+                            className="rounded px-1 py-0.5 bg-yellow-400/25 text-foreground ring-1 ring-yellow-400/30"
+                          >
+                            {part.text}
+                          </mark>
+                        );
+                      })}
+                    </p>
+                  );
+                })}
               </div>
             </ScrollArea>
           </div>

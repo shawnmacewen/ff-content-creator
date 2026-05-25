@@ -41,6 +41,7 @@ export default function EchoWritePage() {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
+  const [detailHighlightSnippets, setDetailHighlightSnippets] = useState<string[]>([]);
 
   const { spans, citationMap } = useMemo(() => {
     return buildAttribution(content, sources);
@@ -96,6 +97,13 @@ export default function EchoWritePage() {
     const json = await res.json();
     // /api/source-content/[id] returns the content object directly (not wrapped).
     setDetailContent(json || null);
+
+    // EchoWrite evidence: collect snippet strings already computed client-side.
+    const snippets = spans
+      .filter((s) => s.sourceId === id && s.snippet)
+      .map((s) => String(s.snippet || ''));
+    setDetailHighlightSnippets(snippets);
+
     setDetailOpen(true);
   };
 
@@ -352,6 +360,7 @@ Separately (client-side), we:
         content={detailContent}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        highlightSnippets={detailHighlightSnippets}
       />
     </div>
   );
