@@ -421,7 +421,7 @@ export default function GeneratePage() {
               />
             
               {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                <Card className="mt-4 rounded-2xl">
+                <Card className="mt-6 rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
                   </CardHeader>
