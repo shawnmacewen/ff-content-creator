@@ -123,8 +123,8 @@ export default function GeneratePage() {
       const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
       setKitOutputs(outputs);
 
-      // If KIT includes Instagram + images are enabled in carousel mode, generate carousel images too.
-      if (includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram')) {
+      // If KIT includes Instagram multipost images, generate carousel images too.
+      if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
         await kitCarousel2Ref.current?.generate();
       }
 
@@ -135,7 +135,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramImage, instagramImageMode, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramImage, instagramImageMode, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -353,7 +353,7 @@ export default function GeneratePage() {
           </div>
 
           {/* Instagram carousel image preview (KIT) */}
-          {includeInstagramImage && instagramImageMode === 'carousel' && kitTypes.includes('social-instagram') ? (
+          {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
             <div>
               <h2 className="mb-3 text-lg font-semibold">5. Instagram Carousel Images</h2>
               {selectedSourceIds.length !== 1 ? (
