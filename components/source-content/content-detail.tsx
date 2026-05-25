@@ -78,14 +78,12 @@ export function ContentDetail({
 }: ContentDetailProps) {
   const [copied, setCopied] = useState(false);
 
-  if (!content) return null;
-
   const displayBodyText = useMemo(() => {
-    const raw = String(content.body || '');
+    const raw = String(content?.body || '');
     // Many sources store body as XML (sometimes entity-encoded XML).
     // Normalize it into readable text for display.
     return normalizeXmlToTextBrowser(raw);
-  }, [content.body]);
+  }, [content?.body]);
 
   const paragraphs = useMemo(() => {
     return displayBodyText
@@ -99,6 +97,8 @@ export function ContentDetail({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!content) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
