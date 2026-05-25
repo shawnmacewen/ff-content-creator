@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useSWR from 'swr';
+import { ContentDetail } from '@/components/source-content/content-detail';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
@@ -23,11 +24,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollText } from 'lucide-react';
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+
+  const selectedSourceId = selectedSourceIds[0] ?? null;
+  const { data: selectedSource } = useSWR<any>(
+    selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
+    fetcher
+  );
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const detailContent = selectedSource?.data ?? selectedSource ?? null;
   const [mode, setMode] = useState<GenerationMode>('kit');
 
   // SINGLE state
@@ -228,7 +240,7 @@ export default function GeneratePage() {
         if (includeInstagramImage) {
           const txt = String(payload?.content || '');
           if (/Image URL:/i.test(txt)) setImageStatus('Instagram image generated');
-          else if (/Image generation status: failed/i.test(txt)) setImageStatus('Instagram image failed (see output section)');
+          else if (/Image generation status: failed/i.test(txt)) setImageStatus('Instagram image failed — see output section');
           else setImageStatus('Instagram image status unknown');
         }
       } else {
@@ -489,16 +501,46 @@ export default function GeneratePage() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
-            <SourceArticlePicker
-              selectedId={selectedSourceIds[0] ?? null}
-              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-            />
+            <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <SourceArticlePicker
+                  selectedId={selectedSourceIds[0] ?? null}
+                  onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+                />
+              </div>
+
+              <div className="rounded-2xl border bg-card p-4">
+                {selectedSource ? (
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold">Selected Content</div>
+                    <div className="text-sm">{selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}</div>
+                    {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
+                      <div className="text-xs text-muted-foreground line-clamp-3">
+                        {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
+                      </div>
+                    ) : null}
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-2xl"
+                        onClick={() => setDetailOpen(true)}
+                        disabled={!selectedSourceId}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Select a source article to preview it here.</div>
+                )}
+              </div>
+            </div>
           </div>
 
-
-
-          <div>
+<div>
             <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
             <KitGeneratedOutput
               selectedTypes={kitTypes}
@@ -577,12 +619,45 @@ export default function GeneratePage() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">3. Source Content</h2>
-            <SourceArticlePicker
-              selectedId={selectedSourceIds[0] ?? null}
-              onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-            />
+            <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <SourceArticlePicker
+                  selectedId={selectedSourceIds[0] ?? null}
+                  onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
+                />
+              </div>
+
+              <div className="rounded-2xl border bg-card p-4">
+                {selectedSource ? (
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold">Selected Content</div>
+                    <div className="text-sm">{selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}</div>
+                    {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
+                      <div className="text-xs text-muted-foreground line-clamp-3">
+                        {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
+                      </div>
+                    ) : null}
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-2xl"
+                        onClick={() => setDetailOpen(true)}
+                        disabled={!selectedSourceId}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Select a source article to preview it here.</div>
+                )}
+              </div>
+            </div>
           </div>
+
 
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div>
@@ -623,6 +698,11 @@ export default function GeneratePage() {
         </div>
       )}
 
+      <ContentDetail
+        content={detailContent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }
