@@ -68,7 +68,11 @@ export default function GeneratePage() {
       .replace(/<[^>]+>/g, ' ')
       .replace(/\r/g, '')
       .replace(/\t/g, ' ')
+      // collapse runs of spaces
       .replace(/[ ]{2,}/g, ' ')
+      // trim spaces around newlines and collapse blank lines
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n[ \t]+/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
