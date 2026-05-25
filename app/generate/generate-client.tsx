@@ -566,6 +566,8 @@ export default function GeneratePage() {
 
                           const thumb =
                             // Prefer LinkedIn URL from CMS metadata
+                            meta?.['SocialMediaPlatformImages.LinkedIn'] ||
+                            meta?.['SocialMediaPlatformImages.linkedin'] ||
                             meta?.SocialMediaPlatformImages?.LinkedIn ||
                             meta?.SocialMediaPlatformImages?.linkedIn ||
                             meta?.SocialMediaPlatformImages?.linkedin ||
@@ -573,6 +575,8 @@ export default function GeneratePage() {
                             meta?.socialMediaPlatformImages?.linkedIn ||
                             meta?.socialMediaPlatformImages?.linkedin ||
                             // Fallbacks
+                            meta?.['SocialMediaPlatformImages.Thumbnail'] ||
+                            meta?.['SocialMediaPlatformImages.thumbnail'] ||
                             meta?.SocialMediaPlatformImages?.Thumbnail ||
                             meta?.SocialMediaPlatformImages?.thumbnail ||
                             meta?.socialMediaPlatformImages?.Thumbnail ||

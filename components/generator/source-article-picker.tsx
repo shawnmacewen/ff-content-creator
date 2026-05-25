@@ -153,6 +153,10 @@ export function SourceArticlePicker({
 
                           const thumb =
                             // Prefer LinkedIn URL from CMS metadata (full external URL)
+                            // Some rows store metadata as flat keys like "SocialMediaPlatformImages.LinkedIn".
+                            (meta?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+                            (meta?.['SocialMediaPlatformImages.linkedin'] as string | undefined) ||
+                            (meta?.['SocialMediaPlatformImages.LinkedIn'.toLowerCase()] as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.LinkedIn as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.linkedIn as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.linkedin as string | undefined) ||
@@ -161,6 +165,8 @@ export function SourceArticlePicker({
                             (meta?.socialMediaPlatformImages?.linkedIn as string | undefined) ||
                             (meta?.socialMediaPlatformImages?.linkedin as string | undefined) ||
                             // Fallbacks
+                            (meta?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+                            (meta?.['SocialMediaPlatformImages.thumbnail'] as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.Thumbnail as string | undefined) ||
                             (meta?.SocialMediaPlatformImages?.thumbnail as string | undefined) ||
                             (meta?.socialMediaPlatformImages?.Thumbnail as string | undefined) ||
