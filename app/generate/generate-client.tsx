@@ -40,6 +40,33 @@ export default function GeneratePage() {
   const [detailOpen, setDetailOpen] = useState(false);
 
   const detailContent = selectedSource?.data ?? selectedSource ?? null;
+
+  const normalizedBodyPreview = (() => {
+    const raw = String(detailContent?.body || '');
+    // Best-effort XML-ish normalization (mirrors ContentDetail behavior, but safe for this page).
+    const decoded = raw
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    const text = decoded
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+      .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+      .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+      .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+      .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/\t/g, ' ')
+      .replace(/[ ]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    if (!text) return '';
+    return text.length > 1000 ? text.slice(0, 1000).trimEnd() + '…' : text;
+  })();
   const [mode, setMode] = useState<GenerationMode>('kit');
 
   // SINGLE state
@@ -510,16 +537,61 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-2xl border bg-card p-4">
+              <div className="rounded-2xl border bg-card p-4 min-w-0">
                 {selectedSource ? (
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold">Selected Content</div>
-                    <div className="text-sm">{selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}</div>
+                  <div className="space-y-3 min-w-0">
+                    <div className="flex items-start gap-3">
+                      <div className="h-16 w-28 overflow-hidden rounded-xl bg-muted shrink-0">
+                        {(() => {
+                          let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                          if (typeof meta === 'string') {
+                            try {
+                              meta = JSON.parse(meta);
+                            } catch {
+                              meta = null;
+                            }
+                          }
+
+                          const thumb =
+                            meta?.SocialMediaPlatformImages?.Thumbnail ||
+                            meta?.SocialMediaPlatformImages?.thumbnail ||
+                            meta?.socialMediaPlatformImages?.Thumbnail ||
+                            meta?.socialMediaPlatformImages?.thumbnail ||
+                            selectedSource?.data?.imageUrl ||
+                            selectedSource?.imageUrl ||
+                            // TEMP default thumbnail for testing
+                            'https://www.broadridgeadvisor.com/images/SocialMediaImages/Twitter/100825CA_TW.jpg';
+
+                          if (!thumb) return null;
+                          // eslint-disable-next-line @next/next/no-img-element
+                          return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                        })()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold">Selected Content</div>
+                        <div className="text-sm font-medium truncate">
+                          {selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}
+                        </div>
+                        {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
+                          <div className="text-[11px] text-muted-foreground">
+                            {String(selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt).split('T')[0]}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
                     {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
                       <div className="text-xs text-muted-foreground line-clamp-3">
                         {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
                       </div>
                     ) : null}
+
+                    <div className="rounded-xl border bg-background/60 p-3 max-h-[220px] overflow-auto">
+                      <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
+                      <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
+                    </div>
+
                     <div>
                       <Button
                         type="button"
@@ -628,16 +700,61 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-2xl border bg-card p-4">
+              <div className="rounded-2xl border bg-card p-4 min-w-0">
                 {selectedSource ? (
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold">Selected Content</div>
-                    <div className="text-sm">{selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}</div>
+                  <div className="space-y-3 min-w-0">
+                    <div className="flex items-start gap-3">
+                      <div className="h-16 w-28 overflow-hidden rounded-xl bg-muted shrink-0">
+                        {(() => {
+                          let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
+                          if (typeof meta === 'string') {
+                            try {
+                              meta = JSON.parse(meta);
+                            } catch {
+                              meta = null;
+                            }
+                          }
+
+                          const thumb =
+                            meta?.SocialMediaPlatformImages?.Thumbnail ||
+                            meta?.SocialMediaPlatformImages?.thumbnail ||
+                            meta?.socialMediaPlatformImages?.Thumbnail ||
+                            meta?.socialMediaPlatformImages?.thumbnail ||
+                            selectedSource?.data?.imageUrl ||
+                            selectedSource?.imageUrl ||
+                            // TEMP default thumbnail for testing
+                            'https://www.broadridgeadvisor.com/images/SocialMediaImages/Twitter/100825CA_TW.jpg';
+
+                          if (!thumb) return null;
+                          // eslint-disable-next-line @next/next/no-img-element
+                          return <img src={thumb} alt="" className="h-full w-full object-cover" />;
+                        })()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold">Selected Content</div>
+                        <div className="text-sm font-medium truncate">
+                          {selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'}
+                        </div>
+                        {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
+                          <div className="text-[11px] text-muted-foreground">
+                            {String(selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt).split('T')[0]}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
                     {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
                       <div className="text-xs text-muted-foreground line-clamp-3">
                         {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
                       </div>
                     ) : null}
+
+                    <div className="rounded-xl border bg-background/60 p-3 max-h-[220px] overflow-auto">
+                      <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
+                      <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
+                    </div>
+
                     <div>
                       <Button
                         type="button"
