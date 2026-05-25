@@ -31,5 +31,7 @@ export async function GET(
     imageUrl: data.metadata?.imageUrl || null,
     sourceSystem: data.source_system || null,
     publisher: data.publisher || (data.source_system === 'sample-seed' ? 'sample' : null),
+    // Needed for client-side thumbnail extraction and content preview rendering.
+    metadata: data.metadata || null,
   });
 }
