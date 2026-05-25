@@ -110,9 +110,9 @@ export function SourceArticlePicker({
       </CardHeader>
 
       <CardContent>
-        <ScrollArea className="h-[520px]">
+        <ScrollArea className="h-[520px] pb-2">
           {isLoading && (
-            <div className="space-y-3 pr-4">
+            <div className="space-y-3 pr-4 pb-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />
               ))}
@@ -120,7 +120,7 @@ export function SourceArticlePicker({
           )}
 
           {!isLoading && (
-            <div className="space-y-3 pr-4">
+            <div className="space-y-3 pr-4 pb-4">
               {filtered.length === 0 ? (
                 <div className="rounded-2xl border p-8 text-center text-sm text-muted-foreground">No articles found.</div>
               ) : null}
