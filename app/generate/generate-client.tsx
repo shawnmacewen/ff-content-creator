@@ -697,13 +697,23 @@ export default function GeneratePage() {
             <Button className="rounded-2xl" onClick={() => router.push('/library')} variant="outline">
               Saved Drafts
             </Button>
-            <Button
-              className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-              onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
-              disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
-            >
-              Generate
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
+                disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
+              >
+                Generate
+              </Button>
+
+              {(mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)) ? (
+                <div className="flex items-center gap-1" aria-label="Generating">
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:-0.2s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:-0.1s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce" />
+                </div>
+              ) : null}
+            </div>
           </div>
 
 <div>
