@@ -63,6 +63,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   hideSourcePicker?: boolean;
   /** Default tab when rendering the internal Tabs. */
   defaultTab?: 'carousel' | 'image-test';
+  /** Control which internal tab is active (used when embedding in Generate page). */
+  activeTab?: 'carousel' | 'image-test';
   /** Override the primary action button label (defaults to "Generate Carousel"). */
   generateLabel?: string;
   /** Notify parent when internal loading state changes (useful when triggering via ref). */
@@ -631,7 +633,11 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         )}
       </div>
 
-      <Tabs defaultValue={props.defaultTab || "carousel"} className="w-full">
+      <Tabs
+        value={props.activeTab}
+        defaultValue={props.defaultTab || "carousel"}
+        className="w-full"
+      >
         {props.hideSettingsControls ? null : (
           <TabsList className="grid w-full grid-cols-2 rounded-2xl">
             <TabsTrigger value="carousel" className="rounded-2xl">
@@ -644,7 +650,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         )}
 
         <TabsContent value="image-test" className="mt-4 space-y-4">
-          <Card className="rounded-2xl">
+          {props.hideSettingsControls ? null : (
+            <Card className="rounded-2xl">
             {props.hideSettingsControls ? null : (
             <CardHeader>
               <CardTitle className="text-base">Generation Settings</CardTitle>
@@ -895,6 +902,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
             </CardContent>
             )}
           </Card>
+          )}
 
           {masterplates.length ? (
             <Card className="rounded-2xl">
@@ -916,7 +924,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         </TabsContent>
 
         <TabsContent value="carousel" className="mt-4 space-y-4">
-          <Card className="rounded-2xl">
+          {props.hideSettingsControls ? null : (
+            <Card className="rounded-2xl">
             {props.hideSettingsControls ? null : (
             <CardHeader>
               <CardTitle className="text-base">Generation Settings</CardTitle>
@@ -1162,6 +1171,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
             </CardContent>
             )}
           </Card>
+          )}
 
           {slides.length ? (
             <Card className="rounded-2xl">
