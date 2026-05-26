@@ -82,7 +82,7 @@ export default function GeneratePage() {
   })();
   const [mode, setMode] = useState<GenerationMode>('kit');
 
-  const [kitOutputTab, setKitOutputTab] = useState<'carousel' | 'masterplate' | ContentType | 'all'>('all');
+  const [kitOutputTab, setKitOutputTab] = useState<'carousel' | ContentType | 'all'>('all');
 
   // SINGLE state
   const [selectedContentTypes, setSelectedContentTypes] = useState<ContentType[]>(['social-instagram']);
@@ -754,20 +754,6 @@ export default function GeneratePage() {
                   </button>
                 ) : null}
 
-                {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                  <button
-                    type="button"
-                    onClick={() => setKitOutputTab('masterplate')}
-                    className={cn(
-                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
-                      kitOutputTab === 'masterplate'
-                        ? 'border-violet-500/60 bg-violet-500/10'
-                        : 'bg-background/60 hover:bg-background'
-                    )}
-                  >
-                    Masterplate
-                  </button>
-                ) : null}
 
                 {kitTypes.filter((t) => t !== 'social-instagram').map((t) => (
                   <button
@@ -801,7 +787,7 @@ export default function GeneratePage() {
             </div>
 
             {/* Keep all mounted; switching tabs must not clear */}
-            <div className={cn('mt-3', (kitOutputTab !== 'carousel' && kitOutputTab !== 'masterplate') && 'hidden')}>
+            <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
               {selectedSourceIds.length !== 1 ? (
                 <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
                   Select exactly 1 source article to generate carousel images.
@@ -812,7 +798,7 @@ export default function GeneratePage() {
                   selectedSourceId={selectedSourceIds[0] || null}
                   hideSourcePicker
                   hideSettingsControls
-                  defaultTab={kitOutputTab === 'masterplate' ? 'image-test' : 'carousel'}
+                  defaultTab="carousel"
                   generateLabel="Generate Images"
                   onLoadingChange={setIsGeneratingKitCarouselImages}
                   slideCount={kitCarouselSlideCount}
@@ -833,7 +819,7 @@ export default function GeneratePage() {
               )}
             </div>
 
-            <div className={cn('mt-3', (kitOutputTab === 'carousel' || kitOutputTab === 'masterplate') && 'hidden')}>
+            <div className={cn('mt-3', kitOutputTab === 'carousel' && 'hidden')}>
               <KitGeneratedOutput
                 selectedTypes={kitTypes.filter((t) => t !== 'social-instagram')}
                 outputs={kitOutputs}

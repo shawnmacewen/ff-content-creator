@@ -251,7 +251,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setShowAdvancedPromptInputLocal(v);
   }, [props, setShowAdvancedPromptInputLocal]);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
-  const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe'>('tile');
+  const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe' | 'masterplate'>('tile');
 
   const swipeRef = React.useRef<HTMLDivElement | null>(null);
   const swipeDrag = React.useRef<{ isDown: boolean; startX: number; scrollLeft: number }>({
