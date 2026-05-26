@@ -36,6 +36,7 @@ export function SourceArticlePicker({
 }) {
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
+  const [search, setSearch] = React.useState<string>('');
 
   // API currently supports q + pageSize; topic is UI-only for now.
   const apiUrl = query
@@ -48,7 +49,6 @@ export function SourceArticlePicker({
 
   const filtered = React.useMemo(() => {
     const items = data?.data ?? [];
-    if (topic === 'All Topics') return items;
 
     const decodeLite = (s: string) =>
       String(s || '')
@@ -70,14 +70,18 @@ export function SourceArticlePicker({
       ESG: ['esg', 'sustainable', 'sustainability', 'responsible', 'impact', 'investing'],
     };
 
-    const needles = (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
+    const needles = topic === 'All Topics' ? [] : (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
+    const q = search.trim().toLowerCase();
 
     return items.filter((c) => {
       const tagText = (c.tags || []).map((t) => decodeLite(String(t))).join(' ');
-      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${tagText}`.toLowerCase();
-      return needles.some((n) => hay.includes(n));
+      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${decodeLite(String(c.excerpt || ''))} ${tagText}`.toLowerCase();
+
+      const topicOk = !needles.length || needles.some((n) => hay.includes(n));
+      const searchOk = !q || hay.includes(q);
+      return topicOk && searchOk;
     });
-  }, [data, topic]);
+  }, [data, topic, search]);
 
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
