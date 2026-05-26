@@ -210,18 +210,9 @@ export default function GeneratePage() {
       instagramKitVariant === 'carousel' &&
       includeInstagramCarouselImages;
 
-    // Start carousel generation in parallel (if possible).
-    let carouselPromise: Promise<void> | null = null;
-    if (shouldGenerateCarousel) {
-      if (kitCarousel2Ref.current) {
-        carouselPromise = kitCarousel2Ref.current.generate();
-      } else {
-        setPendingKitCarouselGenerate(true);
-      }
-    }
-
     try {
-      const kitPromise = fetch('/api/generate', {
+      // 1) Generate KIT text first so non-Instagram outputs show ASAP.
+      await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,11 +233,31 @@ export default function GeneratePage() {
         setKitOutputs(outputs);
       });
 
-      // Let kit text land as soon as it's ready.
-      await kitPromise;
-
-      // Keep the main Generate button disabled until carousel is also done (if enabled).
-      if (carouselPromise) await carouselPromise;
+      // 2) Then generate carousel images (if enabled). Keep Generate disabled until done.
+      if (shouldGenerateCarousel) {
+        if (kitCarousel2Ref.current) {
+          await kitCarousel2Ref.current.generate();
+        } else {
+          // If the carousel section isn't mounted yet, queue it and wait until effect runs.
+          setPendingKitCarouselGenerate(true);
+          // Best-effort wait: poll until pending is cleared or ref appears.
+          // (This avoids finishing the button-disabled state prematurely.)
+          await new Promise<void>((resolve) => {
+            const start = Date.now();
+            const timer = setInterval(() => {
+              const timedOut = Date.now() - start > 5 * 60_000;
+              const handle = kitCarousel2Ref.current;
+              if (timedOut) {
+                clearInterval(timer);
+                resolve();
+              } else if (handle) {
+                clearInterval(timer);
+                handle.generate().finally(() => resolve());
+              }
+            }, 250);
+          });
+        }
+      }
 
       toast.success('KIT generated');
     } catch (err) {
