@@ -632,14 +632,16 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       </div>
 
       <Tabs defaultValue={props.defaultTab || "carousel"} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 rounded-2xl">
-          <TabsTrigger value="carousel" className="rounded-2xl">
-            Carousel
-          </TabsTrigger>
-          <TabsTrigger value="image-test" className="rounded-2xl">
-            MasterPlates Images
-          </TabsTrigger>
-        </TabsList>
+        {props.hideSettingsControls ? null : (
+          <TabsList className="grid w-full grid-cols-2 rounded-2xl">
+            <TabsTrigger value="carousel" className="rounded-2xl">
+              Carousel
+            </TabsTrigger>
+            <TabsTrigger value="image-test" className="rounded-2xl">
+              MasterPlates Images
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="image-test" className="mt-4 space-y-4">
           <Card className="rounded-2xl">

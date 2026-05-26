@@ -727,10 +727,7 @@ export default function GeneratePage() {
                 {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setKitOutputTab('carousel');
-                      setTimeout(() => kitCarousel2Ref.current?.scrollToSlides(), 0);
-                    }}
+                    onClick={() => setKitOutputTab('carousel')}
                     className={cn(
                       'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === 'carousel'
@@ -745,10 +742,7 @@ export default function GeneratePage() {
                 {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setKitOutputTab('masterplate');
-                      setTimeout(() => kitCarousel2Ref.current?.scrollToMasterplates(), 0);
-                    }}
+                    onClick={() => setKitOutputTab('masterplate')}
                     className={cn(
                       'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === 'masterplate'
@@ -792,38 +786,6 @@ export default function GeneratePage() {
             </div>
 
             {/* Keep all mounted; switching tabs must not clear */}
-            <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
-              {selectedSourceIds.length !== 1 ? (
-                <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-                  Select exactly 1 source article to generate carousel images.
-                </div>
-              ) : (
-                <InstagramCarousel2Client
-                  ref={kitCarousel2Ref}
-                  selectedSourceId={selectedSourceIds[0] || null}
-                  hideSourcePicker
-                  hideSettingsControls
-                  defaultTab="carousel"
-                  generateLabel="Generate Images"
-                  onLoadingChange={setIsGeneratingKitCarouselImages}
-                  slideCount={kitCarouselSlideCount}
-                  onSlideCountChange={setKitCarouselSlideCount}
-                  model={kitCarouselModel}
-                  onModelChange={setKitCarouselModel}
-                  cohesionMethod={kitCarouselCohesionMethod}
-                  onCohesionMethodChange={setKitCarouselCohesionMethod}
-                  imageRefMode={kitCarouselImageRefMode}
-                  onImageRefModeChange={setKitCarouselImageRefMode}
-                  moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
-                  onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
-                  showAdvancedPromptInput={kitCarouselAdvanced}
-                  onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
-                  topic={kitCarouselPrompt}
-                  onTopicChange={setKitCarouselPrompt}
-                />
-              )}
-            </div>
-
             <div className={cn('mt-3', (kitOutputTab !== 'carousel' && kitOutputTab !== 'masterplate') && 'hidden')}>
               {selectedSourceIds.length !== 1 ? (
                 <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
@@ -835,7 +797,7 @@ export default function GeneratePage() {
                   selectedSourceId={selectedSourceIds[0] || null}
                   hideSourcePicker
                   hideSettingsControls
-                  defaultTab="carousel"
+                  defaultTab={kitOutputTab === 'masterplate' ? 'image-test' : 'carousel'}
                   generateLabel="Generate Images"
                   onLoadingChange={setIsGeneratingKitCarouselImages}
                   slideCount={kitCarouselSlideCount}
