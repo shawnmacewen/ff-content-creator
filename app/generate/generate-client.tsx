@@ -242,7 +242,11 @@ export default function GeneratePage() {
         setKitOutputs(outputs);
       });
 
-      await Promise.allSettled([kitPromise, carouselPromise].filter(Boolean) as Promise<any>[]);
+      // Let kit text land as soon as it's ready.
+      await kitPromise;
+
+      // Keep the main Generate button disabled until carousel is also done (if enabled).
+      if (carouselPromise) await carouselPromise;
 
       toast.success('KIT generated');
     } catch (err) {
