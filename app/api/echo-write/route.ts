@@ -136,15 +136,18 @@ export async function POST(req: Request) {
 
     const contentTypeInstruction = body.contentType === 'video-script'
       ? [
-          'Write a simple, self-recorded advisor-to-camera video script a person can deliver in ONE TAKE.',
-          'No beat-by-beat formatting.',
-          'Output requirements:',
-          '- Write as natural spoken dialogue (first person is OK).',
-          '- Avoid section headings like "Hook", "Beat 1", "Segment 2", etc.',
-          '- Use short, speakable paragraphs with double newlines between them.',
-          '- Optional: include a few light cadence cues in parentheses only when helpful (e.g., (pause), (smile)).',
+          'Write a self-recorded advisor-to-camera VIDEO SCRIPT (one-take) that reads like an actual script someone can record.',
+          'No beat-by-beat formatting and no scene cuts.',
+          'Structure requirements (use these exact labels):',
+          'INTRO:',
+          'KEY THEMES:',
+          'SCRIPT:',
+          'CTA:',
+          'Writing requirements:',
+          '- Natural spoken dialogue (first person is OK).',
+          '- Keep it tight and speakable; short paragraphs with double newlines between them.',
+          '- Optional: light cadence cues in parentheses only when helpful (e.g., (pause), (smile)).',
           '- Do NOT include shot lists, b-roll ideas, on-screen text callouts, camera directions, or production notes.',
-          '- End with a single concise CTA line.',
         ].join('\n')
       : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
 
