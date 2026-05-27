@@ -152,8 +152,6 @@ export async function GET(request: NextRequest) {
     id: row.id,
     title: decodeHtmlEntities(row.title || ''),
     body: normalizeBody(row.body || ''),
-    bodyHtml: row.body_html || row.metadata?.bodyHtml || null,
-    bodyXml: row.body_xml || row.metadata?.bodyXml || null,
     excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
     type: row.content_designation ?? null,
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),

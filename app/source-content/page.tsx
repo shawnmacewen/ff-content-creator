@@ -82,9 +82,18 @@ export default function SourceContentPage() {
     });
   };
 
-  const handleViewDetail = (content: SourceContent) => {
+  const handleViewDetail = async (content: SourceContent) => {
     setDetailContent(content);
     setDetailOpen(true);
+
+    try {
+      const response = await fetch(`/api/source-content/${content.id}`);
+      if (!response.ok) return;
+      const detail = await response.json();
+      if (detail?.id === content.id) setDetailContent(detail);
+    } catch {
+      // Keep the lightweight list row open if the detail fetch fails.
+    }
   };
 
   const handleUseForGeneration = (content: SourceContent) => {
