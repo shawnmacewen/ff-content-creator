@@ -13,9 +13,12 @@ import {
   Bookmark,
   ChevronDown,
   Clapperboard,
+  Grid2X2,
+  Grid3X3,
   Heart,
   Home,
   Info,
+  Instagram,
   MessageCircle,
   MoreHorizontal,
   Search,
@@ -270,7 +273,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setShowAdvancedPromptInputLocal(v);
   }, [props, setShowAdvancedPromptInputLocal]);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
-  const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe' | 'masterplate'>('tile');
+  const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe' | 'masterplate'>('swipe');
   const [activeSwipeSlide, setActiveSwipeSlide] = React.useState(0);
 
   const swipeRef = React.useRef<HTMLDivElement | null>(null);
@@ -1212,6 +1215,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     onClick={() => setSlidesView('tile')}
                     disabled={isLoading}
                   >
+                    <Grid2X2 className="mr-1.5 h-3.5 w-3.5" />
                     Tile
                   </Button>
                   <Button
@@ -1222,6 +1226,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     onClick={() => setSlidesView('compact')}
                     disabled={isLoading}
                   >
+                    <Grid3X3 className="mr-1.5 h-3.5 w-3.5" />
                     Compact
                   </Button>
                   <Button
@@ -1232,7 +1237,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     onClick={() => setSlidesView('swipe')}
                     disabled={isLoading}
                   >
-                    Swipe
+                    <Instagram className="mr-1.5 h-3.5 w-3.5" />
+                    Instagram Preview
                   </Button>
                 </div>
               </CardHeader>
