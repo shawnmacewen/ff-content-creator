@@ -114,18 +114,7 @@ export function ContentCard({
             <FileText className="h-10 w-10" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-slate-950/15" />
-
-        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
-          {content.type ? (
-            <Badge variant="outline" className={cn('border-white/30 bg-white/90 text-[11px] font-medium text-foreground shadow-sm backdrop-blur', designationToneClass(content.type))}>
-              {content.type}
-            </Badge>
-          ) : null}
-          {isFinraApproved ? (
-            <Badge className="bg-primary text-[10px] text-primary-foreground shadow-sm hover:bg-primary">FINRA</Badge>
-          ) : null}
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
 
         {selectable ? (
           <Checkbox
@@ -136,8 +125,24 @@ export function ContentCard({
         ) : null}
       </div>
 
-      <CardContent className="flex min-h-[236px] flex-1 flex-col p-5">
+      <CardContent className="flex min-h-[224px] flex-1 flex-col p-5">
         <div className="space-y-3">
+          <div className="flex min-h-5 flex-wrap items-center gap-2">
+            {content.type ? (
+              <Badge
+                variant="outline"
+                className={cn('text-[11px] font-medium', designationToneClass(content.type))}
+              >
+                {content.type}
+              </Badge>
+            ) : null}
+            {isFinraApproved ? (
+              <Badge className="bg-primary text-[10px] text-primary-foreground hover:bg-primary">
+                FINRA
+              </Badge>
+            ) : null}
+          </div>
+
           <CardTitle className="line-clamp-2 text-base font-semibold leading-snug">
             {content.title}
           </CardTitle>
@@ -179,7 +184,7 @@ export function ContentCard({
             )}
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+          <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2">
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
