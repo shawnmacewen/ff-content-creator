@@ -60,6 +60,39 @@ type EchoWriteBody = {
   maxSources?: number;
 };
 
+const STOP_WORDS = new Set([
+  'about',
+  'after',
+  'also',
+  'because',
+  'before',
+  'between',
+  'could',
+  'from',
+  'have',
+  'into',
+  'more',
+  'most',
+  'only',
+  'other',
+  'over',
+  'should',
+  'than',
+  'that',
+  'their',
+  'there',
+  'these',
+  'they',
+  'this',
+  'through',
+  'when',
+  'where',
+  'which',
+  'with',
+  'would',
+  'your',
+]);
+
 function styleInstruction(style: EchoWriteBody['writingStyle']) {
   if (style === 'fun') return 'Use engaging, lively pacing, conversational vocabulary, and a friendly CTA.';
   if (style === 'educational') return 'Use teacher-like clarity, structured explanations, and actionable educational CTA.';
@@ -85,19 +118,47 @@ function lengthInstruction(
   return 'Target 700-950 words.';
 }
 
-function scoreRow(row: any, query: string, tokens: string[]) {
+function tokenize(input: string) {
+  return Array.from(new Set(
+    input
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 3 && !STOP_WORDS.has(token))
+  ));
+}
+
+function scoreRow(row: any, query: string, tokens: string[], cleanBody: string) {
   const title = String(row.title || '').toLowerCase();
-  const body = String(row.body || '').toLowerCase();
-  const q = query.toLowerCase();
+  const body = cleanBody.toLowerCase();
+  const q = query.toLowerCase().trim();
   let score = 0;
-  if (title.includes(q)) score += 20;
-  if (body.includes(q)) score += 8;
-  let matched = 0;
+
+  if (q && title.includes(q)) score += 28;
+  if (q && body.includes(q)) score += 14;
+
+  const matchedTerms: string[] = [];
   for (const t of tokens) {
-    if (title.includes(t)) { score += 6; matched += 1; }
-    else if (body.includes(t)) { score += 3; matched += 1; }
+    if (title.includes(t)) {
+      score += 8;
+      matchedTerms.push(t);
+    } else if (body.includes(t)) {
+      score += 3;
+      matchedTerms.push(t);
+    }
   }
-  return { score, matched };
+
+  for (let i = 0; i < tokens.length - 1; i += 1) {
+    const phrase = `${tokens[i]} ${tokens[i + 1]}`;
+    if (title.includes(phrase)) score += 10;
+    else if (body.includes(phrase)) score += 5;
+  }
+
+  const coverage = tokens.length ? matchedTerms.length / tokens.length : 0;
+  score += Math.round(coverage * 10);
+
+  return { score, matched: matchedTerms.length, matchedTerms: Array.from(new Set(matchedTerms)) };
 }
 
 export async function POST(req: Request) {
@@ -116,18 +177,20 @@ export async function POST(req: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    const tokens = Array.from(new Set(body.prompt.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((t) => t.length > 2)));
+    const tokens = tokenize(body.prompt);
 
     const ranked = (rows || [])
-      .map((row) => ({ row, ...scoreRow(row, body.prompt, tokens) }))
+      .map((row) => {
+        const cleanBody = normalizeXmlToText(String(row.body || ''));
+        return { row, cleanBody, ...scoreRow(row, body.prompt, tokens, cleanBody) };
+      })
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(0, Math.min(12, Number(body.maxSources ?? 6))));
 
     const context = ranked
       .map((x, idx) => {
-        const cleanBody = normalizeXmlToText(String(x.row.body || '')).slice(0, 1800);
-        return `Source ${idx + 1} | ${decodeHtmlEntities(String(x.row.title || ''))}\nDesignation: ${x.row.content_designation || 'n/a'}\nBasContentId: ${(x.row as any).bas_content_id || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\n\n${cleanBody}`;
+        return `Source ${idx + 1} | ${decodeHtmlEntities(String(x.row.title || ''))}\nDesignation: ${x.row.content_designation || 'n/a'}\nBasContentId: ${(x.row as any).bas_content_id || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\nMatched terms: ${x.matchedTerms.join(', ') || 'n/a'}\n\n${x.cleanBody.slice(0, 1800)}`;
       })
       .join('\n\n---\n\n');
 
@@ -197,7 +260,8 @@ export async function POST(req: Request) {
         basContentId: (x.row as any).bas_content_id || null,
         designation: x.row.content_designation,
         score: x.score,
-        bodySnippet: normalizeXmlToText(String(x.row.body || '')).slice(0, 2200),
+        matchedTerms: x.matchedTerms,
+        bodySnippet: x.cleanBody.slice(0, 2200),
       })),
     });
   } catch (e: any) {

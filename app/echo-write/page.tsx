@@ -30,6 +30,7 @@ type EchoWriteSource = {
   basContentId?: string | null;
   designation?: string | null;
   score?: number;
+  matchedTerms?: string[];
   bodySnippet?: string;
 };
 
@@ -441,7 +442,22 @@ Separately (client-side), we:
                         <span className="text-xs text-muted-foreground">
                           {s.designation || 'n/a'}
                         </span>
+                        {typeof s.score === 'number' ? (
+                          <span className="text-[10px] text-muted-foreground">
+                            score {s.score}
+                          </span>
+                        ) : null}
                       </div>
+
+                      {s.matchedTerms?.length ? (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {s.matchedTerms.slice(0, 5).map((term) => (
+                            <span key={term} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
+                              {term}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
 
                       {showMatches && n ? (
                         <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>
