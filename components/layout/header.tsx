@@ -18,8 +18,10 @@ import { useTheme } from '@/components/layout/theme-provider';
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
   '/generate': 'Generate Content',
+  '/echo-write': 'EchoWrite',
   '/source-content': 'Source Content',
   '/library': 'Content Library',
+  '/audit': 'Content Scan',
   '/settings': 'Settings',
 };
 
@@ -29,20 +31,28 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 backdrop-blur-sm px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card/95 px-4 shadow-sm backdrop-blur-sm">
+      <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+      <Separator orientation="vertical" className="mr-1 h-5" />
       <Breadcrumb className="flex-1">
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink href="/">FF Content Creator</BreadcrumbLink>
+            <BreadcrumbLink href="/" className="text-muted-foreground">
+              Editorial Platform
+            </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
-            <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+            <BreadcrumbPage className="font-medium text-foreground">
+              {pageTitle}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs text-muted-foreground md:flex">
+        <span className="h-2 w-2 rounded-full bg-success" />
+        Platform workspace
+      </div>
       <Button
         variant="ghost"
         size="icon"

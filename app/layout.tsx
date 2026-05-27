@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1a1a2e',
+  themeColor: '#10214a',
 };
 
 export default function RootLayout({
@@ -32,9 +32,11 @@ export default function RootLayout({
         <ThemeProvider>
           <SidebarProvider>
             <AppSidebar />
-            <SidebarInset>
+            <SidebarInset className="bg-background">
               <Header />
-              <main className="flex-1 overflow-auto p-6">{children}</main>
+              <main className="flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
+                {children}
+              </main>
             </SidebarInset>
           </SidebarProvider>
           <Toaster />
