@@ -13,10 +13,12 @@ function cleanMessages(input: unknown): HelpChatMessage[] {
   if (!Array.isArray(input)) return [];
 
   return input
-    .map((message) => ({
-      role: message?.role === 'assistant' ? 'assistant' : 'user',
-      content: String(message?.content || '').trim().slice(0, 2000),
-    }))
+    .map(
+      (message): HelpChatMessage => ({
+        role: message?.role === 'assistant' ? 'assistant' : 'user',
+        content: String(message?.content || '').trim().slice(0, 2000),
+      })
+    )
     .filter((message) => message.content)
     .slice(-6);
 }
