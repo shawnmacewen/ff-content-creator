@@ -50,7 +50,7 @@ export function ContentFilters({
           placeholder="Search content..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 bg-muted/50"
+          className="bg-white pl-9"
         />
       </div>
       

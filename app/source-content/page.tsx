@@ -7,9 +7,8 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Sparkles, RefreshCw, Database, Info, FolderOpen, ShieldCheck } from 'lucide-react';
+import { Clock, FolderOpen, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
 interface ApiResponse {
@@ -45,7 +44,6 @@ export default function SourceContentPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [syncingMode, setSyncingMode] = useState<null | 'provider'>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -67,7 +65,7 @@ export default function SourceContentPage() {
     return `/api/source-content?${params.toString()}`;
   }, [debouncedQuery, selectedType, selectedTag, selectedPublisher, page]);
 
-  const { data, error, isLoading, isValidating, mutate } = useSWR<ApiResponse>(apiUrl(), fetcher, {
+  const { data, error, isLoading } = useSWR<ApiResponse>(apiUrl(), fetcher, {
     keepPreviousData: true,
   });
 
@@ -125,37 +123,6 @@ export default function SourceContentPage() {
     setPage((p) => Math.min(data.totalPages || 1, p + 1));
   };
 
-  const runProviderSync = async () => {
-    setSyncingMode('provider');
-    toast.info('Broadridge Content API sync started...');
-
-    const response = await fetch('/api/source-content/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode: 'provider',
-        dryRun: false,
-        maxItems: 500,
-        maxPages: 20,
-      }),
-    });
-
-    const rawText = await response.text();
-    let body: any = {};
-    try { body = rawText ? JSON.parse(rawText) : {}; } catch { body = {}; }
-
-    if (!response.ok) {
-      const message = body?.error || rawText || `Sync failed (${response.status})`;
-      toast.error(message);
-      setSyncingMode(null);
-      return;
-    }
-
-    toast.success(`Broadridge Content API sync complete: ${body?.processed ?? 0} processed (${body?.inserted ?? 0} inserted, ${body?.updated ?? 0} updated)`);
-    mutate();
-    setSyncingMode(null);
-  };
-
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
@@ -186,7 +153,7 @@ export default function SourceContentPage() {
             <div className="rounded-md border border-border bg-card p-4">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-md bg-info text-info-foreground">
-                  <ShieldCheck className="h-4 w-4" />
+                  <span className="text-[10px] font-bold leading-none tracking-normal text-white">FINRA</span>
                 </span>
                 <div>
                   <p className="text-sm font-semibold">{data?.meta?.finraReviewedCount ?? 0} FINRA reviewed</p>
@@ -196,48 +163,22 @@ export default function SourceContentPage() {
                 </div>
               </div>
             </div>
+            <div className="rounded-md border border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <Clock className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">Last sync</p>
+                  <p className="text-xs text-muted-foreground">
+                    {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={runProviderSync}
-              disabled={syncingMode !== null}
-              title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the API Lab."
-            >
-              <Database className={`h-4 w-4 mr-2 ${syncingMode === 'provider' ? 'animate-pulse' : ''}`} />
-              {syncingMode === 'provider' ? 'Syncing Broadridge Content API...' : 'Sync Broadridge Content API'}
-              <Info className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => mutate()}
-              disabled={false}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isValidating ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            {selectedIds.size > 0 && (
-              <Button onClick={handleGenerateWithSelected} className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Generate with {selectedIds.size} selected
-              </Button>
-            )}
-          </div>
-          {data && (
-            <div className="text-[10px] leading-tight text-muted-foreground/70">
-              Last synced: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'} · Sources: {Object.entries(data?.meta?.sourceCounts || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'n/a'}
-            </div>
-          )}
-        </div>
-      </div>
 
       <ContentFilters
         searchQuery={searchQuery}
@@ -254,10 +195,14 @@ export default function SourceContentPage() {
         onClearFilters={handleClearFilters}
       />
 
-      <div className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
-        Broadridge Advisor Content: {data?.meta?.publisherCounts?.['broadridge-forefield'] ?? 0}
-      </div>
-
+      {selectedIds.size > 0 && (
+        <div className="flex justify-end">
+          <Button onClick={handleGenerateWithSelected} className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Generate with {selectedIds.size} selected
+          </Button>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
