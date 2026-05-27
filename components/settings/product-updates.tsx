@@ -409,6 +409,14 @@ function ParallaxStorySection({
     };
   };
 
+  const tileStyle = (x: number, y: number, rotate = 0, scale = 1, baseTransform = '') => {
+    if (reduceMotion) return undefined;
+    const float = Math.sin(progress * Math.PI);
+    return {
+      transform: `${baseTransform} translate3d(${progress * x}px, ${progress * y + float * 52}px, ${float * 90}px) rotate(${progress * rotate}deg) scale(${scale + float * 0.18})`,
+    };
+  };
+
   const chapterProgress = useMemo(() => {
     const segmentStart = activeIndex / stories.length;
     const segmentSize = 1 / stories.length;
@@ -453,9 +461,9 @@ function ParallaxStorySection({
         <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
         <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
 
-        <div className="absolute inset-y-0 right-0 hidden w-[58%] [perspective:1200px] lg:block">
+        <div className="absolute inset-y-0 right-0 hidden w-full [perspective:1400px] lg:block">
           <div className="relative h-full">
-            <div className="absolute left-[3%] top-[12%] h-64 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 opacity-85 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={layerStyle(-130, 170, -16, 0.95, 'rotate(-13deg)')}>
+            <div className="absolute left-[8%] top-[10%] h-64 w-48 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-95 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={tileStyle(360, 260, -30, 0.95, 'rotate(-13deg)')}>
               <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
                 <DatabaseZap className="h-8 w-8 text-white" />
                 <div className="mt-20 text-lg font-semibold xl:mt-24 xl:text-xl">Source intelligence</div>
@@ -463,7 +471,7 @@ function ParallaxStorySection({
               </div>
             </div>
 
-            <div className="absolute left-[34%] top-[28%] h-72 w-56 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-80 shadow-2xl backdrop-blur-xl xl:h-[20rem] xl:w-64" style={layerStyle(80, -190, 12, 1.02, 'rotate(5deg)')}>
+            <div className="absolute left-[48%] top-[24%] h-72 w-56 rounded-3xl border border-white/25 bg-white/18 p-3 opacity-90 shadow-2xl backdrop-blur-xl xl:h-[20rem] xl:w-64" style={tileStyle(-300, -310, 26, 1.02, 'rotate(5deg)')}>
               <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
                 <WandSparkles className="h-8 w-8 text-white" />
                 <div className="mt-28 text-lg font-semibold xl:mt-32 xl:text-xl">Generation flow</div>
@@ -471,11 +479,19 @@ function ParallaxStorySection({
               </div>
             </div>
 
-            <div className="absolute right-[5%] top-[54%] h-56 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 opacity-75 shadow-2xl backdrop-blur-xl xl:h-60 xl:w-52" style={layerStyle(-180, -60, 20, 0.98, 'rotate(14deg)')}>
+            <div className="absolute right-[3%] top-[52%] h-56 w-48 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-88 shadow-2xl backdrop-blur-xl xl:h-60 xl:w-52" style={tileStyle(-420, -150, 38, 0.98, 'rotate(14deg)')}>
               <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
                 <Images className="h-8 w-8 text-white" />
                 <div className="mt-16 text-lg font-semibold xl:mt-20">Visual preview</div>
                 <div className="mt-2 text-xs leading-5 text-white/75">Carousel work is reviewed in a social frame.</div>
+              </div>
+            </div>
+
+            <div className="absolute right-[24%] top-[8%] h-48 w-44 rounded-3xl border border-orange-200/20 bg-white/12 p-3 opacity-80 shadow-2xl backdrop-blur-xl xl:h-56 xl:w-52" style={tileStyle(-220, 360, 32, 0.92, 'rotate(18deg)')}>
+              <div className="h-full rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-violet-600 p-4">
+                <PanelTop className="h-8 w-8 text-white" />
+                <div className="mt-14 text-lg font-semibold xl:mt-20">Design system</div>
+                <div className="mt-2 text-xs leading-5 text-white/75">Shared patterns make new screens feel connected.</div>
               </div>
             </div>
           </div>
@@ -483,7 +499,7 @@ function ParallaxStorySection({
       </div>
 
       <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
-        <div className="lg:self-start">
+        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:self-start lg:overflow-y-auto lg:pb-2">
           <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
