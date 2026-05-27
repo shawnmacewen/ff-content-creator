@@ -34,8 +34,8 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     icon: Compass,
   },
   'knowledge-base': {
-    label: 'Knowledge Base',
-    detail: 'Manage reusable guidance and source context.',
+    label: 'Knowledge Center',
+    detail: 'Search help docs for team workflows and app tools.',
     icon: BookOpenCheck,
   },
   'instagram-carousel-2': {
@@ -275,7 +275,7 @@ export default function SettingsPage() {
           </Badge>
           <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Settings</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-            Manage source sync, API inspection, knowledge assets, and carousel generation from one control surface.
+            Manage source sync, API inspection, team help documentation, and carousel generation from one control surface.
           </p>
         </div>
         <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
