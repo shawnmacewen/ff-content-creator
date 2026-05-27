@@ -104,6 +104,14 @@ export default function EchoWritePage() {
     return sourcesWithCitation.filter((s) => s.citationNumber).length;
   }, [sourcesWithCitation]);
 
+  const saveSourceIds = useMemo(() => {
+    const citedIds = sourcesWithCitation
+      .filter((source) => source.citationNumber)
+      .map((source) => source.id);
+
+    return citedIds.length ? citedIds : sources.map((source) => source.id);
+  }, [sources, sourcesWithCitation]);
+
   const groundingStatus = useMemo(() => {
     const totalSentences = spans.length;
     const citedSentences = spans.filter((span) => span.sourceId && span.citationNumber).length;
@@ -170,7 +178,7 @@ export default function EchoWritePage() {
           type: contentType === 'video-script' ? 'video-script' : 'article',
           title: titleFromContent(content),
           content,
-          sourceContentIds: sources.map((s) => s.id),
+          sourceContentIds: saveSourceIds,
           prompt,
           tone: toneFromWritingStyle(writingStyle),
           status: 'draft',
