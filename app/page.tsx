@@ -25,7 +25,6 @@ import {
   TrendingUp,
   UsersRound,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
@@ -94,7 +93,7 @@ const accents: Accent[] = [
 const journeySteps: { title: string; detail: string; icon: Icon; accent: Accent }[] = [
   {
     title: 'Discover',
-    detail: 'Sync advisor-ready articles and campaign material.',
+    detail: 'Sync source articles, provider metadata, and editorial topics.',
     icon: DatabaseZap,
     accent: accents[0],
   },
@@ -106,7 +105,7 @@ const journeySteps: { title: string; detail: string; icon: Icon; accent: Accent 
   },
   {
     title: 'Review',
-    detail: 'Inspect tone, compliance posture, and campaign fit.',
+    detail: 'Inspect tone, source context, formatting, and internal readiness.',
     icon: ShieldCheck,
     accent: accents[2],
   },
@@ -135,41 +134,41 @@ const workflowRows: {
   stages: { title: string; detail: string; icon: Icon }[];
 }[] = [
   {
-    title: 'Create and distribute omnichannel content',
-    role: 'Advisor',
-    detail: 'Turn one approved source into coordinated social, email, article, and carousel assets.',
+    title: 'Convert source content into reusable assets',
+    role: 'Editorial production',
+    detail: 'Turn one source record into social, email, article, and carousel-ready drafts.',
     href: '/generate',
     icon: Megaphone,
     accent: accents[0],
-    outcome: 'More coordinated advisor touchpoints',
+    outcome: 'Source material becomes easier to reuse',
     stages: [
       { title: 'Source article', detail: 'Broadridge content selected', icon: DatabaseZap },
-      { title: 'Generate kit', detail: 'AI assets created by format', icon: Sparkles },
-      { title: 'Save outputs', detail: 'Campaign pieces ready to reuse', icon: Layers3 },
+      { title: 'Generate kit', detail: 'Drafts created by format', icon: Sparkles },
+      { title: 'Save outputs', detail: 'Assets ready to reuse', icon: Layers3 },
     ],
   },
   {
-    title: 'Automated campaigns that nurture',
-    role: 'Marketing manager',
-    detail: 'Build repeatable campaign assets and keep follow-up copy consistent across channels.',
+    title: 'Build repeatable content packages',
+    role: 'Editorial planning',
+    detail: 'Package related drafts so recurring publishing needs stay consistent across formats.',
     href: '/generate?type=email',
     icon: CalendarCheck,
     accent: accents[1],
-    outcome: 'Campaign follow-up becomes repeatable',
+    outcome: 'Recurring content work becomes repeatable',
     stages: [
-      { title: 'Campaign goal', detail: 'Audience and theme defined', icon: PenSquare },
-      { title: 'Email copy', detail: 'Newsletter and sequence drafts', icon: Mail },
-      { title: 'Channel package', detail: 'Reusable campaign material', icon: Send },
+      { title: 'Content goal', detail: 'Topic and format defined', icon: PenSquare },
+      { title: 'Email copy', detail: 'Newsletter draft prepared', icon: Mail },
+      { title: 'Format package', detail: 'Reusable asset group', icon: Send },
     ],
   },
   {
-    title: 'Centralized compliance that scales',
-    role: 'Compliance officer',
-    detail: 'Review source context, disclosures, claims posture, and saved outputs from one workspace.',
+    title: 'Centralize editorial QA',
+    role: 'Editorial review',
+    detail: 'Review source context, disclosures, formatting, and saved outputs from one workspace.',
     href: '/audit',
     icon: ShieldCheck,
     accent: accents[2],
-    outcome: 'Review context stays centralized',
+    outcome: 'Review context stays visible',
     stages: [
       { title: 'Scan content', detail: 'Find risk signals and gaps', icon: FileSearch },
       { title: 'Review context', detail: 'Source attribution stays visible', icon: BadgeCheck },
@@ -177,23 +176,23 @@ const workflowRows: {
     ],
   },
   {
-    title: 'Discoverability that converts',
-    role: 'Editorial team',
-    detail: 'Use source discovery and EchoWrite to shape clear advisor-facing content experiences.',
+    title: 'Improve content findability',
+    role: 'Source curation',
+    detail: 'Use source discovery and EchoWrite to shape clear internal content records and drafts.',
     href: '/echo-write',
     icon: UsersRound,
     accent: accents[3],
-    outcome: 'Advisor content becomes easier to find',
+    outcome: 'Useful source content becomes easier to find',
     stages: [
       { title: 'Find themes', detail: 'Search source inventory', icon: BookOpenCheck },
-      { title: 'Draft copy', detail: 'Long-form advisor content', icon: PenSquare },
+      { title: 'Draft copy', detail: 'Long-form editorial content', icon: PenSquare },
       { title: 'Publish-ready', detail: 'Content can move to review', icon: Send },
     ],
   },
   {
-    title: 'Smarter leads, stronger relationships',
-    role: 'Marketing leader',
-    detail: 'Use workspace signals to understand output mix and prioritize the next content push.',
+    title: 'Prioritize the next editorial pass',
+    role: 'Editorial operations',
+    detail: 'Use workspace signals to understand output mix and prioritize source updates or new drafts.',
     href: '/library',
     icon: BrainCircuit,
     accent: accents[4],
@@ -220,8 +219,8 @@ const platformPillars: { title: string; detail: string; icon: Icon; accent: Acce
     accent: accents[0],
   },
   {
-    title: 'Unified compliance',
-    detail: 'Generated and edited content moves into a durable, reviewable set of marketing assets.',
+    title: 'Editorial QA',
+    detail: 'Generated and edited content moves into a durable, reviewable asset library.',
     icon: ShieldCheck,
     accent: accents[2],
   },
@@ -234,11 +233,11 @@ const platformPillars: { title: string; detail: string; icon: Icon; accent: Acce
 ];
 
 const outcomes = [
-  'Increase advisor discoverability',
-  'Create more campaign assets',
-  'Review content more consistently',
+  'Find useful source content faster',
+  'Create more reusable content assets',
+  'Review drafts more consistently',
   'Reuse approved work across channels',
-  'Show visible marketing momentum',
+  'Show visible editorial throughput',
 ];
 
 const workflowHealth = [
@@ -291,7 +290,7 @@ export default function DashboardPage() {
       {
         label: 'This week',
         value: generatedThisWeek,
-        detail: 'New campaign assets',
+        detail: 'New reusable assets',
         icon: TrendingUp,
       },
       {
@@ -314,15 +313,12 @@ export default function DashboardPage() {
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-8">
-            <Badge className="mb-5 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Advisor marketing command center
-            </Badge>
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight sm:text-4xl">
-              Turn trusted source content into coordinated advisor campaigns.
+              Turn trusted source content into organized editorial assets.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-blue-50/85 sm:text-base">
               Editorial brings synced source material, AI-assisted generation, review context,
-              and reusable campaign assets into one operational workspace.
+              and reusable content assets into one workspace for the internal editorial team.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild className="bg-white text-[#12306a] hover:bg-blue-50">
@@ -361,7 +357,7 @@ export default function DashboardPage() {
             <div className="rounded-md border border-border bg-card p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Campaign output mix</p>
+                  <p className="text-sm font-medium">Editorial output mix</p>
                   <p className="text-xs text-muted-foreground">
                     Social, email, and editorial formats from one workflow.
                   </p>
@@ -418,7 +414,7 @@ export default function DashboardPage() {
         <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-primary">Operating Journey</p>
-            <h2 className="text-xl font-semibold">From source article to measurable campaign asset</h2>
+            <h2 className="text-xl font-semibold">From source article to reusable editorial asset</h2>
           </div>
           <p className="max-w-xl text-sm text-muted-foreground">
             The dashboard now uses the design template&apos;s workflow-coded color, status, and outcome cues.
@@ -448,7 +444,7 @@ export default function DashboardPage() {
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase text-primary">Priority Workflows</p>
-              <h2 className="text-xl font-semibold">5 key scenarios across the advisor growth journey</h2>
+              <h2 className="text-xl font-semibold">5 key scenarios for the editorial team</h2>
             </div>
             <Button asChild variant="outline" size="sm">
               <Link href="/generate">Open Generator</Link>
