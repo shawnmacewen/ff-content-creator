@@ -140,12 +140,12 @@ const releaseStories: ReleaseStory[] = [
     icon: Smartphone,
     commitRefs: ['355b2cc', 'a1d0eac', '77733ad'],
     summary: 'The carousel output moved from a utility preview into a richer Instagram-style review surface.',
-    story: 'The team needed to judge carousel work in the context where it will actually live. We renamed the view, made it the default, centered the swipe surface, and added an AI-generated backdrop that borrows the visual language of the carousel itself.',
+    story: 'The carousel work used to feel like a file preview. This round turns it into a review moment: the default output now opens in an Instagram-style frame, the active slide stays centered, and the surrounding preview borrows color and texture from the generated carousel so the team can judge the asset in context.',
     result: 'Generated carousel assets now feel reviewable as a social post, not just as isolated image files.',
     details: [
-      'Default output view is now Instagram Preview.',
-      'The phone mockup uses a generated ambient background when available.',
-      'Swipe framing keeps the active square centered without slide bleed.',
+      'Instagram Preview is now the default carousel output view.',
+      'The phone mockup can use a generated ambient backdrop from the carousel artwork.',
+      'The swipe preview keeps the active square centered without adjacent slide bleed.',
     ],
     accent: 'from-slate-950 via-indigo-600 to-cyan-400',
     panel: 'border-cyan-300/25 bg-cyan-300/10',
@@ -157,12 +157,12 @@ const releaseStories: ReleaseStory[] = [
     icon: Sparkles,
     commitRefs: ['56a7e87', '1ab20dd'],
     summary: 'Generated assets moved from a static dashboard number to durable activity tracked over time.',
-    story: 'Every meaningful generation event now writes into Supabase. Content generation, EchoWrite, carousel captions, and image generation each contribute to a more accurate picture of editorial throughput.',
+    story: 'Generated work is no longer treated as a loose counter on the dashboard. Each meaningful generation event now writes back as durable activity, which gives Editorial a better record of what the team is producing across content drafts, EchoWrite, carousel captions, and generated images.',
     result: 'The dashboard can now show how much work the platform is helping the team produce during testing and beyond.',
     details: [
-      'Generated assets are backed by generation events.',
-      'Generated images are tracked separately from written content.',
-      'Large output-area progress states make work-in-progress visible.',
+      'Generated assets are backed by persistent generation events.',
+      'Generated images are counted separately from written content outputs.',
+      'Large in-place progress states make active generation easier to understand.',
     ],
     accent: 'from-violet-500 via-fuchsia-400 to-sky-300',
     panel: 'border-violet-300/25 bg-violet-300/10',
@@ -174,12 +174,12 @@ const releaseStories: ReleaseStory[] = [
     icon: Tags,
     commitRefs: ['968203c', '873b96a'],
     summary: 'Tags and designations became visible, consistent, and measurable across the editorial workspace.',
-    story: 'Labels were showing up in different places with different visual treatments. We centralized the color mapping, then added Tag Explorer so the team can see which tags are used, where cleanup is needed, and which source content belongs to a tag.',
+    story: 'Metadata is starting to behave like a navigation layer instead of decoration. Tags and designations now use shared color logic, and Tag Explorer gives the team a place to inspect usage patterns, spot cleanup candidates, and jump back into the source library by tag.',
     result: 'The content library is easier to scan and the team now has a path toward tag governance.',
     details: [
-      'Content designations and tags share consistent color logic.',
-      'Tag Explorer shows counts, single-use tags, and case variants.',
-      'Tag rows link back into Source Content filtered by tag.',
+      'Content designations and tags share consistent color treatment.',
+      'Tag Explorer highlights counts, single-use tags, and case variants.',
+      'Every tag row can open Source Content already filtered to that tag.',
     ],
     accent: 'from-teal-500 via-sky-400 to-indigo-400',
     panel: 'border-teal-300/25 bg-teal-300/10',
@@ -191,12 +191,12 @@ const releaseStories: ReleaseStory[] = [
     icon: Rocket,
     commitRefs: ['9619395', '3c003c3', 'c763ba3'],
     summary: 'The dashboard and design reference shifted away from external marketing language and toward the Editorial Team.',
-    story: 'The product needed to stop speaking to marketers, advisors, and compliance teams as end users. The dashboard now frames the workspace around editorial production, source review, reusable content, and operational momentum.',
+    story: 'The app is settling into its identity as an internal editorial workspace. The dashboard language now speaks to the people finding, updating, creating, and reviewing content, while the design system page gives future screens a shared visual reference instead of one-off styling.',
     result: 'Editorial now feels like an internal tool for the team building and managing content work.',
     details: [
-      'Dashboard copy is focused on internal editorial workflows.',
-      'Template Design System captures the shared visual direction.',
-      'Workflow cards and metrics now support source, create, review, and reuse.',
+      'Dashboard copy now focuses on internal editorial workflows.',
+      'Template Design System captures reusable visual patterns.',
+      'Workflow cards and metrics support source, create, review, and reuse.',
     ],
     accent: 'from-blue-500 via-cyan-400 to-emerald-300',
     panel: 'border-blue-300/25 bg-blue-300/10',
@@ -208,12 +208,12 @@ const releaseStories: ReleaseStory[] = [
     icon: Layers3,
     commitRefs: ['719a4c6', 'f24d947', '32fdb0d'],
     summary: 'Provider content became richer and easier to review before it powers generation.',
-    story: 'The source detail work improved how structured provider bodies render, stored richer body fields, and made source previews more useful for generation and review.',
+    story: 'A lot of the product depends on source material being trustworthy and easy to inspect. The earlier foundation work improved structured provider rendering, preserved richer body fields, and made source previews more useful before that content flows into generation.',
     result: 'The generation experience now has better source context behind it.',
     details: [
-      'Structured source content renders more cleanly.',
-      'Richer body fields are stored for detail and preview surfaces.',
-      'Source previews are more useful in the generation workflow.',
+      'Structured provider content renders more cleanly in detail views.',
+      'Richer body fields are stored for previews and generation context.',
+      'Source previews give generation workflows better grounding.',
     ],
     accent: 'from-emerald-500 via-cyan-400 to-blue-500',
     panel: 'border-emerald-300/25 bg-emerald-300/10',
@@ -434,7 +434,7 @@ function ParallaxStorySection({
 
   return (
     <section ref={sectionRef} className="relative min-h-[520vh] overflow-visible rounded-lg border border-border bg-slate-950 text-white shadow-sm">
-      <div className="sticky top-0 h-[calc(100dvh-2.5rem)] min-h-[620px] overflow-hidden px-4 py-5 sm:px-7 lg:px-10">
+      <div className="sticky top-0 h-[calc(100dvh-1rem)] min-h-[560px] overflow-hidden px-4 py-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(168,85,247,0.28),transparent_30%),linear-gradient(180deg,#08111f_0%,#0f172a_45%,#020617_100%)] transition-colors duration-500" />
         <div className={`absolute inset-x-0 top-0 h-72 bg-gradient-to-r ${activeStory.accent} opacity-25 blur-3xl transition-all duration-500`} style={layerStyle(80, -70, 4, 1)} />
         <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
@@ -460,15 +460,28 @@ function ParallaxStorySection({
             </div>
           </div>
 
-          <div className="grid min-h-0 flex-1 items-center gap-4 overflow-hidden lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="max-w-xl">
-              <Badge className="mb-3 border-white/20 bg-white/10 text-white hover:bg-white/10">{activeStory.kicker}</Badge>
-              <div className="text-sm font-semibold text-cyan-200">Chapter {activeIndex + 1} of {stories.length}</div>
-              <h3 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{activeStory.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-white/76 sm:text-base">{activeStory.story}</p>
-              <div className={cn('mt-4 rounded-2xl border p-4 text-sm leading-6 text-white/78 backdrop-blur', activeStory.panel)}>
+          <div className="grid min-h-0 flex-1 items-center gap-4 overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
+            <article className={cn('max-h-full overflow-hidden rounded-3xl border p-5 shadow-2xl backdrop-blur-xl sm:p-6', activeStory.panel)}>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">{activeStory.kicker}</Badge>
+                <span className="text-sm font-semibold text-cyan-200">Chapter {activeIndex + 1} of {stories.length}</span>
+              </div>
+              <h3 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{activeStory.title}</h3>
+              <p className="mt-4 max-w-3xl text-sm leading-6 text-white/80 sm:text-base">{activeStory.story}</p>
+              <div className="mt-4 rounded-2xl border border-white/12 bg-black/20 p-4 text-sm leading-6 text-white/78">
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
                 {activeStory.result}
+              </div>
+              <div className="mt-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">What changed</div>
+                <ul className="grid gap-2 text-sm leading-5 text-white/76">
+                  {activeStory.details.map((detail) => (
+                    <li key={detail} className="flex gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {activeStory.commitRefs.map((commit) => (
@@ -477,9 +490,9 @@ function ParallaxStorySection({
                   </Badge>
                 ))}
               </div>
-            </div>
+            </article>
 
-            <div className="relative hidden min-h-[380px] [perspective:1200px] sm:block lg:min-h-[440px] xl:min-h-[500px]">
+            <div className="relative hidden min-h-[340px] [perspective:1200px] md:block lg:min-h-[420px] xl:min-h-[470px]">
               <div className="absolute left-4 top-4 h-64 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={layerStyle(-70, -120, -8, 1, 'rotate(-10deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
                   <DatabaseZap className="h-8 w-8 text-white" />
@@ -514,16 +527,7 @@ function ParallaxStorySection({
             </div>
           </div>
 
-          <div className="mb-3 mt-3 grid shrink-0 gap-3 md:grid-cols-3">
-            {activeStory.details.map((detail, index) => (
-              <div key={detail} className="rounded-2xl border border-white/12 bg-white/[0.07] p-3 text-sm leading-5 text-white/72 backdrop-blur">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">Detail {index + 1}</div>
-                {detail}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 pb-1">
+          <div className="mt-3 flex shrink-0 items-center gap-2 pb-1">
             {stories.map((story, index) => (
               <button
                 key={story.title}
