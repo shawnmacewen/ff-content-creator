@@ -233,7 +233,7 @@ export default function SettingsPage() {
   ), []);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="flex w-full max-w-none flex-col gap-6">
       {header}
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

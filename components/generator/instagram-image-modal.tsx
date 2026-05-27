@@ -45,7 +45,7 @@ export function InstagramImageModal({
                 onClick={() => setMode('single')}
                 className={cn(
                   'w-full rounded-2xl border p-4 text-left shadow-sm transition-all hover:shadow-md',
-                  mode === 'single' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                  mode === 'single' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                 )}
               >
                 <div className="text-sm font-semibold">Single Post</div>
@@ -56,7 +56,7 @@ export function InstagramImageModal({
                 onClick={() => setMode('carousel')}
                 className={cn(
                   'w-full rounded-2xl border p-4 text-left shadow-sm transition-all hover:shadow-md',
-                  mode === 'carousel' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                  mode === 'carousel' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                 )}
               >
                 <div className="text-sm font-semibold">Carousel Post</div>
@@ -76,7 +76,7 @@ export function InstagramImageModal({
                     key={n}
                     type="button"
                     variant={slideCount === n ? 'default' : 'outline'}
-                    className={cn('rounded-2xl', slideCount === n && 'bg-violet-600 hover:bg-violet-600/90')}
+                    className={cn('rounded-2xl', slideCount === n && 'bg-primary hover:bg-primary/90')}
                     onClick={() => setSlideCount(n)}
                   >
                     {n} Slides
@@ -94,7 +94,7 @@ export function InstagramImageModal({
                   onClick={() => setGenerationMode('sequential')}
                   className={cn(
                     'w-full rounded-2xl border p-3 text-left shadow-sm transition-all hover:shadow-md',
-                    generationMode === 'sequential' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                    generationMode === 'sequential' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                   )}
                 >
                   <div className="text-sm font-semibold">Sequential</div>
@@ -105,7 +105,7 @@ export function InstagramImageModal({
                   onClick={() => setGenerationMode('master-plate')}
                   className={cn(
                     'w-full rounded-2xl border p-3 text-left shadow-sm transition-all hover:shadow-md',
-                    generationMode === 'master-plate' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                    generationMode === 'master-plate' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                   )}
                 >
                   <div className="text-sm font-semibold">Master Plate</div>
@@ -119,7 +119,7 @@ export function InstagramImageModal({
             <Button variant="outline" className="rounded-2xl" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button className="rounded-2xl bg-violet-600 hover:bg-violet-600/90" onClick={onConfirm}>
+            <Button className="rounded-2xl bg-primary hover:bg-primary/90" onClick={onConfirm}>
               Apply
             </Button>
           </div>

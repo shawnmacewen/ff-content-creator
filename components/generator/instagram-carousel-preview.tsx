@@ -33,15 +33,15 @@ export function SlideMockupCard({
       onClick={onClick}
       className={cn(
         'group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-white/60 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-white/5',
-        active && 'ring-2 ring-violet-500/70'
+        active && 'ring-2 ring-primary/70'
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent" />
-      <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-gradient-to-br from-violet-500/10 via-transparent to-violet-500/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-info/5 to-transparent" />
+      <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-primary/10" />
 
       <div className="relative flex h-full flex-col p-4 text-left">
         <div className="flex items-center justify-between">
-          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-violet-600/90 text-xs font-semibold text-white">
+          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/90 text-xs font-semibold text-white">
             {index + 1}
           </div>
           <div className="h-7 w-7 rounded-full bg-black/5 dark:bg-white/10" aria-hidden />
@@ -149,7 +149,7 @@ export function InstagramCarouselPreview({
               </Button>
             </div>
             <textarea
-              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />

@@ -162,7 +162,7 @@ export function SourceArticlePicker({
                     )}
                   >
                     <div className="flex w-full min-w-0 gap-4">
-                      <div className="h-16 w-28 overflow-hidden rounded-md bg-gradient-to-br from-primary/25 via-fuchsia-500/10 to-transparent">
+                      <div className="h-16 w-28 overflow-hidden rounded-md bg-gradient-to-br from-primary/25 via-info/10 to-transparent">
                         {(() => {
                           let meta: any = c?.metadata;
                           if (typeof meta === 'string') {

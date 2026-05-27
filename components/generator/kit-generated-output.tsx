@@ -56,7 +56,7 @@ export function KitGeneratedOutput({
             {onGenerate ? (
               <Button
                 size="sm"
-                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                className="rounded-2xl bg-primary hover:bg-primary/90"
                 onClick={onGenerate}
                 disabled={!!isGenerating}
               >
@@ -137,7 +137,7 @@ export function KitGeneratedOutput({
           </div>
         )}
 
-        <div className="rounded-2xl border bg-violet-500/10 px-4 py-3 text-xs text-violet-700 dark:text-violet-300">
+        <div className="rounded-2xl border bg-primary/10 px-4 py-3 text-xs text-primary">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <span>AI-generated content. Review and edit before posting.</span>

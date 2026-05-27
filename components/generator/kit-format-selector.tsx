@@ -30,10 +30,10 @@ export function KitFormatSelector({
   onToggle: (t: ContentType) => void;
 }) {
   return (
-    <div className="rounded-2xl border bg-gradient-to-br from-violet-500/10 via-transparent to-transparent p-5 shadow-sm">
+    <div className="rounded-2xl border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-violet-700 dark:text-violet-300">Campaign KIT generates multiple assets from one article</div>
+          <div className="text-sm font-semibold text-primary">Campaign KIT generates multiple assets from one article</div>
           <div className="text-xs text-muted-foreground">
             Perfect for consistent messaging across your channels. Choose the formats you want to include in your kit.
           </div>
@@ -49,12 +49,12 @@ export function KitFormatSelector({
                 onClick={() => onToggle(type)}
                 className={cn(
                   'flex h-10 w-10 items-center justify-center rounded-xl border bg-background/70 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                  active && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                  active && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
                 )}
                 aria-label={label}
                 title={label}
               >
-                <Icon className={cn('h-4 w-4', active ? 'text-violet-600' : 'text-muted-foreground')} />
+                <Icon className={cn('h-4 w-4', active ? 'text-primary' : 'text-muted-foreground')} />
               </button>
             );
           })}
@@ -69,7 +69,7 @@ export function KitFormatSelector({
               key={type}
               type="button"
               variant={active ? 'default' : 'outline'}
-              className={cn('rounded-2xl', active && 'bg-violet-600 hover:bg-violet-600/90')}
+              className={cn('rounded-2xl', active && 'bg-primary hover:bg-primary/90')}
               onClick={() => onToggle(type)}
             >
               {label}

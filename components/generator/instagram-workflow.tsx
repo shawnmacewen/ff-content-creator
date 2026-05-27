@@ -119,12 +119,12 @@ export function InstagramGenerateWorkflow({
               key={s.n}
               className={cn(
                 'flex items-center gap-2 rounded-2xl border px-3 py-2',
-                idx === 1 ? 'border-violet-500/50 bg-violet-500/5' : 'bg-background/60'
+                idx === 1 ? 'border-primary/50 bg-primary/5' : 'bg-background/60'
               )}
             >
               <div className={cn(
                 'flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold',
-                idx === 1 ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                idx === 1 ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
               )}>
                 {s.n}
               </div>
@@ -144,7 +144,7 @@ export function InstagramGenerateWorkflow({
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-3 rounded-2xl border p-3">
-                  <div className="h-14 w-14 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10" />
+                  <div className="h-14 w-14 overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-info/10" />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold">
                       {selectedSource ? 'Oil Markets Add Risk Premium as Middle East Conflict Escalates' : 'No article selected'}
@@ -222,7 +222,7 @@ export function InstagramGenerateWorkflow({
                     type="button"
                     className={cn(
                       'rounded-2xl border p-4 text-center text-xs font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                      p === 'Instagram' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                      p === 'Instagram' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                     )}
                   >
                     {p}
@@ -242,7 +242,7 @@ export function InstagramGenerateWorkflow({
                     onClick={() => setFormat('single')}
                     className={cn(
                       'w-full rounded-2xl border p-4 text-left shadow-sm transition-all hover:shadow-md',
-                      format === 'single' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                      format === 'single' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                     )}
                   >
                     <div className="text-sm font-semibold">Single Post</div>
@@ -254,7 +254,7 @@ export function InstagramGenerateWorkflow({
                     onClick={() => setFormat('carousel')}
                     className={cn(
                       'w-full rounded-2xl border p-4 text-left shadow-sm transition-all hover:shadow-md',
-                      format === 'carousel' && 'border-violet-500/60 bg-violet-500/5 ring-1 ring-violet-500/30'
+                      format === 'carousel' && 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                     )}
                   >
                     <div className="text-sm font-semibold">Carousel Post</div>
@@ -274,7 +274,7 @@ export function InstagramGenerateWorkflow({
                         key={n}
                         type="button"
                         variant={slideCount === n ? 'default' : 'outline'}
-                        className={cn('rounded-2xl', slideCount === n && 'bg-violet-600 hover:bg-violet-600/90')}
+                        className={cn('rounded-2xl', slideCount === n && 'bg-primary hover:bg-primary/90')}
                         disabled={format !== 'carousel'}
                         onClick={() => setSlideCount(n)}
                       >
@@ -287,9 +287,9 @@ export function InstagramGenerateWorkflow({
             </Card>
           </div>
 
-          <div className="rounded-2xl border bg-gradient-to-br from-violet-500/10 via-transparent to-transparent p-4 text-xs text-muted-foreground shadow-sm">
+          <div className="rounded-2xl border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-4 text-xs text-muted-foreground shadow-sm">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-violet-600/90 text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-primary/90 text-white">
                 <Instagram className="h-4 w-4" />
               </div>
               <div>
@@ -302,7 +302,7 @@ export function InstagramGenerateWorkflow({
                 <Label className="text-xs">Instagram Mode</Label>
                 <Switch checked={instagramMode} onCheckedChange={setInstagramMode} />
               </div>
-              <Button className="rounded-2xl bg-violet-600 hover:bg-violet-600/90" onClick={handleGenerateMock}>
+              <Button className="rounded-2xl bg-primary hover:bg-primary/90" onClick={handleGenerateMock}>
                 Generate
               </Button>
             </div>

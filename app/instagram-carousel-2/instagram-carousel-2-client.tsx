@@ -681,9 +681,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                 <div className="space-y-3 min-w-0">
                   {selectedSourceId ? (
-                    <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
+                    <div className="rounded-2xl border border-primary/50 bg-primary/5 p-4 shadow-sm">
                       <div className="flex gap-4">
-                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-primary/25 via-info/10 to-transparent">
                           {(() => {
                             let meta: any = selectedSourceMetadata;
                             if (typeof meta === 'string') {
@@ -737,7 +737,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                   {showAdvancedPromptInput ? (
                     <textarea
-                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                       placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
@@ -840,7 +840,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                           >
                             <input
                               type="checkbox"
-                              className="h-4 w-4 accent-violet-600"
+                              className="h-4 w-4 accent-primary"
                               checked={moreSeamlessBackground}
                               onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
                               disabled={isLoading}
@@ -853,7 +853,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
-                        className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                        className="rounded-2xl bg-primary hover:bg-primary/90"
                         onClick={runCarouselGeneration}
                         disabled={isLoading || !topic.trim()}
                       >
@@ -890,7 +890,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                             </DialogHeader>
                             <textarea
                               readOnly
-                              className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                              className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                               value={(promptLog || lastPromptUsed || '').trim()}
                               placeholder="Generate a carousel to populate the prompt log…"
                             />
@@ -955,9 +955,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                 <div className="space-y-3 min-w-0">
                   {selectedSourceId ? (
-                    <div className="rounded-2xl border border-violet-500/50 bg-violet-500/5 p-4 shadow-sm">
+                    <div className="rounded-2xl border border-primary/50 bg-primary/5 p-4 shadow-sm">
                       <div className="flex gap-4">
-                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                        <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-primary/25 via-info/10 to-transparent">
                           {(() => {
                             let meta: any = selectedSourceMetadata;
                             if (typeof meta === 'string') {
@@ -1011,7 +1011,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                   {showAdvancedPromptInput ? (
                     <textarea
-                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                       placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
@@ -1109,7 +1109,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                           >
                             <input
                               type="checkbox"
-                              className="h-4 w-4 accent-violet-600"
+                              className="h-4 w-4 accent-primary"
                               checked={moreSeamlessBackground}
                               onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
                               disabled={isLoading}
@@ -1122,7 +1122,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
-                        className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                        className="rounded-2xl bg-primary hover:bg-primary/90"
                         onClick={runCarouselGeneration}
                         disabled={isLoading || !topic.trim()}
                       >
@@ -1159,7 +1159,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                             </DialogHeader>
                             <textarea
                               readOnly
-                              className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                              className="min-h-[320px] w-full resize-y rounded-2xl border bg-background p-4 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                               value={(promptLog || lastPromptUsed || '').trim()}
                               placeholder="Generate a carousel to populate the prompt log…"
                             />

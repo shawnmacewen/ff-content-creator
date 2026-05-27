@@ -75,8 +75,8 @@ function SlideCard({
       className={cn(
         'group relative aspect-[4/5] w-full shrink-0 snap-center overflow-hidden rounded-[28px] transition-all',
         // Use outline instead of ring so the active border stays visually even on all sides.
-        'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500/40 focus-visible:outline-offset-2',
-        active ? 'outline outline-2 outline-violet-500/50 outline-offset-2' : 'hover:brightness-[1.02]'
+        'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 focus-visible:outline-offset-2',
+        active ? 'outline outline-2 outline-primary/50 outline-offset-2' : 'hover:brightness-[1.02]'
       )}
       style={
         slide.imageUrl
@@ -97,8 +97,8 @@ function SlideCard({
           slide.imageUrl
             ? 'bg-transparent'
             : template === 'standard'
-              ? 'bg-gradient-to-br from-white via-white/80 to-violet-500/8'
-              : 'bg-gradient-to-br from-violet-500/14 via-violet-200/18 to-white/70'
+              ? 'bg-gradient-to-br from-white via-white/80 to-primary/8'
+              : 'bg-gradient-to-br from-primary/14 via-primary/18 to-white/70'
         )}
       />
       {/* When an image exists, show it raw (no extra overlays) so we can judge the true output quality. */}
@@ -258,7 +258,7 @@ export function InstagramCarouselPanel({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Instagram className="h-4 w-4 text-violet-600" />
+            <Instagram className="h-4 w-4 text-primary" />
             <CardTitle className="text-base">Preview Your Instagram Post</CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export function InstagramCarouselPanel({
             {onGenerate ? (
               <Button
                 size="sm"
-                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
+                className="rounded-2xl bg-primary hover:bg-primary/90"
                 onClick={onGenerate}
                 disabled={!!isGenerating || !canGenerate}
               >
@@ -298,7 +298,7 @@ export function InstagramCarouselPanel({
             type="button"
             size="sm"
             variant={styleVariant === 'purple-gold' ? 'default' : 'outline'}
-            className={cn('rounded-2xl', styleVariant === 'purple-gold' && 'bg-violet-600 hover:bg-violet-600/90')}
+            className={cn('rounded-2xl', styleVariant === 'purple-gold' && 'bg-primary hover:bg-primary/90')}
             onClick={() => onStyleVariantChange?.('purple-gold')}
             disabled={!!isGenerating || !onStyleVariantChange}
           >
@@ -408,7 +408,7 @@ export function InstagramCarouselPanel({
                     key={i}
                     className={cn(
                       'h-1.5 w-1.5 rounded-full bg-muted-foreground/30',
-                      i === activeIndex && 'w-5 bg-violet-600/80'
+                      i === activeIndex && 'w-5 bg-primary/80'
                     )}
                   />
                 ))}
@@ -431,7 +431,7 @@ export function InstagramCarouselPanel({
               </Button>
             </div>
             <textarea
-              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               value={effectiveCaption}
               onChange={(e) => setCaption(e.target.value)}
             />
@@ -451,7 +451,7 @@ export function InstagramCarouselPanel({
             </div>
             <textarea
               readOnly
-              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              className="min-h-[220px] w-full resize-y rounded-2xl border bg-background p-4 text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               value={(promptLog || lastPrompt || '').trim()}
               placeholder="Run a carousel generation to populate prompt logs…"
             />
