@@ -18,6 +18,12 @@ import { format } from 'date-fns';
 import { ExternalLink, User, Calendar, Copy, Check, FileText, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+type RichBlock =
+  | { type: 'heading'; text: string; level: 2 | 3 }
+  | { type: 'paragraph'; text: string }
+  | { type: 'list'; ordered: boolean; items: string[] }
+  | { type: 'table'; rows: string[][] };
+
 const designationToneClasses = [
   'bg-primary/10 text-primary border-primary/25',
   'bg-info/10 text-info border-info/25',
@@ -126,6 +132,126 @@ function normalizeXmlToTextBrowser(input: string): string {
     .replace(/[ ]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function nodeText(node: Node | null | undefined): string {
+  return String(node?.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function hasElementChildren(node: Element) {
+  return Array.from(node.childNodes).some((child) => child.nodeType === Node.ELEMENT_NODE);
+}
+
+function parseTableNode(node: Element): RichBlock | null {
+  const rowNodes = Array.from(node.querySelectorAll('tr,row'));
+  const rows = rowNodes
+    .map((row) => {
+      const cells = Array.from(row.querySelectorAll('th,td,cell,entry'))
+        .map((cell) => nodeText(cell))
+        .filter(Boolean);
+      return cells;
+    })
+    .filter((row) => row.length);
+
+  return rows.length ? { type: 'table', rows } : null;
+}
+
+function parseListNode(node: Element, ordered: boolean): RichBlock | null {
+  const directItems = Array.from(node.children)
+    .filter((child) => ['li', 'item', 'list_item', 'bullet'].includes(child.tagName.toLowerCase()))
+    .map((child) => nodeText(child))
+    .filter(Boolean);
+
+  return directItems.length ? { type: 'list', ordered, items: directItems } : null;
+}
+
+function pushTextBlock(blocks: RichBlock[], type: RichBlock['type'], text: string, level: 2 | 3 = 2) {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean) return;
+  if (type === 'heading') blocks.push({ type, text: clean, level });
+  else if (type === 'paragraph') blocks.push({ type, text: clean });
+}
+
+function walkRichNode(node: Element, blocks: RichBlock[]) {
+  const tag = node.tagName.toLowerCase();
+
+  if (['document_title', 'title', 'h1', 'h2'].includes(tag)) {
+    pushTextBlock(blocks, 'heading', nodeText(node), 2);
+    return;
+  }
+
+  if (['short_title', 'subtitle', 'subhead', 'h3'].includes(tag)) {
+    pushTextBlock(blocks, 'heading', nodeText(node), 3);
+    return;
+  }
+
+  if (['paragraph', 'p'].includes(tag)) {
+    pushTextBlock(blocks, 'paragraph', nodeText(node));
+    return;
+  }
+
+  if (['ul', 'unordered_list', 'bullet_list', 'bullets'].includes(tag)) {
+    const parsed = parseListNode(node, false);
+    if (parsed) blocks.push(parsed);
+    return;
+  }
+
+  if (['ol', 'ordered_list', 'numbered_list'].includes(tag)) {
+    const parsed = parseListNode(node, true);
+    if (parsed) blocks.push(parsed);
+    return;
+  }
+
+  if (tag === 'table') {
+    const parsed = parseTableNode(node);
+    if (parsed) blocks.push(parsed);
+    return;
+  }
+
+  if (!hasElementChildren(node)) {
+    pushTextBlock(blocks, 'paragraph', nodeText(node));
+    return;
+  }
+
+  Array.from(node.children).forEach((child) => walkRichNode(child, blocks));
+}
+
+function plainTextBlocks(input: string): RichBlock[] {
+  return normalizeXmlToTextBrowser(input)
+    .split(/\n\n+/g)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text) => ({ type: 'paragraph', text }) as RichBlock);
+}
+
+function richBlocksFromChildren(parent: Element): RichBlock[] {
+  const blocks: RichBlock[] = [];
+  Array.from(parent.children).forEach((child) => walkRichNode(child, blocks));
+  return blocks;
+}
+
+function parseRichBody(input: string): RichBlock[] {
+  const decoded = decodeEntitiesBrowser(String(input || ''));
+  if (!decoded.trim()) return [];
+
+  const looksStructured = /<\/?[a-z][\s\S]*>/i.test(decoded);
+  if (!looksStructured) {
+    return plainTextBlocks(decoded);
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<root>${decoded}</root>`, 'text/xml');
+    if (doc.querySelector('parsererror')) throw new Error('XML parser error');
+
+    const blocks = richBlocksFromChildren(doc.documentElement);
+    return blocks.length ? blocks : plainTextBlocks(decoded);
+  } catch {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(decoded, 'text/html');
+    const blocks = doc.body ? richBlocksFromChildren(doc.body) : [];
+    return blocks.length ? blocks : plainTextBlocks(decoded);
+  }
 }
 
 function escapeRegex(s: string) {
@@ -242,12 +368,7 @@ export function ContentDetail({
     return normalizeXmlToTextBrowser(raw);
   }, [content?.body]);
 
-  const paragraphs = useMemo(() => {
-    return displayBodyText
-      .split(/\n\n+/g)
-      .map((p) => p.trim())
-      .filter(Boolean);
-  }, [displayBodyText]);
+  const richBlocks = useMemo(() => parseRichBody(String(content?.body || '')), [content?.body]);
 
   const highlightSnippetsClean = useMemo(() => {
     const list = (highlightSnippets || [])
@@ -330,6 +451,81 @@ export function ContentDetail({
         >
           <Copy className="h-3.5 w-3.5" />
         </Button>
+      </div>
+    );
+  };
+
+  const renderHighlightedText = (text: string) => {
+    return highlightText(text, highlightSnippetsClean).map((part, partIndex) => {
+      if (typeof part === 'string') return <span key={partIndex}>{part}</span>;
+      return (
+        <mark
+          key={partIndex}
+          className="rounded bg-primary/15 px-0.5 text-foreground ring-1 ring-primary/20"
+        >
+          {part.text}
+        </mark>
+      );
+    });
+  };
+
+  const renderRichBlock = (block: RichBlock, index: number) => {
+    if (block.type === 'heading') {
+      const HeadingTag = block.level === 2 ? 'h2' : 'h3';
+      return (
+        <HeadingTag
+          key={index}
+          className={cn(
+            'font-semibold leading-tight text-foreground',
+            block.level === 2 ? 'text-lg' : 'text-base',
+          )}
+        >
+          {renderHighlightedText(block.text)}
+        </HeadingTag>
+      );
+    }
+
+    if (block.type === 'paragraph') {
+      return <p key={index}>{renderHighlightedText(block.text)}</p>;
+    }
+
+    if (block.type === 'list') {
+      const ListTag = block.ordered ? 'ol' : 'ul';
+      return (
+        <ListTag
+          key={index}
+          className={cn('space-y-1 pl-5', block.ordered ? 'list-decimal' : 'list-disc')}
+        >
+          {block.items.map((item, itemIndex) => (
+            <li key={itemIndex}>{renderHighlightedText(item)}</li>
+          ))}
+        </ListTag>
+      );
+    }
+
+    return (
+      <div key={index} className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-[520px] border-collapse text-left text-xs">
+          <tbody>
+            {block.rows.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className={
+                  rowIndex === 0 ? 'bg-muted/50 font-medium text-foreground' : 'border-t border-border'
+                }
+              >
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={cellIndex}
+                    className="border-r border-border px-3 py-2 align-top last:border-r-0"
+                  >
+                    {renderHighlightedText(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   };
@@ -429,23 +625,9 @@ export function ContentDetail({
 
             <ScrollArea className="min-h-0 flex-1">
               <div className="px-6 py-5">
-	                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
-	                  {paragraphs.map((paragraph, index) => (
-	                    <p key={index}>
-	                      {highlightText(paragraph, highlightSnippetsClean).map((part, partIndex) => {
-	                        if (typeof part === 'string') return <span key={partIndex}>{part}</span>;
-	                        return (
-	                          <mark
-	                            key={partIndex}
-	                            className="rounded bg-primary/15 px-0.5 text-foreground ring-1 ring-primary/20"
-	                          >
-	                            {part.text}
-	                          </mark>
-	                        );
-	                      })}
-	                    </p>
-	                  ))}
-	                </div>
+                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
+                  {richBlocks.map((block, index) => renderRichBlock(block, index))}
+                </div>
               </div>
             </ScrollArea>
           </div>
