@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerEnv } from '@/lib/env';
+import { recordGenerationEvent } from '@/lib/generation-events';
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,19 @@ export async function POST(req: Request) {
     const first = data?.data?.[0] || {};
 
     const derivedImageUrl = first?.url || (first?.b64_json ? `data:image/png;base64,${first.b64_json}` : null);
+
+    if (res.ok && derivedImageUrl) {
+      await recordGenerationEvent({
+        tool: 'image-test',
+        contentType: 'image-test',
+        category: 'image',
+        assetCount: 1,
+        model: 'gpt-image-1',
+        meta: {
+          route: 'generate-image-test',
+        },
+      });
+    }
 
     return NextResponse.json({
       ok: res.ok,

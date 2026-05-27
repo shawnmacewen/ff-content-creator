@@ -3,13 +3,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { CAROUSEL_TEMPLATES, pickCarouselTemplate } from '@/lib/generator/carousel-templates';
-
-
-function pickVariantSeed(text: string): number {
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-  return hash;
-}
+import { recordGenerationEvent } from '@/lib/generation-events';
 
 function buildForegroundPrompt(args: { theme: any; motif: string; placement: string; index: number; total: number }) {
   return [
@@ -23,26 +17,6 @@ function buildForegroundPrompt(args: { theme: any; motif: string; placement: str
     `Texture: ${args.theme?.texture || 'subtle grain'}.`,
     `Consistency: must match the same visual system across slides.`,
   ].join(' ');
-}
-
-function placementToXY(args: { placement: string; canvasW: number; canvasH: number; fgW: number; fgH: number }) {
-  const pad = 70;
-  const midX = Math.round((args.canvasW - args.fgW) / 2);
-  const midY = Math.round((args.canvasH - args.fgH) / 2);
-
-  switch (args.placement) {
-    case 'left':
-      return { left: pad, top: midY };
-    case 'right':
-      return { left: args.canvasW - args.fgW - pad, top: midY };
-    case 'center':
-      return { left: midX, top: midY };
-    case 'bottom-left':
-      return { left: pad, top: args.canvasH - args.fgH - pad };
-    case 'bottom-right':
-    default:
-      return { left: args.canvasW - args.fgW - pad, top: args.canvasH - args.fgH - pad };
-  }
 }
 
 async function generateImage(apiKey: string, prompt: string, size: '1024x1536' | '1536x1024' | '1024x1024') {
@@ -77,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, visualType, scene, focalPoint, compositionNotes, placement = 'right', quality = 'fast' } = body as {
+  const { theme, masterPlate, style = 'purple-gold', template: templateIn = 'standard', slideId, index, total, beat, motif, imageryMotif, visualType, scene, focalPoint, compositionNotes, placement = 'right' } = body as {
     theme: any;
     masterPlate?: string | null;
     style?: 'purple-gold' | 'frost';
@@ -93,7 +67,6 @@ export async function POST(req: Request) {
     focalPoint?: string;
     compositionNotes?: string;
     placement?: 'left' | 'right' | 'center' | 'bottom-left' | 'bottom-right';
-    quality?: 'fast' | 'cover';
   };
 
   const Schema = z.object({
@@ -117,6 +90,23 @@ export async function POST(req: Request) {
 
     const denom = Math.max(1, total - 1);
     const x = Math.round((index / denom) * 100);
+
+    if (motifUrl) {
+      await recordGenerationEvent({
+        tool: 'carousel-image',
+        contentType: 'instagram-carousel-motif',
+        category: 'image',
+        assetCount: 1,
+        model: 'gpt-image-2',
+        meta: {
+          slideId,
+          index,
+          total,
+          style,
+          usedMasterPlate: true,
+        },
+      });
+    }
 
     return new Response(
       JSON.stringify({
@@ -261,6 +251,24 @@ export async function POST(req: Request) {
   const size = '1024x1536';
   const promptUsed = promptRes.object.prompt;
   const img = await generateImage(env.OPENAI_API_KEY, promptUsed, size);
+
+  if (img.imageUrl) {
+    await recordGenerationEvent({
+      tool: 'carousel-image',
+      contentType: 'instagram-carousel-slide',
+      category: 'image',
+      assetCount: 1,
+      model: 'gpt-image-2',
+      meta: {
+        slideId,
+        index,
+        total,
+        style,
+        template,
+        size,
+      },
+    });
+  }
 
   return new Response(
     JSON.stringify({

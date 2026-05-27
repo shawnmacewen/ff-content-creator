@@ -2,28 +2,8 @@ import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { getServerEnv } from '@/lib/env';
+import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-
-async function recordGenerationEvent(args: {
-  tool: 'generate-content' | 'echowrite';
-  contentType: string;
-  success: boolean;
-  model?: string | null;
-  meta?: Record<string, any>;
-}) {
-  try {
-    const supabase = getSupabaseServerClient();
-    await supabase.from('generation_events').insert({
-      tool: args.tool,
-      content_type: args.contentType,
-      success: args.success,
-      model: args.model || null,
-      meta: args.meta || {},
-    });
-  } catch {
-    // best-effort metrics only
-  }
-}
 
 
 function decodeHtmlEntities(input: string): string {
@@ -278,7 +258,8 @@ export async function POST(req: Request) {
     await recordGenerationEvent({
       tool: 'echowrite',
       contentType: body.contentType,
-      success: true,
+      category: 'content',
+      assetCount: 1,
       model: modelName,
       meta: {
         writingStyle: body.writingStyle,

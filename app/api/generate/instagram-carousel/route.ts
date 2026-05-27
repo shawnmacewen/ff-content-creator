@@ -2,19 +2,8 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-
-function pickVariantSeed(text: string): number {
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-  return hash;
-}
-
-const CAROUSEL_STYLES = [
-  'premium fintech editorial aesthetic, soft purple gradients, subtle grain, rounded shapes',
-  'minimal editorial layout, soft violet gradient background, calm, trustworthy, modern',
-  'clean poster design, purple-to-lavender gradient, light texture, lots of whitespace',
-] as const;
 
 function buildSlideImagePrompt(args: {
   theme: {
@@ -188,6 +177,34 @@ export async function POST(req: Request) {
     const imgPrompt = buildSlideImagePrompt({ theme, headline: s.headline, summary: s.summary, index: i, total: slides.length });
     const img = await generateSlideImage(env.OPENAI_API_KEY, imgPrompt);
     images.push({ slideId: s.id, imageUrl: img.imageUrl, error: img.error });
+  }
+
+  await recordGenerationEvent({
+    tool: 'carousel-plan',
+    contentType: 'instagram-carousel',
+    category: 'content',
+    assetCount: 1,
+    model: env.OPENAI_MODEL,
+    meta: {
+      slideCount: slides.length,
+      sourceContentCount: sourceContentIds?.length || 0,
+      route: 'legacy-carousel',
+    },
+  });
+
+  const successfulImages = images.filter((image) => Boolean(image.imageUrl)).length;
+  if (successfulImages > 0) {
+    await recordGenerationEvent({
+      tool: 'carousel-image',
+      contentType: 'instagram-carousel-slide',
+      category: 'image',
+      assetCount: successfulImages,
+      model: 'gpt-image-1',
+      meta: {
+        slideCount: slides.length,
+        route: 'legacy-carousel',
+      },
+    });
   }
 
   return new Response(

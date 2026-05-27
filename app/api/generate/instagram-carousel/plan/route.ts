@@ -2,6 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
@@ -233,6 +234,36 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error('master plate generation exception', e);
     }
+  }
+
+  await recordGenerationEvent({
+    tool: 'carousel-plan',
+    contentType: 'instagram-carousel-plan',
+    category: 'content',
+    assetCount: 1,
+    model: env.OPENAI_MODEL,
+    meta: {
+      slideCount: slides.length,
+      generationMode,
+      style,
+      sourceContentCount: sourceContentIds?.length || 0,
+      hasMasterPlate: Boolean(masterPlate),
+    },
+  });
+
+  if (masterPlate) {
+    await recordGenerationEvent({
+      tool: 'carousel-image',
+      contentType: 'instagram-carousel-master-plate',
+      category: 'image',
+      assetCount: 1,
+      model: 'gpt-image-2',
+      meta: {
+        generationMode,
+        style,
+        slideCount: slides.length,
+      },
+    });
   }
 
   return new Response(

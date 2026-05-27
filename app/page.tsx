@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   DatabaseZap,
   FileSearch,
+  Image as ImageIcon,
   Layers3,
   Mail,
   Megaphone,
@@ -31,6 +32,16 @@ import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import type { GeneratedContent } from '@/lib/types/content';
 
 type Icon = ComponentType<{ className?: string }>;
+
+type MetricsSummary = {
+  ok: boolean;
+  totals?: {
+    generatedAssets?: number;
+    generatedAssetsThisWeek?: number;
+    generatedImages?: number;
+    generatedImagesThisWeek?: number;
+  };
+};
 
 type Accent = {
   icon: string;
@@ -266,6 +277,10 @@ export default function DashboardPage() {
     mounted ? '/api/generated-content' : null,
     fetcher
   );
+  const { data: metricsSummary } = useSWR<MetricsSummary>(
+    mounted ? '/api/metrics/summary' : null,
+    fetcher
+  );
 
   const content = useMemo(
     () => mapGeneratedContentRows(data?.data || []),
@@ -275,16 +290,19 @@ export default function DashboardPage() {
   const metrics = useMemo(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const generatedThisWeek = content.filter((c) => new Date(c.createdAt) >= weekAgo).length;
+    const savedThisWeek = content.filter((c) => new Date(c.createdAt) >= weekAgo).length;
     const socialCount = content.filter((c) => (c.type || '').startsWith('social-')).length;
     const emailCount = content.filter((c) => (c.type || '').includes('email') || (c.type || '').includes('newsletter')).length;
     const longFormCount = content.filter((c) => ['article', 'infographic-copy', 'faq', 'video-script'].includes(c.type || '')).length;
+    const generatedAssets = metricsSummary?.totals?.generatedAssets ?? content.length;
+    const generatedThisWeek = metricsSummary?.totals?.generatedAssetsThisWeek ?? savedThisWeek;
+    const generatedImages = metricsSummary?.totals?.generatedImages ?? 0;
 
     return [
       {
         label: 'Generated assets',
-        value: content.length,
-        detail: 'Total saved outputs',
+        value: generatedAssets,
+        detail: 'Lifetime content generations',
         icon: Sparkles,
       },
       {
@@ -294,19 +312,19 @@ export default function DashboardPage() {
         icon: TrendingUp,
       },
       {
-        label: 'Social-ready',
-        value: socialCount,
-        detail: 'Posts and captions',
-        icon: MessageSquareText,
+        label: 'Generated images',
+        value: generatedImages,
+        detail: 'Image generations tracked separately',
+        icon: ImageIcon,
       },
       {
-        label: 'Email + long form',
-        value: emailCount + longFormCount,
-        detail: `${emailCount} email, ${longFormCount} editorial`,
+        label: 'Saved outputs',
+        value: content.length,
+        detail: `${socialCount} social, ${emailCount} email, ${longFormCount} editorial`,
         icon: Mail,
       },
     ];
-  }, [content]);
+  }, [content, metricsSummary?.totals]);
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">

@@ -19,6 +19,13 @@ export function getServerEnv() {
   };
 }
 
+export function getSupabaseServerEnv() {
+  return {
+    NEXT_PUBLIC_SUPABASE_URL: required('NEXT_PUBLIC_SUPABASE_URL'),
+    SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),
+  };
+}
+
 export function getPublicEnv() {
   return {
     NEXT_PUBLIC_SUPABASE_URL: required('NEXT_PUBLIC_SUPABASE_URL'),

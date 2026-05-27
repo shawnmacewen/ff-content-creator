@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import { recordGenerationEvent } from '@/lib/generation-events';
 
 const BodySchema = z.object({
   prompt: z.string().min(1),
@@ -117,6 +118,21 @@ export async function POST(req: Request) {
     model,
     referenceImageUrl: parsed.data.referenceImageUrl,
   });
+
+  if (out.imageUrl) {
+    await recordGenerationEvent({
+      tool: 'image-test',
+      contentType: 'instagram-carousel-image-test',
+      category: 'image',
+      assetCount: 1,
+      model,
+      meta: {
+        route: 'instagram-carousel-2-image-test',
+        size,
+        usedReferenceImage: Boolean(parsed.data.referenceImageUrl),
+      },
+    });
+  }
 
   return new Response(
     JSON.stringify({

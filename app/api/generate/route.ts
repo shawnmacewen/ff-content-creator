@@ -1,29 +1,8 @@
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
+import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-
-async function recordGenerationEvent(args: {
-  tool: 'generate-content' | 'echowrite';
-  contentType: string;
-  success: boolean;
-  model?: string | null;
-  meta?: Record<string, any>;
-}) {
-  try {
-    const supabase = getSupabaseServerClient();
-    await supabase.from('generation_events').insert({
-      tool: args.tool,
-      content_type: args.contentType,
-      success: args.success,
-      model: args.model || null,
-      meta: args.meta || {},
-    });
-  } catch {
-    // best-effort metrics only
-  }
-}
-
 import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
 
@@ -120,13 +99,11 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, instagramImageMode = 'single', instagramCarouselSlides = 6, sourceContentIds, customPrompt, tone, additionalContext } = body as {
+  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
     type: ContentType;
     mode?: 'single' | 'kit';
     selectedTypes?: ContentType[];
     includeInstagramImage?: boolean;
-    instagramImageMode?: 'single' | 'carousel';
-    instagramCarouselSlides?: number;
     sourceContentIds: string[];
     customPrompt?: string;
     tone: ToneType;
@@ -209,6 +186,36 @@ export async function POST(req: Request) {
 
     const combined = outputs.map((o) => `## ${o.label}\n\n${o.content}`).join('\n\n---\n\n');
     const overall = assessCompliance(combined);
+
+    await recordGenerationEvent({
+      tool: 'generate-content',
+      contentType: 'kit',
+      category: 'content',
+      assetCount: outputs.length,
+      model: env.OPENAI_MODEL,
+      meta: {
+        mode,
+        selectedTypes: assets.map((asset) => asset.type),
+        tone,
+        sourceContentCount: sourceContentIds?.length || 0,
+      },
+    });
+
+    const generatedImageCount = Object.keys(images).length;
+    if (generatedImageCount > 0) {
+      await recordGenerationEvent({
+        tool: 'image-generation',
+        contentType: 'instagram-image',
+        category: 'image',
+        assetCount: generatedImageCount,
+        model: 'gpt-image-1',
+        meta: {
+          source: 'generate-content-kit',
+          selectedTypes: assets.map((asset) => asset.type),
+        },
+      });
+    }
+
     return new Response(JSON.stringify({ outputs, images, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
@@ -236,5 +243,33 @@ export async function POST(req: Request) {
   }
 
   const compliance = assessCompliance(outputText);
+
+  await recordGenerationEvent({
+    tool: 'generate-content',
+    contentType: type,
+    category: 'content',
+    assetCount: 1,
+    model: env.OPENAI_MODEL,
+    meta: {
+      mode,
+      tone,
+      sourceContentCount: sourceContentIds?.length || 0,
+    },
+  });
+
+  if (Object.keys(images).length > 0) {
+    await recordGenerationEvent({
+      tool: 'image-generation',
+      contentType: 'instagram-image',
+      category: 'image',
+      assetCount: Object.keys(images).length,
+      model: 'gpt-image-1',
+      meta: {
+        source: 'generate-content-single',
+        contentType: type,
+      },
+    });
+  }
+
   return new Response(JSON.stringify({ content: outputText, images, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }
