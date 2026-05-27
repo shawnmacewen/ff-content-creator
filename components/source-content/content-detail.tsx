@@ -24,6 +24,13 @@ type RichBlock =
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'table'; rows: string[][] };
 
+const tableTags = ['table', 'informaltable', 'tgroup', 'thead', 'tbody'];
+const rowTags = ['tr', 'row', 'table_row', 'tablerow'];
+const cellTags = ['th', 'td', 'cell', 'entry', 'table_cell', 'tablecell'];
+const unorderedListTags = ['ul', 'unordered_list', 'bullet_list', 'bullets', 'itemizedlist'];
+const orderedListTags = ['ol', 'ordered_list', 'numbered_list', 'orderedlist'];
+const listItemTags = ['li', 'item', 'list_item', 'listitem', 'bullet'];
+
 const designationToneClasses = [
   'bg-primary/10 text-primary border-primary/25',
   'bg-info/10 text-info border-info/25',
@@ -143,10 +150,12 @@ function hasElementChildren(node: Element) {
 }
 
 function parseTableNode(node: Element): RichBlock | null {
-  const rowNodes = Array.from(node.querySelectorAll('tr,row'));
+  const rowSelector = rowTags.join(',');
+  const cellSelector = cellTags.join(',');
+  const rowNodes = Array.from(node.querySelectorAll(rowSelector));
   const rows = rowNodes
     .map((row) => {
-      const cells = Array.from(row.querySelectorAll('th,td,cell,entry'))
+      const cells = Array.from(row.querySelectorAll(cellSelector))
         .map((cell) => nodeText(cell))
         .filter(Boolean);
       return cells;
@@ -158,7 +167,7 @@ function parseTableNode(node: Element): RichBlock | null {
 
 function parseListNode(node: Element, ordered: boolean): RichBlock | null {
   const directItems = Array.from(node.children)
-    .filter((child) => ['li', 'item', 'list_item', 'bullet'].includes(child.tagName.toLowerCase()))
+    .filter((child) => listItemTags.includes(child.tagName.toLowerCase()))
     .map((child) => nodeText(child))
     .filter(Boolean);
 
@@ -185,24 +194,24 @@ function walkRichNode(node: Element, blocks: RichBlock[]) {
     return;
   }
 
-  if (['paragraph', 'p'].includes(tag)) {
+  if (['paragraph', 'para', 'p', 'simpara'].includes(tag)) {
     pushTextBlock(blocks, 'paragraph', nodeText(node));
     return;
   }
 
-  if (['ul', 'unordered_list', 'bullet_list', 'bullets'].includes(tag)) {
+  if (unorderedListTags.includes(tag)) {
     const parsed = parseListNode(node, false);
     if (parsed) blocks.push(parsed);
     return;
   }
 
-  if (['ol', 'ordered_list', 'numbered_list'].includes(tag)) {
+  if (orderedListTags.includes(tag)) {
     const parsed = parseListNode(node, true);
     if (parsed) blocks.push(parsed);
     return;
   }
 
-  if (tag === 'table') {
+  if (tableTags.includes(tag)) {
     const parsed = parseTableNode(node);
     if (parsed) blocks.push(parsed);
     return;
@@ -217,11 +226,74 @@ function walkRichNode(node: Element, blocks: RichBlock[]) {
 }
 
 function plainTextBlocks(input: string): RichBlock[] {
-  return normalizeXmlToTextBrowser(input)
+  const text = normalizeXmlToTextBrowser(input);
+  const marketBlocks = parseMarketDataTableBlocks(text);
+  if (marketBlocks) return marketBlocks;
+
+  return text
     .split(/\n\n+/g)
     .map((text) => text.trim())
     .filter(Boolean)
     .map((text) => ({ type: 'paragraph', text }) as RichBlock);
+}
+
+function parseMarketDataTableBlocks(input: string): RichBlock[] | null {
+  const text = input.replace(/\r/g, '').trim();
+  const labels = [
+    'Dow Jones Industrial Average',
+    'NASDAQ',
+    'S&P 500',
+    'Russell 2000',
+    'Global Dow',
+    'fed. funds target rate',
+    '10-year Treasuries',
+    'US Dollar-DXY',
+    'Crude Oil-CL=F',
+    'Gold-GC=F',
+  ];
+
+  const foundLabels = labels.filter((label) => new RegExp(`\\b${escapeRegex(label)}\\b`, 'i').test(text));
+  if (foundLabels.length < 4) return null;
+
+  const noteStart = text.search(/Chart reflects/i);
+  const tableText = noteStart >= 0 ? text.slice(0, noteStart) : text;
+  const note = noteStart >= 0 ? text.slice(noteStart).trim() : '';
+
+  const labelPattern = new RegExp(`\\b(${labels.map(escapeRegex).join('|')})\\b`, 'gi');
+  const matches = Array.from(tableText.matchAll(labelPattern));
+  if (matches.length < 4) return null;
+
+  const rows = matches
+    .map((match, index) => {
+      const start = match.index ?? 0;
+      const end = matches[index + 1]?.index ?? tableText.length;
+      const segment = tableText.slice(start, end).replace(/\s+/g, ' ').trim();
+      const label = match[1];
+      const values = segment
+        .slice(label.length)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return [label, ...values];
+    })
+    .filter((row) => row.length >= 4);
+
+  if (rows.length < 4) return null;
+
+  const intro = tableText.slice(0, matches[0].index ?? 0).trim();
+  const showIntro = intro && !/^[\d.,%$ -]+$/.test(intro);
+
+  return [
+    ...(showIntro ? [{ type: 'paragraph' as const, text: intro }] : []),
+    {
+      type: 'table' as const,
+      rows: [
+        ['Market', 'Prior', 'Recent', 'Current', 'Change', 'YTD'],
+        ...rows,
+      ],
+    },
+    ...(note ? [{ type: 'paragraph' as const, text: note }] : []),
+  ];
 }
 
 function richBlocksFromChildren(parent: Element): RichBlock[] {
