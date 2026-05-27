@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, PenSquare, Save, Settings2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, PenSquare, Save, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -103,6 +103,20 @@ export default function EchoWritePage() {
   const citedSourceCount = useMemo(() => {
     return sourcesWithCitation.filter((s) => s.citationNumber).length;
   }, [sourcesWithCitation]);
+
+  const groundingStatus = useMemo(() => {
+    const totalSentences = spans.length;
+    const citedSentences = spans.filter((span) => span.sourceId && span.citationNumber).length;
+    const percent = totalSentences ? Math.round((citedSentences / totalSentences) * 100) : 0;
+
+    return {
+      totalSentences,
+      citedSentences,
+      percent,
+      hasOutput: Boolean(content.trim()),
+      hasRetrievedSources: sources.length > 0,
+    };
+  }, [content, sources.length, spans]);
 
   const generate = async () => {
     setLoading(true);
@@ -364,6 +378,40 @@ Separately (client-side), we:
           </pre>
         </DialogContent>
       </Dialog>
+
+      {groundingStatus.hasOutput ? (
+        <div className="grid gap-3 rounded-lg border border-border bg-card p-4 shadow-sm md:grid-cols-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <PenSquare className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">{groundingStatus.totalSentences} output sentences</p>
+              <p className="text-xs text-muted-foreground">Generated draft structure</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-600 text-white">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">{groundingStatus.citedSentences} cited sentences</p>
+              <p className="text-xs text-muted-foreground">{groundingStatus.percent}% passed citation threshold</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+              <Settings2 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">{sources.length} retrieved sources</p>
+              <p className="text-xs text-muted-foreground">
+                {groundingStatus.hasRetrievedSources ? `${citedSourceCount} cited in output` : 'No matching source context found'}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3 rounded-lg border border-border bg-card p-4 shadow-sm">
