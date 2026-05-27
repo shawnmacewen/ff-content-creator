@@ -78,7 +78,7 @@ const changelogGroups = [
   {
     period: 'Released May 27, 2026',
     theme: 'Visual Product Updates',
-    commits: ['4464163', '467c0a6', '58c0ec2', '6263c26', '0cfde79', '9361869', 'c043734', '99c12f8', '79a2109', '8e18d83'],
+    commits: ['489799a', '4464163', '467c0a6', '58c0ec2', '6263c26', '8e18d83'],
     icon: Eye,
     items: [
       'Added Product Updates as a Settings destination with Visual Log as the default experience.',
@@ -142,25 +142,113 @@ const changelogGroups = [
     ],
   },
   {
-    period: 'Released May 27, 2026',
+    period: 'Released May 14-27, 2026',
     theme: 'Source Content Review Foundation',
-    commits: ['694d44b', '719a4c6', 'f24d947', '32fdb0d', '51d201e', 'ef65710', '11af9e9', '77f4b5f', '6552850', 'd4bec6b'],
+    commits: ['694d44b', '719a4c6', 'f24d947', '32fdb0d', '51d201e', '6552850', 'd4bec6b'],
     icon: Layers3,
     items: [
       'Stored richer source bodies and rendered structured provider content more cleanly, including XML-like content that previously read poorly.',
-      'Kept source list responses lightweight while improving detail modals, metadata links, filters, headers, compliance cards, and source card badges.',
-      'Added source quality signals such as FINRA-reviewed metrics and better preserved source context for downstream generation.',
+      'Kept source list responses lightweight while improving detail modals, metadata links, filters, headers, compliance cards, card badges, and pagination.',
+      'Added source quality and identity signals such as FINRA-reviewed status, filenames, publisher labels, designations, external IDs, and richer source metadata.',
     ],
   },
   {
-    period: 'Released May 27, 2026',
+    period: 'Released May 15-27, 2026',
     theme: 'EchoWrite Grounding and Content Scan',
-    commits: ['cefacbe', 'bdd1c82', 'e30d862', 'c78c2c4', '378c7c7', '1ccdc2b', 'd4e9b9c', '49127f6'],
+    commits: ['cefacbe', 'bdd1c82', '49127f6', '31bb106', 'f2ab294', '8fb2692', 'c718a58'],
     icon: WandSparkles,
     items: [
-      'Hardened EchoWrite grounding with better retrieval scoring, attribution, source evidence, cited-source saving, and visible grounding status.',
-      'Improved EchoWrite generation states and video-script output so generated drafts are clearer to review.',
-      'Improved Content Scan search parsing, query behavior, and text handling so audit workflows find source material more reliably.',
+      'Added EchoWrite as an AI editorial workflow with RAG-style source grounding, rich text editing, prompt inspection, and source-attributed highlights.',
+      'Hardened grounding with better retrieval scoring, attribution, source evidence, cited-source saving, visible grounding status, and source detail drill-ins.',
+      'Built Content Scan from the earlier Content Audit work with standard search, AI Analyze, fallback parsing, CSV export, bulk update marking, diagnostics, and clearer result states.',
+    ],
+  },
+  {
+    period: 'Released May 25-26, 2026',
+    theme: 'Generate KIT Workflow and Output Review',
+    commits: ['3f0f265', 'ad41760', 'f83b2c9', 'a895e7f', '75d6613', '0db7caf', '6540d0f'],
+    icon: Sparkles,
+    items: [
+      'Turned Generate into a KIT workflow that can produce multiple asset types together while keeping single-asset generation available.',
+      'Unified carousel, masterplate, generated copy, and all-output review into one output area with clearer tabbing and copy actions.',
+      'Improved source selection, selected-content previews, thumbnails, body snippets, campaign-friendly headers, and generation progress feedback.',
+    ],
+  },
+  {
+    period: 'Released May 16-21, 2026',
+    theme: 'Carousel 2.0 Image Generation System',
+    commits: ['0e3fa88', '396d628', '3528b64', '79c19d7', 'd6baa24', '9d08dfe', '5c28b52'],
+    icon: Images,
+    items: [
+      'Added Carousel 2.0 as a dedicated image-generation workflow with source article picking, generation settings, prompt logging, and image-test tooling.',
+      'Built masterplate, sequential, swipe, tile, compact, and split-panel review modes so generated carousel images can be inspected in different layouts.',
+      'Iterated on cohesion methods, slide counts, prompt rules, seamless backgrounds, source-body injection, advanced controls, and OpenAI image edit/reference flows.',
+    ],
+  },
+  {
+    period: 'Released May 16-17, 2026',
+    theme: 'Carousel Design Templates and Prompt System',
+    commits: ['9b70eb0', '07a51f7', '181ae64', 'ebafe34', 'ba3ae53', '1c9ca5a', '8141fc2'],
+    icon: PanelTop,
+    items: [
+      'Created carousel templates for intro, standard, and outro slides with style variants such as purple-gold and Frost.',
+      'Documented and refined the prompt system around template hints, art direction, storyboard scenes, visual types, CTA handling, and source gists.',
+      'Polished slide rendering with loaders, labels, full-bleed previews, foreground motifs, readable text treatment, and clipping fixes.',
+    ],
+  },
+  {
+    period: 'Released May 15-16, 2026',
+    theme: 'EchoWrite Editing Experience',
+    commits: ['144f3bc', '0340733', 'd1644bf', 'b52f0de', 'b01dd0a', '8be609d', 'cdf375f'],
+    icon: ScrollText,
+    items: [
+      'Improved EchoWrite output formatting so articles, headings, paragraphs, and video scripts read naturally in review.',
+      'Added edit/highlight mode controls, Tiptap stability fixes, robust source detail modals, hover-linked evidence cards, and per-source color systems.',
+      'Reduced citation clutter and made source matching more resilient by cleaning paragraphs, preserving highlight HTML, and mapping snippets positionally.',
+    ],
+  },
+  {
+    period: 'Released May 14, 2026',
+    theme: 'Broadridge and AdvisorStream Sync',
+    commits: ['ebacbd4', 'd0e6a9b', 'a4a031c', '6ed1272', '6100baf', '6f3b204', '8dde223'],
+    icon: DatabaseZap,
+    items: [
+      'Built provider sync controls for sample seed, AdvisorStream OAuth, article search, full-feed pagination, dry runs, and batched Broadridge sync.',
+      'Hardened provider mapping around nested payloads, detail enrichment, source filtering, date fields, duplicate detection, external IDs, and non-JSON provider errors.',
+      'Added sync diagnostics, logs, completion toasts, run IDs, resume support, provider caps, and source-count visibility for operational review.',
+    ],
+  },
+  {
+    period: 'Released May 13-14, 2026',
+    theme: 'API Lab and Provider Troubleshooting',
+    commits: ['8f20b04', 'd21b9b3', '3ff8963', 'b09a51c', '0ec71d8', '3087d83', '97d9d20'],
+    icon: BadgeCheck,
+    items: [
+      'Added API Lab as an in-app troubleshooting surface for provider metadata, article lookup, search presets, image-test diagnostics, and response inspection.',
+      'Used API Lab and diagnostic endpoints to debug image payloads, base64 rendering, provider backfill, date/publisher repair, and runtime environment health.',
+      'Kept lower-level provider repair controls out of the main Source Content screen once the troubleshooting workflow had a dedicated home.',
+    ],
+  },
+  {
+    period: 'Released May 13-16, 2026',
+    theme: 'Generated Content Backend and App Shell',
+    commits: ['dc5192b', '22f87df', 'b126e25', '6dd5909', 'd295a8c', '84a4681', 'bf5bdc7'],
+    icon: Rocket,
+    items: [
+      'Established the OpenAI and Supabase foundation, generated-content API, save/edit/delete flows, dashboard stats, and recent activity.',
+      'Moved source content, generated content, and metrics onto backend-backed routes instead of demo-only client state.',
+      'Renamed the app to EDITOR[AI]L and shaped the app shell with Settings tabs, Source Content, Saved Content, Dashboard, Generate, and EchoWrite navigation.',
+    ],
+  },
+  {
+    period: 'Released May 13, 2026',
+    theme: 'Initial Prototype Import',
+    commits: ['e2f7c27', 'b58f37b', '46861ba', 'eb15574', '073d066'],
+    icon: GitCommit,
+    items: [
+      'Imported the original ff-content-creator prototype and pinned the package manager/lockfile for deployment consistency.',
+      'Fixed early build/runtime blockers such as search params suspense, build-time API route failures, and lazy environment loading.',
+      'Added the first project tracking notes and sample content export that later supported Source Content and generation workflows.',
     ],
   },
 ];
@@ -327,7 +415,7 @@ function ChangeLog({
         <div className="grid gap-3 sm:min-w-[360px]">
           <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} />
           <div className="grid gap-2 sm:grid-cols-3">
-            <UpdateStat icon={GitCommit} value="49" label="GitHub commits reviewed" />
+            <UpdateStat icon={GitCommit} value="533" label="GitHub commits reviewed" />
             <UpdateStat icon={BadgeCheck} value={String(changelogGroups.length)} label="feature groups" />
             <UpdateStat icon={CalendarDays} value="Daily" label="release dates" />
           </div>
