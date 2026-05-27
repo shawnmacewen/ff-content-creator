@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ExternalLink, User, Calendar, Copy, Check, FileText } from 'lucide-react';
+import { ExternalLink, User, Calendar, Copy, Check, FileText, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 const designationToneClasses = [
@@ -446,17 +446,30 @@ export function ContentDetail({
 
             <ScrollArea className="min-h-0 flex-1 overflow-hidden">
               <div className="space-y-5 px-5 py-4">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   <div className="rounded-md border border-border bg-background p-3">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">FINRA</div>
-                    <div className="mt-1 text-sm font-semibold text-foreground">
-                      {isFinraApproved ? 'Reviewed' : 'Not reviewed'}
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Designation</div>
+                    <div className="mt-1 break-words text-sm font-semibold text-foreground">
+                      {meta?.contentDesignation || content.type || 'n/a'}
                     </div>
                   </div>
                   <div className="rounded-md border border-border bg-background p-3">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Designation</div>
-                    <div className="mt-1 truncate text-sm font-semibold text-foreground">
-                      {meta?.contentDesignation || content.type || 'n/a'}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">FINRA</div>
+                        <div className="mt-1 text-sm font-semibold text-foreground">
+                          {isFinraApproved ? 'Reviewed' : 'Not reviewed'}
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+                          isFinraApproved ? 'bg-success/15 text-success' : 'bg-destructive/10 text-destructive'
+                        )}
+                        title={isFinraApproved ? 'FINRA reviewed' : 'Not FINRA reviewed'}
+                      >
+                        {isFinraApproved ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      </span>
                     </div>
                   </div>
                 </div>
