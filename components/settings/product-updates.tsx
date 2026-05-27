@@ -221,69 +221,84 @@ const releaseStories: ReleaseStory[] = [
 ];
 
 export default function ProductUpdates() {
-  const [activeTab, setActiveTab] = useState<ProductUpdateTab>('change-log');
+  const [activeTab, setActiveTab] = useState<ProductUpdateTab>('visual-log');
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Product Updates
-            </Badge>
-            <h2 className="max-w-3xl text-3xl font-semibold leading-tight">What changed in Editorial</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              A readable changelog plus an experimental visual release story for the product work we are shipping.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                onClick={() => setActiveTab('change-log')}
-                className={cn(
-                  'bg-white text-[#12306a] hover:bg-blue-50',
-                  activeTab !== 'change-log' && 'border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white'
-                )}
-                variant={activeTab === 'change-log' ? 'default' : 'outline'}
-              >
-                <ScrollText className="h-4 w-4" />
-                Change Log
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setActiveTab('visual-log')}
-                className={cn(
-                  'border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white',
-                  activeTab === 'visual-log' && 'bg-white text-[#12306a] hover:bg-blue-50'
-                )}
-                variant={activeTab === 'visual-log' ? 'default' : 'outline'}
-              >
-                <Eye className="h-4 w-4" />
-                Visual Log
-              </Button>
-            </div>
-          </div>
-          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
-            <UpdateStat icon={GitCommit} value="30" label="recent commits reviewed" />
-            <UpdateStat icon={BadgeCheck} value="5" label="release groups" />
-            <UpdateStat icon={CalendarDays} value="Weekly" label="current summary cadence" />
-          </div>
-        </div>
-      </section>
-
-      {activeTab === 'change-log' ? <ChangeLog /> : <VisualLog />}
+    <div className="space-y-4">
+      {activeTab === 'change-log' ? (
+        <ChangeLog activeTab={activeTab} onTabChange={setActiveTab} />
+      ) : (
+        <VisualLog activeTab={activeTab} onTabChange={setActiveTab} />
+      )}
     </div>
   );
 }
 
-function ChangeLog() {
+function ProductUpdateNav({
+  activeTab,
+  onTabChange,
+  tone = 'light',
+}: {
+  activeTab: ProductUpdateTab;
+  onTabChange: (tab: ProductUpdateTab) => void;
+  tone?: 'light' | 'dark';
+}) {
+  const isDark = tone === 'dark';
+
+  return (
+    <div className={cn('flex flex-wrap gap-2', isDark && 'text-white')}>
+      <Button
+        type="button"
+        onClick={() => onTabChange('visual-log')}
+        className={cn(
+          isDark && 'border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white',
+          isDark && activeTab === 'visual-log' && 'bg-white text-slate-950 hover:bg-cyan-50',
+        )}
+        variant={activeTab === 'visual-log' ? 'default' : 'outline'}
+      >
+        <Eye className="h-4 w-4" />
+        Visual Log
+      </Button>
+      <Button
+        type="button"
+        onClick={() => onTabChange('change-log')}
+        className={cn(
+          isDark && 'border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white',
+          isDark && activeTab === 'change-log' && 'bg-white text-slate-950 hover:bg-cyan-50',
+        )}
+        variant={activeTab === 'change-log' ? 'default' : 'outline'}
+      >
+        <ScrollText className="h-4 w-4" />
+        Change Log
+      </Button>
+    </div>
+  );
+}
+
+function ChangeLog({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: ProductUpdateTab;
+  onTabChange: (tab: ProductUpdateTab) => void;
+}) {
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
-      <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
+          <Badge className="mb-3">Product Updates</Badge>
           <p className="text-xs font-semibold uppercase text-primary">Change Log</p>
           <h3 className="text-xl font-semibold">Recent product milestones</h3>
+          <div className="mt-2 text-xs text-muted-foreground">Generated from recent repo commit history and grouped for readability.</div>
         </div>
-        <div className="text-xs text-muted-foreground">Generated from recent repo commit history and grouped for readability.</div>
+        <div className="grid gap-3 sm:min-w-[360px]">
+          <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} />
+          <div className="grid gap-2 sm:grid-cols-3">
+            <UpdateStat icon={GitCommit} value="30" label="commits" />
+            <UpdateStat icon={BadgeCheck} value="5" label="groups" />
+            <UpdateStat icon={CalendarDays} value="Weekly" label="cadence" />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -325,7 +340,15 @@ function ChangeLog() {
   );
 }
 
-function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
+function ParallaxStorySection({
+  stories,
+  activeTab,
+  onTabChange,
+}: {
+  stories: ReleaseStory[];
+  activeTab: ProductUpdateTab;
+  onTabChange: (tab: ProductUpdateTab) => void;
+}) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [progress, setProgress] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -419,17 +442,30 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
         <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
 
         <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur">
-            <span>Visual Log - product update story</span>
-            <span>{activeStory.period}</span>
+          <div className="mb-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Product Updates</Badge>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-white/65">{activeStory.period}</span>
+                </div>
+                <h3 className="mt-2 text-lg font-semibold leading-tight text-white sm:text-xl">Visual release story</h3>
+              </div>
+              <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" />
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <UpdateStat icon={GitCommit} value="30" label="recent commits reviewed" tone="dark" />
+              <UpdateStat icon={BadgeCheck} value="5" label="release groups" tone="dark" />
+              <UpdateStat icon={CalendarDays} value="Weekly" label="summary cadence" tone="dark" />
+            </div>
           </div>
 
-          <div className="grid min-h-0 flex-1 items-center gap-5 overflow-hidden lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid min-h-0 flex-1 items-center gap-4 overflow-hidden lg:grid-cols-[0.9fr_1.1fr]">
             <div className="max-w-xl">
-              <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">{activeStory.kicker}</Badge>
+              <Badge className="mb-3 border-white/20 bg-white/10 text-white hover:bg-white/10">{activeStory.kicker}</Badge>
               <div className="text-sm font-semibold text-cyan-200">Chapter {activeIndex + 1} of {stories.length}</div>
-              <h3 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl xl:text-5xl">{activeStory.title}</h3>
-              <p className="mt-4 text-sm leading-6 text-white/76 sm:text-base">{activeStory.story}</p>
+              <h3 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{activeStory.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-white/76 sm:text-base">{activeStory.story}</p>
               <div className={cn('mt-4 rounded-2xl border p-4 text-sm leading-6 text-white/78 backdrop-blur', activeStory.panel)}>
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
                 {activeStory.result}
@@ -507,12 +543,30 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
   );
 }
 
-function VisualLogFallback({ stories }: { stories: ReleaseStory[] }) {
+function VisualLogFallback({
+  stories,
+  activeTab,
+  onTabChange,
+}: {
+  stories: ReleaseStory[];
+  activeTab: ProductUpdateTab;
+  onTabChange: (tab: ProductUpdateTab) => void;
+}) {
   return (
     <section className="rounded-lg border border-border bg-slate-950 p-5 text-white shadow-sm">
-      <div className="mb-4">
-        <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Visual Log</Badge>
-        <h3 className="mt-3 text-3xl font-semibold">Product story</h3>
+      <div className="mb-4 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Product Updates</Badge>
+            <h3 className="mt-3 text-3xl font-semibold">Product story</h3>
+          </div>
+          <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" />
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <UpdateStat icon={GitCommit} value="30" label="recent commits reviewed" tone="dark" />
+          <UpdateStat icon={BadgeCheck} value="5" label="release groups" tone="dark" />
+          <UpdateStat icon={CalendarDays} value="Weekly" label="summary cadence" tone="dark" />
+        </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {stories.map((story) => {
@@ -533,29 +587,47 @@ function VisualLogFallback({ stories }: { stories: ReleaseStory[] }) {
   );
 }
 
-function VisualLog() {
+function VisualLog({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: ProductUpdateTab;
+  onTabChange: (tab: ProductUpdateTab) => void;
+}) {
   return (
     <>
       <div className="motion-reduce:hidden">
-        <ParallaxStorySection stories={releaseStories} />
+        <ParallaxStorySection stories={releaseStories} activeTab={activeTab} onTabChange={onTabChange} />
       </div>
       <div className="hidden motion-reduce:block">
-        <VisualLogFallback stories={releaseStories} />
+        <VisualLogFallback stories={releaseStories} activeTab={activeTab} onTabChange={onTabChange} />
       </div>
     </>
   );
 }
 
-function UpdateStat({ icon: Icon, value, label }: { icon: typeof GitCommit; value: string; label: string }) {
+function UpdateStat({
+  icon: Icon,
+  value,
+  label,
+  tone = 'light',
+}: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+  tone?: 'light' | 'dark';
+}) {
+  const isDark = tone === 'dark';
+
   return (
-    <div className="rounded-md border border-border bg-card p-4">
+    <div className={cn('rounded-md border p-3', isDark ? 'border-white/12 bg-black/20' : 'border-border bg-card')}>
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-md', isDark ? 'bg-cyan-300/15 text-cyan-200' : 'bg-primary/10 text-primary')}>
           <Icon className="h-4 w-4" />
         </span>
         <div>
-          <p className="text-lg font-semibold">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className={cn('text-lg font-semibold leading-none', isDark && 'text-white')}>{value}</p>
+          <p className={cn('mt-1 text-xs', isDark ? 'text-white/58' : 'text-muted-foreground')}>{label}</p>
         </div>
       </div>
     </div>
