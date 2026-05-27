@@ -22,6 +22,8 @@ export async function GET(
     id: data.id,
     title: data.title,
     body: data.body,
+    bodyHtml: data.body_html || data.metadata?.bodyHtml || null,
+    bodyXml: data.body_xml || data.metadata?.bodyXml || null,
     excerpt: data.metadata?.excerpt || data.body?.slice(0, 220) || '',
     type: data.type,
     tags: data.tags || [],

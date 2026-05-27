@@ -254,6 +254,11 @@ function parseRichBody(input: string): RichBlock[] {
   }
 }
 
+function getRenderableBody(content: SourceContent | null): string {
+  if (!content) return '';
+  return String(content.bodyHtml || content.bodyXml || content.body || '');
+}
+
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -368,7 +373,7 @@ export function ContentDetail({
     return normalizeXmlToTextBrowser(raw);
   }, [content?.body]);
 
-  const richBlocks = useMemo(() => parseRichBody(String(content?.body || '')), [content?.body]);
+  const richBlocks = useMemo(() => parseRichBody(getRenderableBody(content)), [content]);
 
   const highlightSnippetsClean = useMemo(() => {
     const list = (highlightSnippets || [])

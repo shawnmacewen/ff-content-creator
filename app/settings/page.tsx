@@ -98,9 +98,10 @@ export default function SettingsPage() {
   // Content Sync state
   const [running, setRunning] = useState(false);
   const [runningBatched, setRunningBatched] = useState(false);
+  const [runningSyncUpdate, setRunningSyncUpdate] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
-  const shouldPollLogs = tab === 'content-sync' && (running || runningBatched);
+  const shouldPollLogs = tab === 'content-sync' && (running || runningBatched || runningSyncUpdate);
   const { data, isLoading, mutate } = useSWR('/api/source-content/sync/logs', fetcher, {
     refreshInterval: shouldPollLogs ? 5000 : 0,
   });
@@ -203,6 +204,68 @@ export default function SettingsPage() {
     }
   };
 
+  const runSyncAndUpdate = async () => {
+    setRunningSyncUpdate(true);
+    setRunResult(null);
+    try {
+      const batches: any[] = [];
+      let startPage = 0;
+      const maxBatches = 20;
+      const seenWindows = new Set<string>();
+
+      for (let i = 0; i < maxBatches; i += 1) {
+        const response = await fetch('/api/source-content/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'provider-rich-update',
+            dryRun: false,
+            maxItems: 250,
+            maxPages: 1,
+            startPage,
+          }),
+        });
+
+        const json = await response.json();
+        batches.push({ batch: i + 1, startPage, ...json });
+
+        if (!response.ok || !json?.ok) break;
+        if ((json?.processed ?? 0) === 0) break;
+
+        const windowKey = `${json?.startPage ?? startPage}-${json?.endPage ?? startPage}`;
+        if (seenWindows.has(windowKey)) break;
+        seenWindows.add(windowKey);
+
+        const nextFromServer = Number(json?.nextStartPage);
+        if (!Number.isFinite(nextFromServer) || nextFromServer <= startPage) break;
+        startPage = nextFromServer;
+      }
+
+      const result = {
+        ok: true,
+        mode: 'provider-rich-update-batched',
+        batchesRun: batches.length,
+        totals: {
+          processed: batches.reduce((n, b) => n + (b.processed || 0), 0),
+          inserted: batches.reduce((n, b) => n + (b.inserted || 0), 0),
+          updated: batches.reduce((n, b) => n + (b.updated || 0), 0),
+        },
+        batches,
+      };
+
+      setRunResult(result);
+      mutate();
+
+      toast.success(
+        `Sync and Update complete: ${result.totals.processed} processed (${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
+      );
+    } catch (error: any) {
+      toast.error(error?.message || 'Sync and Update failed');
+    } finally {
+      setRunningSyncUpdate(false);
+    }
+  };
+
   const header = useMemo(() => (
     <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
@@ -259,7 +322,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 onClick={runSync}
-                disabled={running || runningBatched}
+                disabled={running || runningBatched || runningSyncUpdate}
                 title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the Content API Explorer."
               >
                 <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
@@ -269,13 +332,22 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 onClick={runSyncBatched}
-                disabled={running || runningBatched}
+                disabled={running || runningBatched || runningSyncUpdate}
                 title="Runs multiple 250-item sync batches in sequence using startPage offsets (target up to ~5000 items). Stops on repeat-page or zero-processed response."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
                 {runningBatched ? 'Running Batched Sync...' : 'Sync Broadridge Content API (Batched)'}
               </Button>
-              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched}>
+              <Button
+                variant="outline"
+                onClick={runSyncAndUpdate}
+                disabled={running || runningBatched || runningSyncUpdate}
+                title="Runs a batched update over existing Broadridge source records, fetching article detail data again and saving richer HTML/XML body fields for View Detail rendering."
+              >
+                <Database className={`h-4 w-4 mr-2 ${runningSyncUpdate ? 'animate-pulse' : ''}`} />
+                {runningSyncUpdate ? 'Running Sync and Update...' : 'Sync and Update'}
+              </Button>
+              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched || runningSyncUpdate}>
                 <RefreshCw className="h-4 w-4" />
                 Refresh Logs
               </Button>

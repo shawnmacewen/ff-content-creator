@@ -62,6 +62,99 @@ function pickExtraProperties(detailData: any) {
   };
 }
 
+function decodeHtmlEntitiesServer(input: string): string {
+  return String(input || '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function richMarkupToPlainText(input: string): string {
+  return decodeHtmlEntitiesServer(input)
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<\/?(section|container|article|corpus|table|thead|tbody|tr|row)[^>]*>/gi, '\n\n')
+    .replace(/<\/?(ul|ol|unordered_list|ordered_list|bullet_list|numbered_list|bullets)[^>]*>/gi, '\n')
+    .replace(/<(li|item|list_item|bullet)[^>]*>/gi, '\n- ')
+    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+    .replace(/<(th|td|cell|entry)[^>]*>([\s\S]*?)<\/\1>/gi, '$2\t')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/\t[ \t]+/g, '\t')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function collectStringValuesByKey(input: any, keyMatcher: (key: string) => boolean) {
+  const values: Array<{ key: string; value: string }> = [];
+  const seen = new Set<any>();
+  const queue: any[] = [input];
+
+  while (queue.length) {
+    const node = queue.shift();
+    if (!node || typeof node !== 'object' || seen.has(node)) continue;
+    seen.add(node);
+
+    for (const [key, value] of Object.entries(node)) {
+      if (typeof value === 'string' && keyMatcher(key) && value.trim()) {
+        values.push({ key, value: value.trim() });
+      } else if (value && typeof value === 'object') {
+        queue.push(value);
+      }
+    }
+  }
+
+  return values;
+}
+
+function looksLikeMarkup(input: string) {
+  return /<\/?[a-z][\s\S]*>/i.test(decodeHtmlEntitiesServer(input));
+}
+
+function pickRichBody(detailData: any) {
+  const htmlCandidates = collectStringValuesByKey(detailData, (key) => {
+    const normalized = key.toLowerCase();
+    return (
+      normalized.includes('html') ||
+      normalized.includes('rendered') ||
+      normalized.includes('formatted') ||
+      normalized.includes('markup')
+    );
+  }).filter((candidate) => looksLikeMarkup(candidate.value));
+
+  const xmlCandidates = collectStringValuesByKey(detailData, (key) => {
+    const normalized = key.toLowerCase();
+    return (
+      normalized === 'content' ||
+      normalized.includes('xml') ||
+      normalized.includes('body') ||
+      normalized.includes('articletext') ||
+      normalized.includes('fulltext')
+    );
+  }).filter((candidate) => looksLikeMarkup(candidate.value));
+
+  const bodyHtml = htmlCandidates[0]?.value || null;
+  const bodyXml = xmlCandidates.find((candidate) => candidate.value !== bodyHtml)?.value || null;
+  const bestPlainSource = bodyHtml || bodyXml || detailData?.content || '';
+
+  return {
+    bodyHtml,
+    bodyXml,
+    bodyPlainText: bestPlainSource ? richMarkupToPlainText(String(bestPlainSource)) : '',
+    sourceFields: {
+      html: htmlCandidates[0]?.key || null,
+      xml: xmlCandidates.find((candidate) => candidate.value !== bodyHtml)?.key || null,
+    },
+  };
+}
+
 function coalesceEffectiveDate(input: any, publisher?: string | null): string | null {
   const isForefield = publisher === 'broadridge-forefield';
   const directCandidates = isForefield
@@ -137,7 +230,7 @@ function coalesceEffectiveDate(input: any, publisher?: string | null): string | 
 }
 
 interface SyncRequestBody {
-  mode?: 'sample-seed' | 'provider' | 'provider-backfill';
+  mode?: 'sample-seed' | 'provider' | 'provider-backfill' | 'provider-rich-update';
   dryRun?: boolean;
   forceDetailDateRefresh?: boolean;
   yearsBack?: number;
@@ -356,6 +449,7 @@ export async function POST(req: Request) {
 
         const detailData = detail?.article?.data || detail?.data || detail;
         const detailSource = String(detailData?.source || '').trim().toLowerCase();
+        const richBody = pickRichBody(detailData);
 
         // Canonical publisher classification from detail source
         const nextPublisher =
@@ -409,6 +503,9 @@ export async function POST(req: Request) {
         row.finra_approved = extra.selected.FinraApproved === null ? null : String(extra.selected.FinraApproved).toLowerCase() === 'true';
         row.ap_content_type = extra.selected.APContentType;
         row.evergreen = extra.selected.Evergreen === null ? null : String(extra.selected.Evergreen).toLowerCase() === 'true';
+        if (richBody.bodyPlainText) row.body = richBody.bodyPlainText;
+        row.body_html = richBody.bodyHtml;
+        row.body_xml = richBody.bodyXml;
 
         row.metadata = {
           ...(row.metadata || {}),
@@ -421,6 +518,9 @@ export async function POST(req: Request) {
           categories,
           subCategories,
           contentDesignation: detailData?.content_designation || null,
+          bodyHtml: richBody.bodyHtml,
+          bodyXml: richBody.bodyXml,
+          richBodySourceFields: richBody.sourceFields,
         };
 
         verifiedRows.push(row);
@@ -433,6 +533,151 @@ export async function POST(req: Request) {
         { status: 502 }
       );
     }
+  } else if (mode === 'provider-rich-update') {
+    const config = getAdvisorStreamConfig();
+    if (!validateAdvisorStreamConfig(config)) {
+      return NextResponse.json(
+        { ok: false, error: 'AdvisorStream env vars are not fully configured' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseServerClient();
+    const pageSize = Math.max(1, Math.min(500, maxItems));
+    const from = startPage * pageSize;
+    const to = from + pageSize - 1;
+
+    let targetQuery = supabase
+      .from('source_content')
+      .select('id, external_id, source_system, publisher, published_at, metadata, body')
+      .eq('source_system', 'advisorstream')
+      .order('created_at', { ascending: true })
+      .range(from, to);
+
+    if (forefieldOnly) targetQuery = targetQuery.eq('publisher', 'broadridge-forefield');
+
+    const { data: richUpdateRows, error: richUpdateError } = await targetQuery;
+
+    if (richUpdateError) {
+      return NextResponse.json({ ok: false, error: richUpdateError.message }, { status: 500 });
+    }
+
+    const token = await getAdvisorStreamAccessToken(config);
+    const targets = richUpdateRows || [];
+
+    for (const target of targets) {
+      const fallbackId =
+        target.external_id ||
+        (target as any)?.metadata?.raw?.articleId ||
+        (target as any)?.metadata?.raw?.uuid ||
+        null;
+
+      if (!fallbackId) {
+        detailFetchMiss += 1;
+        continue;
+      }
+
+      const detail = await fetchAdvisorStreamArticleById(config.apiBaseUrl, token, fallbackId);
+      if (!detail) {
+        detailFetchMiss += 1;
+        continue;
+      }
+      detailFetchSuccess += 1;
+
+      const detailData = detail?.article?.data || detail?.data || detail;
+      const detailSource = String(detailData?.source || '').trim().toLowerCase();
+      const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
+      const richBody = pickRichBody(detailData);
+
+      let mappedDate: string | null = null;
+      if (publisher === 'broadridge-forefield') {
+        mappedDate = coalesceEffectiveDate({
+          effective_date: detailData?.effective_date,
+          Effective_date: detailData?.Effective_date,
+          data: detailData,
+        }, publisher);
+      } else {
+        mappedDate = coalesceEffectiveDate({
+          publish_date: detailData?.publish_date,
+          published_date: detailData?.published_date,
+          published_at: detailData?.published_at,
+          publication_date: detailData?.publication_date,
+          data: detailData,
+        }, publisher);
+      }
+
+      if (mappedDate) detailDateMapped += 1;
+      detailPublisherMapped += 1;
+
+      const extra = pickExtraProperties(detailData);
+      const categories = Array.isArray(detailData?.categories) ? detailData.categories : [];
+      const subCategories = Array.isArray(detailData?.sub_categories)
+        ? detailData.sub_categories
+        : Array.isArray(detailData?.subCategories)
+          ? detailData.subCategories
+          : [];
+
+      rows.push({
+        id: target.id,
+        external_id: target.external_id,
+        source_system: 'advisorstream',
+        publisher,
+        body: richBody.bodyPlainText || target.body || '',
+        body_html: richBody.bodyHtml,
+        body_xml: richBody.bodyXml,
+        published_at: mappedDate || target.published_at || null,
+        content_designation: detailData?.content_designation || null,
+        categories,
+        sub_categories: subCategories,
+        bas_content_id: extra.selected.BasContentId,
+        bas_content_filename: extra.selected.BasContentFilename,
+        content_format: extra.selected.Format,
+        finra_letter_url: extra.selected.FinraLetterUrl,
+        finra_approved: extra.selected.FinraApproved === null ? null : String(extra.selected.FinraApproved).toLowerCase() === 'true',
+        ap_content_type: extra.selected.APContentType,
+        evergreen: extra.selected.Evergreen === null ? null : String(extra.selected.Evergreen).toLowerCase() === 'true',
+        metadata: {
+          ...((target as any).metadata || {}),
+          detailFetched: true,
+          detailSource: detailData?.source || null,
+          detailMappedDate: mappedDate || target.published_at || null,
+          extraPropertiesRaw: extra.raw,
+          extraProperties: extra.map,
+          extraPropertiesSelected: extra.selected,
+          categories,
+          subCategories,
+          contentDesignation: detailData?.content_designation || null,
+          bodyHtml: richBody.bodyHtml,
+          bodyXml: richBody.bodyXml,
+          richBodySourceFields: richBody.sourceFields,
+          richBodyUpdatedAt: new Date().toISOString(),
+        },
+      });
+    }
+
+    await appendSyncLog({
+      runId,
+      mode,
+      page: startPage,
+      offset: from,
+      fetched: targets.length,
+      normalized: rows.length,
+      publisherMatched: rows.filter((row) => row.publisher === 'broadridge-forefield').length,
+      dateMatched: rows.filter((row) => row.published_at).length,
+      inserted: 0,
+      updated: rows.length,
+      skipped: Math.max(0, targets.length - rows.length),
+      elapsedMs: 0,
+      createdAt: new Date().toISOString(),
+    });
+
+    pageDiagnostics.push({
+      page: startPage,
+      offset: from,
+      firstExternalId: String(targets[0]?.external_id || '') || null,
+      lastExternalId: String(targets[targets.length - 1]?.external_id || '') || null,
+      sampleExternalIds: targets.slice(0, 5).map((target: any) => String(target.external_id || '')).filter(Boolean),
+    });
   } else if (mode === 'provider-backfill') {
     const config = getAdvisorStreamConfig();
     if (!validateAdvisorStreamConfig(config)) {
@@ -479,6 +724,7 @@ export async function POST(req: Request) {
       const detailData = detail?.article?.data || detail?.data || detail;
       const detailSource = String(detailData?.source || '').trim().toLowerCase();
       const publisher = detailSource === 'broadridge advisor content' ? 'broadridge-forefield' : 'publisher-content';
+      const richBody = pickRichBody(detailData);
 
       let mappedDate: string | null = null;
       if (publisher === 'broadridge-forefield') {
@@ -513,6 +759,9 @@ export async function POST(req: Request) {
         external_id: target.external_id,
         source_system: 'advisorstream',
         publisher,
+        ...(richBody.bodyPlainText ? { body: richBody.bodyPlainText } : {}),
+        body_html: richBody.bodyHtml,
+        body_xml: richBody.bodyXml,
         published_at: mappedDate,
         content_designation: detailData?.content_designation || null,
         categories,
@@ -535,6 +784,10 @@ export async function POST(req: Request) {
           categories,
           subCategories,
           contentDesignation: detailData?.content_designation || null,
+          bodyHtml: richBody.bodyHtml,
+          bodyXml: richBody.bodyXml,
+          richBodySourceFields: richBody.sourceFields,
+          richBodyUpdatedAt: new Date().toISOString(),
         },
       });
     }
@@ -578,7 +831,7 @@ export async function POST(req: Request) {
   }
 
   for (const row of uniqueRows) {
-    if (mode === 'provider-backfill' && row.id) {
+    if ((mode === 'provider-backfill' || mode === 'provider-rich-update') && row.id) {
       const { id, ...patch } = row;
       const { error } = await supabase
         .from('source_content')
@@ -632,7 +885,7 @@ export async function POST(req: Request) {
     repeatingPageDetected,
     repeatingIdsSample: Array.from(new Set(repeatingIdsSample)).slice(0, 10),
     pageDiagnostics: pageDiagnostics.slice(0, 20),
-    enrichment: mode === 'provider' ? {
+    enrichment: (mode === 'provider' || mode === 'provider-rich-update') ? {
       detailFetchSuccess: (typeof detailFetchSuccess !== 'undefined' ? detailFetchSuccess : 0),
       detailFetchMiss: (typeof detailFetchMiss !== 'undefined' ? detailFetchMiss : 0),
       detailDateMapped: (typeof detailDateMapped !== 'undefined' ? detailDateMapped : 0),
