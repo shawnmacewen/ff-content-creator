@@ -34,16 +34,31 @@ interface ApiResponse {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+function getInitialSourceFilters() {
+  if (typeof window === 'undefined') {
+    return { q: '', contentDesignation: '', tags: '', publisher: '' };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: params.get('q') || '',
+    contentDesignation: params.get('contentDesignation') || params.get('type') || '',
+    tags: params.get('tags') || '',
+    publisher: params.get('publisher') || '',
+  };
+}
+
 export default function SourceContentPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
-  const [selectedPublisher, setSelectedPublisher] = useState('');
+  const [initialFilters] = useState(getInitialSourceFilters);
+  const [searchQuery, setSearchQuery] = useState(initialFilters.q);
+  const [selectedType, setSelectedType] = useState(initialFilters.contentDesignation);
+  const [selectedTag, setSelectedTag] = useState(initialFilters.tags);
+  const [selectedPublisher, setSelectedPublisher] = useState(initialFilters.publisher);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(initialFilters.q);
   const [page, setPage] = useState(1);
 
   // Debounce search query

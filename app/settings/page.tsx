@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Compass, Database, Image, Info, Palette, RefreshCw } from 'lucide-react';
+import { BookOpenCheck, Compass, Database, Image, Info, Palette, RefreshCw, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
+import TagExplorer from '@/components/settings/tag-explorer';
 import TemplateDesignSystem from '@/components/settings/template-design-system';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +17,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 type SettingsTab =
   | 'content-sync'
   | 'content-api-explorer'
+  | 'tag-explorer'
   | 'knowledge-base'
   | 'template-design-system'
   | 'instagram-carousel-2';
@@ -23,6 +25,7 @@ type SettingsTab =
 const settingsTabs: SettingsTab[] = [
   'content-sync',
   'content-api-explorer',
+  'tag-explorer',
   'knowledge-base',
   'template-design-system',
   'instagram-carousel-2',
@@ -38,6 +41,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Content API Explorer',
     detail: 'Inspect provider API responses and query behavior.',
     icon: Compass,
+  },
+  'tag-explorer': {
+    label: 'Tag Explorer',
+    detail: 'Audit tag usage, cleanup candidates, and source coverage.',
+    icon: Tags,
   },
   'knowledge-base': {
     label: 'Knowledge Center',
@@ -279,7 +287,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         {settingsTabs.map((settingsTab) => (
           <TabButton
             key={settingsTab}
@@ -389,6 +397,8 @@ export default function SettingsPage() {
         </>
       ) : tab === 'content-api-explorer' ? (
         <ContentApiExplorer />
+      ) : tab === 'tag-explorer' ? (
+        <TagExplorer />
       ) : tab === 'knowledge-base' ? (
         <KnowledgeBase />
       ) : tab === 'template-design-system' ? (
