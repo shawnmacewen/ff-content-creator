@@ -27,6 +27,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { HelpChat } from './help-chat';
 import {
   carouselNotes,
   doDontRules,
@@ -247,6 +248,8 @@ export default function KnowledgeBase() {
           />
         </div>
       </section>
+
+      <HelpChat />
 
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="mb-5">
