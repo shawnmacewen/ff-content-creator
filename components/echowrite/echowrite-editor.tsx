@@ -209,7 +209,7 @@ export function EchoWriteEditor({
 
     applyingRef.current = true;
     try {
-      editor.commands.setContent(contentToApply || '', false);
+      editor.commands.setContent(contentToApply || '', { emitUpdate: false });
     } finally {
       applyingRef.current = false;
     }

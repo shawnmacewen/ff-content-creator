@@ -63,7 +63,7 @@ function SlideCard({
   // Text color defaults:
   // - Standard slides are light/near-white reading slides → dark text.
   // - Frost intro/outro can be darker hero slides → allow light text there.
-  const useDarkText = template === 'standard' || (styleVariant === 'frost' && template === 'standard');
+  const useDarkText = template === 'standard';
 
   const headlineSizeClass = template === 'intro' ? 'text-[34px]' : template === 'outro' ? 'text-[30px]' : 'text-3xl';
   const summarySizeClass = template === 'intro' ? 'text-[15px]' : 'text-sm';

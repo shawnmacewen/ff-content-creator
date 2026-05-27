@@ -1,6 +1,6 @@
 import type { ContentType, ToneType } from '../types/content';
 
-const mockResponses: Record<ContentType, Record<ToneType, string>> = {
+const mockResponses: Partial<Record<ContentType, string | Partial<Record<ToneType, string>>>> = {
   'social-twitter': {
     professional: 'Markets reward discipline. Your portfolio strategy should reflect long-term fundamentals, not daily volatility. Focus on allocation, diversification, and consistent rebalancing. Your future self will thank you. #WealthBuilding #Investment',
     casual: 'Ever notice how the best investment moves are the boring ones? Set it, forget it, rebalance annually. That\'s literally the secret sauce. 🚀 Who else is team "boring portfolio"?',
@@ -21,11 +21,17 @@ export function generateMockResponse(
   contentType: ContentType,
   tone: ToneType
 ): string {
+  const response = mockResponses[contentType];
+
+  if (typeof response === 'string') {
+    return response;
+  }
+
   // Try to get the exact tone match
-  if (mockResponses[contentType]?.[tone]) {
-    return mockResponses[contentType][tone];
+  if (response?.[tone]) {
+    return response[tone];
   }
 
   // Fallback to professional if tone not available
-  return mockResponses[contentType]?.professional || 'Content generation requires an API key configuration.';
+  return response?.professional || 'Content generation requires an API key configuration.';
 }
