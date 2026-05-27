@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Clock, FolderOpen, Sparkles } from 'lucide-react';
+import { Clock, FolderOpen, Settings, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
 import { Badge } from '@/components/ui/badge';
 
@@ -168,12 +169,22 @@ export default function SourceContentPage() {
                 <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <Clock className="h-4 w-4" />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold">Last sync</p>
                   <p className="text-xs text-muted-foreground">
                     {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'}
                   </p>
                 </div>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <Link href="/settings?tab=content-sync" aria-label="Open Content Sync settings">
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>

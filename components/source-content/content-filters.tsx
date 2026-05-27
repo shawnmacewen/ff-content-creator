@@ -56,7 +56,7 @@ export function ContentFilters({
       
       <div className="flex gap-2">
         <Select value={selectedType} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-[140px] bg-muted/50">
+          <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="All designations" />
           </SelectTrigger>
           <SelectContent>
@@ -70,7 +70,7 @@ export function ContentFilters({
         </Select>
 
         <Select value={selectedTag} onValueChange={onTagChange}>
-          <SelectTrigger className="w-[140px] bg-muted/50">
+          <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="All tags" />
           </SelectTrigger>
           <SelectContent>
@@ -84,7 +84,7 @@ export function ContentFilters({
         </Select>
 
         <Select value={selectedPublisher} onValueChange={onPublisherChange}>
-          <SelectTrigger className="w-[170px] bg-muted/50">
+          <SelectTrigger className="w-[170px] bg-white">
             <SelectValue placeholder="All publishers" />
           </SelectTrigger>
           <SelectContent>
