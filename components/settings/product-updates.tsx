@@ -419,6 +419,35 @@ function ParallaxStorySection({
     <section ref={sectionRef} className="relative overflow-hidden rounded-lg border border-border bg-slate-950 text-white shadow-sm">
       <div className="pointer-events-none sticky top-0 z-0 -mb-[calc(100dvh-1rem)] h-[calc(100dvh-1rem)] min-h-[560px] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(168,85,247,0.28),transparent_30%),linear-gradient(180deg,#08111f_0%,#0f172a_45%,#020617_100%)] transition-colors duration-500" />
+        <div
+          className="absolute -left-32 top-[-18%] h-[68%] w-[72%] rounded-[6rem] opacity-35 blur-3xl"
+          style={{
+            ...layerStyle(110, 95, -7, 1),
+            background: 'linear-gradient(135deg, rgba(6,182,212,0.95), rgba(59,130,246,0.72) 46%, rgba(217,70,239,0.58))',
+          }}
+        />
+        <div
+          className="absolute right-[-20%] top-[10%] h-[72%] w-[70%] rounded-[7rem] opacity-30 blur-3xl"
+          style={{
+            ...layerStyle(-150, 120, 9, 1),
+            background: 'linear-gradient(145deg, rgba(168,85,247,0.92), rgba(236,72,153,0.74) 52%, rgba(251,146,60,0.6))',
+          }}
+        />
+        <div
+          className="absolute bottom-[-28%] left-[16%] h-[60%] w-[76%] rounded-[6rem] opacity-24 blur-3xl"
+          style={{
+            ...layerStyle(90, -170, 6, 1),
+            background: 'linear-gradient(115deg, rgba(20,184,166,0.72), rgba(14,165,233,0.68) 36%, rgba(249,115,22,0.54) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.16] mix-blend-screen"
+          style={{
+            ...layerStyle(-60, 40, 4, 1),
+            background:
+              'linear-gradient(120deg, transparent 8%, rgba(34,211,238,0.55) 20%, transparent 32%, rgba(217,70,239,0.45) 48%, transparent 61%, rgba(251,146,60,0.42) 76%, transparent 88%)',
+          }}
+        />
         <div className={`absolute inset-x-0 top-0 h-72 bg-gradient-to-r ${activeStory.accent} opacity-25 blur-3xl transition-all duration-500`} style={layerStyle(80, -70, 4, 1)} />
         <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
         <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
@@ -454,7 +483,7 @@ function ParallaxStorySection({
       </div>
 
       <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        <div className="lg:self-start">
           <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
