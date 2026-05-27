@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, PenSquare, Save, Settings2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, PenSquare, Save, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -294,7 +294,7 @@ export default function EchoWritePage() {
           <Button onClick={generate} disabled={loading || !prompt.trim()}>
             {loading ? 'Generating...' : 'Generate'}
           </Button>
-          <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim()}>
+          <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim() || !content.trim()}>
             Regenerate
           </Button>
           <div className="flex-1" />
@@ -416,7 +416,15 @@ Separately (client-side), we:
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3 rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold">Generated Output</h2>
+            <div>
+              <h2 className="text-sm font-semibold">Generated Output</h2>
+              {loading ? (
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Scanning source content and drafting grounded output...
+                </p>
+              ) : null}
+            </div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={copyOutput} disabled={!content.trim()}>Copy</Button>
               <Button size="sm" onClick={saveDraft} disabled={!content.trim() || saving}>
@@ -539,7 +547,11 @@ Separately (client-side), we:
                   </div>
                 </div>
               );
-            }) : <div className="text-muted-foreground p-3">No sources yet.</div>}
+            }) : (
+              <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                {loading ? 'Retrieving matching source content...' : 'No sources retrieved yet.'}
+              </div>
+            )}
           </div>
 
           <div className="p-3 text-xs text-muted-foreground border-t bg-muted/10">
