@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState, type ComponentType } from 'react';
 import {
   ArrowRight,
+  AlertTriangle,
   BookOpenCheck,
   CheckCircle2,
   Compass,
@@ -15,10 +16,12 @@ import {
   Lightbulb,
   ListChecks,
   PenSquare,
+  Route,
   Search,
   SearchCheck,
   Settings2,
   Sparkles,
+  Wrench,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +39,21 @@ type HelpGuide = {
   bestFor: string[];
   steps: string[];
   tips: string[];
+  keywords: string[];
+};
+
+type WorkflowRecipe = {
+  title: string;
+  outcome: string;
+  path: string[];
+  notes: string[];
+  keywords: string[];
+};
+
+type TroubleshootingItem = {
+  problem: string;
+  check: string;
+  fix: string;
   keywords: string[];
 };
 
@@ -246,6 +264,104 @@ const quickAnswers = [
   },
 ];
 
+const workflowRecipes: WorkflowRecipe[] = [
+  {
+    title: 'Find source material and create a reusable draft',
+    outcome: 'A source-grounded draft saved for team review.',
+    path: [
+      'Open Source Content and search for the topic, campaign theme, or exact phrase.',
+      'Open View Details on the strongest source items and confirm the content is appropriate.',
+      'Select one or more source items and choose Generate with selected.',
+      'Generate the desired format, review the draft, then save it to Saved Content.',
+    ],
+    notes: [
+      'Use fewer, stronger sources when creating carousel or image-based content.',
+      'Use Saved Content status to show whether the draft still needs review.',
+    ],
+    keywords: ['source', 'generate', 'saved content', 'draft', 'review', 'workflow'],
+  },
+  {
+    title: 'Check coverage before requesting new content',
+    outcome: 'A clearer answer on whether the existing source library already covers a topic.',
+    path: [
+      'Open Content Scan.',
+      'Use Standard Search for exact phrases, names, or regulatory terms.',
+      'Use AI Analyze for broader questions such as whether a theme is covered.',
+      'Open matching details and mark items that need update when the source content is outdated or incomplete.',
+    ],
+    notes: [
+      'Search first when the request is specific; analyze when the request is conceptual.',
+      'Use exclusions to remove stale years, unrelated topics, or repeated false positives.',
+    ],
+    keywords: ['coverage', 'scan', 'audit', 'search', 'AI analyze', 'needs update'],
+  },
+  {
+    title: 'Draft a longer article or video script with evidence',
+    outcome: 'A readable EchoWrite draft with source context available for verification.',
+    path: [
+      'Open EchoWrite and write a specific prompt for the audience and use case.',
+      'Choose article or video script and set length or target word count.',
+      'Generate the draft, then inspect the cited sources and hover evidence.',
+      'Open source details for any claim that needs review before saving.',
+      'Save the draft to Saved Content when it is worth editing or approval.',
+    ],
+    notes: [
+      'EchoWrite is better than the general generator when attribution and readability matter.',
+      'For video scripts, specify runtime and the CTA in the prompt.',
+    ],
+    keywords: ['echowrite', 'article', 'video script', 'evidence', 'citations', 'sources'],
+  },
+  {
+    title: 'Refresh source records and validate provider fields',
+    outcome: 'Synced source content with enough detail for search, generation, and View Details.',
+    path: [
+      'Open Settings and choose Content Sync.',
+      'Use Sync Broadridge Content API for standard imports or Sync and Update for detail refreshes.',
+      'Watch sync logs for processed, inserted, updated, and repeated-page behavior.',
+      'Use Content API Explorer when a provider response field needs inspection.',
+      'Reopen Source Content and View Details to confirm the refreshed article body renders correctly.',
+    ],
+    notes: [
+      'Rich XML/HTML fields are for reading in detail views; generation should stay focused on plain source body text.',
+      'Capture provider schema assumptions in handoff notes when they affect parsing or display.',
+    ],
+    keywords: ['sync', 'update', 'api explorer', 'provider', 'xml', 'html', 'logs'],
+  },
+];
+
+const troubleshootingItems: TroubleshootingItem[] = [
+  {
+    problem: 'A generated draft feels too broad or unfocused.',
+    check: 'Check whether too many source articles were selected or whether the prompt lacks a clear target format.',
+    fix: 'Use one to three strong sources, choose the exact format, and add audience, tone, and CTA details before regenerating.',
+    keywords: ['broad', 'unfocused', 'prompt', 'sources', 'generate'],
+  },
+  {
+    problem: 'An Instagram carousel image plan is unpredictable.',
+    check: 'Check whether the selected source content is long, mixed-topic, or carrying rich body markup into the image flow.',
+    fix: 'Use a focused source selection and keep image/carousel generation grounded in concise plain text.',
+    keywords: ['instagram', 'carousel', 'image', 'plain text', 'source selection'],
+  },
+  {
+    problem: 'A source detail view is missing bullets, tables, or formatting.',
+    check: 'Check whether the item has rich XML/HTML data and whether the plain body fallback is being shown.',
+    fix: 'Run Sync and Update if detail fields are missing, then report examples where XML parsing still flattens structure.',
+    keywords: ['source detail', 'xml', 'html', 'tables', 'bullets', 'formatting'],
+  },
+  {
+    problem: 'Search returns too many irrelevant matches.',
+    check: 'Check whether the query is broad, missing exact quotes, or not using exclude terms.',
+    fix: 'Use exact phrases in quotes, add must-exclude terms, and switch to AI Analyze only when meaning matters more than wording.',
+    keywords: ['search', 'irrelevant', 'quotes', 'exclude', 'content scan'],
+  },
+  {
+    problem: 'Team members cannot tell whether saved content is ready.',
+    check: 'Check whether the item status is still draft or whether edited content was never saved.',
+    fix: 'Use Saved Content statuses consistently: draft, review, approved, and published.',
+    keywords: ['saved content', 'status', 'review', 'approved', 'published'],
+  },
+];
+
 const carouselNotes = [
   {
     title: 'Style should own',
@@ -300,6 +416,16 @@ function guideMatches(guide: HelpGuide, query: string) {
     .every((term) => haystack.includes(term));
 }
 
+function textMatches(values: string[], query: string) {
+  if (!query) return true;
+
+  const haystack = values.join(' ').toLowerCase();
+  return query
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((term) => haystack.includes(term));
+}
+
 export default function KnowledgeBase() {
   const [query, setQuery] = useState('');
   const [activeGuideId, setActiveGuideId] = useState(helpGuides[0].id);
@@ -307,6 +433,36 @@ export default function KnowledgeBase() {
 
   const filteredGuides = useMemo(
     () => helpGuides.filter((guide) => guideMatches(guide, normalizedQuery)),
+    [normalizedQuery]
+  );
+
+  const filteredQuickAnswers = useMemo(
+    () =>
+      quickAnswers.filter((item) =>
+        textMatches([item.question, item.answer], normalizedQuery)
+      ),
+    [normalizedQuery]
+  );
+
+  const filteredRecipes = useMemo(
+    () =>
+      workflowRecipes.filter((recipe) =>
+        textMatches(
+          [recipe.title, recipe.outcome, ...recipe.path, ...recipe.notes, ...recipe.keywords],
+          normalizedQuery
+        )
+      ),
+    [normalizedQuery]
+  );
+
+  const filteredTroubleshootingItems = useMemo(
+    () =>
+      troubleshootingItems.filter((item) =>
+        textMatches(
+          [item.problem, item.check, item.fix, ...item.keywords],
+          normalizedQuery
+        )
+      ),
     [normalizedQuery]
   );
 
@@ -343,7 +499,7 @@ export default function KnowledgeBase() {
                 <div>
                   <p className="text-sm font-semibold">{helpGuides.length} tool guides</p>
                   <p className="text-xs text-muted-foreground">
-                    Built around the primary left navigation workflow.
+                    Plus workflows, quick answers, and troubleshooting.
                   </p>
                 </div>
               </div>
@@ -497,12 +653,115 @@ export default function KnowledgeBase() {
           <h3 className="text-xl font-semibold">Common team questions</h3>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          {quickAnswers.map((item) => (
-            <div key={item.question} className="rounded-md border border-border bg-background p-4">
-              <h4 className="text-sm font-semibold">{item.question}</h4>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.answer}</p>
+          {filteredQuickAnswers.length ? (
+            filteredQuickAnswers.map((item) => (
+              <div key={item.question} className="rounded-md border border-border bg-background p-4">
+                <h4 className="text-sm font-semibold">{item.question}</h4>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.answer}</p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground md:col-span-2">
+              No quick answers match that search.
             </div>
-          ))}
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Workflow Playbooks</p>
+          <h3 className="text-xl font-semibold">Common jobs from start to finish</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            These playbooks connect multiple tools into the real work patterns the internal
+            content team is likely to repeat.
+          </p>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          {filteredRecipes.length ? (
+            filteredRecipes.map((recipe) => (
+              <div key={recipe.title} className="rounded-md border border-border bg-background p-4">
+                <div className="mb-3 flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Route className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-semibold">{recipe.title}</h4>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{recipe.outcome}</p>
+                  </div>
+                </div>
+                <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
+                  {recipe.path.map((step, index) => (
+                    <li key={step} className="flex gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-foreground">
+                        {index + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-4 rounded-md bg-secondary/45 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                    Notes
+                  </div>
+                  <ul className="space-y-1.5 text-xs leading-5 text-muted-foreground">
+                    {recipe.notes.map((note) => (
+                      <li key={note} className="flex gap-2">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground xl:col-span-2">
+              No workflow playbooks match that search.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Troubleshooting</p>
+          <h3 className="text-xl font-semibold">When something does not look right</h3>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {filteredTroubleshootingItems.length ? (
+            filteredTroubleshootingItems.map((item) => (
+              <div key={item.problem} className="rounded-md border border-border bg-background p-4">
+                <div className="mb-3 flex items-start gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
+                    <AlertTriangle className="h-4 w-4" />
+                  </span>
+                  <h4 className="text-sm font-semibold">{item.problem}</h4>
+                </div>
+                <div className="grid gap-3 text-sm leading-6 text-muted-foreground">
+                  <div>
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase text-foreground">
+                      <Search className="h-3.5 w-3.5 text-primary" />
+                      Check
+                    </div>
+                    <p>{item.check}</p>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase text-foreground">
+                      <Wrench className="h-3.5 w-3.5 text-primary" />
+                      Fix
+                    </div>
+                    <p>{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground lg:col-span-2">
+              No troubleshooting entries match that search.
+            </div>
+          )}
         </div>
       </section>
 
