@@ -27,6 +27,14 @@ type TagMetric = {
   hasCaseVariants: boolean;
 };
 
+type CleanupVariantGroup = {
+  key: string;
+  label: string;
+  count: number;
+  tags: TagMetric[];
+  variants: string[];
+};
+
 type TagExplorerResponse = {
   tags: TagMetric[];
   summary: {
@@ -44,8 +52,52 @@ const sortLabels: Record<SortMode, string> = {
   'count-desc': 'Most used',
   'name-asc': 'A-Z',
   'single-use': 'Single-use',
-  variants: 'Variants',
+  variants: 'Similar',
 };
+
+function singularizeToken(token: string) {
+  if (token.length > 4 && token.endsWith('ies')) return `${token.slice(0, -3)}y`;
+  if (token.length > 4 && /(?:xes|ches|shes|sses|zes)$/.test(token)) return token.slice(0, -2);
+  if (token.length > 3 && token.endsWith('s') && !/(?:ss|us|is)$/.test(token)) return token.slice(0, -1);
+  return token;
+}
+
+function cleanupKeyForTag(tag: TagMetric) {
+  return tag.normalized
+    .replace(/&|\+/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map(singularizeToken)
+    .join(' ');
+}
+
+function buildCleanupVariantGroups(tags: TagMetric[]): CleanupVariantGroup[] {
+  const groups = new Map<string, TagMetric[]>();
+
+  for (const tag of tags) {
+    const key = cleanupKeyForTag(tag);
+    if (!key) continue;
+    groups.set(key, [...(groups.get(key) || []), tag]);
+  }
+
+  return Array.from(groups.entries())
+    .map(([key, groupTags]) => {
+      const sortedTags = [...groupTags].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+      const variants = Array.from(new Set(sortedTags.flatMap((tag) => tag.variants.length ? tag.variants : [tag.tag])))
+        .sort((a, b) => a.localeCompare(b));
+
+      return {
+        key,
+        label: sortedTags[0]?.tag || key,
+        count: sortedTags.reduce((sum, tag) => sum + tag.count, 0),
+        tags: sortedTags,
+        variants,
+      };
+    })
+    .filter((group) => group.tags.length > 1 || group.tags.some((tag) => tag.hasCaseVariants))
+    .sort((a, b) => b.tags.length - a.tags.length || b.count - a.count || a.label.localeCompare(b.label));
+}
 
 export default function TagExplorer() {
   const [query, setQuery] = useState('');
@@ -55,15 +107,20 @@ export default function TagExplorer() {
 
   const tags = useMemo(() => data?.tags || [], [data?.tags]);
   const maxCount = Math.max(...tags.map((tag) => tag.count), 1);
-  const cleanupChecks = (data?.summary?.singleUseCount ?? 0) + (data?.summary?.variantCount ?? 0);
   const singleUseTags = useMemo(
     () => tags.filter((tag) => tag.count === 1).sort((a, b) => a.tag.localeCompare(b.tag)),
     [tags]
   );
-  const variantTags = useMemo(
-    () => tags.filter((tag) => tag.hasCaseVariants).sort((a, b) => b.variants.length - a.variants.length || a.tag.localeCompare(b.tag)),
-    [tags]
+  const variantGroups = useMemo(() => buildCleanupVariantGroups(tags), [tags]);
+  const variantGroupTagKeys = useMemo(
+    () => new Set(variantGroups.flatMap((group) => group.tags.map((tag) => tag.normalized))),
+    [variantGroups]
   );
+  const variantTagCount = useMemo(
+    () => variantGroups.reduce((sum, group) => sum + group.tags.length, 0),
+    [variantGroups]
+  );
+  const cleanupChecks = singleUseTags.length + variantGroups.length;
 
   const filteredTags = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -80,13 +137,13 @@ export default function TagExplorer() {
     } else if (sortMode === 'single-use') {
       next = next.filter((tag) => tag.count === 1).sort((a, b) => a.tag.localeCompare(b.tag));
     } else if (sortMode === 'variants') {
-      next = next.filter((tag) => tag.hasCaseVariants).sort((a, b) => b.variants.length - a.variants.length || a.tag.localeCompare(b.tag));
+      next = next.filter((tag) => variantGroupTagKeys.has(tag.normalized)).sort((a, b) => a.tag.localeCompare(b.tag));
     } else {
       next.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
     }
 
     return next;
-  }, [query, sortMode, tags]);
+  }, [query, sortMode, tags, variantGroupTagKeys]);
 
   const topTags = tags.slice(0, 8);
 
@@ -113,7 +170,7 @@ export default function TagExplorer() {
               onClick={() => setCleanupOpen(true)}
               className="rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <MetricCard icon={TriangleAlert} label="Cleanup checks" value={cleanupChecks} detail="single-use + variant groups" />
+              <MetricCard icon={TriangleAlert} label="Cleanup checks" value={cleanupChecks} detail="single-use + similar groups" />
             </button>
           </div>
         </div>
@@ -123,7 +180,8 @@ export default function TagExplorer() {
         open={cleanupOpen}
         onOpenChange={setCleanupOpen}
         singleUseTags={singleUseTags}
-        variantTags={variantTags}
+        variantGroups={variantGroups}
+        variantTagCount={variantTagCount}
         onFilter={(mode) => {
           setSortMode(mode);
           setQuery('');
@@ -165,7 +223,7 @@ export default function TagExplorer() {
           <h3 className="text-lg font-semibold">What this helps with</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <UseCase title="Planning coverage" detail="See which topics are well-covered before assigning new content." />
-            <UseCase title="Cleanup" detail="Find one-off tags and casing variants that should be merged later." />
+            <UseCase title="Cleanup" detail="Find one-off tags and similar labels that should be reviewed for merging later." />
             <UseCase title="Source selection" detail="Jump from any tag into the Source Content library for review." />
             <UseCase title="Future governance" detail="This can become the basis for approved tags, aliases, and tag-owner workflows." />
           </div>
@@ -232,19 +290,23 @@ export default function TagExplorer() {
                     <div className="mt-1 truncate text-xs text-muted-foreground">
                       Variants: {tag.variants.join(', ')}
                     </div>
+                  ) : variantGroupTagKeys.has(tag.normalized) ? (
+                    <div className="mt-1 truncate text-xs text-muted-foreground">
+                      Similar tag group candidate
+                    </div>
                   ) : null}
                 </div>
                 <div className="text-right font-semibold tabular-nums">{tag.count}</div>
                 <div className="hidden md:block">
                   <span className={cn(
                     'inline-flex rounded-full border px-2 py-0.5 text-xs font-medium',
-                    tag.hasCaseVariants
+                    variantGroupTagKeys.has(tag.normalized)
                       ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/35 dark:bg-amber-500/15 dark:text-amber-200'
                       : tag.count === 1
                         ? 'border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-500/35 dark:bg-slate-500/15 dark:text-slate-200'
                         : 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-200'
                   )}>
-                    {tag.hasCaseVariants ? 'Variant review' : tag.count === 1 ? 'Single-use' : 'Active'}
+                    {variantGroupTagKeys.has(tag.normalized) ? 'Similar review' : tag.count === 1 ? 'Single-use' : 'Active'}
                   </span>
                 </div>
                 <div className="text-right">
@@ -270,21 +332,23 @@ function CleanupDialog({
   open,
   onOpenChange,
   singleUseTags,
-  variantTags,
+  variantGroups,
+  variantTagCount,
   onFilter,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   singleUseTags: TagMetric[];
-  variantTags: TagMetric[];
+  variantGroups: CleanupVariantGroup[];
+  variantTagCount: number;
   onFilter: (mode: Extract<SortMode, 'single-use' | 'variants'>) => void;
 }) {
   const singleUsePreview = singleUseTags.slice(0, 12);
-  const variantPreview = variantTags.slice(0, 8);
+  const variantPreview = variantGroups.slice(0, 8);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden p-0">
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[1180px] overflow-hidden p-0">
         <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
@@ -293,7 +357,7 @@ function CleanupDialog({
             <div>
               <DialogTitle>Cleanup checks</DialogTitle>
               <DialogDescription className="mt-2 max-w-2xl leading-6">
-                Suggested tag cleanup groups based on tags used once and normalized tags with multiple display variants.
+                Suggested cleanup groups based on tags used once and tags that look like duplicates after punctuation, casing, and simple plural cleanup.
               </DialogDescription>
             </div>
           </div>
@@ -309,10 +373,10 @@ function CleanupDialog({
               onAction={() => onFilter('single-use')}
             />
             <CleanupSummaryCard
-              title="Variant groups"
-              count={variantTags.length}
-              detail="Tags that normalize to the same label but appear with different casing, spacing, or punctuation. These are the safest cleanup candidates."
-              actionLabel="Show variant groups"
+              title="Similar tag groups"
+              count={variantGroups.length}
+              detail={`${variantTagCount.toLocaleString()} tags appear in groups that may represent the same idea with different spelling, punctuation, casing, or singular/plural forms.`}
+              actionLabel="Show similar groups"
               onAction={() => onFilter('variants')}
             />
           </div>
@@ -348,38 +412,46 @@ function CleanupDialog({
             </section>
 
             <section className="rounded-lg border border-border bg-background p-4">
-              <h3 className="text-sm font-semibold">Variant groups to standardize</h3>
+              <h3 className="text-sm font-semibold">Similar groups to standardize</h3>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Pick one preferred label for each group, then update matching source items to that spelling.
+                Pick one preferred label for each group, then update matching source items to that spelling. These are suggestions, not automatic merges.
               </p>
               <div className="mt-4 space-y-3">
                 {variantPreview.length ? (
-                  variantPreview.map((tag) => (
-                    <div key={tag.normalized} className="rounded-md border border-border p-3">
+                  variantPreview.map((group) => (
+                    <div key={group.key} className="rounded-md border border-border p-3">
                       <div className="flex items-center justify-between gap-3">
-                        <Badge variant="outline" className={cn('max-w-56 truncate text-xs font-medium', tagLabelClass(tag.tag))}>
-                          {tag.tag}
+                        <Badge variant="outline" className={cn('max-w-56 truncate text-xs font-medium', tagLabelClass(group.label))}>
+                          {group.label}
                         </Badge>
                         <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
-                          {tag.count} uses
+                          {group.count} uses
                         </span>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {tag.variants.map((variant) => (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {group.variants.map((variant) => (
                           <span key={variant} className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
                             {variant}
                           </span>
                         ))}
                       </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {group.tags.map((tag) => (
+                          <Link key={tag.normalized} href={`/source-content?tags=${encodeURIComponent(tag.tag)}`} className="min-w-0 rounded-md border border-border px-2 py-1.5 text-xs hover:bg-secondary">
+                            <span className="block truncate font-medium">{tag.tag}</span>
+                            <span className="text-muted-foreground">{tag.count} uses</span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No variant groups found.</p>
+                  <p className="text-sm text-muted-foreground">No similar tag groups found.</p>
                 )}
               </div>
-              {variantTags.length > variantPreview.length ? (
+              {variantGroups.length > variantPreview.length ? (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Showing {variantPreview.length} of {variantTags.length.toLocaleString()} groups.
+                  Showing {variantPreview.length} of {variantGroups.length.toLocaleString()} groups.
                 </p>
               ) : null}
             </section>
@@ -388,7 +460,7 @@ function CleanupDialog({
           <div className="mt-5 rounded-lg border border-dashed border-border bg-secondary/40 p-4">
             <h3 className="text-sm font-semibold">Suggested cleanup workflow</h3>
             <div className="mt-3 grid gap-3 text-xs leading-5 text-muted-foreground md:grid-cols-3">
-              <p><span className="font-semibold text-foreground">1.</span> Start with variant groups because the intent is usually obvious.</p>
+              <p><span className="font-semibold text-foreground">1.</span> Start with similar groups because the intent is usually easier to compare.</p>
               <p><span className="font-semibold text-foreground">2.</span> Review single-use tags and decide whether each belongs as a broader existing tag.</p>
               <p><span className="font-semibold text-foreground">3.</span> Open the tagged source items, update their tags, then refresh Tag Explorer.</p>
             </div>
@@ -414,12 +486,12 @@ function CleanupSummaryCard({
 }) {
   return (
     <div className="rounded-lg border border-border bg-background p-4">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-2xl font-semibold tabular-nums">{count.toLocaleString()}</p>
           <h3 className="mt-1 text-sm font-semibold">{title}</h3>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={onAction}>
+        <Button type="button" variant="outline" size="sm" onClick={onAction} className="w-full justify-center sm:w-auto">
           {actionLabel}
         </Button>
       </div>
