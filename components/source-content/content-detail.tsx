@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -91,6 +92,11 @@ function metadataValue(value: unknown) {
   if (value === null || value === undefined || value === '') return 'n/a';
   if (Array.isArray(value)) return value.length ? value.join(', ') : 'n/a';
   return String(value);
+}
+
+function isUrlValue(value: unknown) {
+  if (typeof value !== 'string') return false;
+  return /^https?:\/\/\S+$/i.test(value.trim());
 }
 
 function decodeEntitiesBrowser(input: string): string {
@@ -269,6 +275,14 @@ export function ContentDetail({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyUrl = async (url: string) => {
+    await navigator.clipboard.writeText(url);
+    toast({
+      title: 'URL copied',
+      description: 'The image link was copied to your clipboard.',
+    });
+  };
+
   if (!content) return null;
 
   const meta = parseMetadata(content);
@@ -280,16 +294,50 @@ export function ContentDetail({
     { label: 'Filename', value: selectedProperties?.BasContentFilename },
     { label: 'Content ID', value: selectedProperties?.BasContentId },
     { label: 'Format', value: selectedProperties?.Format },
+    { label: 'FINRA letter', value: selectedProperties?.FinraLetterUrl },
     { label: 'Evergreen', value: selectedProperties?.Evergreen },
     { label: 'Categories', value: meta?.categories },
     { label: 'Sub-categories', value: meta?.subCategories },
   ];
   const extraProperties = Object.entries((meta?.extraProperties || {}) as Record<string, any>);
 
+  const renderMetadataValue = (value: unknown) => {
+    const text = metadataValue(value);
+
+    if (!isUrlValue(text)) {
+      return text;
+    }
+
+    return (
+      <div className="flex min-w-0 items-center gap-2">
+        <a
+          href={text}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 flex-1 truncate text-primary underline-offset-2 hover:underline"
+          title={text}
+        >
+          {text}
+        </a>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-7 w-7 shrink-0"
+          aria-label="Copy URL"
+          title="Copy URL"
+          onClick={() => handleCopyUrl(text)}
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[86vh] w-[92vw] max-w-[92vw] flex-col overflow-hidden rounded-lg border-border bg-background p-0 sm:max-w-[92vw]">
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <DialogContent className="flex h-[86vh] max-h-[92vh] w-[92vw] max-w-[92vw] flex-col overflow-hidden rounded-lg border-border bg-background p-0 sm:max-w-[92vw]">
+        <div className="grid min-h-0 flex-1 overflow-hidden grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
           <div className="flex min-w-0 flex-col overflow-hidden">
             <DialogHeader className="border-b border-border px-6 py-5 text-left">
               <div className="flex flex-col gap-4 md:flex-row md:items-start">
@@ -396,7 +444,7 @@ export function ContentDetail({
               <p className="mt-1 text-xs text-muted-foreground">Provider metadata and approval signals.</p>
             </div>
 
-            <ScrollArea className="min-h-0 flex-1">
+            <ScrollArea className="min-h-0 flex-1 overflow-hidden">
               <div className="space-y-5 px-5 py-4">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-md border border-border bg-background p-3">
@@ -415,10 +463,10 @@ export function ContentDetail({
 
                 <div className="space-y-3">
                   {sourceDetails.map((item) => (
-                    <div key={item.label} className="rounded-md border border-border bg-background px-3 py-2">
+                    <div key={item.label} className="min-w-0 rounded-md border border-border bg-background px-3 py-2">
                       <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
                       <div className="mt-1 break-words text-xs leading-5 text-foreground">
-                        {metadataValue(item.value)}
+                        {renderMetadataValue(item.value)}
                       </div>
                     </div>
                   ))}
@@ -429,9 +477,9 @@ export function ContentDetail({
                   {extraProperties.length ? (
                     <div className="space-y-2">
                       {extraProperties.map(([key, value]) => (
-                        <div key={key} className="rounded-md bg-background px-3 py-2 text-xs leading-5">
+                        <div key={key} className="min-w-0 rounded-md bg-background px-3 py-2 text-xs leading-5">
                           <div className="font-medium text-muted-foreground">{key}</div>
-                          <div className="mt-0.5 break-words text-foreground">{metadataValue(value)}</div>
+                          <div className="mt-0.5 break-words text-foreground">{renderMetadataValue(value)}</div>
                         </div>
                       ))}
                     </div>
