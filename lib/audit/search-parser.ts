@@ -11,7 +11,6 @@ function extractQuoted(input: string): string[] {
 
 export function parseSearchPrompt(prompt: string): ParsedSearchQuery {
   const text = prompt.trim();
-  const quoted = extractQuoted(text);
 
   let mode: 'all' | 'any' = 'all';
   if (/\b(any of|match any|either)\b/i.test(text)) mode = 'any';
@@ -20,18 +19,20 @@ export function parseSearchPrompt(prompt: string): ParsedSearchQuery {
   let includeRaw = parts[0] || '';
   const excludeRaw = parts.slice(1).join(' ');
 
-  // Natural-language helper: "mentions X" -> extract X
-  const mentionsMatch = includeRaw.match(/\b(mentions?|contains?|includes?|with)\b\s+(.+)$/i);
+  // Natural-language helper: "mentions X" / "mentions X but not Y" -> extract X.
+  const mentionsMatch = includeRaw.match(/\b(mentions?|contains?|includes?|with|has|have)\b\s+(.+)$/i);
   if (mentionsMatch?.[2]) includeRaw = mentionsMatch[2];
 
   // Remove instructional lead-ins
-  includeRaw = includeRaw.replace(/^\s*(list|find|show|search|content|pieces|items|that)\s+/gi, ' ').trim();
+  includeRaw = includeRaw
+    .replace(/^\s*(list|find|show|search|surface|return|content|pieces|articles|items|item|that)\s+/gi, ' ')
+    .trim();
 
   const stopWords = new Set(['the','and','for','that','with','from','this','those','these','into','about','every','piece','content','items','item','list','find','show']);
 
   const normalize = (s: string) => s
     .replace(/"[^"]+"/g, ' ')
-    .split(/,|\band\b/i)
+    .split(/,|\n|;|\band\b/i)
     .map((x) => x.trim())
     .filter((x) => x.length > 2)
     .filter((x) => !stopWords.has(x.toLowerCase()));
@@ -39,8 +40,10 @@ export function parseSearchPrompt(prompt: string): ParsedSearchQuery {
   const includeTokens = normalize(includeRaw);
   const excludeTokens = normalize(excludeRaw);
 
-  const mustInclude = Array.from(new Set([...quoted, ...includeTokens])).filter(Boolean);
-  const mustExclude = Array.from(new Set(extractQuoted(excludeRaw).concat(excludeTokens))).filter(Boolean);
+  const includeQuoted = extractQuoted(includeRaw);
+  const excludeQuoted = extractQuoted(excludeRaw);
+  const mustInclude = Array.from(new Set([...includeQuoted, ...includeTokens])).filter(Boolean);
+  const mustExclude = Array.from(new Set([...excludeQuoted, ...excludeTokens])).filter(Boolean);
 
   return { mustInclude, mustExclude, mode };
 }

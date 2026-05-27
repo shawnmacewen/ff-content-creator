@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
+import { makeSnippet, normalizeSourceText, scoreTextMatch } from '@/lib/audit/text';
 
 const OutSchema = z.object({
   summary: z.string(),
@@ -20,36 +21,23 @@ const OutSchema = z.object({
 
 function fallbackAnalyze(rows: any[], prompt: string) {
   const parsed = parseSearchPrompt(prompt);
-
-  const stopwords = new Set(['the','and','for','with','that','this','from','into','about','what','when','where','which','would','could','should','have','has','had','are','was','were','your','their','them','they','then','than','also','just','like','find','show','list','content']);
-
   let includeTerms = parsed.mustInclude || [];
-  let mode: 'all' | 'any' = (parsed.mode || 'all') as 'all' | 'any';
+  const mode: 'all' | 'any' = (parsed.mode || 'all') as 'all' | 'any';
 
-  // Natural-language prompts often parse into one long include phrase that never literal-matches.
-  // Tokenize to resilient keyword matching in fallback mode.
-  if (includeTerms.length <= 1) {
-    const tokens = prompt
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter((t) => t.length >= 4 && !stopwords.has(t));
-    const uniq = Array.from(new Set(tokens)).slice(0, 8);
-    if (uniq.length >= 2) {
-      includeTerms = uniq;
-      mode = 'any';
-    }
-  }
+  if (!includeTerms.length) includeTerms = [prompt.trim()];
 
   const matches = rows
-    .filter((r) => {
-      const hay = `${r.title || ''}\n${r.body || ''}`.toLowerCase();
-      const includeOk = mode === 'any'
-        ? includeTerms.some((t) => hay.includes(t.toLowerCase()))
-        : includeTerms.every((t) => hay.includes(t.toLowerCase()));
-      const excludeOk = parsed.mustExclude.every((t) => !hay.includes(t.toLowerCase()));
-      return includeOk && excludeOk;
+    .map((r) => {
+      const scored = scoreTextMatch({
+        text: `${r.title || ''}\n${r.body || ''}`,
+        includeTerms,
+        excludeTerms: parsed.mustExclude,
+        mode,
+      });
+      return { ...r, ...scored };
     })
+    .filter((r) => r.includeOk && r.excludeOk)
+    .sort((a, b) => b.score - a.score)
     .map((r) => ({
       id: r.id,
       externalId: r.externalId || null,
@@ -58,13 +46,15 @@ function fallbackAnalyze(rows: any[], prompt: string) {
       sourceSystem: r.sourceSystem || null,
       type: r.type || 'article',
       publishedAt: r.publishedAt || null,
-      url: r.metadata?.url || null,
+      url: r.url || null,
       tags: r.tags || [],
       body: r.body || '',
-      excerpt: r.excerpt || '',
-      snippet: r.excerpt || (r.body || '').slice(0, 240),
-      reason: 'Matched fallback keyword logic',
-      evidence: (r.body || '').slice(0, 180),
+      excerpt: makeSnippet(r.body || '', r.matchedTerms.length ? r.matchedTerms : includeTerms),
+      snippet: makeSnippet(r.body || '', r.matchedTerms.length ? r.matchedTerms : includeTerms),
+      matchedTerms: r.matchedTerms,
+      excludedTerms: r.excludedTerms,
+      reason: 'Matched deterministic fallback constraints',
+      evidence: makeSnippet(r.body || '', r.matchedTerms.length ? r.matchedTerms : includeTerms, 180),
       confidence: 0.55,
     }));
 
@@ -85,8 +75,12 @@ export async function POST(req: Request) {
     const { prompt, publisher = 'all', limit = 120, depth = 'quick' } = await req.json();
     if (!prompt?.trim()) return NextResponse.json({ ok: false, error: 'Missing prompt' }, { status: 400 });
 
-    const scanLimit = depth === 'deep' ? 300 : Math.min(150, Math.max(1, Number(limit) || 120));
-    const chunkSize = depth === 'deep' ? 20 : 25;
+    const parsed = parseSearchPrompt(prompt);
+    const includeTerms = parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()];
+    const excludeTerms = parsed.mustExclude;
+    const scanLimit = depth === 'deep' ? 1000 : Math.min(500, Math.max(1, Number(limit) || 300));
+    const candidateLimit = depth === 'deep' ? 120 : 60;
+    const chunkSize = depth === 'deep' ? 15 : 20;
 
     const supabase = getSupabaseServerClient();
     let q = supabase
@@ -109,17 +103,43 @@ export async function POST(req: Request) {
       tags: Array.isArray(r.tags) ? r.tags : [],
       excerpt: '',
       publishedAt: r.published_at,
-      body: String(r.body || '').slice(0, 2000),
+      body: normalizeSourceText(String(r.body || '')).slice(0, 3000),
     }));
 
+    const scoredRows = rows
+      .map((row) => {
+        const scored = scoreTextMatch({
+          text: `${row.title || ''}\n${row.body || ''}`,
+          includeTerms,
+          excludeTerms,
+          mode: parsed.mode,
+        });
+        return { ...row, ...scored };
+      })
+      .filter((row) => row.excludeOk)
+      .sort((a, b) => b.score - a.score);
+
+    const literalCandidates = scoredRows.filter((row) => row.includeOk);
+    const aiRows = (literalCandidates.length ? literalCandidates : scoredRows)
+      .slice(0, candidateLimit)
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        publisher: row.publisher,
+        type: row.type,
+        publishedAt: row.publishedAt,
+        matchedTerms: row.matchedTerms,
+        text: row.body.slice(0, 1800),
+      }));
+
     let parserUsed: 'ai' | 'fallback' = 'ai';
-    const idSet = new Set(rows.map((r) => r.id));
-    const rowById = new Map(rows.map((r) => [r.id, r]));
+    const idSet = new Set(aiRows.map((r) => r.id));
+    const rowById = new Map(scoredRows.map((r) => [r.id, r]));
 
     try {
       const env = getServerEnv();
       const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-      const chunks = chunk(rows, chunkSize);
+      const chunks = chunk(aiRows, chunkSize);
       const merged: any[] = [];
       const summaries: string[] = [];
 
@@ -127,7 +147,20 @@ export async function POST(req: Request) {
         const result = await generateObject({
           model: openai(env.OPENAI_MODEL),
           schema: OutSchema,
-          prompt: `Task: ${prompt}\nAnalyze these rows and return likely matches with reasons, evidence, confidence.\nOnly use ids from rows.\nRows:\n${JSON.stringify(c)}`,
+          prompt: [
+            `Task: ${prompt}`,
+            '',
+            'Classify source content against these constraints:',
+            `- Must include: ${includeTerms.join(', ') || 'n/a'}`,
+            `- Must exclude: ${excludeTerms.join(', ') || 'n/a'}`,
+            `- Include mode: ${parsed.mode}`,
+            '',
+            'Return only rows that satisfy the task. If a row includes an excluded term or fails the include requirement, do not return it.',
+            'Use exact evidence from the row text. Confidence should reflect how directly the row satisfies the constraints.',
+            'Only use ids from rows.',
+            '',
+            `Rows:\n${JSON.stringify(c)}`,
+          ].join('\n'),
         });
         summaries.push(result.object.summary);
         merged.push(...(result.object.matches || []));
@@ -154,8 +187,10 @@ export async function POST(req: Request) {
             url: row?.url || null,
             tags: row?.tags || [],
             body: row?.body || '',
-            excerpt: row?.excerpt || '',
-            snippet: row?.excerpt || (row?.body || '').slice(0, 240),
+            excerpt: makeSnippet(row?.body || '', row?.matchedTerms?.length ? row.matchedTerms : includeTerms),
+            snippet: m.evidence || makeSnippet(row?.body || '', row?.matchedTerms?.length ? row.matchedTerms : includeTerms),
+            matchedTerms: row?.matchedTerms || [],
+            excludedTerms: row?.excludedTerms || [],
             reason: m.reason,
             evidence: m.evidence,
             confidence: m.confidence,
@@ -165,15 +200,15 @@ export async function POST(req: Request) {
 
       if (!matches.length) {
         parserUsed = 'fallback';
-        const fb = fallbackAnalyze(rows, prompt);
-        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: 'ai-returned-zero-matches', scanned: rows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+        const fb = fallbackAnalyze(scoredRows, prompt);
+        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: 'ai-returned-zero-matches', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
       }
 
-      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, scanned: rows.length, chunkCount: chunks.length, summary: summaries.filter(Boolean).join(' | ').slice(0, 1000), total: matches.length, matches });
+      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: summaries.filter(Boolean).join(' | ').slice(0, 1000), total: matches.length, matches });
     } catch (err: any) {
       parserUsed = 'fallback';
-      const fb = fallbackAnalyze(rows, prompt);
-      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: err?.message ? `ai-error:${String(err.message).slice(0, 120)}` : 'ai-error', scanned: rows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+      const fb = fallbackAnalyze(scoredRows, prompt);
+      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: err?.message ? `ai-error:${String(err.message).slice(0, 120)}` : 'ai-error', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
     }
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'Analyze failed' }, { status: 500 });

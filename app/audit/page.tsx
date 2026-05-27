@@ -4,9 +4,10 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { FileSearch, Search, Sparkles, User } from 'lucide-react';
+import { CheckCircle2, FileSearch, Loader2, Search, Sparkles, User, XCircle } from 'lucide-react';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
+import { toast } from 'sonner';
 
 type Match = {
   id: string;
@@ -22,6 +23,11 @@ type Match = {
   excerpt?: string;
   snippet: string;
   score: number;
+  matchedTerms?: string[];
+  excludedTerms?: string[];
+  reason?: string;
+  evidence?: string;
+  confidence?: number;
 };
 
 export default function AuditPage() {
@@ -54,7 +60,7 @@ export default function AuditPage() {
         body: JSON.stringify({
           prompt: searchPrompt,
           publisher,
-          limit: 200,
+          limit: method === 'search' ? 1000 : analyzeDepth === 'deep' ? 1000 : 300,
           mode: matchMode,
           depth: analyzeDepth,
           mustInclude: includeTerms,
@@ -65,9 +71,12 @@ export default function AuditPage() {
       setResult(body);
       if (!res.ok || body?.ok === false) {
         setError(body?.error || `Audit failed (${res.status})`);
+      } else {
+        toast.success(`${body?.total ?? body?.matches?.length ?? 0} matches found`);
       }
     } catch (e: any) {
       setError(String(e?.message || e));
+      toast.error('Content Scan failed');
     } finally {
       setLoading(false);
     }
@@ -116,8 +125,18 @@ export default function AuditPage() {
   const markNeedsUpdate = async () => {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    await fetch('/api/audit/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, note: prompt }) });
+    const response = await fetch('/api/audit/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, note: prompt || includeTerms }) });
+    if (!response.ok) {
+      toast.error('Failed to mark selected content');
+      return;
+    }
+    toast.success(`${ids.length} item(s) marked`);
   };
+
+  const matches = (result?.matches || []) as Match[];
+  const resultTotal = result?.total ?? matches.length;
+  const scanned = result?.scanned ?? 0;
+  const candidateCount = result?.candidateCount;
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
@@ -194,40 +213,62 @@ export default function AuditPage() {
           <div className="grid md:grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-xs font-medium text-foreground">Include terms</label>
-              <Input value={includeTerms} onChange={(e) => setIncludeTerms(e.target.value)} placeholder="" />
+              <Input
+                value={includeTerms}
+                onChange={(e) => setIncludeTerms(e.target.value)}
+                className="bg-white"
+                placeholder='"2025 mileage rate"'
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-foreground">Exclude terms</label>
-              <Input value={excludeTerms} onChange={(e) => setExcludeTerms(e.target.value)} placeholder="" />
+              <Input
+                value={excludeTerms}
+                onChange={(e) => setExcludeTerms(e.target.value)}
+                className="bg-white"
+                placeholder='"2026 mileage rate"'
+              />
             </div>
           </div>
         ) : (
           <div className="flex gap-2 items-center">
-            <Input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder='e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate' />
+            <Input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="bg-white"
+              placeholder='e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate'
+            />
           </div>
         )}
         <div className="flex flex-wrap gap-2 items-center">
-          <select className="border rounded px-2 bg-background" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
+          <select className="border rounded px-2 bg-white" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
             <option value="all">All publishers</option>
             <option value="broadridge-forefield">Broadridge Forefield</option>
             <option value="publisher-content">Publisher Content</option>
             <option value="sample">Sample</option>
           </select>
           {method === 'search' && (
-            <select className="border rounded px-2 bg-background text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
+            <select className="border rounded px-2 bg-white text-sm" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
               <option value="all">Match all include terms</option>
               <option value="any">Match any include term</option>
             </select>
           )}
           {method === 'analyze' && (
-            <select className="border rounded px-2 bg-background text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
+            <select className="border rounded px-2 bg-white text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
               <option value="quick">AI Quick Scan</option>
               <option value="deep">AI Deep Scan</option>
             </select>
           )}
         </div>
         <div className="flex flex-wrap gap-2 items-center pt-2">
-          <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())}>{loading ? (method === 'analyze' ? 'Analyzing...' : 'Running...') : (method === 'analyze' ? 'Run AI Analyze' : 'Run Audit')}</Button>
+          <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())}>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {method === 'analyze' ? 'Analyzing...' : 'Running...'}
+              </>
+            ) : method === 'analyze' ? 'Run AI Analyze' : 'Run Standard Search'}
+          </Button>
           <Button variant="outline" onClick={() => {
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
@@ -240,20 +281,66 @@ export default function AuditPage() {
       </div>
 
       {loading && (
-        <div className="text-sm text-muted-foreground rounded border p-3">Running audit...</div>
+        <div className="text-sm text-muted-foreground rounded border p-3">
+          {method === 'analyze' ? 'Scanning candidates and applying AI classification...' : 'Scanning normalized source content...'}
+        </div>
       )}
 
       {error && (
         <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
       )}
 
+      {result && !loading && !error && (
+        <div className="grid gap-3 rounded-lg border border-border bg-card p-4 shadow-sm md:grid-cols-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Search className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">{resultTotal} matches</p>
+              <p className="text-xs text-muted-foreground">{scanned} source items scanned</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+              {method === 'analyze' ? <Sparkles className="h-4 w-4" /> : <FileSearch className="h-4 w-4" />}
+            </span>
+            <div>
+              <p className="text-sm font-semibold">{method === 'analyze' ? 'AI Analyze' : 'Standard Search'}</p>
+              <p className="text-xs text-muted-foreground">
+                {result?.parserUsed === 'fallback' ? 'Fallback parser' : method === 'search' ? 'Deterministic parser' : `${candidateCount ?? 0} AI candidates`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-600 text-white">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">Criteria parsed</p>
+              <p className="text-xs text-muted-foreground">
+                {(result?.structured?.mustInclude || []).length} include / {(result?.structured?.mustExclude || []).length} exclude
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {result?.structured && (
-        <div className="text-xs text-muted-foreground rounded border p-3 space-y-1">
-          {result?.structured && <div>Parsed query: <code>{JSON.stringify(result.structured)}</code></div>}
-          <div>Mode: <strong>{method === 'analyze' ? 'AI Analyze' : 'Standard Search'}</strong></div>
-          <div>Parser: <strong>{result?.parserUsed === 'fallback' ? 'Fallback' : method === 'search' ? 'Deterministic parser' : 'AI parser'}</strong></div>
-          {result?.summary && <div>Summary: <span>{result.summary}</span></div>}
-          <div>Matches: <strong>{result?.total ?? result?.matches?.length ?? 0}</strong> · Scanned: <strong>{result?.scanned ?? 0}</strong></div>
+        <div className="rounded-lg border border-border bg-card p-4 text-xs text-muted-foreground shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            {(result.structured.mustInclude || []).map((term: string) => (
+              <Badge key={`include-${term}`} variant="outline" className="bg-emerald-50 text-emerald-700">
+                include: {term}
+              </Badge>
+            ))}
+            {(result.structured.mustExclude || []).map((term: string) => (
+              <Badge key={`exclude-${term}`} variant="outline" className="bg-red-50 text-red-700">
+                exclude: {term}
+              </Badge>
+            ))}
+          </div>
+          {result?.summary && <div className="mt-3">{result.summary}</div>}
         </div>
       )}
 
@@ -262,7 +349,7 @@ export default function AuditPage() {
           <div className="text-sm text-muted-foreground rounded border p-3">No matches found for this query. Try broader wording or remove exclusions.</div>
         )}
 
-        {(result?.matches || []).map((m: Match) => (
+        {matches.map((m: Match) => (
           <div key={m.id} className="rounded border p-3 space-y-2">
             <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
             <div className="flex items-start justify-between gap-2">
@@ -298,8 +385,25 @@ export default function AuditPage() {
               <span>{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</span>
             </div>
             {'reason' in m && (m as any).reason && (
-              <p className="text-sm text-foreground/90">Reason: {(m as any).reason}</p>
+              <p className="text-sm text-foreground/90">Reason: {m.reason}</p>
             )}
+            <div className="flex flex-wrap gap-1.5">
+              {(m.matchedTerms || []).map((term) => (
+                <Badge key={`${m.id}-match-${term}`} variant="outline" className="bg-emerald-50 text-emerald-700">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {term}
+                </Badge>
+              ))}
+              {(m.excludedTerms || []).map((term) => (
+                <Badge key={`${m.id}-exclude-${term}`} variant="outline" className="bg-red-50 text-red-700">
+                  <XCircle className="h-3 w-3" />
+                  {term}
+                </Badge>
+              ))}
+            </div>
+            {m.evidence ? (
+              <p className="rounded-md bg-primary/5 px-3 py-2 text-sm text-foreground/90">{m.evidence}</p>
+            ) : null}
             <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
             <div>
               <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDetails(m)}>View Details</Button>

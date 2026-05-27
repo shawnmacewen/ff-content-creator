@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
-
-function makeSnippet(text: string, terms: string[]) {
-  if (!text) return '';
-  const lower = text.toLowerCase();
-  const hit = terms.find((t) => t && lower.includes(t.toLowerCase()));
-  if (!hit) return text.slice(0, 220);
-  const idx = lower.indexOf(hit.toLowerCase());
-  const start = Math.max(0, idx - 80);
-  const end = Math.min(text.length, idx + hit.length + 120);
-  return text.slice(start, end).replace(/\s+/g, ' ').trim();
-}
+import { makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
 
 export async function POST(req: Request) {
   try {
@@ -29,11 +19,11 @@ export async function POST(req: Request) {
     }
 
     const parsed = parseSearchPrompt(prompt);
-    const includeList = mustInclude
-      ? mustInclude.split(',').map((s) => s.trim()).filter(Boolean)
+    const includeList = mustInclude?.trim()
+      ? splitTerms(mustInclude)
       : parsed.mustInclude;
-    const excludeList = mustExclude
-      ? mustExclude.split(',').map((s) => s.trim()).filter(Boolean)
+    const excludeList = mustExclude?.trim()
+      ? splitTerms(mustExclude)
       : parsed.mustExclude;
 
     const structured = {
@@ -41,7 +31,7 @@ export async function POST(req: Request) {
       mustExclude: excludeList,
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
-      limit: Math.min(500, Math.max(1, Number(limit) || 100)),
+      limit: Math.min(5000, Math.max(1, Number(limit) || 1000)),
     };
 
     const supabase = getSupabaseServerClient();
@@ -60,30 +50,38 @@ export async function POST(req: Request) {
     const includeTerms = structured.mustInclude || [];
     const excludeTerms = structured.mustExclude || [];
 
-    const rows = (data || []).filter((row: any) => {
-      const hay = `${row.title || ''}\n${row.body || ''}`.toLowerCase();
-      const includeOk = structured.mode === 'any'
-        ? includeTerms.some((t) => hay.includes(t.toLowerCase()))
-        : includeTerms.every((t) => hay.includes(t.toLowerCase()));
-      const excludeOk = excludeTerms.every((t) => !hay.includes(t.toLowerCase()));
-      return includeOk && excludeOk;
-    });
+    const matches = (data || [])
+      .map((row: any) => {
+        const cleanBody = normalizeSourceText(row.body || '');
+        const hay = `${row.title || ''}\n${cleanBody}`;
+        const scored = scoreTextMatch({
+          text: hay,
+          includeTerms,
+          excludeTerms,
+          mode: structured.mode,
+        });
 
-    const matches = rows.map((row: any) => ({
-      id: row.id,
-      externalId: row.external_id || null,
-      title: row.title,
-      publisher: row.publisher || null,
-      sourceSystem: row.source_system || null,
-      type: row.type || 'article',
-      publishedAt: row.published_at || null,
-      url: row.metadata?.url || null,
-      tags: Array.isArray(row.tags) ? row.tags : [],
-      body: row.body || '',
-      excerpt: makeSnippet(row.body || '', includeTerms),
-      snippet: makeSnippet(row.body || '', includeTerms),
-      score: includeTerms.length,
-    }));
+        return { row, cleanBody, ...scored };
+      })
+      .filter((row) => row.includeOk && row.excludeOk)
+      .sort((a, b) => b.score - a.score)
+      .map(({ row, cleanBody, matchedTerms, excludedTerms, score }) => ({
+        id: row.id,
+        externalId: row.external_id || null,
+        title: row.title,
+        publisher: row.publisher || null,
+        sourceSystem: row.source_system || null,
+        type: row.type || 'article',
+        publishedAt: row.published_at || null,
+        url: row.metadata?.url || null,
+        tags: Array.isArray(row.tags) ? row.tags : [],
+        body: cleanBody,
+        excerpt: makeSnippet(cleanBody, matchedTerms.length ? matchedTerms : includeTerms),
+        snippet: makeSnippet(cleanBody, matchedTerms.length ? matchedTerms : includeTerms),
+        matchedTerms,
+        excludedTerms,
+        score,
+      }));
 
     return NextResponse.json({ ok: true, parserUsed: 'deterministic', structured, total: matches.length, scanned: (data || []).length, matches });
   } catch (error: any) {
