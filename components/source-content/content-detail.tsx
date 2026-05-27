@@ -12,19 +12,17 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { SourceContent } from '@/lib/types/content';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ExternalLink, User, Calendar, Copy, Check } from 'lucide-react';
+import { ExternalLink, User, Calendar, Copy, Check, FileText } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 const designationToneClasses = [
-  'bg-blue-500/12 text-blue-200 border-blue-500/30',
-  'bg-emerald-500/12 text-emerald-200 border-emerald-500/30',
-  'bg-violet-500/12 text-violet-200 border-violet-500/30',
-  'bg-amber-500/12 text-amber-200 border-amber-500/30',
-  'bg-rose-500/12 text-rose-200 border-rose-500/30',
-  'bg-cyan-500/12 text-cyan-200 border-cyan-500/30',
-  'bg-lime-500/12 text-lime-200 border-lime-500/30',
-  'bg-fuchsia-500/12 text-fuchsia-200 border-fuchsia-500/30',
+  'bg-primary/10 text-primary border-primary/25',
+  'bg-info/10 text-info border-info/25',
+  'bg-warning/10 text-warning border-warning/25',
+  'bg-muted text-muted-foreground border-border',
+  'bg-secondary text-secondary-foreground border-border',
 ];
 
 function designationToneClass(value?: string | null) {
@@ -32,6 +30,67 @@ function designationToneClass(value?: string | null) {
   let hash = 0;
   for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
   return designationToneClasses[hash % designationToneClasses.length];
+}
+
+function parseMetadata(content: SourceContent | null) {
+  const meta = content?.metadata;
+  if (typeof meta !== 'string') return meta;
+  try {
+    return JSON.parse(meta) as SourceContent['metadata'];
+  } catch {
+    return null;
+  }
+}
+
+function extraPropertyFromArray(meta: SourceContent['metadata'] | null | undefined, key: string): string | undefined {
+  const arr = meta?.raw?.extra_properties;
+  if (!Array.isArray(arr)) return undefined;
+
+  const hit = arr.find((item: any) => String(item?.key || '') === key);
+  const value = hit?.stringValue ?? hit?.value ?? hit?.string_value;
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getThumbnailUrl(content: SourceContent | null) {
+  if (!content) return null;
+
+  const meta = parseMetadata(content);
+  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+
+  const thumb =
+    (extraMap?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.LinkedIn') ||
+    (meta?.SocialMediaPlatformImages?.LinkedIn as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.linkedIn as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.linkedin as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.LinkedIn as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.linkedIn as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.linkedin as string | undefined) ||
+    (extraMap?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.Thumbnail') ||
+    (meta?.SocialMediaPlatformImages?.Thumbnail as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.thumbnail as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.Thumbnail as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.thumbnail as string | undefined) ||
+    (content.imageUrl as string | undefined);
+
+  return thumb?.trim() || null;
+}
+
+function getPublisherLabel(content: SourceContent) {
+  if (!content.publisher) return 'Unavailable';
+  if (content.publisher === 'broadridge-forefield') return 'Broadridge Advisor Content';
+  if (content.publisher === 'publisher-content') return 'Publisher Content';
+  if (content.publisher === 'sample') return 'Sample';
+  return content.publisher;
+}
+
+function metadataValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return 'n/a';
+  if (Array.isArray(value)) return value.length ? value.join(', ') : 'n/a';
+  return String(value);
 }
 
 function decodeEntitiesBrowser(input: string): string {
@@ -212,129 +271,185 @@ export function ContentDetail({
 
   if (!content) return null;
 
+  const meta = parseMetadata(content);
+  const selectedProperties = meta?.extraPropertiesSelected || {};
+  const thumbnailUrl = getThumbnailUrl(content);
+  const isFinraApproved = String(selectedProperties?.FinraApproved ?? '').toLowerCase() === 'true';
+  const sourceDetails = [
+    { label: 'External ID', value: content.externalId || 'Unavailable' },
+    { label: 'Filename', value: selectedProperties?.BasContentFilename },
+    { label: 'Content ID', value: selectedProperties?.BasContentId },
+    { label: 'Format', value: selectedProperties?.Format },
+    { label: 'Evergreen', value: selectedProperties?.Evergreen },
+    { label: 'Categories', value: meta?.categories },
+    { label: 'Sub-categories', value: meta?.subCategories },
+  ];
+  const extraProperties = Object.entries((meta?.extraProperties || {}) as Record<string, any>);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[84vw] w-[84vw] sm:max-w-[84vw] h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <DialogTitle className="text-xl leading-tight">
-                {content.title}
-              </DialogTitle>
-              <DialogDescription className="flex items-center gap-3 text-sm">
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  <span className={content.publisher === 'publisher-content' ? 'text-purple-500' : content.sourceSystem === 'advisorstream' ? 'text-blue-500' : content.sourceSystem === 'sample-seed' ? 'text-green-500' : 'text-blue-500'}>
-                    {content.publisher
-                      ? content.publisher === 'broadridge-forefield'
-                        ? 'Broadridge Forefield'
-                        : content.publisher === 'publisher-content'
-                          ? 'Publisher Content'
-                          : content.publisher === 'sample'
-                            ? 'Sample'
-                            : content.publisher
-                      : 'Unavailable'}
-                  </span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable'}
-                </span>
-              </DialogDescription>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              {content.type ? (
-                <Badge variant="outline" className={`font-medium tracking-wide ${designationToneClass(content.type)}`}>
-                  {content.type}
-                </Badge>
-              ) : null}
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {content.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-
-        <Separator className="my-3" />
-
-        {highlightSnippetsClean.length ? (
-          <div className="rounded-xl border bg-muted/10 p-3">
-            <div className="text-xs font-semibold text-foreground">Used in this output</div>
-            <div className="mt-2 space-y-2">
-              {highlightSnippetsClean.slice(0, 3).map((s, i) => (
-                <div
-                  key={i}
-                  className="text-xs leading-relaxed rounded px-2 py-1 bg-[#f3e8ff] dark:bg-purple-950/50 text-foreground ring-1 ring-violet-500/25"
-                >
-                  “{s}”
+      <DialogContent className="flex h-[86vh] w-[92vw] max-w-[92vw] flex-col overflow-hidden rounded-lg border-border bg-background p-0 sm:max-w-[92vw]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="flex min-w-0 flex-col overflow-hidden">
+            <DialogHeader className="border-b border-border px-6 py-5 text-left">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg border border-border bg-gradient-to-br from-primary/18 via-info/8 to-secondary md:w-48">
+                  {thumbnailUrl ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-primary/45">
+                      <FileText className="h-9 w-9" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 via-transparent to-transparent" />
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 text-[11px] text-muted-foreground">
-              Note: this is best-effort evidence from EchoWrite’s client-side matching; it may be paraphrased.
-            </div>
-          </div>
-        ) : null}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-          <div className="lg:col-span-2 min-h-0">
-            <ScrollArea className="h-full pr-4">
-              <div className="prose prose-sm prose-invert max-w-none break-words overflow-x-hidden">
-                {paragraphs.map((paragraph, index) => {
-                  return (
-                    <p key={index} className="text-sm text-foreground/90 mb-4">
-                      {paragraph}
-                    </p>
-                  );
-                })}
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {content.type ? (
+                      <Badge
+                        variant="outline"
+                        className={cn('text-[11px] font-medium', designationToneClass(content.type))}
+                      >
+                        {content.type}
+                      </Badge>
+                    ) : null}
+                    {isFinraApproved ? (
+                      <Badge className="bg-primary text-[10px] text-primary-foreground hover:bg-primary">
+                        FINRA reviewed
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <DialogTitle className="text-xl leading-tight text-foreground">
+                      {content.title}
+                    </DialogTitle>
+                    <DialogDescription className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                      <span className="inline-flex items-center gap-1 text-primary">
+                        <User className="h-3.5 w-3.5" />
+                        {getPublisherLabel(content)}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable'}
+                      </span>
+                    </DialogDescription>
+                  </div>
+
+                  {content.tags.length ? (
+                    <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden">
+                      {content.tags.slice(0, 8).map((tag) => (
+                        <Badge key={tag} variant="outline" className="bg-background/70 text-xs font-normal">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {content.tags.length > 8 ? (
+                        <Badge variant="outline" className="bg-background/70 text-xs font-normal">
+                          +{content.tags.length - 8}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </ScrollArea>
-          </div>
+            </DialogHeader>
 
-          <div className="lg:col-span-1 rounded-md border p-3 min-h-0">
-            <h3 className="text-sm font-semibold mb-3">Metadata</h3>
-            <ScrollArea className="h-full pr-2">
-              <div className="space-y-2 text-xs">
-                <div><span className="text-muted-foreground">External ID:</span> {content.externalId || 'Unavailable'}</div>
-                <div><span className="text-muted-foreground">BasContentId:</span> {content.metadata?.extraPropertiesSelected?.BasContentId || 'n/a'}</div>
-                <div><span className="text-muted-foreground">BasContentFilename:</span> {content.metadata?.extraPropertiesSelected?.BasContentFilename || 'n/a'}</div>
-                <div><span className="text-muted-foreground">Format:</span> {content.metadata?.extraPropertiesSelected?.Format || 'n/a'}</div>
-                <div><span className="text-muted-foreground">FinraLetterUrl:</span> {content.metadata?.extraPropertiesSelected?.FinraLetterUrl || 'n/a'}</div>
-                <div><span className="text-muted-foreground">FinraApproved:</span> {String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? 'n/a')}</div>
-                <div><span className="text-muted-foreground">APContentType:</span> {content.metadata?.extraPropertiesSelected?.APContentType || 'n/a'}</div>
-                <div><span className="text-muted-foreground">Evergreen:</span> {String(content.metadata?.extraPropertiesSelected?.Evergreen ?? 'n/a')}</div>
-                <div><span className="text-muted-foreground">Content Designation:</span> {content.metadata?.contentDesignation || 'n/a'}</div>
-                <div><span className="text-muted-foreground">Categories:</span> {Array.isArray(content.metadata?.categories) ? content.metadata.categories.join(', ') || 'n/a' : 'n/a'}</div>
-                <div><span className="text-muted-foreground">Sub-categories:</span> {Array.isArray(content.metadata?.subCategories) ? content.metadata.subCategories.join(', ') || 'n/a' : 'n/a'}</div>
-
-                <div className="pt-3 mt-3 border-t">
-                  <div className="text-xs font-semibold mb-2">Extra Properties (variable)</div>
-                  <div className="space-y-1">
-                    {Object.entries(content.metadata?.extraProperties || {}).length ? (
-                      Object.entries((content.metadata?.extraProperties || {}) as Record<string, any>).map(([k, v]) => (
-                        <div key={k} className="break-words">
-                          <span className="text-muted-foreground">{k}:</span> {String(v ?? '') || 'n/a'}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-muted-foreground">n/a</div>
-                    )}
+            {highlightSnippetsClean.length ? (
+              <div className="border-b border-border px-6 py-4">
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <div className="text-xs font-semibold text-foreground">Used in this output</div>
+                  <div className="mt-2 space-y-2">
+                    {highlightSnippetsClean.slice(0, 3).map((s, i) => (
+                      <div
+                        key={i}
+                        className="rounded-md bg-background px-2 py-1 text-xs leading-relaxed text-foreground ring-1 ring-primary/20"
+                      >
+                        "{s}"
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-[11px] text-muted-foreground">
+                    Best-effort evidence from EchoWrite matching; excerpts may be paraphrased.
                   </div>
                 </div>
               </div>
+            ) : null}
+
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="px-6 py-5">
+                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
+                  {paragraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
             </ScrollArea>
           </div>
+
+          <aside className="flex min-h-0 flex-col border-t border-border bg-muted/25 lg:border-l lg:border-t-0">
+            <div className="border-b border-border px-5 py-4">
+              <h3 className="text-sm font-semibold text-foreground">Source details</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Provider metadata and approval signals.</p>
+            </div>
+
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="space-y-5 px-5 py-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">FINRA</div>
+                    <div className="mt-1 text-sm font-semibold text-foreground">
+                      {isFinraApproved ? 'Reviewed' : 'Not reviewed'}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Designation</div>
+                    <div className="mt-1 truncate text-sm font-semibold text-foreground">
+                      {meta?.contentDesignation || content.type || 'n/a'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {sourceDetails.map((item) => (
+                    <div key={item.label} className="rounded-md border border-border bg-background px-3 py-2">
+                      <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
+                      <div className="mt-1 break-words text-xs leading-5 text-foreground">
+                        {metadataValue(item.value)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-border pt-4">
+                  <div className="mb-2 text-xs font-semibold text-foreground">Extra properties</div>
+                  {extraProperties.length ? (
+                    <div className="space-y-2">
+                      {extraProperties.map(([key, value]) => (
+                        <div key={key} className="rounded-md bg-background px-3 py-2 text-xs leading-5">
+                          <div className="font-medium text-muted-foreground">{key}</div>
+                          <div className="mt-0.5 break-words text-foreground">{metadataValue(value)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-border bg-background px-3 py-3 text-xs text-muted-foreground">
+                      No extra properties available.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
+          </aside>
         </div>
 
-        <Separator className="my-3" />
+        <Separator />
 
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+        <div className="flex shrink-0 flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleCopy}>
               {copied ? (
                 <>
@@ -359,6 +474,7 @@ export function ContentDetail({
           </div>
           {onUseForGeneration && (
             <Button
+              className="sm:ml-auto"
               onClick={() => {
                 onUseForGeneration(content);
                 onOpenChange(false);
