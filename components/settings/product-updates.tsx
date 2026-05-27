@@ -76,58 +76,91 @@ function getScrollViewport(root: ScrollRoot) {
 
 const changelogGroups = [
   {
-    period: 'Week of May 27, 2026',
-    theme: 'Instagram carousel preview and generation polish',
-    commits: ['355b2cc', 'a1d0eac', '77733ad', '1ab20dd'],
-    icon: Smartphone,
+    period: 'Released May 27, 2026',
+    theme: 'Visual Product Updates',
+    commits: ['4464163', '467c0a6', '58c0ec2', '6263c26', '0cfde79', '9361869', 'c043734', '99c12f8', '79a2109', '8e18d83'],
+    icon: Eye,
     items: [
-      'Added an AI-generated visual backdrop for the Instagram Preview phone mockup, using the first carousel masterplate as reference.',
-      'Renamed Swipe to Instagram Preview, made it the default carousel output view, and added clear view icons.',
-      'Centered the Instagram carousel swipe preview so adjacent slides no longer bleed into the active slide.',
-      'Added larger bouncing-dot progress states directly inside generated output areas.',
+      'Added Product Updates as a Settings destination with Visual Log as the default experience.',
+      'Built the chapter-based release story, then fixed the scroll model so chapters are real visible panels instead of empty parallax positions.',
+      'Strengthened the pinned gradient background, tile-card parallax, chapter jump controls, and sticky progress/navigation rail.',
     ],
   },
   {
-    period: 'Week of May 27, 2026',
-    theme: 'Editorial metadata and source exploration',
+    period: 'Released May 27, 2026',
+    theme: 'Source Metadata and Tag Explorer',
     commits: ['968203c', '873b96a'],
     icon: Tags,
     items: [
-      'Added Settings -> Tag Explorer with tag counts, top tags, cleanup views, case-variant detection, and Source Content links.',
-      'Centralized content designation and tag color mapping so labels stay visually consistent across Source Content, modals, and generation screens.',
+      'Added Settings -> Tag Explorer so the team can inspect tag counts, top tags, cleanup candidates, and case variants.',
+      'Linked tag rows back into Source Content with the selected tag already applied.',
+      'Centralized designation and tag color treatment so labels stay consistent across Source Content, generation, modals, and pickers.',
     ],
   },
   {
-    period: 'Week of May 27, 2026',
-    theme: 'Metrics and dashboard positioning',
-    commits: ['56a7e87', '9619395', '3c003c3'],
+    period: 'Released May 27, 2026',
+    theme: 'Instagram Preview and Carousel Review',
+    commits: ['355b2cc', 'a1d0eac', '77733ad', 'c10ff84', 'a3f0822'],
+    icon: Smartphone,
+    items: [
+      'Renamed the carousel output surface to Instagram Preview and made it the default review view.',
+      'Generated an ambient preview backdrop from carousel artwork so the phone mockup feels connected to the asset being reviewed.',
+      'Centered the swipe preview and moved Carousel 2.0 into the Settings navigation so review controls are easier to find.',
+    ],
+  },
+  {
+    period: 'Released May 27, 2026',
+    theme: 'Generation Metrics and Feedback',
+    commits: ['56a7e87', '1ab20dd', '4ed9cb1'],
     icon: DatabaseZap,
     items: [
-      'Moved Generated Assets to durable Supabase-backed generation events and added separate generated image tracking.',
-      'Refocused the dashboard around internal Editorial Team workflows rather than external marketing/advisor language.',
-      'Aligned the dashboard with the workflow design template patterns.',
+      'Moved generated asset counts onto durable Supabase-backed generation events across EchoWrite, Generate, carousel planning, slides, and image tests.',
+      'Separated generated image tracking from written content output so dashboard metrics can distinguish asset types.',
+      'Added larger in-place progress states and cleaned up source preview layout so generation work reports back while it is running.',
     ],
   },
   {
-    period: 'Week of May 27, 2026',
-    theme: 'Settings knowledge and design reference',
-    commits: ['c763ba3', 'd803ae2', '049a5ff', 'bf1e72e', 'ec15509', '78c6e05'],
+    period: 'Released May 27, 2026',
+    theme: 'Dashboard and Internal Tool Identity',
+    commits: ['9619395', 'c763ba3', '3c003c3', 'a9917fe', 'd9c50a5', 'ece532a'],
+    icon: Rocket,
+    items: [
+      'Refocused dashboard language around the Editorial Team and the internal work of finding, creating, reviewing, and reusing content.',
+      'Added a Template Design System page for reviewing workflow colors, page patterns, rows, and examples.',
+      'Removed extra platform/header language so Settings and the sidebar feel more like an app workspace than a marketing shell.',
+    ],
+  },
+  {
+    period: 'Released May 27, 2026',
+    theme: 'Knowledge Center and Help Chat',
+    commits: ['d803ae2', '049a5ff', 'bf1e72e', 'ec15509', '78c6e05'],
     icon: PanelTop,
     items: [
-      'Added the Template Design System page for reviewing workflow colors, patterns, rows, and examples.',
-      'Built the Knowledge Center foundation, expanded workflow playbooks, and added a help-only support chat widget.',
-      'Turned Settings into the home for operational, help, and review tools.',
+      'Built the Knowledge Center framework and expanded it into workflow playbooks, task paths, guardrails, glossary content, and troubleshooting entries.',
+      'Added a help-only support chat backed by local Knowledge Center retrieval, then moved it into a common popout widget pattern.',
+      'Kept the assistant scoped to help content so it can answer workflow questions without running app actions or changing records.',
     ],
   },
   {
-    period: 'Earlier foundation',
-    theme: 'Source detail, EchoWrite, and scan improvements',
-    commits: ['719a4c6', 'f24d947', '32fdb0d', 'bdd1c82', 'e30d862', 'c78c2c4'],
+    period: 'Released May 27, 2026',
+    theme: 'Source Content Review Foundation',
+    commits: ['694d44b', '719a4c6', 'f24d947', '32fdb0d', '51d201e', 'ef65710', '11af9e9', '77f4b5f', '6552850', 'd4bec6b'],
     icon: Layers3,
     items: [
-      'Improved source detail rendering for structured rich content and XML-like provider bodies.',
-      'Stored richer source content bodies for better preview and generation context.',
-      'Improved Content Scan search and EchoWrite source grounding, citations, and generation states.',
+      'Stored richer source bodies and rendered structured provider content more cleanly, including XML-like content that previously read poorly.',
+      'Kept source list responses lightweight while improving detail modals, metadata links, filters, headers, compliance cards, and source card badges.',
+      'Added source quality signals such as FINRA-reviewed metrics and better preserved source context for downstream generation.',
+    ],
+  },
+  {
+    period: 'Released May 27, 2026',
+    theme: 'EchoWrite Grounding and Content Scan',
+    commits: ['cefacbe', 'bdd1c82', 'e30d862', 'c78c2c4', '378c7c7', '1ccdc2b', 'd4e9b9c', '49127f6'],
+    icon: WandSparkles,
+    items: [
+      'Hardened EchoWrite grounding with better retrieval scoring, attribution, source evidence, cited-source saving, and visible grounding status.',
+      'Improved EchoWrite generation states and video-script output so generated drafts are clearer to review.',
+      'Improved Content Scan search parsing, query behavior, and text handling so audit workflows find source material more reliably.',
     ],
   },
 ];
@@ -289,14 +322,14 @@ function ChangeLog({
           <Badge className="mb-3">Product Updates</Badge>
           <p className="text-xs font-semibold uppercase text-primary">Change Log</p>
           <h3 className="text-xl font-semibold">Recent product milestones</h3>
-          <div className="mt-2 text-xs text-muted-foreground">Generated from recent repo commit history and grouped for readability.</div>
+          <div className="mt-2 text-xs text-muted-foreground">Built from GitHub commit history and grouped by completed feature work.</div>
         </div>
         <div className="grid gap-3 sm:min-w-[360px]">
           <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} />
           <div className="grid gap-2 sm:grid-cols-3">
-            <UpdateStat icon={GitCommit} value="30" label="commits" />
-            <UpdateStat icon={BadgeCheck} value="5" label="groups" />
-            <UpdateStat icon={CalendarDays} value="Weekly" label="cadence" />
+            <UpdateStat icon={GitCommit} value="49" label="GitHub commits reviewed" />
+            <UpdateStat icon={BadgeCheck} value={String(changelogGroups.length)} label="feature groups" />
+            <UpdateStat icon={CalendarDays} value="Daily" label="release dates" />
           </div>
         </div>
       </div>
