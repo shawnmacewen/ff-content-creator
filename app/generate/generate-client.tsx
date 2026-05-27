@@ -621,8 +621,8 @@ export default function GeneratePage() {
               <div className="rounded-lg border bg-background p-4 min-w-0">
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
-                    <div className="flex items-start gap-3">
-                      <div className="h-64 w-[28rem] overflow-hidden rounded-md bg-muted shrink-0">
+                    <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start">
+                      <div className="h-44 w-full shrink-0 overflow-hidden rounded-md bg-muted sm:h-52 xl:h-40 xl:w-56">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
@@ -670,7 +670,7 @@ export default function GeneratePage() {
                             <img
                               src={String(thumb).trim()}
                               alt=""
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-contain"
                               referrerPolicy="no-referrer"
                             />
                           );
@@ -679,10 +679,10 @@ export default function GeneratePage() {
 
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold">Selected Content</div>
-                        <div className="text-sm font-medium truncate">
+                        <div className="line-clamp-3 break-words text-sm font-medium">
                           {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
                         </div>
-<div className="mt-1 flex flex-wrap items-center gap-2">
+                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
                           {(() => {
                             let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                             if (typeof meta === 'string') {
@@ -706,7 +706,7 @@ export default function GeneratePage() {
                             const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
                             if (!fn) return null;
                             return (
-                              <span className="text-[11px] text-muted-foreground">{String(fn)}</span>
+                              <span className="min-w-0 break-all text-[11px] text-muted-foreground">{String(fn)}</span>
                             );
                           })()}
                         </div>
@@ -945,8 +945,8 @@ export default function GeneratePage() {
               <div className="rounded-lg border bg-background p-4 min-w-0">
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
-                    <div className="flex items-start gap-3">
-                      <div className="h-64 w-[28rem] overflow-hidden rounded-md bg-muted shrink-0">
+                    <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start">
+                      <div className="h-44 w-full shrink-0 overflow-hidden rounded-md bg-muted sm:h-52 xl:h-40 xl:w-56">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
@@ -972,7 +972,7 @@ export default function GeneratePage() {
                             <img
                               src={String(thumb).trim()}
                               alt=""
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-contain"
                               referrerPolicy="no-referrer"
                             />
                           );
@@ -981,10 +981,10 @@ export default function GeneratePage() {
 
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold">Selected Content</div>
-                        <div className="text-sm font-medium truncate">
+                        <div className="line-clamp-3 break-words text-sm font-medium">
                           {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
                         </div>
-<div className="mt-1 flex flex-wrap items-center gap-2">
+                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
                           {(() => {
                             let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                             if (typeof meta === 'string') {
@@ -1008,7 +1008,7 @@ export default function GeneratePage() {
                             const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
                             if (!fn) return null;
                             return (
-                              <span className="text-[11px] text-muted-foreground">{String(fn)}</span>
+                              <span className="min-w-0 break-all text-[11px] text-muted-foreground">{String(fn)}</span>
                             );
                           })()}
                         </div>
