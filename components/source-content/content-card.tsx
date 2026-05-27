@@ -1,22 +1,20 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { SourceContent } from '@/lib/types/content';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar, ExternalLink, User } from 'lucide-react';
+import { Calendar, ExternalLink, FileText, User } from 'lucide-react';
 
 const designationToneClasses = [
-  'bg-blue-500/12 text-blue-200 border-blue-500/30',
-  'bg-emerald-500/12 text-emerald-200 border-emerald-500/30',
-  'bg-violet-500/12 text-violet-200 border-violet-500/30',
-  'bg-amber-500/12 text-amber-200 border-amber-500/30',
-  'bg-rose-500/12 text-rose-200 border-rose-500/30',
-  'bg-cyan-500/12 text-cyan-200 border-cyan-500/30',
-  'bg-lime-500/12 text-lime-200 border-lime-500/30',
-  'bg-fuchsia-500/12 text-fuchsia-200 border-fuchsia-500/30',
+  'bg-primary/10 text-primary border-primary/25',
+  'bg-info/10 text-info border-info/25',
+  'bg-warning/10 text-warning border-warning/25',
+  'bg-muted text-muted-foreground border-border',
+  'bg-secondary text-secondary-foreground border-border',
 ];
 
 function designationToneClass(value?: string | null) {
@@ -24,6 +22,59 @@ function designationToneClass(value?: string | null) {
   let hash = 0;
   for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
   return designationToneClasses[hash % designationToneClasses.length];
+}
+
+function parseMetadata(content: SourceContent) {
+  const meta = content.metadata;
+  if (typeof meta !== 'string') return meta;
+  try {
+    return JSON.parse(meta) as SourceContent['metadata'];
+  } catch {
+    return null;
+  }
+}
+
+function extraPropertyFromArray(meta: SourceContent['metadata'] | null, key: string): string | undefined {
+  const arr = meta?.raw?.extra_properties;
+  if (!Array.isArray(arr)) return undefined;
+
+  const hit = arr.find((item: any) => String(item?.key || '') === key);
+  const value = hit?.stringValue ?? hit?.value ?? hit?.string_value;
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getThumbnailUrl(content: SourceContent) {
+  const meta = parseMetadata(content);
+  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+
+  const thumb =
+    (extraMap?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.LinkedIn') ||
+    (meta?.SocialMediaPlatformImages?.LinkedIn as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.linkedIn as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.linkedin as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.LinkedIn as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.linkedIn as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.linkedin as string | undefined) ||
+    (extraMap?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.Thumbnail') ||
+    (meta?.SocialMediaPlatformImages?.Thumbnail as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.thumbnail as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.Thumbnail as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.thumbnail as string | undefined) ||
+    (content.imageUrl as string | undefined);
+
+  return thumb?.trim() || null;
+}
+
+function getPublisherLabel(content: SourceContent) {
+  if (!content.publisher) return 'Unavailable';
+  if (content.publisher === 'broadridge-forefield') return 'Broadridge Advisor Content';
+  if (content.publisher === 'publisher-content') return 'Publisher Content';
+  if (content.publisher === 'sample') return 'Sample';
+  return content.publisher;
 }
 
 interface ContentCardProps {
@@ -41,93 +92,100 @@ export function ContentCard({
   onViewDetail,
   selectable = false,
 }: ContentCardProps) {
+  const thumbnailUrl = getThumbnailUrl(content);
+  const filename = content.metadata?.extraPropertiesSelected?.BasContentFilename || 'Unavailable';
+  const isFinraApproved = String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? '').toLowerCase() === 'true';
+
   return (
     <Card
-      className={`bg-card border-border transition-colors hover:border-primary/50 h-[280px] flex flex-col ${
-        isSelected ? 'border-primary ring-1 ring-primary' : ''
-      }`}
+      className={cn(
+        'group h-full overflow-hidden rounded-lg border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md',
+        isSelected && 'border-primary ring-2 ring-primary/25'
+      )}
     >
-      <CardHeader className="pb-1 min-h-[84px]">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="space-y-1 flex-1">
-              <CardTitle className="text-base font-medium leading-tight line-clamp-2">
-                {content.title}
-              </CardTitle>
-              <CardDescription className="flex items-center gap-2 text-xs">
-                <User className="h-3 w-3" />
-                <span
-                  className={
-                    content.publisher === 'publisher-content'
-                      ? 'text-purple-500'
-                      : content.sourceSystem === 'advisorstream'
-                        ? 'text-blue-500'
-                        : content.sourceSystem === 'sample-seed'
-                          ? 'text-green-500'
-                          : 'text-blue-500'
-                  }
-                >
-                  {content.publisher
-                    ? content.publisher === 'broadridge-forefield'
-                      ? 'Broadridge Advisor Content'
-                      : content.publisher === 'publisher-content'
-                        ? 'Publisher Content'
-                        : content.publisher === 'sample'
-                          ? 'Sample'
-                          : content.publisher
-                    : 'Unavailable'}
-                </span>
-                <span className="text-muted-foreground">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {content.publishedAt
-                    ? format(new Date(content.publishedAt), 'MMM d, yyyy')
-                    : 'Published date unavailable'}
-                </span>
-              </CardDescription>
-              <div className="text-xs text-muted-foreground">Filename: {content.metadata?.extraPropertiesSelected?.BasContentFilename || 'Unavailable'}</div>
-            </div>
+      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-primary/18 via-info/8 to-secondary">
+        {thumbnailUrl ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.03]"
+            style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-primary/45">
+            <FileText className="h-10 w-10" />
           </div>
-          <div className="flex flex-col gap-2 items-end">
-            {selectable && (
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
-                className="h-8 w-8 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-              />
-            )}
-            {content.type ? (
-              <Badge variant="outline" className={`shrink-0 font-medium tracking-wide ${designationToneClass(content.type)}`}>
-                {content.type}
-              </Badge>
-            ) : null}
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-slate-950/15" />
+
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+          {content.type ? (
+            <Badge variant="outline" className={cn('border-white/30 bg-white/90 text-[11px] font-medium text-foreground shadow-sm backdrop-blur', designationToneClass(content.type))}>
+              {content.type}
+            </Badge>
+          ) : null}
+          {isFinraApproved ? (
+            <Badge className="bg-primary text-[10px] text-primary-foreground shadow-sm hover:bg-primary">FINRA</Badge>
+          ) : null}
+        </div>
+
+        {selectable ? (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
+            className="absolute right-3 top-3 h-8 w-8 rounded-md border-white/70 bg-white/90 shadow-sm data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+          />
+        ) : null}
+      </div>
+
+      <CardContent className="flex min-h-[236px] flex-1 flex-col p-5">
+        <div className="space-y-3">
+          <CardTitle className="line-clamp-2 text-base font-semibold leading-snug">
+            {content.title}
+          </CardTitle>
+
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-primary">
+              <User className="h-3 w-3" />
+              {getPublisherLabel(content)}
+            </span>
+            <span aria-hidden>•</span>
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {content.publishedAt
+                ? format(new Date(content.publishedAt), 'MMM d, yyyy')
+                : 'Published date unavailable'}
+            </span>
           </div>
+
+          <div className="truncate text-xs text-muted-foreground">
+            Filename: {filename}
+          </div>
+
+          <p className="line-clamp-3 min-h-[60px] text-sm leading-5 text-muted-foreground">
+            {content.excerpt || 'No summary available for this content item.'}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0 flex-1 flex flex-col">
-        <div className="min-h-[56px] flex items-start">
-          <p className="text-sm text-muted-foreground line-clamp-2 w-full">{content.excerpt}</p>
-        </div>
+
         <div className="mt-auto">
-          <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+          <div className="flex min-h-[24px] flex-wrap gap-1.5">
             {content.tags.slice(0, 4).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs">
+              <Badge key={tag} variant="outline" className="bg-background/70 text-xs font-normal">
                 {tag}
               </Badge>
             ))}
             {content.tags.length > 4 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="bg-background/70 text-xs font-normal">
                 +{content.tags.length - 4}
               </Badge>
             )}
           </div>
-          <div className="flex items-center justify-between gap-2 pt-2">
+
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onViewDetail?.(content)}
-                className="h-8"
+                className="h-8 px-2"
               >
                 View Details
               </Button>
@@ -136,7 +194,7 @@ export function ContentCard({
                   variant="ghost"
                   size="sm"
                   asChild
-                  className="h-8"
+                  className="h-8 px-2"
                 >
                   <a href={content.url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3 w-3 mr-1" />
@@ -145,10 +203,6 @@ export function ContentCard({
                 </Button>
               )}
             </div>
-
-            {String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? '').toLowerCase() === 'true' && (
-              <Badge className="h-6 text-[10px] px-2 py-0 bg-blue-600 hover:bg-blue-600 text-white">FINRA</Badge>
-            )}
           </div>
         </div>
       </CardContent>
