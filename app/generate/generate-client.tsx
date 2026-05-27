@@ -16,6 +16,7 @@ import { KitGeneratedOutput } from '@/components/generator/kit-generated-output'
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { Badge } from '@/components/ui/badge';
+import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
@@ -693,7 +694,7 @@ export default function GeneratePage() {
                             const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
                             if (!designation) return null;
                             return (
-                              <Badge variant="outline" className="rounded-full text-[11px]">
+                              <Badge variant="outline" className={cn('rounded-full text-[11px]', designationLabelClass(String(designation)))}>
                                 {String(designation)}
                               </Badge>
                             );
@@ -729,7 +730,7 @@ export default function GeneratePage() {
                       {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
-                            <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
+                            <Badge key={tag} variant="outline" className={cn('rounded-full text-[11px]', tagLabelClass(String(tag)))}>
                               {decodeEntitiesLite(String(tag))}
                             </Badge>
                           ))}
@@ -1004,7 +1005,7 @@ export default function GeneratePage() {
                             const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
                             if (!designation) return null;
                             return (
-                              <Badge variant="outline" className="rounded-full text-[11px]">
+                              <Badge variant="outline" className={cn('rounded-full text-[11px]', designationLabelClass(String(designation)))}>
                                 {String(designation)}
                               </Badge>
                             );
@@ -1040,7 +1041,7 @@ export default function GeneratePage() {
                       {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
-                            <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
+                            <Badge key={tag} variant="outline" className={cn('rounded-full text-[11px]', tagLabelClass(String(tag)))}>
                               {decodeEntitiesLite(String(tag))}
                             </Badge>
                           ))}

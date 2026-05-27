@@ -29,6 +29,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ContentDetail } from '@/components/source-content/content-detail';
+import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
+import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -711,9 +713,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                           <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
 
                           <div className="mt-2 flex flex-wrap items-center gap-2">
-                            {selectedSourceType ? <Badge variant="secondary">{selectedSourceType}</Badge> : null}
+                            {selectedSourceType ? (
+                              <Badge variant="outline" className={cn('text-[11px]', designationLabelClass(selectedSourceType))}>
+                                {selectedSourceType}
+                              </Badge>
+                            ) : null}
                             {(selectedSourceTags || []).slice(0, 6).map((t) => (
-                              <Badge key={t} variant="outline">
+                              <Badge key={t} variant="outline" className={cn('text-[11px]', tagLabelClass(t))}>
                                 {t}
                               </Badge>
                             ))}
@@ -985,9 +991,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                           <div className="truncate text-sm font-semibold">{selectedSourceTitle || selectedSourceId}</div>
 
                           <div className="mt-2 flex flex-wrap items-center gap-2">
-                            {selectedSourceType ? <Badge variant="secondary">{selectedSourceType}</Badge> : null}
+                            {selectedSourceType ? (
+                              <Badge variant="outline" className={cn('text-[11px]', designationLabelClass(selectedSourceType))}>
+                                {selectedSourceType}
+                              </Badge>
+                            ) : null}
                             {(selectedSourceTags || []).slice(0, 6).map((t) => (
-                              <Badge key={t} variant="outline">
+                              <Badge key={t} variant="outline" className={cn('text-[11px]', tagLabelClass(t))}>
                                 {t}
                               </Badge>
                             ))}

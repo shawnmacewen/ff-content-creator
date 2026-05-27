@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { designationLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
+import { cn } from '@/lib/utils';
 import { Search, X, FileText } from 'lucide-react';
 import useSWR from 'swr';
 
@@ -129,7 +131,7 @@ export function SourceSelector({ selectedIds, onSelectionChange }: SourceSelecto
                         {content.excerpt}
                       </p>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className={cn('text-xs', designationLabelClass(content.type))}>
                           {content.type}
                         </Badge>
                         <span className="text-xs text-muted-foreground">{content.author}</span>

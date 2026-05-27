@@ -5,24 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { SourceContent } from '@/lib/types/content';
+import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar, ExternalLink, FileText, User } from 'lucide-react';
-
-const designationToneClasses = [
-  'bg-primary/10 text-primary border-primary/25',
-  'bg-info/10 text-info border-info/25',
-  'bg-warning/10 text-warning border-warning/25',
-  'bg-muted text-muted-foreground border-border',
-  'bg-secondary text-secondary-foreground border-border',
-];
-
-function designationToneClass(value?: string | null) {
-  const text = String(value || 'unknown');
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-  return designationToneClasses[hash % designationToneClasses.length];
-}
 
 function parseMetadata(content: SourceContent) {
   const meta = content.metadata;
@@ -131,7 +117,7 @@ export function ContentCard({
             {content.type ? (
               <Badge
                 variant="outline"
-                className={cn('text-[11px] font-medium', designationToneClass(content.type))}
+                className={cn('text-[11px] font-medium', designationLabelClass(content.type))}
               >
                 {content.type}
               </Badge>
@@ -173,12 +159,12 @@ export function ContentCard({
         <div className="mt-auto">
           <div className="flex min-h-[24px] flex-wrap gap-1.5">
             {content.tags.slice(0, 4).map((tag) => (
-              <Badge key={tag} variant="outline" className="bg-background/70 text-xs font-normal">
+              <Badge key={tag} variant="outline" className={cn('text-xs font-normal', tagLabelClass(tag))}>
                 {tag}
               </Badge>
             ))}
             {content.tags.length > 4 && (
-              <Badge variant="outline" className="bg-background/70 text-xs font-normal">
+              <Badge variant="outline" className={cn('text-xs font-normal', overflowLabelClass())}>
                 +{content.tags.length - 4}
               </Badge>
             )}

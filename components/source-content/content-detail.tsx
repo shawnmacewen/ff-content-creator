@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -30,21 +31,6 @@ const cellTags = ['th', 'td', 'cell', 'entry', 'table_cell', 'tablecell'];
 const unorderedListTags = ['ul', 'unordered_list', 'bullet_list', 'bullets', 'itemizedlist'];
 const orderedListTags = ['ol', 'ordered_list', 'numbered_list', 'orderedlist'];
 const listItemTags = ['li', 'item', 'list_item', 'listitem', 'bullet'];
-
-const designationToneClasses = [
-  'bg-primary/10 text-primary border-primary/25',
-  'bg-info/10 text-info border-info/25',
-  'bg-warning/10 text-warning border-warning/25',
-  'bg-muted text-muted-foreground border-border',
-  'bg-secondary text-secondary-foreground border-border',
-];
-
-function designationToneClass(value?: string | null) {
-  const text = String(value || 'unknown');
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-  return designationToneClasses[hash % designationToneClasses.length];
-}
 
 function parseMetadata(content: SourceContent | null) {
   const meta = content?.metadata;
@@ -633,7 +619,7 @@ export function ContentDetail({
                     {content.type ? (
                       <Badge
                         variant="outline"
-                        className={cn('text-[11px] font-medium', designationToneClass(content.type))}
+                        className={cn('text-[11px] font-medium', designationLabelClass(content.type))}
                       >
                         {content.type}
                       </Badge>
@@ -664,12 +650,12 @@ export function ContentDetail({
                   {content.tags.length ? (
                     <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden">
                       {content.tags.slice(0, 8).map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-background/70 text-xs font-normal">
+                        <Badge key={tag} variant="outline" className={cn('text-xs font-normal', tagLabelClass(tag))}>
                           {tag}
                         </Badge>
                       ))}
                       {content.tags.length > 8 ? (
-                        <Badge variant="outline" className="bg-background/70 text-xs font-normal">
+                        <Badge variant="outline" className={cn('text-xs font-normal', overflowLabelClass())}>
                           +{content.tags.length - 8}
                         </Badge>
                       ) : null}

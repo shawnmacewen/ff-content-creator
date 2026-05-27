@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import type { SourceContent } from '@/lib/types/content';
 import { Search, Filter, ChevronDown, Check } from 'lucide-react';
@@ -243,12 +244,12 @@ export function SourceArticlePicker({
 
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           {(c.tags || []).slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="rounded-full text-[11px]">
+                            <Badge key={tag} variant="outline" className={cn('rounded-full text-[11px]', tagLabelClass(tag))}>
                               {tag}
                             </Badge>
                           ))}
                           {!c.tags?.length ? (
-                            <Badge variant="outline" className="rounded-full text-[11px]">
+                            <Badge variant="outline" className={cn('rounded-full text-[11px]', designationLabelClass(c.type))}>
                               {c.type}
                             </Badge>
                           ) : null}
