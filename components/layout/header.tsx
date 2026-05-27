@@ -20,7 +20,7 @@ const routeLabels: Record<string, string> = {
   '/generate': 'Generate Content',
   '/echo-write': 'EchoWrite',
   '/source-content': 'Source Content',
-  '/library': 'Content Library',
+  '/library': 'Saved Content',
   '/audit': 'Content Scan',
   '/settings': 'Settings',
 };

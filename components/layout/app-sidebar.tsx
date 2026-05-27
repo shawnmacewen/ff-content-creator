@@ -52,7 +52,7 @@ const mainNavItems = [
     icon: FolderOpen,
   },
   {
-    title: 'Content Library',
+    title: 'Saved Content',
     href: '/library',
     icon: Library,
   },

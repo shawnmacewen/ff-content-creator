@@ -45,7 +45,7 @@ const journeySteps: { title: string; detail: string; icon: Icon }[] = [
   },
   {
     title: 'Publish',
-    detail: 'Move approved content into library and distribution flows.',
+    detail: 'Move approved content into saved content and distribution flows.',
     icon: Send,
   },
 ];
@@ -83,8 +83,8 @@ const platformPillars: { title: string; detail: string; icon: Icon }[] = [
     icon: Boxes,
   },
   {
-    title: 'Reusable library',
-    detail: 'Generated content moves toward a durable, reviewable library of marketing assets.',
+    title: 'Saved content workspace',
+    detail: 'Generated and edited content moves into a durable, reviewable set of marketing assets.',
     icon: MessageSquareText,
   },
 ];
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 Workflow Health
               </p>
               <div className="mt-3 grid gap-3">
-                {['Content sync ready', 'Generation routes online', 'Review library connected'].map((item) => (
+                {['Content sync ready', 'Generation routes online', 'Saved content connected'].map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
                     <span className="flex h-7 w-7 items-center justify-center rounded-md bg-success/15">
                       <BadgeCheck className="h-4 w-4 text-success" />

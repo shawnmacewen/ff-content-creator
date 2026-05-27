@@ -94,7 +94,7 @@ export default function LibraryPage() {
         tone: updatedContent.tone,
         prompt: updatedContent.prompt,
         sourceContentIds: updatedContent.sourceContentIds,
-        versionNote: 'Edited in library',
+        versionNote: 'Edited in Saved Content',
       }),
     });
 
@@ -120,7 +120,7 @@ export default function LibraryPage() {
       <div className="flex w-full max-w-none flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Content Library</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Saved Content</h1>
             <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
@@ -139,11 +139,11 @@ export default function LibraryPage() {
         <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
             <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Generated assets
+              Saved workspace
             </Badge>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Content Library</h1>
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Saved Content</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              Manage saved drafts, review assets, and reusable campaign content.
+              Manage saved drafts, reviewed assets, and reusable campaign content.
             </p>
           </div>
           <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
@@ -153,7 +153,7 @@ export default function LibraryPage() {
                   <Library className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">{content.length} library items</p>
+                  <p className="text-sm font-semibold">{content.length} saved items</p>
                   <p className="text-xs text-muted-foreground">Drafts, review items, and published assets.</p>
                 </div>
               </div>
