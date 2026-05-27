@@ -6,6 +6,13 @@ import useSWR from 'swr';
 import { ArrowDownAZ, ExternalLink, Hash, ListFilter, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { tagLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
@@ -43,10 +50,20 @@ const sortLabels: Record<SortMode, string> = {
 export default function TagExplorer() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('count-desc');
+  const [cleanupOpen, setCleanupOpen] = useState(false);
   const { data, error, isLoading } = useSWR<TagExplorerResponse>('/api/source-content/tags', fetcher);
 
   const tags = useMemo(() => data?.tags || [], [data?.tags]);
   const maxCount = Math.max(...tags.map((tag) => tag.count), 1);
+  const cleanupChecks = (data?.summary?.singleUseCount ?? 0) + (data?.summary?.variantCount ?? 0);
+  const singleUseTags = useMemo(
+    () => tags.filter((tag) => tag.count === 1).sort((a, b) => a.tag.localeCompare(b.tag)),
+    [tags]
+  );
+  const variantTags = useMemo(
+    () => tags.filter((tag) => tag.hasCaseVariants).sort((a, b) => b.variants.length - a.variants.length || a.tag.localeCompare(b.tag)),
+    [tags]
+  );
 
   const filteredTags = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -90,10 +107,29 @@ export default function TagExplorer() {
             <MetricCard icon={Tags} label="Unique tags" value={data?.summary?.uniqueTags ?? 0} detail="distinct normalized labels" />
             <MetricCard icon={Hash} label="Tag uses" value={data?.summary?.totalTagUses ?? 0} detail="total assignments" />
             <MetricCard icon={ListFilter} label="Tagged items" value={data?.summary?.taggedContentCount ?? 0} detail="content with at least one tag" />
-            <MetricCard icon={TriangleAlert} label="Cleanup checks" value={(data?.summary?.singleUseCount ?? 0) + (data?.summary?.variantCount ?? 0)} detail="single-use + variant groups" />
+            <button
+              type="button"
+              aria-label="Open cleanup check details"
+              onClick={() => setCleanupOpen(true)}
+              className="rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <MetricCard icon={TriangleAlert} label="Cleanup checks" value={cleanupChecks} detail="single-use + variant groups" />
+            </button>
           </div>
         </div>
       </section>
+
+      <CleanupDialog
+        open={cleanupOpen}
+        onOpenChange={setCleanupOpen}
+        singleUseTags={singleUseTags}
+        variantTags={variantTags}
+        onFilter={(mode) => {
+          setSortMode(mode);
+          setQuery('');
+          setCleanupOpen(false);
+        }}
+      />
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -226,6 +262,168 @@ export default function TagExplorer() {
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function CleanupDialog({
+  open,
+  onOpenChange,
+  singleUseTags,
+  variantTags,
+  onFilter,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  singleUseTags: TagMetric[];
+  variantTags: TagMetric[];
+  onFilter: (mode: Extract<SortMode, 'single-use' | 'variants'>) => void;
+}) {
+  const singleUsePreview = singleUseTags.slice(0, 12);
+  const variantPreview = variantTags.slice(0, 8);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
+              <TriangleAlert className="h-5 w-5" />
+            </span>
+            <div>
+              <DialogTitle>Cleanup checks</DialogTitle>
+              <DialogDescription className="mt-2 max-w-2xl leading-6">
+                Suggested tag cleanup groups based on tags used once and normalized tags with multiple display variants.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto px-6 py-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <CleanupSummaryCard
+              title="Single-use tags"
+              count={singleUseTags.length}
+              detail="Tags assigned to exactly one source item. These may be valid niche labels, but they are good candidates for merging into broader planning tags."
+              actionLabel="Show single-use tags"
+              onAction={() => onFilter('single-use')}
+            />
+            <CleanupSummaryCard
+              title="Variant groups"
+              count={variantTags.length}
+              detail="Tags that normalize to the same label but appear with different casing, spacing, or punctuation. These are the safest cleanup candidates."
+              actionLabel="Show variant groups"
+              onAction={() => onFilter('variants')}
+            />
+          </div>
+
+          <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+            <section className="rounded-lg border border-border bg-background p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Single-use examples</h3>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Review these before deleting or merging. A one-off tag can still be useful if it marks a specific campaign or recurring content lane.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {singleUsePreview.length ? (
+                  singleUsePreview.map((tag) => (
+                    <Link key={tag.normalized} href={`/source-content?tags=${encodeURIComponent(tag.tag)}`}>
+                      <Badge variant="outline" className={cn('max-w-56 truncate text-xs font-medium', tagLabelClass(tag.tag))}>
+                        {tag.tag}
+                      </Badge>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No single-use tags found.</p>
+                )}
+              </div>
+              {singleUseTags.length > singleUsePreview.length ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Showing {singleUsePreview.length} of {singleUseTags.length.toLocaleString()} candidates.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="rounded-lg border border-border bg-background p-4">
+              <h3 className="text-sm font-semibold">Variant groups to standardize</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Pick one preferred label for each group, then update matching source items to that spelling.
+              </p>
+              <div className="mt-4 space-y-3">
+                {variantPreview.length ? (
+                  variantPreview.map((tag) => (
+                    <div key={tag.normalized} className="rounded-md border border-border p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <Badge variant="outline" className={cn('max-w-56 truncate text-xs font-medium', tagLabelClass(tag.tag))}>
+                          {tag.tag}
+                        </Badge>
+                        <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+                          {tag.count} uses
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {tag.variants.map((variant) => (
+                          <span key={variant} className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+                            {variant}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No variant groups found.</p>
+                )}
+              </div>
+              {variantTags.length > variantPreview.length ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Showing {variantPreview.length} of {variantTags.length.toLocaleString()} groups.
+                </p>
+              ) : null}
+            </section>
+          </div>
+
+          <div className="mt-5 rounded-lg border border-dashed border-border bg-secondary/40 p-4">
+            <h3 className="text-sm font-semibold">Suggested cleanup workflow</h3>
+            <div className="mt-3 grid gap-3 text-xs leading-5 text-muted-foreground md:grid-cols-3">
+              <p><span className="font-semibold text-foreground">1.</span> Start with variant groups because the intent is usually obvious.</p>
+              <p><span className="font-semibold text-foreground">2.</span> Review single-use tags and decide whether each belongs as a broader existing tag.</p>
+              <p><span className="font-semibold text-foreground">3.</span> Open the tagged source items, update their tags, then refresh Tag Explorer.</p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CleanupSummaryCard({
+  title,
+  count,
+  detail,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  count: number;
+  detail: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-2xl font-semibold tabular-nums">{count.toLocaleString()}</p>
+          <h3 className="mt-1 text-sm font-semibold">{title}</h3>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-muted-foreground">{detail}</p>
     </div>
   );
 }
