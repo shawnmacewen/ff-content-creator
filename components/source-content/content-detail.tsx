@@ -429,11 +429,23 @@ export function ContentDetail({
 
             <ScrollArea className="min-h-0 flex-1">
               <div className="px-6 py-5">
-                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
-                  {paragraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
+	                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
+	                  {paragraphs.map((paragraph, index) => (
+	                    <p key={index}>
+	                      {highlightText(paragraph, highlightSnippetsClean).map((part, partIndex) => {
+	                        if (typeof part === 'string') return <span key={partIndex}>{part}</span>;
+	                        return (
+	                          <mark
+	                            key={partIndex}
+	                            className="rounded bg-primary/15 px-0.5 text-foreground ring-1 ring-primary/20"
+	                          >
+	                            {part.text}
+	                          </mark>
+	                        );
+	                      })}
+	                    </p>
+	                  ))}
+	                </div>
               </div>
             </ScrollArea>
           </div>
