@@ -10,6 +10,7 @@ import { ContentTypeSelector } from '@/components/generator/content-type-selecto
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
+import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
 
@@ -772,11 +773,7 @@ export default function GeneratePage() {
               </Button>
 
               {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
-                <div className="flex items-center gap-1" aria-label="Generating">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.2s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.1s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-                </div>
+                <BouncingDots className="gap-1" dotClassName="h-1.5 w-1.5" />
               ) : null}
             </div>
           </div>
@@ -789,6 +786,19 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Review carousel images and campaign copy before saving.</p>
               </div>
             </div>
+
+            {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
+              <div className="mb-4">
+                <GeneratingOutputState
+                  label={isGeneratingKit ? 'Generating editorial assets' : 'Generating carousel images'}
+                  detail={
+                    isGeneratingKit
+                      ? 'The selected content formats are being drafted and will appear here as soon as the request completes.'
+                      : 'Carousel images are being produced. The current button indicator stays visible, and this area shows the larger progress state.'
+                  }
+                />
+              </div>
+            ) : null}
 
             <div className="rounded-lg border bg-background p-3">
               <div className="flex flex-wrap gap-2">

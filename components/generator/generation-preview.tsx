@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
+import { GeneratingOutputState } from '@/components/generator/generating-dots';
 import type { ContentTypeInfo } from '@/lib/types/content';
 import type { ContentType, ContentStatus } from '@/lib/types/content';
 import { Copy, Check, Save, RefreshCw, Sparkles } from 'lucide-react';
@@ -193,7 +194,12 @@ export function GenerationPreview({
 
       </CardHeader>
       <CardContent className="space-y-4">
-        {isEditing ? (
+        {isGenerating ? (
+          <GeneratingOutputState
+            label="Generating editorial asset"
+            detail="The generated output will appear here as soon as the request completes."
+          />
+        ) : isEditing ? (
           <Textarea
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
