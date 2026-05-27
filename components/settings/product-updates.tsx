@@ -38,6 +38,42 @@ type ReleaseStory = {
   panel: string;
 };
 
+type ScrollRoot = HTMLElement | Window;
+
+function isWindowRoot(root: ScrollRoot): root is Window {
+  return root === window;
+}
+
+function getScrollRoot(section: HTMLElement | null): ScrollRoot {
+  let node = section?.parentElement || null;
+
+  while (node) {
+    const style = window.getComputedStyle(node);
+    const overflowY = `${style.overflowY} ${style.overflow}`;
+    if (/(auto|scroll|overlay)/.test(overflowY) && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+
+  return window;
+}
+
+function getScrollViewport(root: ScrollRoot) {
+  if (isWindowRoot(root)) {
+    return {
+      top: 0,
+      height: window.innerHeight,
+    };
+  }
+
+  const rect = root.getBoundingClientRect();
+  return {
+    top: rect.top,
+    height: root.clientHeight,
+  };
+}
+
 const changelogGroups = [
   {
     period: 'Week of May 27, 2026',
@@ -307,12 +343,16 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
 
   useEffect(() => {
     let frame = 0;
+    const root = getScrollRoot(sectionRef.current);
+
     const update = () => {
       const section = sectionRef.current;
       if (!section) return;
       const rect = section.getBoundingClientRect();
-      const scrollable = Math.max(rect.height - window.innerHeight, 1);
-      const next = Math.min(Math.max(-rect.top / scrollable, 0), 0.999);
+      const viewport = getScrollViewport(root);
+      const top = rect.top - viewport.top;
+      const scrollable = Math.max(rect.height - viewport.height, 1);
+      const next = Math.min(Math.max(-top / scrollable, 0), 0.999);
       setProgress(next);
     };
 
@@ -322,19 +362,44 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
     };
 
     update();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', onScroll);
+      root.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
   }, []);
 
-  const layerStyle = (x: number, y: number, rotate = 0, scale = 1) => {
+  const scrollToStory = (index: number) => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const root = getScrollRoot(section);
+    const viewport = getScrollViewport(root);
+    const rect = section.getBoundingClientRect();
+    const top = rect.top - viewport.top;
+    const scrollable = Math.max(rect.height - viewport.height, 1);
+    const target = (index / stories.length) * scrollable;
+
+    if (isWindowRoot(root)) {
+      window.scrollTo({
+        top: window.scrollY + top + target,
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
+      return;
+    }
+
+    root.scrollTo({
+      top: root.scrollTop + top + target,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  };
+
+  const layerStyle = (x: number, y: number, rotate = 0, scale = 1, baseTransform = '') => {
     if (reduceMotion) return undefined;
     return {
-      transform: `translate3d(${progress * x}px, ${progress * y}px, 0) rotate(${progress * rotate}deg) scale(${scale + progress * 0.08})`,
+      transform: `${baseTransform} translate3d(${progress * x}px, ${progress * y}px, 0) rotate(${progress * rotate}deg) scale(${scale + progress * 0.08})`,
     };
   };
 
@@ -349,7 +414,7 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
       <div className="sticky top-0 min-h-screen overflow-hidden px-4 py-6 sm:px-7 lg:px-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(168,85,247,0.28),transparent_30%),linear-gradient(180deg,#08111f_0%,#0f172a_45%,#020617_100%)] transition-colors duration-500" />
         <div className={`absolute inset-x-0 top-0 h-72 bg-gradient-to-r ${activeStory.accent} opacity-25 blur-3xl transition-all duration-500`} style={layerStyle(80, -70, 4, 1)} />
-        <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] -translate-x-1/2 rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1)} />
+        <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
         <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
         <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
 
@@ -379,21 +444,21 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
             </div>
 
             <div className="relative min-h-[560px] [perspective:1200px]">
-              <div className="absolute left-4 top-4 h-80 w-60 rotate-[-10deg] rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d]" style={layerStyle(-70, -120, -8, 1)}>
+              <div className="absolute left-4 top-4 h-80 w-60 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d]" style={layerStyle(-70, -120, -8, 1, 'rotate(-10deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
                   <DatabaseZap className="h-8 w-8 text-white" />
                   <div className="mt-28 text-xl font-semibold">Source intelligence</div>
                   <div className="mt-2 text-xs leading-5 text-white/75">Richer source context powers review and generation.</div>
                 </div>
               </div>
-              <div className="absolute left-24 top-28 h-[22rem] w-64 rotate-[4deg] rounded-3xl border border-white/20 bg-white/15 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(40, -70, 5, 1.02)}>
+              <div className="absolute left-24 top-28 h-[22rem] w-64 rounded-3xl border border-white/20 bg-white/15 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(40, -70, 5, 1.02, 'rotate(4deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
                   <WandSparkles className="h-8 w-8 text-white" />
                   <div className="mt-36 text-xl font-semibold">Generation flow</div>
                   <div className="mt-2 text-xs leading-5 text-white/75">Outputs show progress, counts, and context.</div>
                 </div>
               </div>
-              <div className="absolute right-4 top-64 h-64 w-56 rotate-[12deg] rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(-120, 70, 12, 1)}>
+              <div className="absolute right-4 top-64 h-64 w-56 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(-120, 70, 12, 1, 'rotate(12deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
                   <Images className="h-8 w-8 text-white" />
                   <div className="mt-20 text-lg font-semibold">Visual preview</div>
@@ -427,6 +492,7 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
               <button
                 key={story.title}
                 type="button"
+                onClick={() => scrollToStory(index)}
                 className={cn(
                   'h-2 rounded-full transition-all',
                   index === activeIndex ? 'w-12 bg-cyan-300' : 'w-5 bg-white/25 hover:bg-white/40'
