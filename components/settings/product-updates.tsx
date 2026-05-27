@@ -423,6 +423,34 @@ function ParallaxStorySection({
         <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
         <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
         <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
+
+        <div className="absolute inset-y-0 right-0 hidden w-[58%] [perspective:1200px] lg:block">
+          <div className="relative h-full">
+            <div className="absolute left-[3%] top-[12%] h-64 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 opacity-85 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={layerStyle(-130, 170, -16, 0.95, 'rotate(-13deg)')}>
+              <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
+                <DatabaseZap className="h-8 w-8 text-white" />
+                <div className="mt-20 text-lg font-semibold xl:mt-24 xl:text-xl">Source intelligence</div>
+                <div className="mt-2 text-xs leading-5 text-white/75">Richer source context powers review and generation.</div>
+              </div>
+            </div>
+
+            <div className="absolute left-[34%] top-[28%] h-72 w-56 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-80 shadow-2xl backdrop-blur-xl xl:h-[20rem] xl:w-64" style={layerStyle(80, -190, 12, 1.02, 'rotate(5deg)')}>
+              <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
+                <WandSparkles className="h-8 w-8 text-white" />
+                <div className="mt-28 text-lg font-semibold xl:mt-32 xl:text-xl">Generation flow</div>
+                <div className="mt-2 text-xs leading-5 text-white/75">Outputs show progress, counts, and context.</div>
+              </div>
+            </div>
+
+            <div className="absolute right-[5%] top-[54%] h-56 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 opacity-75 shadow-2xl backdrop-blur-xl xl:h-60 xl:w-52" style={layerStyle(-180, -60, 20, 0.98, 'rotate(14deg)')}>
+              <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
+                <Images className="h-8 w-8 text-white" />
+                <div className="mt-16 text-lg font-semibold xl:mt-20">Visual preview</div>
+                <div className="mt-2 text-xs leading-5 text-white/75">Carousel work is reviewed in a social frame.</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
@@ -520,33 +548,6 @@ function ParallaxStorySection({
           })}
         </div>
 
-        <div className="pointer-events-none absolute bottom-10 right-8 z-0 hidden w-[44%] [perspective:1200px] lg:block">
-          <div className="relative min-h-[470px]">
-            <div className="absolute left-4 top-4 h-64 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={layerStyle(-70, -120, -8, 1, 'rotate(-10deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
-                <DatabaseZap className="h-8 w-8 text-white" />
-                <div className="mt-20 text-lg font-semibold xl:mt-24 xl:text-xl">Source intelligence</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Richer source context powers review and generation.</div>
-              </div>
-            </div>
-
-            <div className="absolute left-20 top-20 h-72 w-56 rounded-3xl border border-white/20 bg-white/15 p-3 shadow-2xl backdrop-blur-xl xl:left-24 xl:top-24 xl:h-[20rem] xl:w-64" style={layerStyle(40, -70, 5, 1.02, 'rotate(4deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
-                <WandSparkles className="h-8 w-8 text-white" />
-                <div className="mt-28 text-lg font-semibold xl:mt-32 xl:text-xl">Generation flow</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Outputs show progress, counts, and context.</div>
-              </div>
-            </div>
-
-            <div className="absolute right-4 top-48 h-56 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl xl:top-56 xl:h-60 xl:w-52" style={layerStyle(-120, 70, 12, 1, 'rotate(12deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
-                <Images className="h-8 w-8 text-white" />
-                <div className="mt-16 text-lg font-semibold xl:mt-20">Visual preview</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Carousel work is reviewed in a social frame.</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
