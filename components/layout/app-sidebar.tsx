@@ -88,6 +88,7 @@ const contentTypeItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
 
   return (
     <Sidebar>
@@ -164,6 +165,9 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <div className="px-2 pt-2 font-mono text-[10px] leading-none text-muted-foreground">
+          SHA {gitSha}
+        </div>
       </SidebarFooter>
       
       <SidebarRail />
