@@ -259,6 +259,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
+  const [previewBackgroundUrl, setPreviewBackgroundUrl] = React.useState<string | null>(null);
+  const [isPreviewBackgroundLoading, setIsPreviewBackgroundLoading] = React.useState(false);
 
   const [lastPromptUsed, setLastPromptUsed] = React.useState<string>('');
   const [promptLog, setPromptLog] = React.useState<string>('');
@@ -404,6 +406,67 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     return { imageUrl: url, promptUsed: promptToSend };
   };
 
+  const generatePreviewBackground = async (referenceImageUrl: string, args: { totalSlides: number; platesNeeded: number }) => {
+    const sourceLine = selectedSourceTitle
+      ? `Source topic: ${selectedSourceTitle}.`
+      : topic.trim()
+        ? `Carousel topic: ${topic.trim()}.`
+        : 'Carousel topic: editorial social content.';
+
+    const promptToSend = [
+      'Create a premium vertical background image for an Instagram phone preview mockup.',
+      'Use the provided carousel masterplate only as a visual reference for palette, texture, lighting, illustration style, and editorial mood.',
+      sourceLine,
+      `The foreground phone UI will be placed centered on top of this image by the application, so keep the center calm with soft depth and no busy focal object behind the phone.`,
+      'Composition: 1536x1024 landscape canvas, atmospheric editorial backdrop, subtle gradients, abstract source-inspired shapes, gentle depth, polished social preview staging.',
+      `Match the generated carousel campaign across ${args.totalSlides} slides and ${args.platesNeeded} masterplate group(s).`,
+      'Absolute rule: no readable text, no letters, no numbers, no logos, no watermarks, no UI, no phone, no frame.',
+    ].join(' ');
+
+    setIsPreviewBackgroundLoading(true);
+    setPromptLog((prev) => {
+      const header = '--- Instagram Preview background prompt ---';
+      return [prev, `${header}\n${promptToSend}`].filter(Boolean).join('\n\n');
+    });
+
+    try {
+      const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: promptToSend,
+          model,
+          size: '1536x1024',
+          referenceImageUrl,
+        }),
+      });
+
+      const outText = await r.text().catch(() => '');
+      const out = (() => {
+        try {
+          return outText ? JSON.parse(outText) : {};
+        } catch {
+          return { raw: outText };
+        }
+      })();
+
+      if (!r.ok) {
+        const detail = typeof out?.error === 'string' ? out.error : outText || '';
+        throw new Error(detail || `Preview background request failed (${r.status})`);
+      }
+
+      const url = out?.imageUrl as string | undefined;
+      if (!url) throw new Error('Preview background API returned no imageUrl');
+      setPreviewBackgroundUrl(url);
+    } catch (e: any) {
+      const msg = typeof e?.message === 'string' ? e.message : 'Preview background generation failed';
+      console.error('Preview background generation failed:', e);
+      toast.error(`${msg} (using dark fallback)`);
+    } finally {
+      setIsPreviewBackgroundLoading(false);
+    }
+  };
+
   const buildPlatePrompt = (args: {
     plateIndex: number;
     platesNeeded: number;
@@ -485,6 +548,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setError(null);
     setMasterplates([]);
     setSlides([]);
+    setPreviewBackgroundUrl(null);
+    setIsPreviewBackgroundLoading(false);
     setPromptLog('');
 
     try {
@@ -579,6 +644,10 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
         // Defensive: never keep more than the requested slide count.
         setSlides(newSlides.slice(0, count));
+      }
+
+      if (newMasterplates[0]?.imageUrl) {
+        await generatePreviewBackground(newMasterplates[0].imageUrl, { totalSlides: count, platesNeeded });
       }
 
       toast.success('Carousel generated');
@@ -1258,8 +1327,17 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     const activeSlideNumber = Math.min(activeSwipeSlide + 1, ordered.length);
 
                     return (
-                      <div className="flex w-full justify-center overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-950 via-black to-slate-950 px-3 py-6 sm:px-8">
-                        <div className="relative w-full max-w-[430px] rounded-[3rem] border border-white/15 bg-black p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)]">
+                      <div
+                        className="relative flex w-full justify-center overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-950 via-black to-slate-950 bg-cover bg-center px-3 py-6 sm:px-8"
+                        style={previewBackgroundUrl ? { backgroundImage: `url("${previewBackgroundUrl.replace(/"/g, '\\"')}")` } : undefined}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/65" />
+                        {isPreviewBackgroundLoading ? (
+                          <div className="absolute right-5 top-5 z-10 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
+                            Building preview background
+                          </div>
+                        ) : null}
+                        <div className="relative z-10 w-full max-w-[430px] rounded-[3rem] border border-white/15 bg-black p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)]">
                           <div className="pointer-events-none absolute left-1/2 top-3 z-20 h-8 w-28 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
                           <div className="pointer-events-none absolute left-1/2 top-5 z-30 h-3 w-3 translate-x-10 rounded-full bg-slate-900 ring-2 ring-black">
                             <span className="block h-1.5 w-1.5 translate-x-0.5 translate-y-0.5 rounded-full bg-blue-500/70" />
