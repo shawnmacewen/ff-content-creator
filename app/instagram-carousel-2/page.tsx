@@ -1,5 +1,5 @@
-import InstagramCarousel2Client from './instagram-carousel-2-client';
+import { redirect } from 'next/navigation';
 
 export default function InstagramCarousel2Page() {
-  return <InstagramCarousel2Client />;
+  redirect('/settings?tab=instagram-carousel-2');
 }

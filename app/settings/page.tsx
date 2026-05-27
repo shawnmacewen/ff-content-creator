@@ -1,15 +1,33 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { Database, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type SettingsTab = 'content-sync' | 'content-api-explorer' | 'knowledge-base';
+type SettingsTab = 'content-sync' | 'content-api-explorer' | 'knowledge-base' | 'instagram-carousel-2';
+
+const settingsTabs: SettingsTab[] = [
+  'content-sync',
+  'content-api-explorer',
+  'knowledge-base',
+  'instagram-carousel-2',
+];
+
+function getInitialTab(tab: string | null): SettingsTab {
+  return settingsTabs.includes(tab as SettingsTab) ? (tab as SettingsTab) : 'content-sync';
+}
+
+function getInitialTabFromLocation(): SettingsTab {
+  if (typeof window === 'undefined') return 'content-sync';
+  return getInitialTab(new URLSearchParams(window.location.search).get('tab'));
+}
 
 function TabButton({
   active,
@@ -32,7 +50,13 @@ function TabButton({
 }
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<SettingsTab>('content-sync');
+  const router = useRouter();
+  const [tab, setTab] = useState<SettingsTab>(getInitialTabFromLocation);
+
+  const selectTab = (nextTab: SettingsTab) => {
+    setTab(nextTab);
+    router.replace(nextTab === 'content-sync' ? '/settings' : `/settings?tab=${nextTab}`, { scroll: false });
+  };
 
   // Content Sync state
   const [running, setRunning] = useState(false);
@@ -146,7 +170,7 @@ export default function SettingsPage() {
     return (
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Content Sync + Content API Explorer.</p>
+        <p className="text-muted-foreground">Content Sync, Content API Explorer, Knowledge Base, and Instagram Carousel 2.0.</p>
       </div>
     );
   }, []);
@@ -156,14 +180,17 @@ export default function SettingsPage() {
       {header}
 
       <div className="flex items-center gap-2">
-        <TabButton active={tab === 'content-sync'} onClick={() => setTab('content-sync')}>
+        <TabButton active={tab === 'content-sync'} onClick={() => selectTab('content-sync')}>
           Content Sync
         </TabButton>
-        <TabButton active={tab === 'content-api-explorer'} onClick={() => setTab('content-api-explorer')}>
+        <TabButton active={tab === 'content-api-explorer'} onClick={() => selectTab('content-api-explorer')}>
           Content API Explorer
         </TabButton>
-        <TabButton active={tab === 'knowledge-base'} onClick={() => setTab('knowledge-base')}>
+        <TabButton active={tab === 'knowledge-base'} onClick={() => selectTab('knowledge-base')}>
           Knowledge Base
+        </TabButton>
+        <TabButton active={tab === 'instagram-carousel-2'} onClick={() => selectTab('instagram-carousel-2')}>
+          Instagram Carousel 2.0
         </TabButton>
       </div>
 
@@ -249,8 +276,10 @@ export default function SettingsPage() {
         </>
       ) : tab === 'content-api-explorer' ? (
         <ContentApiExplorer />
-      ) : (
+      ) : tab === 'knowledge-base' ? (
         <KnowledgeBase />
+      ) : (
+        <InstagramCarousel2Client />
       )}
     </div>
   );

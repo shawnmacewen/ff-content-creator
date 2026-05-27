@@ -11,7 +11,6 @@ import {
   FileText,
   Mail,
   Share2,
-  Images,
   SearchCheck,
   PenSquare,
 } from 'lucide-react';
@@ -42,9 +41,9 @@ const mainNavItems = [
     icon: Sparkles,
   },
   {
-    title: 'Instagram Carousel 2.0',
-    href: '/instagram-carousel-2',
-    icon: Images,
+    title: 'EchoWrite',
+    href: '/echo-write',
+    icon: PenSquare,
   },
   {
     title: 'Source Content',
@@ -60,11 +59,6 @@ const mainNavItems = [
     title: 'Content Scan',
     href: '/audit',
     icon: SearchCheck,
-  },
-  {
-    title: 'EchoWrite',
-    href: '/echo-write',
-    icon: PenSquare,
   },
 ];
 
