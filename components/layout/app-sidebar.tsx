@@ -97,7 +97,7 @@ export function AppSidebar() {
               EDITOR[AI]L
             </span>
             <span className="text-xs text-sidebar-foreground/60">
-              Advisor marketing platform
+              Internal content curation
             </span>
           </div>
         </Link>
