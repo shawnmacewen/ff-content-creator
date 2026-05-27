@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import {
-  ArrowRight,
   AlertTriangle,
+  ArrowRight,
   BookOpenCheck,
   CheckCircle2,
   Compass,
+  FileText,
   FolderOpen,
   HelpCircle,
   Image as ImageIcon,
@@ -26,397 +27,42 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  carouselNotes,
+  doDontRules,
+  formatGuides,
+  glossaryItems,
+  helpGuides,
+  quickAnswers,
+  taskEntryPoints,
+  troubleshootingItems,
+  workflowRecipes,
+  type HelpGuide,
+  type HelpIcon,
+} from '@/lib/help-center-content';
 
 type Icon = ComponentType<{ className?: string }>;
 
-type HelpGuide = {
-  id: string;
-  title: string;
-  eyebrow: string;
-  href: string;
-  icon: Icon;
-  description: string;
-  bestFor: string[];
-  steps: string[];
-  tips: string[];
-  keywords: string[];
+const iconMap: Record<HelpIcon, Icon> = {
+  alert: AlertTriangle,
+  book: BookOpenCheck,
+  dashboard: LayoutDashboard,
+  folder: FolderOpen,
+  image: ImageIcon,
+  library: Library,
+  pen: PenSquare,
+  route: Route,
+  scan: SearchCheck,
+  settings: Settings2,
+  sparkles: Sparkles,
+  wrench: Wrench,
 };
-
-type WorkflowRecipe = {
-  title: string;
-  outcome: string;
-  path: string[];
-  notes: string[];
-  keywords: string[];
-};
-
-type TroubleshootingItem = {
-  problem: string;
-  check: string;
-  fix: string;
-  keywords: string[];
-};
-
-const helpGuides: HelpGuide[] = [
-  {
-    id: 'dashboard',
-    title: 'Dashboard',
-    eyebrow: 'Start here',
-    href: '/',
-    icon: LayoutDashboard,
-    description:
-      'Use the dashboard to understand the workspace status, jump into high-priority workflows, and monitor saved content activity.',
-    bestFor: [
-      'Checking whether content sync and generation routes are ready.',
-      'Starting common workflows such as campaign creation, source review, or editorial drafting.',
-      'Getting a quick read on generated asset volume and output mix.',
-    ],
-    steps: [
-      'Review the workflow health panel before starting a new content task.',
-      'Use Priority Workflows to jump directly into Generate Content, Content Scan, or EchoWrite.',
-      'Scan the metrics cards to understand recent saved output activity.',
-    ],
-    tips: [
-      'The dashboard is an orientation screen, not the source of record for content.',
-      'If counts look stale, check Saved Content and Source Content directly.',
-    ],
-    keywords: ['home', 'overview', 'metrics', 'workflow health', 'campaigns'],
-  },
-  {
-    id: 'generate',
-    title: 'Generate Content',
-    eyebrow: 'Create assets',
-    href: '/generate',
-    icon: Sparkles,
-    description:
-      'Use Generate Content to turn selected source material into channel-specific assets such as social posts, email copy, newsletters, articles, FAQs, infographic copy, and video scripts.',
-    bestFor: [
-      'Creating quick marketing-ready drafts from one or more source articles.',
-      'Building platform-specific content from synced and reviewed source material.',
-      'Starting from selected content in Source Content or choosing a Quick Create format from the sidebar.',
-    ],
-    steps: [
-      'Choose the content type that matches the channel or deliverable.',
-      'Select source content when the draft needs to stay grounded in approved material.',
-      'Set tone and generation options before running the draft.',
-      'Review the output, then save useful drafts into Saved Content.',
-    ],
-    tips: [
-      'For Instagram carousel work, keep the selected source focused. Too much source text can make image planning less predictable.',
-      'Use plain source body text for AI generation. Rich XML/HTML is mainly for View Detail reading.',
-      'Save only drafts that are worth review or reuse.',
-    ],
-    keywords: ['generate', 'social', 'email', 'newsletter', 'article', 'faq', 'video script', 'carousel'],
-  },
-  {
-    id: 'echowrite',
-    title: 'EchoWrite',
-    eyebrow: 'Editorial drafting',
-    href: '/echo-write',
-    icon: PenSquare,
-    description:
-      'Use EchoWrite for longer editorial drafting with source grounding, inline source evidence, and a focused writing surface.',
-    bestFor: [
-      'Drafting article-style copy from multiple source references.',
-      'Creating readable video scripts with hook, script, on-screen text, and CTA structure.',
-      'Checking which source passages supported the generated draft.',
-    ],
-    steps: [
-      'Write a clear prompt describing the content goal and audience.',
-      'Choose article or video script, writing style, length, and maximum sources.',
-      'Generate the draft and inspect the source list beside the editor.',
-      'Hover or open source details to verify evidence before saving.',
-      'Save approved working drafts to Saved Content.',
-    ],
-    tips: [
-      'Use EchoWrite when readability and source attribution matter more than fast one-off output.',
-      'For video scripts, keep the prompt specific about runtime, audience, and desired call to action.',
-      'The Last generation prompt modal is useful when debugging model behavior.',
-    ],
-    keywords: ['echowrite', 'editor', 'article', 'video script', 'citations', 'sources', 'draft'],
-  },
-  {
-    id: 'source-content',
-    title: 'Source Content',
-    eyebrow: 'Find source material',
-    href: '/source-content',
-    icon: FolderOpen,
-    description:
-      'Use Source Content to browse synced provider material, filter by metadata, inspect article details, and send selected content into generation workflows.',
-    bestFor: [
-      'Finding advisor-ready source articles before creating new assets.',
-      'Reviewing FINRA-reviewed source material and provider metadata.',
-      'Selecting one or more sources to use as grounding material for Generate Content.',
-    ],
-    steps: [
-      'Search by topic, phrase, title, or source metadata.',
-      'Use filters for type, tag, publisher, or designation when narrowing results.',
-      'Open View Details to inspect the article body, rich XML rendering, metadata, and image assets.',
-      'Select one or more items and choose Generate with selected.',
-    ],
-    tips: [
-      'Use View Details when layout, tables, bullets, or provider metadata matter.',
-      'If a source body looks wrong, note whether the plain body, XML, or HTML version is affected.',
-      'Content Sync in Settings controls how source records get refreshed.',
-    ],
-    keywords: ['source', 'articles', 'broadridge', 'forefield', 'advisorstream', 'metadata', 'finra', 'details'],
-  },
-  {
-    id: 'library',
-    title: 'Saved Content',
-    eyebrow: 'Manage drafts',
-    href: '/library',
-    icon: Library,
-    description:
-      'Use Saved Content as the working library for generated drafts, reviewed pieces, approved assets, and reusable campaign content.',
-    bestFor: [
-      'Finding previously generated content by type, status, or search term.',
-      'Editing saved drafts after generation.',
-      'Copying or preparing content for review and downstream use.',
-    ],
-    steps: [
-      'Search or filter by content type and status.',
-      'Open a saved item to view or edit the full draft.',
-      'Update status as content moves through draft, review, approved, and published states.',
-      'Copy finished content when it is ready to use outside Editorial.',
-    ],
-    tips: [
-      'Saved Content is the durable workspace. Unsaved generated output can be lost when leaving a generator page.',
-      'Use statuses consistently so the team can tell what still needs review.',
-    ],
-    keywords: ['saved', 'library', 'drafts', 'review', 'approved', 'published', 'copy', 'edit'],
-  },
-  {
-    id: 'content-scan',
-    title: 'Content Scan',
-    eyebrow: 'Audit coverage',
-    href: '/audit',
-    icon: SearchCheck,
-    description:
-      'Use Content Scan to search, analyze, and mark source coverage before building or refreshing advisor content.',
-    bestFor: [
-      'Checking whether source inventory already covers a topic.',
-      'Finding exact phrases, included terms, and excluded terms across source body text.',
-      'Using AI-assisted analysis when a request is semantic or nuanced.',
-    ],
-    steps: [
-      'Choose Standard Search for exact terms and phrase matching.',
-      'Choose AI Analyze for natural-language coverage questions.',
-      'Add include and exclude terms to reduce irrelevant matches.',
-      'Open details on promising matches, then mark items that need update when appropriate.',
-    ],
-    tips: [
-      'Use quotes for exact phrases in Standard Search.',
-      'Use AI Analyze when you care about meaning, not only exact wording.',
-      'Content Scan helps decide what to update before creating new content.',
-    ],
-    keywords: ['scan', 'audit', 'search', 'coverage', 'include', 'exclude', 'AI analyze', 'mark'],
-  },
-  {
-    id: 'settings',
-    title: 'Settings',
-    eyebrow: 'Admin tools',
-    href: '/settings',
-    icon: Settings2,
-    description:
-      'Use Settings for source sync operations, provider API inspection, this help center, and advanced carousel generation tuning.',
-    bestFor: [
-      'Running source content sync and reviewing sync logs.',
-      'Inspecting provider API responses in Content API Explorer.',
-      'Reading tool documentation and advanced generation notes.',
-      'Testing Instagram Carousel 2.0 behavior outside the main generator flow.',
-    ],
-    steps: [
-      'Use Content Sync to import or refresh provider content.',
-      'Use Content API Explorer when diagnosing provider response fields.',
-      'Use Knowledge Center for tool instructions and team workflow guidance.',
-      'Use Instagram Carousel 2.0 for advanced carousel generation tuning.',
-    ],
-    tips: [
-      'Sync and Update refreshes richer detail fields for source detail rendering.',
-      'Avoid running large syncs while validating unrelated UI behavior.',
-      'Provider schema changes should be captured here or in handoff notes.',
-    ],
-    keywords: ['settings', 'sync', 'logs', 'api explorer', 'knowledge center', 'carousel'],
-  },
-];
-
-const quickAnswers = [
-  {
-    question: 'Where should I start a new advisor content task?',
-    answer:
-      'Start in Source Content when you need approved source material first. Start in Generate Content when you already know the source or format. Start in EchoWrite for longer editorial drafting.',
-  },
-  {
-    question: 'When should I use EchoWrite instead of Generate Content?',
-    answer:
-      'Use EchoWrite for article drafts, video scripts, and source-grounded writing where the team needs to inspect supporting evidence. Use Generate Content for faster format-specific drafts.',
-  },
-  {
-    question: 'Where do finished or useful drafts go?',
-    answer:
-      'Save them to Saved Content. That is the durable workspace for review, edits, approval status, and reuse.',
-  },
-  {
-    question: 'How do I check whether we already have content on a topic?',
-    answer:
-      'Use Content Scan. Standard Search is best for exact phrases; AI Analyze is best for natural-language coverage questions.',
-  },
-];
-
-const workflowRecipes: WorkflowRecipe[] = [
-  {
-    title: 'Find source material and create a reusable draft',
-    outcome: 'A source-grounded draft saved for team review.',
-    path: [
-      'Open Source Content and search for the topic, campaign theme, or exact phrase.',
-      'Open View Details on the strongest source items and confirm the content is appropriate.',
-      'Select one or more source items and choose Generate with selected.',
-      'Generate the desired format, review the draft, then save it to Saved Content.',
-    ],
-    notes: [
-      'Use fewer, stronger sources when creating carousel or image-based content.',
-      'Use Saved Content status to show whether the draft still needs review.',
-    ],
-    keywords: ['source', 'generate', 'saved content', 'draft', 'review', 'workflow'],
-  },
-  {
-    title: 'Check coverage before requesting new content',
-    outcome: 'A clearer answer on whether the existing source library already covers a topic.',
-    path: [
-      'Open Content Scan.',
-      'Use Standard Search for exact phrases, names, or regulatory terms.',
-      'Use AI Analyze for broader questions such as whether a theme is covered.',
-      'Open matching details and mark items that need update when the source content is outdated or incomplete.',
-    ],
-    notes: [
-      'Search first when the request is specific; analyze when the request is conceptual.',
-      'Use exclusions to remove stale years, unrelated topics, or repeated false positives.',
-    ],
-    keywords: ['coverage', 'scan', 'audit', 'search', 'AI analyze', 'needs update'],
-  },
-  {
-    title: 'Draft a longer article or video script with evidence',
-    outcome: 'A readable EchoWrite draft with source context available for verification.',
-    path: [
-      'Open EchoWrite and write a specific prompt for the audience and use case.',
-      'Choose article or video script and set length or target word count.',
-      'Generate the draft, then inspect the cited sources and hover evidence.',
-      'Open source details for any claim that needs review before saving.',
-      'Save the draft to Saved Content when it is worth editing or approval.',
-    ],
-    notes: [
-      'EchoWrite is better than the general generator when attribution and readability matter.',
-      'For video scripts, specify runtime and the CTA in the prompt.',
-    ],
-    keywords: ['echowrite', 'article', 'video script', 'evidence', 'citations', 'sources'],
-  },
-  {
-    title: 'Refresh source records and validate provider fields',
-    outcome: 'Synced source content with enough detail for search, generation, and View Details.',
-    path: [
-      'Open Settings and choose Content Sync.',
-      'Use Sync Broadridge Content API for standard imports or Sync and Update for detail refreshes.',
-      'Watch sync logs for processed, inserted, updated, and repeated-page behavior.',
-      'Use Content API Explorer when a provider response field needs inspection.',
-      'Reopen Source Content and View Details to confirm the refreshed article body renders correctly.',
-    ],
-    notes: [
-      'Rich XML/HTML fields are for reading in detail views; generation should stay focused on plain source body text.',
-      'Capture provider schema assumptions in handoff notes when they affect parsing or display.',
-    ],
-    keywords: ['sync', 'update', 'api explorer', 'provider', 'xml', 'html', 'logs'],
-  },
-];
-
-const troubleshootingItems: TroubleshootingItem[] = [
-  {
-    problem: 'A generated draft feels too broad or unfocused.',
-    check: 'Check whether too many source articles were selected or whether the prompt lacks a clear target format.',
-    fix: 'Use one to three strong sources, choose the exact format, and add audience, tone, and CTA details before regenerating.',
-    keywords: ['broad', 'unfocused', 'prompt', 'sources', 'generate'],
-  },
-  {
-    problem: 'An Instagram carousel image plan is unpredictable.',
-    check: 'Check whether the selected source content is long, mixed-topic, or carrying rich body markup into the image flow.',
-    fix: 'Use a focused source selection and keep image/carousel generation grounded in concise plain text.',
-    keywords: ['instagram', 'carousel', 'image', 'plain text', 'source selection'],
-  },
-  {
-    problem: 'A source detail view is missing bullets, tables, or formatting.',
-    check: 'Check whether the item has rich XML/HTML data and whether the plain body fallback is being shown.',
-    fix: 'Run Sync and Update if detail fields are missing, then report examples where XML parsing still flattens structure.',
-    keywords: ['source detail', 'xml', 'html', 'tables', 'bullets', 'formatting'],
-  },
-  {
-    problem: 'Search returns too many irrelevant matches.',
-    check: 'Check whether the query is broad, missing exact quotes, or not using exclude terms.',
-    fix: 'Use exact phrases in quotes, add must-exclude terms, and switch to AI Analyze only when meaning matters more than wording.',
-    keywords: ['search', 'irrelevant', 'quotes', 'exclude', 'content scan'],
-  },
-  {
-    problem: 'Team members cannot tell whether saved content is ready.',
-    check: 'Check whether the item status is still draft or whether edited content was never saved.',
-    fix: 'Use Saved Content statuses consistently: draft, review, approved, and published.',
-    keywords: ['saved content', 'status', 'review', 'approved', 'published'],
-  },
-];
-
-const carouselNotes = [
-  {
-    title: 'Style should own',
-    items: [
-      'Palette, colors, lighting, mood, and texture.',
-      'Global visual constraints such as no vignette, no borders, and no edge banding.',
-      'Text color and typography direction.',
-    ],
-  },
-  {
-    title: 'SlideCard Template should own',
-    items: [
-      'Text placement, layout, hierarchy, max lines, and padding.',
-      'Prompt composition intent such as cover, explanatory, or CTA slide.',
-      'Reserved negative-space zones where text needs to remain legible.',
-    ],
-  },
-  {
-    title: 'Standard slide variants',
-    items: [
-      'diagram: map, diagram, or schematic feel.',
-      'chart: one simple supporting chart element.',
-      'photo: editorial photo subject matching the source gist.',
-      'icon: large symbolic shape integrated into the background.',
-      'texture: pattern or surface related to the source gist.',
-    ],
-  },
-];
 
 function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
-function guideMatches(guide: HelpGuide, query: string) {
-  if (!query) return true;
-
-  const haystack = [
-    guide.title,
-    guide.eyebrow,
-    guide.description,
-    ...guide.bestFor,
-    ...guide.steps,
-    ...guide.tips,
-    ...guide.keywords,
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  return query
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((term) => haystack.includes(term));
-}
-
-function textMatches(values: string[], query: string) {
+function termsMatch(values: string[], query: string) {
   if (!query) return true;
 
   const haystack = values.join(' ').toLowerCase();
@@ -426,20 +72,79 @@ function textMatches(values: string[], query: string) {
     .every((term) => haystack.includes(term));
 }
 
+function guideMatches(guide: HelpGuide, query: string) {
+  return termsMatch(
+    [
+      guide.title,
+      guide.eyebrow,
+      guide.description,
+      ...guide.bestFor,
+      ...guide.steps,
+      ...guide.tips,
+      ...guide.keywords,
+    ],
+    query
+  );
+}
+
+function guideHash(id: string) {
+  return `guide-${id}`;
+}
+
 export default function KnowledgeBase() {
   const [query, setQuery] = useState('');
   const [activeGuideId, setActiveGuideId] = useState(helpGuides[0].id);
   const normalizedQuery = normalize(query);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hash = window.location.hash.replace(/^#/, '');
+    if (!hash.startsWith('guide-')) return;
+
+    const guideId = hash.replace(/^guide-/, '');
+    if (helpGuides.some((guide) => guide.id === guideId)) {
+      setActiveGuideId(guideId);
+    }
+  }, []);
 
   const filteredGuides = useMemo(
     () => helpGuides.filter((guide) => guideMatches(guide, normalizedQuery)),
     [normalizedQuery]
   );
 
+  const activeGuide = useMemo(() => {
+    const selectedGuide = helpGuides.find((guide) => guide.id === activeGuideId);
+    if (!normalizedQuery) return selectedGuide || helpGuides[0];
+    if (selectedGuide && filteredGuides.some((guide) => guide.id === selectedGuide.id)) {
+      return selectedGuide;
+    }
+    return filteredGuides[0] || null;
+  }, [activeGuideId, filteredGuides, normalizedQuery]);
+
+  const filteredTaskEntryPoints = useMemo(
+    () =>
+      taskEntryPoints.filter((item) =>
+        termsMatch([item.title, item.description, ...item.steps, ...item.keywords], normalizedQuery)
+      ),
+    [normalizedQuery]
+  );
+
   const filteredQuickAnswers = useMemo(
     () =>
       quickAnswers.filter((item) =>
-        textMatches([item.question, item.answer], normalizedQuery)
+        termsMatch([item.question, item.answer], normalizedQuery)
+      ),
+    [normalizedQuery]
+  );
+
+  const filteredFormatGuides = useMemo(
+    () =>
+      formatGuides.filter((format) =>
+        termsMatch(
+          [format.title, format.useWhen, ...format.inputs, ...format.outputCheck, ...format.keywords],
+          normalizedQuery
+        )
       ),
     [normalizedQuery]
   );
@@ -447,7 +152,7 @@ export default function KnowledgeBase() {
   const filteredRecipes = useMemo(
     () =>
       workflowRecipes.filter((recipe) =>
-        textMatches(
+        termsMatch(
           [recipe.title, recipe.outcome, ...recipe.path, ...recipe.notes, ...recipe.keywords],
           normalizedQuery
         )
@@ -458,23 +163,33 @@ export default function KnowledgeBase() {
   const filteredTroubleshootingItems = useMemo(
     () =>
       troubleshootingItems.filter((item) =>
-        textMatches(
-          [item.problem, item.check, item.fix, ...item.keywords],
-          normalizedQuery
-        )
+        termsMatch([item.problem, item.check, item.fix, ...item.keywords], normalizedQuery)
       ),
     [normalizedQuery]
   );
 
-  const activeGuide = useMemo(
+  const filteredGlossaryItems = useMemo(
     () =>
-      helpGuides.find((guide) => guide.id === activeGuideId) ||
-      filteredGuides[0] ||
-      helpGuides[0],
-    [activeGuideId, filteredGuides]
+      glossaryItems.filter((item) =>
+        termsMatch([item.term, item.definition, ...item.keywords], normalizedQuery)
+      ),
+    [normalizedQuery]
   );
 
-  const ActiveIcon = activeGuide.icon;
+  const selectGuide = (guideId: string) => {
+    setActiveGuideId(guideId);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `#${guideHash(guideId)}`);
+    }
+  };
+
+  const openTaskGuide = (guideId: string) => {
+    selectGuide(guideId);
+    const target = document.getElementById('tool-guides');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const ActiveIcon = activeGuide ? iconMap[activeGuide.icon] : HelpCircle;
 
   return (
     <div className="flex flex-col gap-6">
@@ -499,7 +214,7 @@ export default function KnowledgeBase() {
                 <div>
                   <p className="text-sm font-semibold">{helpGuides.length} tool guides</p>
                   <p className="text-xs text-muted-foreground">
-                    Plus workflows, quick answers, and troubleshooting.
+                    Plus task paths, format help, glossary, and troubleshooting.
                   </p>
                 </div>
               </div>
@@ -510,9 +225,9 @@ export default function KnowledgeBase() {
                   <HelpCircle className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">Use this before asking how</p>
+                  <p className="text-sm font-semibold">Deep-linkable guides</p>
                   <p className="text-xs text-muted-foreground">
-                    Guides cover purpose, steps, and practical operating notes.
+                    Guide selections update the URL hash for direct sharing.
                   </p>
                 </div>
               </div>
@@ -533,7 +248,41 @@ export default function KnowledgeBase() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Getting Started</p>
+          <h3 className="text-xl font-semibold">Choose the job you need to do</h3>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {filteredTaskEntryPoints.length ? (
+            filteredTaskEntryPoints.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => openTaskGuide(entry.guideId)}
+                className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent/40"
+              >
+                <h4 className="text-sm font-semibold">{entry.title}</h4>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{entry.description}</p>
+                <div className="mt-3 space-y-1.5">
+                  {entry.steps.map((step) => (
+                    <div key={step} className="flex gap-2 text-xs text-muted-foreground">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground md:col-span-2 xl:col-span-5">
+              No getting-started paths match that search.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section id="tool-guides" className="grid scroll-mt-6 gap-6 xl:grid-cols-[0.82fr_1.18fr]">
         <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase text-primary">Tool Guides</p>
@@ -542,15 +291,16 @@ export default function KnowledgeBase() {
           <div className="grid gap-2">
             {filteredGuides.length ? (
               filteredGuides.map((guide) => {
-                const GuideIcon = guide.icon;
-                const active = guide.id === activeGuide.id;
+                const GuideIcon = iconMap[guide.icon];
+                const active = guide.id === activeGuide?.id;
 
                 return (
                   <button
                     key={guide.id}
+                    id={guideHash(guide.id)}
                     type="button"
-                    onClick={() => setActiveGuideId(guide.id)}
-                    className={`flex items-center gap-3 rounded-md border p-3 text-left transition-colors ${
+                    onClick={() => selectGuide(guide.id)}
+                    className={`flex scroll-mt-6 items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                       active
                         ? 'border-primary/50 bg-primary/10 text-primary'
                         : 'border-border bg-background hover:border-primary/35 hover:bg-accent/45'
@@ -568,83 +318,143 @@ export default function KnowledgeBase() {
               })
             ) : (
               <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-                No guide matches that search yet.
+                No guide matches that search.
               </div>
             )}
           </div>
         </div>
 
         <article className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <ActiveIcon className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase text-primary">{activeGuide.eyebrow}</p>
-                <h3 className="text-2xl font-semibold">{activeGuide.title}</h3>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                  {activeGuide.description}
-                </p>
+          {activeGuide ? (
+            <>
+              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <ActiveIcon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-primary">{activeGuide.eyebrow}</p>
+                    <h3 className="text-2xl font-semibold">{activeGuide.title}</h3>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                      {activeGuide.description}
+                    </p>
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href={activeGuide.href}>
+                    Open Tool
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-            </div>
-            <Button asChild variant="outline" size="sm" className="shrink-0">
-              <Link href={activeGuide.href}>
-                Open Tool
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-md border border-border bg-secondary/35 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <Compass className="h-4 w-4 text-primary" />
-                Best For
-              </div>
-              <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-                {activeGuide.bestFor.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-md border border-border bg-secondary/35 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Compass className="h-4 w-4 text-primary" />
+                    Best For
+                  </div>
+                  <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+                    {activeGuide.bestFor.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-            <div className="rounded-md border border-border bg-secondary/35 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <ListChecks className="h-4 w-4 text-primary" />
-                How To Use It
-              </div>
-              <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
-                {activeGuide.steps.map((item, index) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-background text-xs font-semibold text-foreground">
-                      {index + 1}
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
+                <div className="rounded-md border border-border bg-secondary/35 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <ListChecks className="h-4 w-4 text-primary" />
+                    How To Use It
+                  </div>
+                  <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
+                    {activeGuide.steps.map((item, index) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-background text-xs font-semibold text-foreground">
+                          {index + 1}
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
 
-            <div className="rounded-md border border-border bg-secondary/35 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                Helpful Notes
+                <div className="rounded-md border border-border bg-secondary/35 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Lightbulb className="h-4 w-4 text-primary" />
+                    Helpful Notes
+                  </div>
+                  <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+                    {activeGuide.tips.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-                {activeGuide.tips.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+            </>
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-5 text-sm text-muted-foreground">
+              Search did not match any tool guide. Try a broader task like source, generate, scan, sync, or saved.
             </div>
-          </div>
+          )}
         </article>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Generate Formats</p>
+          <h3 className="text-xl font-semibold">Format-specific help</h3>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          {filteredFormatGuides.length ? (
+            filteredFormatGuides.map((format) => (
+              <div key={format.title} className="rounded-md border border-border bg-background p-4">
+                <div className="mb-3 flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-semibold">{format.title}</h4>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{format.useWhen}</p>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase text-foreground">Good Inputs</div>
+                    <ul className="space-y-1.5 text-xs leading-5 text-muted-foreground">
+                      {format.inputs.map((item) => (
+                        <li key={item} className="flex gap-2">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase text-foreground">Output Check</div>
+                    <ul className="space-y-1.5 text-xs leading-5 text-muted-foreground">
+                      {format.outputCheck.map((item) => (
+                        <li key={item} className="flex gap-2">
+                          <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground xl:col-span-2">
+              No format guides match that search.
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
@@ -665,6 +475,32 @@ export default function KnowledgeBase() {
               No quick answers match that search.
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Do / Do Not</p>
+          <h3 className="text-xl font-semibold">Operational guardrails</h3>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {doDontRules.map((rule) => (
+            <div key={rule.title} className="rounded-md border border-border bg-background p-4">
+              <h4 className="text-sm font-semibold">{rule.title}</h4>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                {rule.items.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    {rule.title === 'Do' ? (
+                      <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                    ) : (
+                      <AlertTriangle className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                    )}
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -766,38 +602,62 @@ export default function KnowledgeBase() {
       </section>
 
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-primary">Advanced Reference</p>
-            <h3 className="text-xl font-semibold">Instagram Carousel 2.0 generation notes</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              These notes preserve the previous Knowledge Base guidance for carousel image planning.
-              They are intended for tuning and debugging, not day-to-day user onboarding.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/settings?tab=instagram-carousel-2">
-              Open Carousel 2.0
-              <ImageIcon className="h-4 w-4" />
-            </Link>
-          </Button>
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase text-primary">Glossary</p>
+          <h3 className="text-xl font-semibold">Shared language</h3>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {carouselNotes.map((note) => (
-            <div key={note.title} className="rounded-md border border-border bg-secondary/35 p-4">
-              <h4 className="text-sm font-semibold">{note.title}</h4>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                {note.items.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {filteredGlossaryItems.length ? (
+            filteredGlossaryItems.map((item) => (
+              <div key={item.term} className="rounded-md border border-border bg-background p-4">
+                <h4 className="text-sm font-semibold">{item.term}</h4>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.definition}</p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground md:col-span-2 xl:col-span-4">
+              No glossary terms match that search.
             </div>
-          ))}
+          )}
         </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+        <details>
+          <summary className="cursor-pointer list-none">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-primary">Advanced Reference</p>
+                <h3 className="text-xl font-semibold">Instagram Carousel 2.0 generation notes</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                  Advanced tuning and debugging notes are separated from normal user help.
+                </p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/settings?tab=instagram-carousel-2">
+                  Open Carousel 2.0
+                  <ImageIcon className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </summary>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {carouselNotes.map((note) => (
+              <div key={note.title} className="rounded-md border border-border bg-secondary/35 p-4">
+                <h4 className="text-sm font-semibold">{note.title}</h4>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                  {note.items.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
       </section>
     </div>
   );
