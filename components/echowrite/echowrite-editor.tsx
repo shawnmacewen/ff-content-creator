@@ -76,7 +76,6 @@ export function EchoWriteEditor({
   // Default to highlight mode on mount (avoid any hydration weirdness flipping modes).
   useEffect(() => {
     setMode('highlight');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 

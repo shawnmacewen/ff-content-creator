@@ -15,9 +15,6 @@ export type KitOutput = {
   content: string;
 };
 
-// NOTE: No mock/default preview content. Keep output empty until generated.
-const PREVIEW_MOCK: Record<string, string> = {};
-
 export function KitGeneratedOutput({
   selectedTypes,
   outputs,
@@ -35,7 +32,10 @@ export function KitGeneratedOutput({
   /** Show/hide the internal per-type tab strip. */
   showTabs?: boolean;
 }) {
-  const types = selectedTypes.length ? selectedTypes : (['social-instagram'] as ContentType[]);
+  const types = React.useMemo(
+    () => (selectedTypes.length ? selectedTypes : (['social-instagram'] as ContentType[])),
+    [selectedTypes]
+  );
   const [activeInternal, setActiveInternal] = React.useState<ContentType>(types[0]);
 
   React.useEffect(() => {

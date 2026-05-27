@@ -474,7 +474,6 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
   const runCarouselGeneration = async () => {
 
-    // eslint-disable-next-line no-console
     console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, topic });
 
     setIsLoading(true);
@@ -498,7 +497,6 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         platePlan.push({ plateIndex, slideStart, slideEnd, size, panels });
       }
 
-      // eslint-disable-next-line no-console
       console.log('runCarouselGeneration:platePlan', { count, platesNeeded, platePlan });
 
       const newMasterplates: Masterplate[] = [];
@@ -513,14 +511,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         const size = plate.size;
         const panels = plate.panels;
 
-        // eslint-disable-next-line no-console
         console.log('runCarouselGeneration:plateLoop', { plateIndex, slideStart, slideEnd, size, panels });
 
         let promptToSend = '';
         try {
           promptToSend = buildPlatePrompt({ plateIndex, platesNeeded, slideStart, slideEnd, totalSlides: count, size, panels });
         } catch (e: any) {
-          // eslint-disable-next-line no-console
           console.error('buildPlatePrompt failed', { plateIndex, slideStart, slideEnd, size, panels }, e);
           throw e;
         }
@@ -583,7 +579,6 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       toast.success('Carousel generated');
     } catch (e: any) {
       // Surface full details during development/testing.
-      // eslint-disable-next-line no-console
       console.error('Carousel generation failed:', e);
 
       const msg =

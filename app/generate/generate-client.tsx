@@ -11,7 +11,6 @@ import { SourceArticlePicker } from '@/components/generator/source-article-picke
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
-import { KitFormatSelector } from '@/components/generator/kit-format-selector';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
@@ -29,7 +28,6 @@ import { toast } from 'sonner';
 
 import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -327,7 +325,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedContentTypes, includeInstagramImage, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleSave = async (status: ContentStatus) => {
     const primaryType = selectedContentTypes[0];
@@ -668,7 +666,6 @@ export default function GeneratePage() {
                             selectedSource?.imageUrl;
 
                           if (!thumb) return null;
-                          // eslint-disable-next-line @next/next/no-img-element
                           return (
                             <img
                               src={String(thumb).trim()}
@@ -971,7 +968,6 @@ export default function GeneratePage() {
                             'https://www.broadridgeadvisor.com/images/SocialMediaImages/Twitter/100825CA_TW.jpg';
 
                           if (!thumb) return null;
-                          // eslint-disable-next-line @next/next/no-img-element
                           return (
                             <img
                               src={String(thumb).trim()}

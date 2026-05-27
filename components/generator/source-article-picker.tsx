@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import useSWR from 'swr';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,6 @@ export function SourceArticlePicker({
 }) {
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
-  const [search, setSearch] = React.useState<string>('');
 
   // API currently supports q + pageSize; topic is UI-only for now.
   const apiUrl = query
@@ -71,7 +70,7 @@ export function SourceArticlePicker({
     };
 
     const needles = topic === 'All Topics' ? [] : (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
-    const q = search.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
 
     return items.filter((c) => {
       const tagText = (c.tags || []).map((t) => decodeLite(String(t))).join(' ');
@@ -81,7 +80,7 @@ export function SourceArticlePicker({
       const searchOk = !q || hay.includes(q);
       return topicOk && searchOk;
     });
-  }, [data, topic, search]);
+  }, [data, topic, query]);
 
   return (
     <Card className="rounded-md border bg-card shadow-sm">
@@ -206,7 +205,6 @@ export function SourceArticlePicker({
                             (c?.imageUrl as string | undefined);
 
                           if (!thumb) return null;
-                          // eslint-disable-next-line @next/next/no-img-element
                           return (
                             <img
                               src={String(thumb).trim()}

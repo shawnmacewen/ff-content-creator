@@ -16,7 +16,7 @@ import { ContentEditor } from '@/components/library/content-editor';
 import useSWR from 'swr';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
-import type { GeneratedContent, ContentType, ContentStatus } from '@/lib/types/content';
+import type { GeneratedContent } from '@/lib/types/content';
 import { Library, Search, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';

@@ -1,8 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CONTENT_TYPES, getContentTypesByCategory } from '@/lib/content-config';
+import { getContentTypesByCategory } from '@/lib/content-config';
 import type { ContentType } from '@/lib/types/content';
 import {
   Twitter,

@@ -40,18 +40,14 @@ function emptySlides(count: number): CarouselSlide[] {
 
 function SlideCard({
   slide,
-  index,
   active,
   onClick,
   isGenerating,
-  styleVariant = 'purple-gold',
 }: {
   slide: CarouselSlide;
-  index: number;
   active?: boolean;
   onClick?: () => void;
   isGenerating?: boolean;
-  styleVariant?: 'purple-gold' | 'frost';
 }) {
   const template = (slide.template || 'standard') as 'intro' | 'standard' | 'outro';
   const templateSpec = CAROUSEL_TEMPLATES[template] || CAROUSEL_TEMPLATES.standard;
@@ -374,11 +370,9 @@ export function InstagramCarouselPanel({
                         <div className="space-y-2">
                           <SlideCard
                             slide={s}
-                            index={idx}
                             active={idx === activeIndex}
                             onClick={() => setActiveIndex(idx)}
                             isGenerating={isGenerating}
-                            styleVariant={styleVariant}
                           />
                           <div className="px-1 text-[11px] font-medium tracking-wide text-muted-foreground">
                             Slide {idx + 1} - {template}

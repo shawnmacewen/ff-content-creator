@@ -34,7 +34,7 @@ export default function EchoWritePage() {
   const [content, setContent] = useState('');
   const [sources, setSources] = useState<any[]>([]);
   const [hoverSourceId, setHoverSourceId] = useState<string | null>(null);
-  const [hoverSnippet, setHoverSnippet] = useState<string | null>(null);
+  const [, setHoverSnippet] = useState<string | null>(null);
   const [showMatches, setShowMatches] = useState(true);
   const [lastPrompt, setLastPrompt] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
