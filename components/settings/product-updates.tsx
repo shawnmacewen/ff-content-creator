@@ -410,31 +410,31 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
   }, [activeIndex, progress, stories.length]);
 
   return (
-    <section ref={sectionRef} className="relative min-h-[420vh] overflow-visible rounded-lg border border-border bg-slate-950 text-white shadow-sm">
-      <div className="sticky top-0 min-h-screen overflow-hidden px-4 py-6 sm:px-7 lg:px-10">
+    <section ref={sectionRef} className="relative min-h-[520vh] overflow-visible rounded-lg border border-border bg-slate-950 text-white shadow-sm">
+      <div className="sticky top-0 h-[calc(100dvh-2.5rem)] min-h-[620px] overflow-hidden px-4 py-5 sm:px-7 lg:px-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(168,85,247,0.28),transparent_30%),linear-gradient(180deg,#08111f_0%,#0f172a_45%,#020617_100%)] transition-colors duration-500" />
         <div className={`absolute inset-x-0 top-0 h-72 bg-gradient-to-r ${activeStory.accent} opacity-25 blur-3xl transition-all duration-500`} style={layerStyle(80, -70, 4, 1)} />
         <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
         <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
         <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl flex-col">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur">
+        <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur">
             <span>Visual Log - product update story</span>
             <span>{activeStory.period}</span>
           </div>
 
-          <div className="grid flex-1 items-center gap-7 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid min-h-0 flex-1 items-center gap-5 overflow-hidden lg:grid-cols-[0.9fr_1.1fr]">
             <div className="max-w-xl">
               <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">{activeStory.kicker}</Badge>
               <div className="text-sm font-semibold text-cyan-200">Chapter {activeIndex + 1} of {stories.length}</div>
-              <h3 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">{activeStory.title}</h3>
-              <p className="mt-5 text-base leading-7 text-white/76">{activeStory.story}</p>
-              <div className={cn('mt-5 rounded-2xl border p-4 text-sm leading-6 text-white/78 backdrop-blur', activeStory.panel)}>
+              <h3 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl xl:text-5xl">{activeStory.title}</h3>
+              <p className="mt-4 text-sm leading-6 text-white/76 sm:text-base">{activeStory.story}</p>
+              <div className={cn('mt-4 rounded-2xl border p-4 text-sm leading-6 text-white/78 backdrop-blur', activeStory.panel)}>
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
                 {activeStory.result}
               </div>
-              <div className="mt-5 flex flex-wrap gap-1.5">
+              <div className="mt-4 flex flex-wrap gap-1.5">
                 {activeStory.commitRefs.map((commit) => (
                   <Badge key={commit} variant="outline" className="border-white/20 bg-black/20 font-mono text-[11px] text-white">
                     {commit}
@@ -443,29 +443,29 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
               </div>
             </div>
 
-            <div className="relative min-h-[560px] [perspective:1200px]">
-              <div className="absolute left-4 top-4 h-80 w-60 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d]" style={layerStyle(-70, -120, -8, 1, 'rotate(-10deg)')}>
+            <div className="relative hidden min-h-[380px] [perspective:1200px] sm:block lg:min-h-[440px] xl:min-h-[500px]">
+              <div className="absolute left-4 top-4 h-64 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={layerStyle(-70, -120, -8, 1, 'rotate(-10deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
                   <DatabaseZap className="h-8 w-8 text-white" />
-                  <div className="mt-28 text-xl font-semibold">Source intelligence</div>
+                  <div className="mt-20 text-lg font-semibold xl:mt-24 xl:text-xl">Source intelligence</div>
                   <div className="mt-2 text-xs leading-5 text-white/75">Richer source context powers review and generation.</div>
                 </div>
               </div>
-              <div className="absolute left-24 top-28 h-[22rem] w-64 rounded-3xl border border-white/20 bg-white/15 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(40, -70, 5, 1.02, 'rotate(4deg)')}>
+              <div className="absolute left-20 top-20 h-72 w-56 rounded-3xl border border-white/20 bg-white/15 p-3 shadow-2xl backdrop-blur-xl xl:left-24 xl:top-24 xl:h-[20rem] xl:w-64" style={layerStyle(40, -70, 5, 1.02, 'rotate(4deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
                   <WandSparkles className="h-8 w-8 text-white" />
-                  <div className="mt-36 text-xl font-semibold">Generation flow</div>
+                  <div className="mt-28 text-lg font-semibold xl:mt-32 xl:text-xl">Generation flow</div>
                   <div className="mt-2 text-xs leading-5 text-white/75">Outputs show progress, counts, and context.</div>
                 </div>
               </div>
-              <div className="absolute right-4 top-64 h-64 w-56 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl" style={layerStyle(-120, 70, 12, 1, 'rotate(12deg)')}>
+              <div className="absolute right-4 top-48 h-56 w-48 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-xl xl:top-56 xl:h-60 xl:w-52" style={layerStyle(-120, 70, 12, 1, 'rotate(12deg)')}>
                 <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
                   <Images className="h-8 w-8 text-white" />
-                  <div className="mt-20 text-lg font-semibold">Visual preview</div>
+                  <div className="mt-16 text-lg font-semibold xl:mt-20">Visual preview</div>
                   <div className="mt-2 text-xs leading-5 text-white/75">Carousel work is reviewed in a social frame.</div>
                 </div>
               </div>
-              <div className="absolute right-20 top-14 w-72 rounded-3xl border border-white/15 bg-black/35 p-5 shadow-2xl backdrop-blur-xl" style={layerStyle(100, 110, -4, 1)}>
+              <div className="absolute right-12 top-8 w-64 rounded-3xl border border-white/15 bg-black/35 p-5 shadow-2xl backdrop-blur-xl xl:right-20 xl:top-12 xl:w-72" style={layerStyle(100, 110, -4, 1)}>
                 <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${activeStory.accent}`}>
                   <Icon className="h-7 w-7" />
                 </div>
@@ -478,9 +478,9 @@ function ParallaxStorySection({ stories }: { stories: ReleaseStory[] }) {
             </div>
           </div>
 
-          <div className="mb-3 mt-auto grid gap-3 md:grid-cols-3">
+          <div className="mb-3 mt-3 grid shrink-0 gap-3 md:grid-cols-3">
             {activeStory.details.map((detail, index) => (
-              <div key={detail} className="rounded-2xl border border-white/12 bg-white/[0.07] p-4 text-sm leading-6 text-white/72 backdrop-blur">
+              <div key={detail} className="rounded-2xl border border-white/12 bg-white/[0.07] p-3 text-sm leading-5 text-white/72 backdrop-blur">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">Detail {index + 1}</div>
                 {detail}
               </div>
