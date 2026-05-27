@@ -196,6 +196,12 @@ export async function GET(request: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .eq('publisher', 'broadridge-forefield');
   publisherCounts['broadridge-forefield'] = broadridgeCount || 0;
+
+  const { count: finraReviewedCount } = await supabase
+    .from('source_content')
+    .select('id', { count: 'exact', head: true })
+    .eq('finra_approved', true);
+
   const lastSyncedAt = allRows
     .map((r: any) => r.updated_at)
     .filter(Boolean)
@@ -209,6 +215,6 @@ export async function GET(request: NextRequest) {
     pageSize,
     totalPages: Math.ceil((count || 0) / pageSize),
     filters: { availableTags, availableTypes: availableDesignations, availableAuthors, availablePublishers },
-    meta: { sourceCounts, publisherCounts, lastSyncedAt },
+    meta: { sourceCounts, publisherCounts, finraReviewedCount: finraReviewedCount || 0, lastSyncedAt },
   });
 }

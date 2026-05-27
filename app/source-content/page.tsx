@@ -7,7 +7,7 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Sparkles, RefreshCw, Database, Info, FolderOpen } from 'lucide-react';
+import { Sparkles, RefreshCw, Database, Info, FolderOpen, ShieldCheck } from 'lucide-react';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ interface ApiResponse {
     lastSyncedAt?: string | null;
     sourceCounts?: Record<string, number>;
     publisherCounts?: Record<string, number>;
+    finraReviewedCount?: number;
   };
 }
 
@@ -178,6 +179,19 @@ export default function SourceContentPage() {
                   <p className="text-sm font-semibold">{data?.total ?? 0} available items</p>
                   <p className="text-xs text-muted-foreground">
                     {selectedIds.size} selected for generation
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-info text-info-foreground">
+                  <ShieldCheck className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">{data?.meta?.finraReviewedCount ?? 0} FINRA reviewed</p>
+                  <p className="text-xs text-muted-foreground">
+                    approved source content pieces
                   </p>
                 </div>
               </div>
