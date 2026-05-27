@@ -8,7 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Info, ScrollText } from 'lucide-react';
+import {
+  BatteryFull,
+  Bookmark,
+  ChevronDown,
+  Clapperboard,
+  Heart,
+  Home,
+  Info,
+  MessageCircle,
+  MoreHorizontal,
+  Search,
+  Send,
+  Signal,
+  SquarePlus,
+  ScrollText,
+  UserCircle,
+  Wifi,
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ContentDetail } from '@/components/source-content/content-detail';
@@ -252,6 +269,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   }, [props, setShowAdvancedPromptInputLocal]);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [slidesView, setSlidesView] = React.useState<'tile' | 'compact' | 'swipe' | 'masterplate'>('tile');
+  const [activeSwipeSlide, setActiveSwipeSlide] = React.useState(0);
 
   const swipeRef = React.useRef<HTMLDivElement | null>(null);
   const swipeDrag = React.useRef<{ isDown: boolean; startX: number; scrollLeft: number }>({
@@ -1222,45 +1240,163 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     .slice(0, slideCount);
 
                   if (slidesView === 'swipe') {
+                    const captionTitle = selectedSourceTitle || topic.replace(/\.$/, '') || 'Your carousel';
+                    const captionText = selectedSourceExcerpt
+                      ? selectedSourceExcerpt
+                      : `${captionTitle} is ready for review. Swipe through the carousel to preview each slide in context.`;
+                    const activeSlideNumber = Math.min(activeSwipeSlide + 1, ordered.length);
+
                     return (
-                      <div className="w-full max-w-full overflow-hidden">
-                        <div
-                          ref={swipeRef}
-                          className="w-full max-w-full min-w-0 flex gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none overscroll-x-contain"
-                          style={{ WebkitOverflowScrolling: 'touch' }}
-                          onPointerDown={(e) => {
-                            const el = swipeRef.current;
-                            if (!el) return;
-                            swipeDrag.current.isDown = true;
-                            swipeDrag.current.startX = e.clientX;
-                            swipeDrag.current.scrollLeft = el.scrollLeft;
-                            (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
-                          }}
-                          onPointerUp={(e) => {
-                            swipeDrag.current.isDown = false;
-                            (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId);
-                          }}
-                          onPointerCancel={() => {
-                            swipeDrag.current.isDown = false;
-                          }}
-                          onPointerLeave={() => {
-                            swipeDrag.current.isDown = false;
-                          }}
-                          onPointerMove={(e) => {
-                            if (!swipeDrag.current.isDown) return;
-                            const el = swipeRef.current;
-                            if (!el) return;
-                            const dx = e.clientX - swipeDrag.current.startX;
-                            el.scrollLeft = swipeDrag.current.scrollLeft - dx;
-                          }}
-                        >
-                          {ordered.map((s) => (
-                            <div key={s.id} className="shrink-0 w-[260px] sm:w-[320px] snap-start space-y-2 pointer-events-none">
-                              <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="w-full rounded-2xl border" />
+                      <div className="flex w-full justify-center overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-950 via-black to-slate-950 px-3 py-6 sm:px-8">
+                        <div className="relative w-full max-w-[430px] rounded-[3rem] border border-white/15 bg-black p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)]">
+                          <div className="pointer-events-none absolute left-1/2 top-3 z-20 h-8 w-28 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
+                          <div className="pointer-events-none absolute left-1/2 top-5 z-30 h-3 w-3 translate-x-10 rounded-full bg-slate-900 ring-2 ring-black">
+                            <span className="block h-1.5 w-1.5 translate-x-0.5 translate-y-0.5 rounded-full bg-blue-500/70" />
+                          </div>
+
+                          <div className="overflow-hidden rounded-[2.5rem] bg-[#050505] text-white">
+                            <div className="flex h-10 items-center justify-between px-8 pt-2 text-[15px] font-semibold">
+                              <span>9:41</span>
+                              <div className="flex items-center gap-1.5">
+                                <Signal className="h-4 w-4" />
+                                <Wifi className="h-4 w-4" />
+                                <BatteryFull className="h-5 w-5" />
+                              </div>
                             </div>
-                          ))}
+
+                            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                              <div className="flex items-center gap-1 text-3xl font-semibold tracking-normal" style={{ fontFamily: 'Brush Script MT, Segoe Script, cursive' }}>
+                                Instagram
+                                <ChevronDown className="mt-1 h-5 w-5" />
+                              </div>
+                              <div className="flex items-center gap-5">
+                                <Heart className="h-7 w-7" />
+                                <Send className="h-7 w-7" />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between px-5 py-4">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-lg font-black text-white ring-2 ring-emerald-300/50">
+                                  E
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="truncate text-base font-bold">editorial</div>
+                                  <div className="truncate text-xs text-white/80">{captionTitle}</div>
+                                </div>
+                              </div>
+                              <MoreHorizontal className="h-6 w-6 shrink-0" />
+                            </div>
+
+                            <div className="relative">
+                              <div
+                                ref={swipeRef}
+                                className="flex w-full max-w-full min-w-0 cursor-grab snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden scroll-smooth px-5 pb-2 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                style={{ WebkitOverflowScrolling: 'touch' }}
+                                aria-label="Instagram carousel phone swipe preview"
+                                onScroll={(e) => {
+                                  const el = e.currentTarget;
+                                  const children = Array.from(el.children) as HTMLDivElement[];
+                                  const center = el.scrollLeft + el.clientWidth / 2;
+                                  let nearestIndex = 0;
+                                  let nearestDistance = Number.POSITIVE_INFINITY;
+
+                                  children.forEach((child, index) => {
+                                    const childCenter = child.offsetLeft + child.offsetWidth / 2;
+                                    const distance = Math.abs(center - childCenter);
+                                    if (distance < nearestDistance) {
+                                      nearestDistance = distance;
+                                      nearestIndex = index;
+                                    }
+                                  });
+
+                                  setActiveSwipeSlide(nearestIndex);
+                                }}
+                                onPointerDown={(e) => {
+                                  const el = swipeRef.current;
+                                  if (!el) return;
+                                  swipeDrag.current.isDown = true;
+                                  swipeDrag.current.startX = e.clientX;
+                                  swipeDrag.current.scrollLeft = el.scrollLeft;
+                                  (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
+                                }}
+                                onPointerUp={(e) => {
+                                  swipeDrag.current.isDown = false;
+                                  (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId);
+                                }}
+                                onPointerCancel={() => {
+                                  swipeDrag.current.isDown = false;
+                                }}
+                                onPointerLeave={() => {
+                                  swipeDrag.current.isDown = false;
+                                }}
+                                onPointerMove={(e) => {
+                                  if (!swipeDrag.current.isDown) return;
+                                  const el = swipeRef.current;
+                                  if (!el) return;
+                                  const dx = e.clientX - swipeDrag.current.startX;
+                                  el.scrollLeft = swipeDrag.current.scrollLeft - dx;
+                                }}
+                              >
+                                {ordered.map((s) => (
+                                  <div key={s.id} className="relative w-[86%] shrink-0 snap-center select-none overflow-hidden rounded-xl bg-zinc-900 pointer-events-none">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="aspect-square w-full object-cover" draggable={false} />
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="pointer-events-none absolute right-8 top-4 rounded-full bg-black/65 px-3 py-1 text-sm font-bold text-white">
+                                {activeSlideNumber}/{ordered.length}
+                              </div>
+                            </div>
+
+                            <div className="px-5 pb-5 pt-3">
+                              <div className="mb-3 flex items-center justify-between">
+                                <div className="flex items-center gap-5">
+                                  <Heart className="h-7 w-7" />
+                                  <MessageCircle className="h-7 w-7" />
+                                  <Send className="h-7 w-7" />
+                                </div>
+                                <Bookmark className="h-7 w-7" />
+                              </div>
+
+                              <div className="mb-3 flex justify-center gap-1.5">
+                                {ordered.map((s, index) => (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    className={`h-2.5 w-2.5 rounded-full transition-colors ${index === activeSwipeSlide ? 'bg-sky-500' : 'bg-white/35'}`}
+                                    aria-label={`Go to slide ${s.slideNumber}`}
+                                    onClick={() => {
+                                      const el = swipeRef.current;
+                                      const child = el?.children[index] as HTMLDivElement | undefined;
+                                      child?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                                      setActiveSwipeSlide(index);
+                                    }}
+                                  />
+                                ))}
+                              </div>
+
+                              <div className="space-y-1 text-[15px] leading-snug">
+                                <p className="line-clamp-3">
+                                  <span className="font-bold">editorial</span>{' '}
+                                  {captionText}
+                                </p>
+                                <p className="text-sky-400">#FinancialPlanning #ContentMarketing #SwipeThrough</p>
+                                <p className="text-white/45">View all {Math.max(ordered.length * 8, 12)} comments</p>
+                                <p className="text-xs uppercase tracking-wide text-white/45">Just now</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-around border-t border-white/10 px-7 py-4">
+                              <Home className="h-7 w-7 fill-white" />
+                              <Search className="h-7 w-7" />
+                              <SquarePlus className="h-7 w-7" />
+                              <Clapperboard className="h-7 w-7" />
+                              <UserCircle className="h-7 w-7" />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
