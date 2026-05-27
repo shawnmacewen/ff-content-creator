@@ -118,6 +118,49 @@ function lengthInstruction(
   return 'Target 700-950 words.';
 }
 
+function videoScriptStructureInstruction(
+  length: EchoWriteBody['length'],
+  targetWordCount?: number,
+) {
+  const timing =
+    targetWordCount && targetWordCount > 0
+      ? `Aim for about ${targetWordCount} spoken words.`
+      : length === 'short'
+        ? 'Aim for about 45-75 seconds spoken.'
+        : length === 'long'
+          ? 'Aim for about 2.5-4 minutes spoken.'
+          : 'Aim for about 90-150 seconds spoken.';
+
+  return [
+    'Write a practical advisor-to-camera video script that is easy to read aloud.',
+    timing,
+    '',
+    'Use this exact readable structure:',
+    'TITLE: [short working title]',
+    'RUNTIME: [estimated spoken runtime]',
+    '',
+    'HOOK',
+    '[1-2 short spoken sentences that create immediate interest.]',
+    '',
+    'SCRIPT',
+    '[Write the spoken script as short paragraphs. Each paragraph should be 1-3 sentences. Put a blank line between paragraphs.]',
+    '',
+    'OPTIONAL ON-SCREEN TEXT',
+    '- [3-5 short text overlays, max 7 words each]',
+    '',
+    'CTA',
+    '[One clear closing line.]',
+    '',
+    'Formatting rules:',
+    '- Use the labels exactly as shown: TITLE, RUNTIME, HOOK, SCRIPT, OPTIONAL ON-SCREEN TEXT, CTA.',
+    '- Do not use markdown heading symbols.',
+    '- Do not write a two-column table.',
+    '- Do not include camera directions, b-roll instructions, shot lists, production notes, or bracketed stage directions.',
+    '- Do not over-cite source names inside the spoken script.',
+    '- Keep sentences conversational, concrete, and speakable.',
+  ].join('\n');
+}
+
 function tokenize(input: string) {
   return Array.from(new Set(
     input
@@ -196,18 +239,12 @@ export async function POST(req: Request) {
 
     const env = getServerEnv();
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+    const modelName = body.contentType === 'video-script'
+      ? env.ECHOWRITE_VIDEO_MODEL
+      : env.ECHOWRITE_MODEL;
 
     const contentTypeInstruction = body.contentType === 'video-script'
-      ? [
-          'Write a self-recorded advisor-to-camera VIDEO SCRIPT (one-take) that reads like an actual script someone can record.',
-          'No beat-by-beat formatting and no scene cuts.',
-          'Writing requirements:',
-          '- Natural spoken dialogue (first person is OK).',
-          '- Keep it tight and speakable; short paragraphs with double newlines between them.',
-          '- Include a clear opening hook, 2-3 key ideas, and a closing CTA, but keep them as natural spoken paragraphs.',
-          '- Optional: light cadence cues in parentheses only when helpful (e.g., (pause), (smile)).',
-          '- Do NOT include section labels, shot lists, b-roll ideas, on-screen text callouts, camera directions, or production notes.',
-        ].join('\n')
+      ? videoScriptStructureInstruction(body.length, body.targetWordCount)
       : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
 
     const prompt = [
@@ -221,7 +258,7 @@ export async function POST(req: Request) {
       '- Do not output one giant block of text.',
       '- Use short paragraphs (2–4 sentences).',
       body.contentType === 'video-script'
-        ? '- For video scripts: do NOT use section headings or beat labels; just write the spoken script with short paragraphs.'
+        ? '- For video scripts: use the required script labels, but keep the SCRIPT section as natural spoken paragraphs.'
         : '- Write like a readable editorial article a human would actually read: natural headline, subheadings only where helpful (don’t over-fragment), and longer coherent paragraphs when needed.' ,
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
       'Do not invent statistics, regulatory claims, or source details that are not present in SOURCE CONTEXT.',
@@ -232,9 +269,9 @@ export async function POST(req: Request) {
     ].join('\n');
 
     const result = await generateText({
-      model: openai(env.OPENAI_MODEL),
+      model: openai(modelName),
       prompt,
-      temperature: 0.5,
+      temperature: body.contentType === 'video-script' ? 0.35 : 0.5,
       maxOutputTokens: 2200,
     });
 
@@ -242,17 +279,18 @@ export async function POST(req: Request) {
       tool: 'echowrite',
       contentType: body.contentType,
       success: true,
-      model: env.OPENAI_MODEL,
+      model: modelName,
       meta: {
         writingStyle: body.writingStyle,
         length: body.length,
         maxSources: Number(body.maxSources ?? 6),
+        globalModel: env.OPENAI_MODEL,
       },
     });
 
     return NextResponse.json({
       content: result.text,
-      debug: { prompt },
+      debug: { prompt, model: modelName },
       sources: ranked.map((x) => ({
         id: x.row.id,
         title: x.row.title,

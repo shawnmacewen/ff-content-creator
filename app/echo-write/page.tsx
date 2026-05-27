@@ -66,6 +66,7 @@ export default function EchoWritePage() {
   const [, setHoverSnippet] = useState<string | null>(null);
   const [showMatches, setShowMatches] = useState(true);
   const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [lastModel, setLastModel] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
@@ -149,6 +150,7 @@ export default function EchoWritePage() {
       setContent(json.content || '');
       setSources(json.sources || []);
       setLastPrompt(String(json?.debug?.prompt || ''));
+      setLastModel(String(json?.debug?.model || ''));
       setHoverSourceId(null);
       setHoverSnippet(null);
       toast.success('EchoWrite draft generated');
@@ -378,7 +380,7 @@ Separately (client-side), we:
           <DialogHeader>
             <DialogTitle>Last generation prompt</DialogTitle>
             <DialogDescription>
-              This is the full prompt used to generate the most recent EchoWrite output.
+              {lastModel ? `Model: ${lastModel}` : 'This is the full prompt used to generate the most recent EchoWrite output.'}
             </DialogDescription>
           </DialogHeader>
           <pre className="text-xs whitespace-pre-wrap break-words max-h-[65vh] overflow-auto rounded border bg-muted/20 p-3">

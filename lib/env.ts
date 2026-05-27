@@ -9,6 +9,10 @@ export function getServerEnv() {
     OPENAI_API_KEY: required('OPENAI_API_KEY'),
     // Default model for text planning/generation (can be overridden via OPENAI_MODEL in env)
     OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4.1',
+    // Optional EchoWrite-specific overrides so we can upgrade drafting quality
+    // without changing image planning or other generation routes.
+    ECHOWRITE_MODEL: process.env.ECHOWRITE_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1',
+    ECHOWRITE_VIDEO_MODEL: process.env.ECHOWRITE_VIDEO_MODEL || process.env.ECHOWRITE_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1',
     NEXT_PUBLIC_SUPABASE_URL: required('NEXT_PUBLIC_SUPABASE_URL'),
     SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),
   };
