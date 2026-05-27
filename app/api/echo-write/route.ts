@@ -138,16 +138,12 @@ export async function POST(req: Request) {
       ? [
           'Write a self-recorded advisor-to-camera VIDEO SCRIPT (one-take) that reads like an actual script someone can record.',
           'No beat-by-beat formatting and no scene cuts.',
-          'Structure requirements (use these exact labels):',
-          'INTRO:',
-          'KEY THEMES:',
-          'SCRIPT:',
-          'CTA:',
           'Writing requirements:',
           '- Natural spoken dialogue (first person is OK).',
           '- Keep it tight and speakable; short paragraphs with double newlines between them.',
+          '- Include a clear opening hook, 2-3 key ideas, and a closing CTA, but keep them as natural spoken paragraphs.',
           '- Optional: light cadence cues in parentheses only when helpful (e.g., (pause), (smile)).',
-          '- Do NOT include shot lists, b-roll ideas, on-screen text callouts, camera directions, or production notes.',
+          '- Do NOT include section labels, shot lists, b-roll ideas, on-screen text callouts, camera directions, or production notes.',
         ].join('\n')
       : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
 
@@ -165,6 +161,7 @@ export async function POST(req: Request) {
         ? '- For video scripts: do NOT use section headings or beat labels; just write the spoken script with short paragraphs.'
         : '- Write like a readable editorial article a human would actually read: natural headline, subheadings only where helpful (don’t over-fragment), and longer coherent paragraphs when needed.' ,
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
+      'Do not invent statistics, regulatory claims, or source details that are not present in SOURCE CONTEXT.',
       'Return publication-ready output only.',
       '',
       'SOURCE CONTEXT:',

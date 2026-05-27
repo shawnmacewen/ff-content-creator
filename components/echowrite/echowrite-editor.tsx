@@ -54,6 +54,14 @@ function colorForCitation(n: number) {
   return sourceColors[(n - 1) % sourceColors.length];
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export function EchoWriteEditor({
   value,
   spans,
@@ -91,7 +99,7 @@ export function EchoWriteEditor({
       .filter(Boolean);
 
     const renderPlainSentence = (text: string) => {
-      const safe = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safe = escapeHtml(text);
       return `<span class="text-foreground">${safe}</span>`;
     };
 
@@ -101,7 +109,7 @@ export function EchoWriteEditor({
     const renderHighlightedSentence = (fallbackText: string) => {
       const s = takeNextSpan();
       const text = s.text || fallbackText;
-      const safe = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safe = escapeHtml(text);
 
       if (!showMatches || !s.sourceId || !s.citationNumber) {
         return `<span class="text-foreground">${safe}</span>`;
@@ -113,7 +121,7 @@ export function EchoWriteEditor({
         : '';
 
       const colorClass = `${colors.bg} ${colors.darkBg} cursor-pointer transition-all text-foreground${hoverRing}`.trim();
-      const attrib = ` data-attribution="true" data-source-id="${s.sourceId}" data-citation-number="${s.citationNumber}" data-color-class="${colorClass.replace(/\"/g, '')}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="${colorClass.replace(/\"/g, '')}"`;
+      const attrib = ` data-attribution="true" data-source-id="${escapeHtml(s.sourceId)}" data-citation-number="${s.citationNumber}" data-color-class="${escapeHtml(colorClass)}" data-snippet="${encodeURIComponent(s.snippet || '')}" class="${escapeHtml(colorClass)}"`;
       // Citation badge disabled for now (it was being appended repeatedly during mode toggles).
       return `<span${attrib}>${safe}</span>`;
     };

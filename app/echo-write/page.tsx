@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { PenSquare, Settings2 } from 'lucide-react';
+import { AlertCircle, PenSquare, Save, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +21,32 @@ import {
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+
+type EchoWriteSource = {
+  id: string;
+  title: string;
+  publisher?: string | null;
+  basContentId?: string | null;
+  designation?: string | null;
+  score?: number;
+  bodySnippet?: string;
+};
+
+function titleFromContent(content: string) {
+  const firstLine = content
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  return (firstLine || 'EchoWrite draft').replace(/^#+\s*/, '').slice(0, 100);
+}
+
+function toneFromWritingStyle(style: 'professional' | 'fun' | 'educational') {
+  if (style === 'fun') return 'friendly';
+  if (style === 'educational') return 'authoritative';
+  return 'professional';
+}
 
 export default function EchoWritePage() {
   const [prompt, setPrompt] = useState('');
@@ -31,8 +57,10 @@ export default function EchoWritePage() {
   const [maxSources, setMaxSources] = useState(6);
 
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [content, setContent] = useState('');
-  const [sources, setSources] = useState<any[]>([]);
+  const [sources, setSources] = useState<EchoWriteSource[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [hoverSourceId, setHoverSourceId] = useState<string | null>(null);
   const [, setHoverSnippet] = useState<string | null>(null);
   const [showMatches, setShowMatches] = useState(true);
@@ -61,14 +89,23 @@ export default function EchoWritePage() {
   const sourcesWithCitation = useMemo(() => {
     const list = [...sources]
       .map((s) => ({ ...s, citationNumber: citationMap.get(s.id) || null }))
-      .filter((s) => s.citationNumber);
+      .sort((a, b) => {
+        const aCitation = a.citationNumber || 9999;
+        const bCitation = b.citationNumber || 9999;
+        if (aCitation !== bCitation) return aCitation - bCitation;
+        return (b.score || 0) - (a.score || 0);
+      });
 
-    list.sort((a, b) => (a.citationNumber || 9999) - (b.citationNumber || 9999));
     return list;
   }, [sources, citationMap]);
 
+  const citedSourceCount = useMemo(() => {
+    return sourcesWithCitation.filter((s) => s.citationNumber).length;
+  }, [sourcesWithCitation]);
+
   const generate = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/echo-write', {
         method: 'POST',
@@ -83,13 +120,59 @@ export default function EchoWritePage() {
         }),
       });
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || 'EchoWrite generation failed');
+      }
       setContent(json.content || '');
       setSources(json.sources || []);
       setLastPrompt(String(json?.debug?.prompt || ''));
       setHoverSourceId(null);
       setHoverSnippet(null);
+      toast.success('EchoWrite draft generated');
+    } catch (err: any) {
+      const message = err?.message || 'EchoWrite generation failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const copyOutput = async () => {
+    await navigator.clipboard.writeText(content || '');
+    toast.success('Output copied');
+  };
+
+  const saveDraft = async () => {
+    if (!content.trim()) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/generated-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: contentType === 'video-script' ? 'video-script' : 'article',
+          title: titleFromContent(content),
+          content,
+          sourceContentIds: sources.map((s) => s.id),
+          prompt,
+          tone: toneFromWritingStyle(writingStyle),
+          status: 'draft',
+          versionNote: 'Saved from EchoWrite',
+        }),
+      });
+
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(json?.error || 'Failed to save EchoWrite draft');
+      }
+
+      toast.success('Saved to Saved Content');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save EchoWrite draft');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -219,6 +302,12 @@ export default function EchoWritePage() {
             <Settings2 className="h-4 w-4" />
           </Button>
         </div>
+        {error ? (
+          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : null}
       </div>
 
       <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
@@ -254,9 +343,9 @@ We ask the model to:
 4) Evidence/highlights after generation
 Separately (client-side), we:
 - split the generated output into sentences
-- run lexical overlap against the returned source snippets
-- assign citations/highlights to the best matching source per sentence
-- show only cited sources in the right panel`}
+- compare each generated sentence to source passages
+- cite/highlight only stronger passage matches
+- show both cited sources and retrieved-but-not-cited context in the right panel`}
           </pre>
         </DialogContent>
       </Dialog>
@@ -279,7 +368,13 @@ Separately (client-side), we:
         <div className="lg:col-span-3 rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold">Generated Output</h2>
-            <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(content || '')}>Copy</Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={copyOutput} disabled={!content.trim()}>Copy</Button>
+              <Button size="sm" onClick={saveDraft} disabled={!content.trim() || saving}>
+                <Save className="h-4 w-4" />
+                {saving ? 'Saving...' : 'Save Draft'}
+              </Button>
+            </div>
           </div>
 
           <EchoWriteEditor
@@ -295,9 +390,9 @@ Separately (client-side), we:
           />
         </div>
 
-        <div className="lg:col-span-2 w-4/5 justify-self-end rounded-lg border border-border bg-card p-0 overflow-hidden shadow-sm">
+        <div className="lg:col-span-2 w-full rounded-lg border border-border bg-card p-0 overflow-hidden shadow-sm">
           <div className="shrink-0 p-4 border-b border-border flex items-center justify-between">
-            <span className="font-semibold text-sm">Sources Used ({sourcesWithCitation.length})</span>
+            <span className="font-semibold text-sm">Sources ({citedSourceCount} cited / {sources.length} retrieved)</span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Show matches</span>
               <Switch checked={showMatches} onCheckedChange={(v) => setShowMatches(Boolean(v))} />
@@ -339,13 +434,22 @@ Separately (client-side), we:
 
                     <div className="flex-1 min-w-0 flex flex-col">
                       <h4 className="font-medium text-sm leading-tight text-foreground">{s.title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {s.designation || 'n/a'}
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <Badge variant={n ? 'default' : 'outline'} className="h-5 rounded text-[10px]">
+                          {n ? 'Cited' : 'Retrieved'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {s.designation || 'n/a'}
+                        </span>
+                      </div>
 
-                      {showMatches ? (
+                      {showMatches && n ? (
                         <p className={`text-xs mt-2 italic line-clamp-3 ${colors ? `${colors.bg} ${colors.darkBg} rounded px-2 py-1 text-foreground` : 'text-muted-foreground'}`}>
                           “{sourceSnippetMap.get(s.id) || 'n/a'}”
+                        </p>
+                      ) : showMatches ? (
+                        <p className="text-xs mt-2 rounded bg-muted/40 px-2 py-1 text-muted-foreground">
+                          Retrieved for context, but not strongly matched to a generated sentence.
                         </p>
                       ) : null}
 
@@ -375,7 +479,7 @@ Separately (client-side), we:
           </div>
 
           <div className="p-3 text-xs text-muted-foreground border-t bg-muted/10">
-            Sources were automatically matched to highlighted content.
+            Cited sources met a stronger passage-match threshold. Retrieved sources were provided to the model as context.
           </div>
         </div>
       </div>
