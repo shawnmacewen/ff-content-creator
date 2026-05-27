@@ -51,7 +51,7 @@ export function ToneControls({
                 />
                 <Label
                   htmlFor={option.value}
-                  className="flex flex-col w-full cursor-pointer rounded-lg border border-border p-3 hover:bg-muted/50 peer-data-[state=checked]:border-violet-500/60 peer-data-[state=checked]:bg-violet-500/10 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-violet-500/20 transition-colors"
+                  className="flex flex-col w-full cursor-pointer rounded-lg border border-border p-3 hover:bg-muted/50 peer-data-[state=checked]:border-primary/60 peer-data-[state=checked]:bg-primary/10 peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary/20 transition-colors"
                 >
                   <span className="text-sm font-medium">{option.label}</span>
                   <span className="text-xs text-muted-foreground">{option.description}</span>
@@ -65,7 +65,7 @@ export function ToneControls({
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">Advanced (Optional)</div>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-2xl gap-2">
+              <Button variant="outline" size="sm" className="rounded-md gap-2">
                 {advancedOpen || hasAdvanced ? 'Hide' : 'Show'}
                 <ChevronDown className={cn('h-4 w-4 transition-transform', (advancedOpen || hasAdvanced) && 'rotate-180')} />
               </Button>

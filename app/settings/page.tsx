@@ -3,11 +3,13 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { Database, Info } from 'lucide-react';
+import { BookOpenCheck, Compass, Database, Image, Info, RefreshCw, ServerCog } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -20,6 +22,29 @@ const settingsTabs: SettingsTab[] = [
   'instagram-carousel-2',
 ];
 
+const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof Database }> = {
+  'content-sync': {
+    label: 'Content Sync',
+    detail: 'Run provider imports and review sync progress.',
+    icon: Database,
+  },
+  'content-api-explorer': {
+    label: 'Content API Explorer',
+    detail: 'Inspect provider API responses and query behavior.',
+    icon: Compass,
+  },
+  'knowledge-base': {
+    label: 'Knowledge Base',
+    detail: 'Manage reusable guidance and source context.',
+    icon: BookOpenCheck,
+  },
+  'instagram-carousel-2': {
+    label: 'Instagram Carousel 2.0',
+    detail: 'Tune the carousel generation workspace.',
+    icon: Image,
+  },
+};
+
 function getInitialTab(tab: string | null): SettingsTab {
   return settingsTabs.includes(tab as SettingsTab) ? (tab as SettingsTab) : 'content-sync';
 }
@@ -31,20 +56,32 @@ function getInitialTabFromLocation(): SettingsTab {
 
 function TabButton({
   active,
-  children,
+  tab,
   onClick,
 }: {
   active: boolean;
-  children: React.ReactNode;
+  tab: SettingsTab;
   onClick: () => void;
 }) {
+  const Icon = tabMeta[tab].icon;
+
   return (
     <button
-      className={`px-3 py-2 text-sm rounded-md border ${active ? 'bg-muted' : 'bg-background hover:bg-muted/50'}`}
+      className={`flex min-h-[92px] items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
+        active
+          ? 'border-primary/60 bg-primary/10 text-primary shadow-sm'
+          : 'border-border bg-card hover:border-primary/40 hover:bg-accent/40'
+      }`}
       onClick={onClick}
       type="button"
     >
-      {children}
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-primary'}`}>
+        <Icon className="h-4 w-4" />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">{tabMeta[tab].label}</span>
+        <span className="mt-1 block text-xs leading-5 text-muted-foreground">{tabMeta[tab].detail}</span>
+      </span>
     </button>
   );
 }
@@ -166,41 +203,61 @@ export default function SettingsPage() {
     }
   };
 
-  const header = useMemo(() => {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Content Sync, Content API Explorer, Knowledge Base, and Instagram Carousel 2.0.</p>
+  const header = useMemo(() => (
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
+          <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
+            Platform administration
+          </Badge>
+          <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Settings</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
+            Manage source sync, API inspection, knowledge assets, and carousel generation from one control surface.
+          </p>
+        </div>
+        <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
+          <div className="rounded-md border border-border bg-card p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <ServerCog className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold">Workspace modules</p>
+                <p className="text-xs text-muted-foreground">Four settings areas available.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    );
-  }, []);
+    </section>
+  ), []);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       {header}
 
-      <div className="flex items-center gap-2">
-        <TabButton active={tab === 'content-sync'} onClick={() => selectTab('content-sync')}>
-          Content Sync
-        </TabButton>
-        <TabButton active={tab === 'content-api-explorer'} onClick={() => selectTab('content-api-explorer')}>
-          Content API Explorer
-        </TabButton>
-        <TabButton active={tab === 'knowledge-base'} onClick={() => selectTab('knowledge-base')}>
-          Knowledge Base
-        </TabButton>
-        <TabButton active={tab === 'instagram-carousel-2'} onClick={() => selectTab('instagram-carousel-2')}>
-          Instagram Carousel 2.0
-        </TabButton>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {settingsTabs.map((settingsTab) => (
+          <TabButton
+            key={settingsTab}
+            tab={settingsTab}
+            active={tab === settingsTab}
+            onClick={() => selectTab(settingsTab)}
+          />
+        ))}
       </div>
 
       {tab === 'content-sync' ? (
         <>
-          <div className="rounded-lg border p-4 space-y-3">
-            <h2 className="text-lg font-semibold">Run Content Sync</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase text-primary">Provider Import</p>
+              <h2 className="text-lg font-semibold">Run Content Sync</h2>
+              <p className="text-sm text-muted-foreground">Pull Broadridge Advisor Content into the local source library.</p>
+            </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
+              <Button
+                variant="outline"
                 onClick={runSync}
                 disabled={running || runningBatched}
                 title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the Content API Explorer."
@@ -208,32 +265,36 @@ export default function SettingsPage() {
                 <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
                 {running ? 'Syncing Broadridge Content API...' : 'Sync Broadridge Content API'}
                 <Info className="h-3.5 w-3.5 ml-2 text-muted-foreground" />
-              </button>
-              <button
-                className="inline-flex items-center rounded border px-4 py-2 text-sm disabled:opacity-50"
+              </Button>
+              <Button
+                variant="outline"
                 onClick={runSyncBatched}
                 disabled={running || runningBatched}
                 title="Runs multiple 250-item sync batches in sequence using startPage offsets (target up to ~5000 items). Stops on repeat-page or zero-processed response."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
                 {runningBatched ? 'Running Batched Sync...' : 'Sync Broadridge Content API (Batched)'}
-              </button>
-              <button className="rounded border px-4 py-2 text-sm" onClick={() => mutate()} disabled={running || runningBatched}>
+              </Button>
+              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched}>
+                <RefreshCw className="h-4 w-4" />
                 Refresh Logs
-              </button>
+              </Button>
             </div>
             {runResult ? (
               <pre className="text-xs bg-muted rounded p-2 overflow-auto">{JSON.stringify(runResult, null, 2)}</pre>
             ) : null}
           </div>
 
-          <div className="rounded-lg border p-4 space-y-3">
-            <h2 className="text-lg font-semibold">Content API Logs</h2>
-            <p className="text-sm text-muted-foreground">Per-block sync progress (auto-refresh every 5s while a sync is running).</p>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase text-primary">Sync History</p>
+              <h2 className="text-lg font-semibold">Content API Logs</h2>
+              <p className="text-sm text-muted-foreground">Per-block sync progress auto-refreshes while a sync is running.</p>
+            </div>
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-muted-foreground">
+                  <tr className="border-b bg-secondary/50 text-left text-muted-foreground">
                     <th className="p-2">Time</th>
                     <th className="p-2">Run</th>
                     <th className="p-2">Page</th>

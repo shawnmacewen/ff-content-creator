@@ -19,7 +19,12 @@ import { Badge } from '@/components/ui/badge';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
-import { ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  BadgeCheck,
+  DatabaseZap,
+  Layers3,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
@@ -379,29 +384,62 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Generate Campaign Content</h1>
-            <p className="text-muted-foreground">Turn one source article into a coordinated content kit across channels.</p>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="-ml-2 mb-5 text-blue-50 hover:bg-white/10 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
+              Campaign generation workflow
+            </Badge>
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">
+              Generate coordinated advisor content from one approved source.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
+              Select a source, tune the generation controls, and review channel-ready assets in a single process.
+            </p>
+          </div>
+          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
+            {[
+              { label: 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
+              { label: mode === 'kit' ? 'Campaign kit mode' : 'Single asset mode', icon: Layers3, active: true },
+              { label: 'Review output before saving', icon: BadgeCheck, active: Boolean(generatedContent || kitOutputs?.length) },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
+                <span className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-md',
+                  item.active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                )}>
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <span className="text-sm font-medium">{item.label}</span>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* actions moved below Section 3 */}
-        </div>
-      </div>
+      </section>
 
       <GenerationModeToggle mode={mode} onChange={setMode} />
 
       {mode === 'kit' ? (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">1. Select KIT Content Types</h2>
+            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">1</span>
+                <div>
+                  <h2 className="text-lg font-semibold">Select KIT Content Types</h2>
+                  <p className="text-sm text-muted-foreground">Choose the channel mix for this campaign package.</p>
+                </div>
+              </div>
               <KitContentTypeSelector
                 selected={kitTypes}
                 onToggle={(t) => {
@@ -439,7 +477,7 @@ export default function GeneratePage() {
               />
             
               {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                <Card className="mt-6 rounded-2xl">
+                <Card className="mt-6 rounded-lg border-border shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
                   </CardHeader>
@@ -448,7 +486,7 @@ export default function GeneratePage() {
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Slides</div>
                         <select
-                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          className="w-full rounded-md border bg-background px-3 py-2"
                           value={kitCarouselSlideCount}
                           onChange={(e) => setKitCarouselSlideCount(Number(e.target.value) || 3)}
                         >
@@ -461,7 +499,7 @@ export default function GeneratePage() {
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Model</div>
                         <select
-                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          className="w-full rounded-md border bg-background px-3 py-2"
                           value={kitCarouselModel}
                           onChange={(e) => setKitCarouselModel(e.target.value as any)}
                         >
@@ -475,7 +513,7 @@ export default function GeneratePage() {
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Cohesion</div>
                         <select
-                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          className="w-full rounded-md border bg-background px-3 py-2"
                           value={kitCarouselCohesionMethod}
                           onChange={(e) => setKitCarouselCohesionMethod(e.target.value as any)}
                         >
@@ -487,7 +525,7 @@ export default function GeneratePage() {
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Image Ref Mode</div>
                         <select
-                          className="w-full rounded-xl border bg-background px-3 py-2"
+                          className="w-full rounded-md border bg-background px-3 py-2"
                           value={kitCarouselImageRefMode}
                           onChange={(e) => setKitCarouselImageRefMode(e.target.value as any)}
                           disabled={kitCarouselCohesionMethod !== 'image-ref'}
@@ -512,7 +550,7 @@ export default function GeneratePage() {
                         <Button
                           type="button"
                           variant={kitCarouselAdvanced ? 'default' : 'outline'}
-                          className="rounded-2xl"
+                          className="rounded-md"
                           onClick={() => setKitCarouselAdvanced((v) => !v)}
                         >
                           Advanced
@@ -522,7 +560,7 @@ export default function GeneratePage() {
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-9 w-9 rounded-2xl"
+                          className="h-9 w-9 rounded-md"
                           onClick={() => kitCarousel2Ref.current?.openPromptLog()}
                           title="View generation prompt log"
                         >
@@ -535,7 +573,7 @@ export default function GeneratePage() {
                       <div className="space-y-2">
                         <div className="text-xs font-semibold text-muted-foreground">Carousel prompt (optional add-on)</div>
                         <textarea
-                          className="w-full min-h-[84px] rounded-xl border bg-background px-3 py-2 text-sm"
+                          className="w-full min-h-[84px] rounded-md border bg-background px-3 py-2 text-sm"
                           value={kitCarouselPrompt}
                           onChange={(e) => setKitCarouselPrompt(e.target.value)}
                         />
@@ -546,8 +584,14 @@ export default function GeneratePage() {
               ) : null}
             </div>
 
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
+            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">2</span>
+                <div>
+                  <h2 className="text-lg font-semibold">Generation Settings</h2>
+                  <p className="text-sm text-muted-foreground">Set tone, instructions, and campaign context.</p>
+                </div>
+              </div>
               <ToneControls
                 tone={tone}
                 onToneChange={setTone}
@@ -560,8 +604,14 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
+              <div>
+                <h2 className="text-lg font-semibold">Select Content</h2>
+                <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
+              </div>
+            </div>
             <div className="grid gap-6 lg:grid-cols-2 items-stretch">
               <div>
                 <SourceArticlePicker
@@ -570,11 +620,11 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-2xl border bg-card p-4 min-w-0">
+              <div className="rounded-lg border bg-background p-4 min-w-0">
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
                     <div className="flex items-start gap-3">
-                      <div className="h-64 w-[28rem] overflow-hidden rounded-xl bg-muted shrink-0">
+                      <div className="h-64 w-[28rem] overflow-hidden rounded-md bg-muted shrink-0">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
@@ -677,7 +727,7 @@ export default function GeneratePage() {
                       </div>
                     ) : null}
 
-                    <div className="rounded-xl border bg-background/60 p-3 max-h-[320px] overflow-auto">
+                    <div className="rounded-md border bg-card p-3 max-h-[320px] overflow-auto">
                       {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
@@ -696,7 +746,7 @@ export default function GeneratePage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-2xl"
+                        className="rounded-md"
                         onClick={() => setDetailOpen(true)}
                         disabled={!selectedSourceId}
                       >
@@ -712,41 +762,47 @@ export default function GeneratePage() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button className="rounded-2xl" onClick={() => router.push('/library')} variant="outline">
+            <Button className="rounded-md" onClick={() => router.push('/library')} variant="outline">
               Saved Drafts
             </Button>
             <div className="flex items-center gap-2">
               <Button
-                className="rounded-2xl bg-violet-600 hover:bg-violet-600/90"
-                onClick={mode === 'single' ? handleGenerate : handleGenerateKit}
-                disabled={mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)}
+                className="rounded-md"
+                onClick={handleGenerateKit}
+                disabled={isGeneratingKit || isGeneratingKitCarouselImages}
               >
                 Generate
               </Button>
 
-              {(mode === 'single' ? isGenerating : (isGeneratingKit || isGeneratingKitCarouselImages)) ? (
+              {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
                 <div className="flex items-center gap-1" aria-label="Generating">
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:-0.2s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce [animation-delay:-0.1s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-bounce" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.2s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.1s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
                 </div>
               ) : null}
             </div>
           </div>
 
-<div>
-            <h2 className="mb-3 text-lg font-semibold">4. Generated Output</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">4</span>
+              <div>
+                <h2 className="text-lg font-semibold">Generated Output</h2>
+                <p className="text-sm text-muted-foreground">Review carousel images and campaign copy before saving.</p>
+              </div>
+            </div>
 
-            <div className="rounded-2xl border bg-card p-3 shadow-sm">
+            <div className="rounded-lg border bg-background p-3">
               <div className="flex flex-wrap gap-2">
                 {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                   <button
                     type="button"
                     onClick={() => setKitOutputTab('carousel')}
                     className={cn(
-                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                      'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === 'carousel'
-                        ? 'border-violet-500/60 bg-violet-500/10'
+                        ? 'border-primary/60 bg-primary/10 text-primary'
                         : 'bg-background/60 hover:bg-background'
                     )}
                   >
@@ -761,9 +817,9 @@ export default function GeneratePage() {
                     type="button"
                     onClick={() => setKitOutputTab(t)}
                     className={cn(
-                      'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                      'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === t
-                        ? 'border-violet-500/60 bg-violet-500/10'
+                        ? 'border-primary/60 bg-primary/10 text-primary'
                         : 'bg-background/60 hover:bg-background'
                     )}
                   >
@@ -775,9 +831,9 @@ export default function GeneratePage() {
                   type="button"
                   onClick={() => setKitOutputTab('all')}
                   className={cn(
-                    'rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors',
+                    'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                     kitOutputTab === 'all'
-                      ? 'border-violet-500/60 bg-violet-500/10'
+                      ? 'border-primary/60 bg-primary/10 text-primary'
                       : 'bg-background/60 hover:bg-background'
                   )}
                 >
@@ -789,7 +845,7 @@ export default function GeneratePage() {
             {/* Keep all mounted; switching tabs must not clear */}
             <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
               {selectedSourceIds.length !== 1 ? (
-                <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                <div className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
                   Select exactly 1 source article to generate carousel images.
                 </div>
               ) : (
@@ -833,8 +889,14 @@ export default function GeneratePage() {
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
-              <div>
-                <h2 className="mb-3 text-lg font-semibold">1. Select Content Type</h2>
+              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">1</span>
+                  <div>
+                    <h2 className="text-lg font-semibold">Select Content Type</h2>
+                    <p className="text-sm text-muted-foreground">Choose the output format for this generation.</p>
+                  </div>
+                </div>
                 <ContentTypeSelector
                   selected={selectedContentTypes}
                   onToggle={handleToggleTypeSingle}
@@ -847,8 +909,14 @@ export default function GeneratePage() {
             </div>
 
             <div className="space-y-6">
-              <div>
-                <h2 className="mb-3 text-lg font-semibold">2. Generation Settings</h2>
+              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">2</span>
+                  <div>
+                    <h2 className="text-lg font-semibold">Generation Settings</h2>
+                    <p className="text-sm text-muted-foreground">Set tone, instructions, and campaign context.</p>
+                  </div>
+                </div>
                 <ToneControls
                   tone={tone}
                   onToneChange={setTone}
@@ -861,8 +929,14 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">3. Select Content</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
+              <div>
+                <h2 className="text-lg font-semibold">Select Content</h2>
+                <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
+              </div>
+            </div>
             <div className="grid gap-6 lg:grid-cols-2 items-stretch">
               <div>
                 <SourceArticlePicker
@@ -871,11 +945,11 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-2xl border bg-card p-4 min-w-0">
+              <div className="rounded-lg border bg-background p-4 min-w-0">
                 {selectedSource ? (
                   <div className="space-y-3 min-w-0">
                     <div className="flex items-start gap-3">
-                      <div className="h-64 w-[28rem] overflow-hidden rounded-xl bg-muted shrink-0">
+                      <div className="h-64 w-[28rem] overflow-hidden rounded-md bg-muted shrink-0">
                         {(() => {
                           let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
                           if (typeof meta === 'string') {
@@ -956,7 +1030,7 @@ export default function GeneratePage() {
                       </div>
                     ) : null}
 
-                    <div className="rounded-xl border bg-background/60 p-3 max-h-[320px] overflow-auto">
+                    <div className="rounded-md border bg-card p-3 max-h-[320px] overflow-auto">
                       {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
                         <div className="mb-2 flex flex-wrap gap-2">
                           {detailContent.tags.slice(0, 8).map((tag: string) => (
@@ -975,7 +1049,7 @@ export default function GeneratePage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-2xl"
+                        className="rounded-md"
                         onClick={() => setDetailOpen(true)}
                         disabled={!selectedSourceId}
                       >
@@ -992,10 +1066,16 @@ export default function GeneratePage() {
 
 
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">4. Instagram Carousel Images</h2>
+            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">4</span>
+                <div>
+                  <h2 className="text-lg font-semibold">Instagram Carousel Images</h2>
+                  <p className="text-sm text-muted-foreground">Generate the swipeable image set for Instagram.</p>
+                </div>
+              </div>
               {selectedSourceIds.length !== 1 ? (
-                <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                <div className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
                   Select exactly 1 source article to generate carousel images.
                 </div>
               ) : (
@@ -1012,7 +1092,13 @@ export default function GeneratePage() {
 
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold">5. Preview & Save</h2>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">5</span>
+              <div>
+                <h2 className="text-lg font-semibold">Preview & Save</h2>
+                <p className="text-sm text-muted-foreground">Edit, copy, or save the generated asset.</p>
+              </div>
+            </div>
             <GenerationPreview
               contentType={selectedContentTypes[0] ?? null}
               previewLabel={selectedContentTypes[0] ? CONTENT_TYPE_MAP[selectedContentTypes[0]].label : null}

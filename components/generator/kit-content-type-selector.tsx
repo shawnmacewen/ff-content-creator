@@ -91,14 +91,14 @@ export function KitContentTypeSelector({
                           onToggle('social-instagram');
                         }}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          carouselSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                          carouselSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
                         )}
                       >
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-xl',
-                            carouselSelected ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-8 w-8 items-center justify-center rounded-md',
+                            carouselSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                           )}
                         >
                           <Instagram className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function KitContentTypeSelector({
                           className={cn(
                             'ml-1 select-none rounded-full border px-2 py-0.5 text-[11px] transition-colors',
                             includeInstagramCarouselImages
-                              ? 'border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300'
+                              ? 'border-primary/40 bg-primary/10 text-primary dark:text-primary'
                               : 'border-border text-muted-foreground hover:bg-muted'
                           )}
                         >
@@ -136,14 +136,14 @@ export function KitContentTypeSelector({
                           onToggle('social-instagram');
                         }}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          singleSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                          singleSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
                         )}
                       >
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-xl',
-                            singleSelected ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-8 w-8 items-center justify-center rounded-md',
+                            singleSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                           )}
                         >
                           <Instagram className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function KitContentTypeSelector({
                           className={cn(
                             'ml-1 select-none rounded-full border px-2 py-0.5 text-[11px] transition-colors',
                             includeInstagramSingleImages
-                              ? 'border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300'
+                              ? 'border-primary/40 bg-primary/10 text-primary dark:text-primary'
                               : 'border-border text-muted-foreground hover:bg-muted'
                           )}
                         >
@@ -183,14 +183,14 @@ export function KitContentTypeSelector({
                     type="button"
                     onClick={() => onToggle(ct.id)}
                     className={cn(
-                      'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                      isSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                      'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                      isSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
                     )}
                   >
                     <span
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-xl',
-                        isSelected ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                        'flex h-8 w-8 items-center justify-center rounded-md',
+                        isSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -213,14 +213,14 @@ export function KitContentTypeSelector({
                         type="button"
                         onClick={() => onToggle(ct.id)}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-2xl border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          isSelected && 'border-violet-500/60 bg-violet-500/10 ring-1 ring-violet-500/20'
+                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                          isSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
                         )}
                       >
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-xl',
-                            isSelected ? 'bg-violet-600 text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-8 w-8 items-center justify-center rounded-md',
+                            isSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                           )}
                         >
                           <Icon className="h-4 w-4" />

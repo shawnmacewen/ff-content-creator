@@ -84,7 +84,7 @@ export function SourceArticlePicker({
   }, [data, topic, search]);
 
   return (
-    <Card className="rounded-2xl border bg-card shadow-sm">
+    <Card className="rounded-md border bg-card shadow-sm">
       <CardHeader className="pb-4">
 
 
@@ -95,15 +95,15 @@ export function SourceArticlePicker({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search articles by title, keyword, or topic..."
-              className="h-10 rounded-2xl pl-9 bg-muted/40"
+              className="h-10 rounded-md pl-9 bg-muted/40"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" className="h-10 rounded-2xl gap-2">
+            <Button type="button" variant="outline" className="h-10 rounded-md gap-2">
               <Filter className="h-4 w-4" />
               Filter
             </Button>
-            <Button type="button" variant="outline" className="h-10 rounded-2xl gap-2">
+            <Button type="button" variant="outline" className="h-10 rounded-md gap-2">
               Newest First
               <ChevronDown className="h-4 w-4" />
             </Button>
@@ -121,7 +121,7 @@ export function SourceArticlePicker({
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                   active
-                    ? 'border-violet-500/60 bg-violet-600 text-white'
+                    ? 'border-primary/60 bg-primary text-white'
                     : 'bg-background/60 text-muted-foreground hover:bg-background'
                 )}
               >
@@ -137,7 +137,7 @@ export function SourceArticlePicker({
           {isLoading && (
             <div className="space-y-3 pr-2 pb-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />
+                <div key={i} className="h-20 rounded-md bg-muted animate-pulse" />
               ))}
             </div>
           )}
@@ -145,7 +145,7 @@ export function SourceArticlePicker({
           {!isLoading && (
             <div className="space-y-3 pr-2 pb-4">
               {filtered.length === 0 ? (
-                <div className="rounded-2xl border p-8 text-center text-sm text-muted-foreground">No articles found.</div>
+                <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">No articles found.</div>
               ) : null}
 
               {filtered.map((c) => {
@@ -158,12 +158,12 @@ export function SourceArticlePicker({
                     type="button"
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
-                      'relative w-full max-w-full overflow-hidden rounded-2xl border bg-background/60 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                      selected && 'border-violet-500/60 ring-2 ring-violet-500/30 bg-violet-500/5'
+                      'relative w-full max-w-full overflow-hidden rounded-md border bg-background/60 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+                      selected && 'border-primary/60 ring-2 ring-primary/30 bg-primary/10'
                     )}
                   >
                     <div className="flex w-full min-w-0 gap-4">
-                      <div className="h-16 w-28 overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 via-fuchsia-500/10 to-transparent">
+                      <div className="h-16 w-28 overflow-hidden rounded-md bg-gradient-to-br from-primary/25 via-fuchsia-500/10 to-transparent">
                         {(() => {
                           let meta: any = c?.metadata;
                           if (typeof meta === 'string') {
@@ -234,7 +234,7 @@ export function SourceArticlePicker({
                             <div
                               className={cn(
                                 'flex h-7 w-7 items-center justify-center rounded-full border',
-                                selected ? 'border-violet-500 bg-violet-600 text-white' : 'border-muted text-muted-foreground'
+                                selected ? 'border-primary bg-primary text-white' : 'border-muted text-muted-foreground'
                               )}
                               aria-hidden
                             >

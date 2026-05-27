@@ -292,13 +292,13 @@ export function GenerationPreview({
         )}
 
         {imageGenerationEnabled && imageStatus ? (
-          <div className="text-xs rounded border border-blue-500/30 bg-blue-500/10 p-2 text-blue-100">
+          <div className="text-xs rounded border border-primary/30 bg-primary/10 p-2 text-primary">
             Image generation: {imageStatus}
           </div>
         ) : null}
 
         {compliance?.findings?.length ? (
-          <div className="text-xs rounded border border-amber-500/30 bg-amber-500/10 p-2 text-amber-100">
+          <div className="text-xs rounded border border-warning/30 bg-warning/10 p-2 text-foreground">
             Potential compliance flags: {compliance.findings.join('; ')}
           </div>
         ) : null}
