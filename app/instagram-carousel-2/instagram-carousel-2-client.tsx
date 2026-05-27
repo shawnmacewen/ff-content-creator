@@ -1283,10 +1283,10 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                               <MoreHorizontal className="h-6 w-6 shrink-0" />
                             </div>
 
-                            <div className="relative">
+                            <div className="relative px-5">
                               <div
                                 ref={swipeRef}
-                                className="flex w-full max-w-full min-w-0 cursor-grab snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden scroll-smooth px-5 pb-2 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                className="flex w-full max-w-full min-w-0 cursor-grab snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-xl scroll-smooth active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                                 style={{ WebkitOverflowScrolling: 'touch' }}
                                 aria-label="Instagram carousel phone swipe preview"
                                 onScroll={(e) => {
@@ -1334,7 +1334,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                                 }}
                               >
                                 {ordered.map((s) => (
-                                  <div key={s.id} className="relative w-[86%] shrink-0 snap-center select-none overflow-hidden rounded-xl bg-zinc-900 pointer-events-none">
+                                  <div key={s.id} className="pointer-events-none relative w-full shrink-0 snap-center select-none overflow-hidden bg-zinc-900">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className="aspect-square w-full object-cover" draggable={false} />
                                   </div>
