@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type WheelEvent } from 'react';
 import {
   BadgeCheck,
   CalendarDays,
@@ -470,6 +470,24 @@ function ParallaxStorySection({
     });
   };
 
+  const releasePageScroll = (event: WheelEvent<HTMLDivElement>) => {
+    if (!compact) return;
+
+    const scroller = event.currentTarget;
+    const maxScrollerTop = scroller.scrollHeight - scroller.clientHeight;
+    const atTop = scroller.scrollTop <= 1;
+    const atBottom = scroller.scrollTop >= maxScrollerTop - 1;
+    const shouldRelease = (event.deltaY > 0 && atBottom) || (event.deltaY < 0 && atTop);
+
+    if (!shouldRelease) return;
+
+    const pageScroller = scroller.closest('main');
+    if (!pageScroller) return;
+
+    event.preventDefault();
+    pageScroller.scrollBy({ top: event.deltaY, behavior: 'auto' });
+  };
+
   const parallaxStyle = (transform: string, extra?: CSSProperties): CSSProperties | undefined => {
     if (reduceMotion) return extra;
     return {
@@ -596,6 +614,7 @@ function ParallaxStorySection({
             ref={scrollRef}
             className="h-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+            onWheel={releasePageScroll}
           >
             <div style={{ height: stories.length * chapterHeight }} className="relative">
               {stories.map((story, index) => {
