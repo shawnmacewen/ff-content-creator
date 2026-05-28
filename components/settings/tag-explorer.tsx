@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { ArrowDownAZ, Check, Copy, ExternalLink, FileText, Hash, ListFilter, Search, Tags, TriangleAlert } from 'lucide-react';
+import { ArrowDownAZ, ExternalLink, Hash, ListFilter, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,12 +27,6 @@ type TagMetric = {
   hasCaseVariants: boolean;
 };
 
-type TagSourceItem = {
-  id: string;
-  title: string;
-  filename: string;
-};
-
 type CleanupVariantGroup = {
   key: string;
   label: string;
@@ -50,11 +44,6 @@ type TagExplorerResponse = {
     singleUseCount: number;
     variantCount: number;
   };
-};
-
-type TagInUseResponse = {
-  tag: string;
-  sourceItems: TagSourceItem[];
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -114,7 +103,6 @@ export default function TagExplorer() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('count-desc');
   const [cleanupOpen, setCleanupOpen] = useState(false);
-  const [inUseTag, setInUseTag] = useState<TagMetric | null>(null);
   const { data, error, isLoading } = useSWR<TagExplorerResponse>('/api/source-content/tags', fetcher);
 
   const tags = useMemo(() => data?.tags || [], [data?.tags]);
@@ -207,13 +195,6 @@ export default function TagExplorer() {
           setCleanupOpen(false);
         }}
       />
-      <TagInUseDialog
-        tag={inUseTag}
-        open={Boolean(inUseTag)}
-        onOpenChange={(open) => {
-          if (!open) setInUseTag(null);
-        }}
-      />
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -297,18 +278,17 @@ export default function TagExplorer() {
         ) : null}
 
         <div className="mt-4 overflow-hidden rounded-md border border-border">
-          <div className="grid grid-cols-[1fr_72px_84px_84px] bg-secondary/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid-cols-[1fr_120px_160px_130px_130px]">
+          <div className="grid grid-cols-[1fr_72px_84px] bg-secondary/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid-cols-[1fr_120px_160px_130px]">
             <div>Tag</div>
             <div className="text-right">Uses</div>
             <div className="hidden md:block">Health</div>
-            <div className="text-right">In Use List</div>
             <div className="text-right">Open</div>
           </div>
           {isLoading ? (
             <div className="p-4 text-sm text-muted-foreground">Loading tag metrics...</div>
           ) : filteredTags.length ? (
             filteredTags.map((tag) => (
-              <div key={tag.normalized} className="grid grid-cols-[1fr_72px_84px_84px] items-center gap-3 border-t border-border px-3 py-3 text-sm md:grid-cols-[1fr_120px_160px_130px_130px]">
+              <div key={tag.normalized} className="grid grid-cols-[1fr_72px_84px] items-center gap-3 border-t border-border px-3 py-3 text-sm md:grid-cols-[1fr_120px_160px_130px]">
                 <div className="min-w-0">
                   <Badge variant="outline" className={cn('max-w-full truncate text-xs font-medium', tagLabelClass(tag.tag))}>
                     {tag.tag}
@@ -337,19 +317,6 @@ export default function TagExplorer() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Open in-use list for ${tag.tag}`}
-                    onClick={() => setInUseTag(tag)}
-                    className="px-2"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span className="sr-only">Open in-use list</span>
-                  </Button>
-                </div>
-                <div className="text-right">
                   <Button asChild variant="ghost" size="sm">
                     <Link href={`/source-content?tags=${encodeURIComponent(tag.tag)}`}>
                       View
@@ -365,104 +332,6 @@ export default function TagExplorer() {
         </div>
       </section>
     </div>
-  );
-}
-
-function TagInUseDialog({
-  tag,
-  open,
-  onOpenChange,
-}: {
-  tag: TagMetric | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const { data, error, isLoading } = useSWR<TagInUseResponse>(
-    open && tag ? `/api/source-content/tags/in-use?tag=${encodeURIComponent(tag.normalized)}` : null,
-    fetcher
-  );
-  const sourceItems = data?.sourceItems || [];
-  const copyText = sourceItems.map((item) => item.filename).join('\n');
-
-  async function copyFilenames() {
-    if (!copyText) return;
-    await navigator.clipboard.writeText(copyText);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[920px] overflow-hidden p-0">
-        <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <FileText className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <DialogTitle>In Use List</DialogTitle>
-              <DialogDescription className="mt-2 max-w-2xl leading-6">
-                {tag ? (
-                  <>
-                    <span className="font-medium text-foreground">{tag.tag}</span> appears in {tag.count.toLocaleString()} source content {tag.count === 1 ? 'item' : 'items'}.
-                  </>
-                ) : (
-                  'Source content using this tag.'
-                )}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="px-6 py-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold">Filenames from the source database</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Copy the full list for cleanup, review, or handoff notes.
-              </p>
-            </div>
-            <Button type="button" variant="outline" onClick={copyFilenames} disabled={!sourceItems.length} className="gap-2">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? 'Copied' : `Copy ${sourceItems.length ? sourceItems.length.toLocaleString() : ''}`.trim()}
-            </Button>
-          </div>
-
-          <div className="mt-4 max-h-[calc(100vh-17rem)] overflow-y-auto rounded-md border border-border">
-            {isLoading ? (
-              <div className="p-4 text-sm text-muted-foreground">
-                Loading filenames...
-              </div>
-            ) : error ? (
-              <div className="p-4 text-sm text-destructive">
-                Failed to load the in-use filename list.
-              </div>
-            ) : sourceItems.length ? (
-              <div className="divide-y divide-border">
-                {sourceItems.map((item, index) => (
-                  <div key={item.id} className="grid grid-cols-[48px_1fr] gap-3 px-4 py-3 text-sm">
-                    <div className="text-right text-xs font-semibold tabular-nums text-muted-foreground">
-                      {index + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{item.filename}</p>
-                      {item.title && item.title !== item.filename ? (
-                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.title}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 text-sm text-muted-foreground">
-                No source content items were returned for this tag.
-              </div>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 

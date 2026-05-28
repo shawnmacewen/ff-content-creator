@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProductUpdatesVisualStory } from '@/components/settings/product-updates';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import type { GeneratedContent } from '@/lib/types/content';
 
@@ -316,12 +315,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <ProductUpdatesVisualStory
-        compact
-        showNav={false}
-        className="-mx-4 -mt-5 rounded-none border-x-0 border-t-0 sm:-mx-6 lg:-mx-8"
-      />
-
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric, index) => (
           <Card key={metric.label} className="overflow-hidden rounded-lg border-border bg-card shadow-sm">

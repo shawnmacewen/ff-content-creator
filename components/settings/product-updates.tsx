@@ -785,30 +785,6 @@ function VisualLog({
   );
 }
 
-export function ProductUpdatesVisualStory({
-  className,
-  showNav = true,
-  compact = false,
-}: {
-  className?: string;
-  showNav?: boolean;
-  compact?: boolean;
-}) {
-  const [activeTab, setActiveTab] = useState<ProductUpdateTab>('visual-log');
-
-  return activeTab === 'change-log' ? (
-    <ChangeLog activeTab={activeTab} onTabChange={setActiveTab} />
-  ) : (
-    <VisualLog
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      className={className}
-      showNav={showNav}
-      compact={compact}
-    />
-  );
-}
-
 function UpdateStat({
   icon: Icon,
   value,
