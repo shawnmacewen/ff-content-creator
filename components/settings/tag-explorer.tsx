@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowDownAZ, Database, ExternalLink, Hash, ListFilter, RefreshCw, Search, Tags, TriangleAlert } from 'lucide-react';
+import { ArrowDownAZ, ChevronRight, Database, ExternalLink, Hash, ListFilter, RefreshCw, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -212,21 +212,21 @@ export default function TagExplorer() {
             <MetricCard icon={Tags} label="Unique tags" value={data?.summary?.uniqueTags ?? 0} detail="distinct normalized labels" />
             <MetricCard icon={Hash} label="Tag uses" value={data?.summary?.totalTagUses ?? 0} detail="total assignments" />
             <MetricCard icon={ListFilter} label="Tagged items" value={data?.summary?.taggedContentCount ?? 0} detail="content with at least one tag" />
-            <div
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               aria-label="Open cleanup check details"
               onClick={() => setCleanupOpen(true)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setCleanupOpen(true);
-                }
-              }}
-              className="rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <MetricCard icon={TriangleAlert} label="Cleanup checks" value={cleanupChecks} detail="single-use + similar groups" />
-            </div>
+              <MetricCard
+                icon={TriangleAlert}
+                label="Cleanup checks"
+                value={cleanupChecks}
+                detail="single-use + similar groups"
+                actionLabel="View details"
+                tone="warning"
+              />
+            </button>
           </div>
         </div>
       </section>
@@ -428,7 +428,7 @@ function CleanupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[1180px] overflow-hidden p-0">
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none overflow-hidden p-0 sm:max-w-[min(1180px,calc(100vw-2rem))]">
         <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300">
@@ -444,7 +444,7 @@ function CleanupDialog({
         </DialogHeader>
 
         <div className="max-h-[calc(100vh-10rem)] overflow-y-auto px-6 py-5">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <CleanupSummaryCard
               title="Single-use tags"
               count={singleUseTags.length}
@@ -565,13 +565,13 @@ function CleanupSummaryCard({
   onAction: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <div className="min-w-0 rounded-lg border border-border bg-background p-4">
+      <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+        <div className="min-w-0">
           <p className="text-2xl font-semibold tabular-nums">{count.toLocaleString()}</p>
           <h3 className="mt-1 text-sm font-semibold">{title}</h3>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={onAction} className="w-full justify-center sm:w-auto">
+        <Button type="button" variant="outline" size="sm" onClick={onAction} className="w-full justify-center whitespace-nowrap xl:w-auto">
           {actionLabel}
         </Button>
       </div>
@@ -580,17 +580,45 @@ function CleanupSummaryCard({
   );
 }
 
-function MetricCard({ icon: Icon, label, value, detail }: { icon: typeof Tags; label: string; value: number; detail: string }) {
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  actionLabel,
+  tone = 'default',
+}: {
+  icon: typeof Tags;
+  label: string;
+  value: number;
+  detail: string;
+  actionLabel?: string;
+  tone?: 'default' | 'warning';
+}) {
   return (
-    <div className="rounded-md border border-border bg-card p-4">
-      <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+    <div className={cn(
+      'h-full rounded-md border bg-card p-4',
+      tone === 'warning'
+        ? 'border-amber-300 bg-amber-50/70 ring-1 ring-amber-200 transition group-hover:border-amber-400 group-hover:bg-amber-50 dark:border-amber-500/35 dark:bg-amber-500/10 dark:ring-amber-500/20'
+        : 'border-border'
+    )}>
+      <div className="flex items-start gap-3">
+        <span className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+          tone === 'warning' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-primary/10 text-primary'
+        )}>
           <Icon className="h-4 w-4" />
         </span>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-lg font-semibold tabular-nums">{value.toLocaleString()}</p>
           <p className="text-xs font-medium text-foreground">{label}</p>
           <p className="text-xs text-muted-foreground">{detail}</p>
+          {actionLabel ? (
+            <span className="mt-3 inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white transition group-hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950">
+              {actionLabel}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
