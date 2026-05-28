@@ -448,7 +448,7 @@ function ParallaxStorySection({
   const [scrollTop, setScrollTop] = useState(0);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const chapterHeight = compact ? 560 : 720;
+  const chapterHeight = compact ? 520 : 720;
   const maxScroll = Math.max((stories.length - 1) * chapterHeight, 1);
   const progress = clamp(scrollTop / maxScroll, 0, 1);
   const activeIndex = clamp(Math.round(scrollTop / chapterHeight), 0, stories.length - 1);
@@ -482,7 +482,7 @@ function ParallaxStorySection({
     <section
       className={cn(
         'relative overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm',
-        compact ? 'h-[560px] min-h-[560px]' : 'h-[calc(100dvh-5.5rem)] min-h-[720px]',
+        compact ? 'h-[620px] min-h-[620px]' : 'h-[calc(100dvh-5.5rem)] min-h-[720px]',
         className
       )}
       onMouseMove={(event) => {
@@ -498,7 +498,9 @@ function ParallaxStorySection({
       <div
         className="pointer-events-none absolute inset-0"
         style={parallaxStyle(
-          `translate3d(${mouse.x * -20}px, ${-scrollTop * 0.05 + mouse.y * -20}px, 0) scale(1.06)`,
+          compact
+            ? `translate3d(${mouse.x * -10}px, ${mouse.y * -10}px, 0) scale(1.04)`
+            : `translate3d(${mouse.x * -20}px, ${-scrollTop * 0.05 + mouse.y * -20}px, 0) scale(1.06)`,
           {
             background:
               'radial-gradient(circle at 18% 20%, rgba(34,211,238,.28), transparent 28%), radial-gradient(circle at 78% 30%, rgba(217,70,239,.30), transparent 30%), radial-gradient(circle at 45% 78%, rgba(251,146,60,.18), transparent 30%), linear-gradient(135deg,#061a2e,#17162f 52%,#020817)',
@@ -507,15 +509,15 @@ function ParallaxStorySection({
       />
       <div
         className="pointer-events-none absolute -left-32 top-56 h-[520px] w-[520px] rounded-full border border-cyan-300/20"
-        style={parallaxStyle(`translateY(${-scrollTop * 0.22}px) rotate(${scrollTop * 0.04}deg)`)}
+        style={parallaxStyle(compact ? 'translateY(0) rotate(0deg)' : `translateY(${-scrollTop * 0.22}px) rotate(${scrollTop * 0.04}deg)`)}
       />
       <div
         className="pointer-events-none absolute -right-44 top-20 h-[680px] w-[680px] rounded-full border border-fuchsia-300/16"
-        style={parallaxStyle(`translateY(${scrollTop * 0.16}px) rotate(${-scrollTop * 0.035}deg)`)}
+        style={parallaxStyle(compact ? 'translateY(0) rotate(0deg)' : `translateY(${scrollTop * 0.16}px) rotate(${-scrollTop * 0.035}deg)`)}
       />
       <div
         className="pointer-events-none absolute bottom-[-18rem] left-[18%] h-[620px] w-[620px] rounded-full border border-orange-300/12"
-        style={parallaxStyle(`translate3d(${scrollTop * 0.08}px, ${-scrollTop * 0.18}px, 0) rotate(${scrollTop * 0.025}deg)`)}
+        style={parallaxStyle(compact ? 'translate3d(0, 0, 0) rotate(0deg)' : `translate3d(${scrollTop * 0.08}px, ${-scrollTop * 0.18}px, 0) rotate(${scrollTop * 0.025}deg)`)}
       />
 
       <div
@@ -600,14 +602,17 @@ function ParallaxStorySection({
                 const StoryIcon = story.icon;
                 const local = clamp((scrollTop - index * chapterHeight) / chapterHeight, -1, 1);
                 const distance = Math.abs(local);
-                const visibleOpacity = clamp(1 - distance * 0.45, 0.18, 1);
+                const visibleOpacity = compact
+                  ? clamp(1 - distance * 3.4, 0, 1)
+                  : clamp(1 - distance * 0.45, 0.18, 1);
+                const articleOffset = compact ? local * 165 : local * 90;
 
                 return (
                   <section
                     key={story.title}
                     className={cn(
                       'sticky top-0 flex snap-start items-center justify-center px-4 sm:px-6',
-                      compact ? 'h-[560px] py-6 lg:px-6' : 'h-[720px] py-10 lg:px-8'
+                      compact ? 'h-[620px] py-7 lg:px-6' : 'h-[720px] py-10 lg:px-8'
                     )}
                   >
                     <div
@@ -639,7 +644,7 @@ function ParallaxStorySection({
                         'relative w-full border border-white/15 bg-slate-900/78 shadow-2xl backdrop-blur-2xl',
                         compact ? 'max-w-2xl rounded-3xl p-5 md:p-6' : 'max-w-3xl rounded-[30px] p-6 md:p-9'
                       )}
-                      style={parallaxStyle(`translateY(${local * 90}px) scale(${1 - distance * 0.08})`, { opacity: visibleOpacity })}
+                      style={parallaxStyle(`translateY(${articleOffset}px) scale(${1 - distance * 0.08})`, { opacity: visibleOpacity })}
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">{story.kicker}</Badge>
