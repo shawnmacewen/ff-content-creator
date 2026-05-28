@@ -3,30 +3,41 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { ContentStatus, ContentType, ToneType } from '@/lib/types/content';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
+  try {
+    const searchParams = request.nextUrl.searchParams;
 
-  const q = searchParams.get('q') || '';
-  const type = searchParams.get('type') || undefined;
-  const status = searchParams.get('status') || undefined;
+    const q = searchParams.get('q') || '';
+    const type = searchParams.get('type') || undefined;
+    const status = searchParams.get('status') || undefined;
 
-  const supabase = getSupabaseServerClient();
+    const supabase = getSupabaseServerClient();
 
-  let query = supabase
-    .from('generated_content')
-    .select('*')
-    .order('updated_at', { ascending: false });
+    let query = supabase
+      .from('generated_content')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(200);
 
-  if (q) query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`);
-  if (type && type !== 'all') query = query.eq('type', type);
-  if (status && status !== 'all') query = query.eq('status', status);
+    if (q) query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`);
+    if (type && type !== 'all') query = query.eq('type', type);
+    if (status && status !== 'all') query = query.eq('status', status);
 
-  const { data, error } = await query;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    const { data, error } = await (async () => {
+      try {
+        return await query.abortSignal(controller.signal);
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ data: [], fallback: true, fallbackReason: error.message });
+
+    return NextResponse.json({ data: data || [] });
+  } catch (error: any) {
+    return NextResponse.json({ data: [], fallback: true, fallbackReason: error?.message || 'database-unavailable' });
   }
-
-  return NextResponse.json({ data: data || [] });
 }
 
 export async function POST(req: Request) {
