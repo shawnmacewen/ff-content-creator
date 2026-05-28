@@ -172,14 +172,21 @@ export default function TagExplorer() {
             <MetricCard icon={Tags} label="Unique tags" value={data?.summary?.uniqueTags ?? 0} detail="distinct normalized labels" />
             <MetricCard icon={Hash} label="Tag uses" value={data?.summary?.totalTagUses ?? 0} detail="total assignments" />
             <MetricCard icon={ListFilter} label="Tagged items" value={data?.summary?.taggedContentCount ?? 0} detail="content with at least one tag" />
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               aria-label="Open cleanup check details"
               onClick={() => setCleanupOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setCleanupOpen(true);
+                }
+              }}
               className="rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <MetricCard icon={TriangleAlert} label="Cleanup checks" value={cleanupChecks} detail="single-use + similar groups" />
-            </button>
+            </div>
           </div>
         </div>
       </section>
