@@ -323,7 +323,7 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold">5 key scenarios for the editorial team</h2>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href="/generate">Open Generator</Link>
+              <Link href="/generate" prefetch={false}>Open Generator</Link>
             </Button>
           </div>
           <div className="grid gap-3">
@@ -331,6 +331,7 @@ export default function DashboardPage() {
               <Link
                 key={scenario.title}
                 href={scenario.href}
+                prefetch={false}
                 className={`group relative grid gap-4 overflow-hidden rounded-md border bg-background p-4 transition-colors hover:bg-accent/35 lg:grid-cols-[230px_1fr_220px] ${scenario.accent.border}`}
               >
                 <span className={`absolute inset-y-0 left-0 w-1 ${scenario.accent.bar}`} />

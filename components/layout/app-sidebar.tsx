@@ -88,7 +88,7 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-5 py-5">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" prefetch={false} className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
@@ -118,7 +118,7 @@ export function AppSidebar() {
                         'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
                     )}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch={false}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -141,7 +141,7 @@ export function AppSidebar() {
                     asChild
                     className="h-9 rounded-md text-sidebar-foreground/72 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch={false}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -174,7 +174,7 @@ export function AppSidebar() {
                   'bg-sidebar-accent text-sidebar-accent-foreground'
               )}
             >
-              <Link href="/settings">
+              <Link href="/settings" prefetch={false}>
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </Link>
