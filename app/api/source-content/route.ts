@@ -238,7 +238,10 @@ export async function GET(request: NextRequest) {
         dbQuery.abortSignal(signal).range(0, 199)
       ));
       if (candidateErr) {
-        error = candidateErr;
+        return fallbackSourceContentResponse({
+          ...fallbackArgs,
+          reason: candidateErr.message || 'database-error',
+        });
       } else {
         const scored = ((candidateRows || []) as any[])
           .map((row) => {
@@ -260,7 +263,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fallbackSourceContentResponse({
+        ...fallbackArgs,
+        reason: error.message || 'database-error',
+      });
     }
 
     const rows = data || [];
