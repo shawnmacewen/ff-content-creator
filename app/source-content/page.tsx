@@ -18,6 +18,7 @@ interface ApiResponse {
   page: number;
   pageSize: number;
   totalPages: number;
+  hasNextPage?: boolean;
   filters: {
     availableTags: string[];
     availableTypes: string[];
@@ -106,6 +107,7 @@ export default function SourceContentPage() {
 
   const { data, error, isLoading } = useSWR<ApiResponse>(apiUrl(), fetcher, {
     keepPreviousData: true,
+    shouldRetryOnError: false,
   });
   const { data: filterData } = useSWR<FilterResponse>('/api/source-content/filters', fetcher, {
     revalidateOnFocus: false,
@@ -175,7 +177,8 @@ export default function SourceContentPage() {
 
   const handleNextPage = () => {
     if (!data) return;
-    setPage((p) => Math.min(data.totalPages || 1, p + 1));
+    if (!data.hasNextPage && page >= (data.totalPages || 1)) return;
+    setPage((p) => p + 1);
   };
 
   return (
@@ -287,7 +290,7 @@ export default function SourceContentPage() {
         <>
           <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
             <span>
-              Showing {contentItems.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
+              Showing {contentItems.length} results (page {data.page}{data.hasNextPage ? '+' : ''})
             </span>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -303,7 +306,7 @@ export default function SourceContentPage() {
                 <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (data.totalPages || 1)}>
+                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!data.hasNextPage && page >= (data.totalPages || 1)}>
                   Next
                 </Button>
               </div>

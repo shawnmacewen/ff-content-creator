@@ -81,6 +81,47 @@ function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: 
   return { score, coreMatches };
 }
 
+function safeMetadata(value: any) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function mapSourceContentRow(row: any) {
+  const metadata = safeMetadata(row.metadata);
+  const extraPropertiesSelected = safeMetadata(metadata.extraPropertiesSelected);
+
+  return {
+    id: row.id,
+    title: decodeHtmlEntities(row.title || ''),
+    body: row.body ? normalizeBody(row.body) : '',
+    excerpt: normalizeBody(metadata.excerpt || row.body || '').slice(0, 220),
+    type: row.content_designation ?? row.type ?? null,
+    tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
+    publishedAt: row.published_at || null,
+    author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
+    url: metadata.url || null,
+    imageUrl: metadata.imageUrl || null,
+    sourceSystem: row.source_system || null,
+    publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
+    externalId: row.external_id || null,
+    metadata: {
+      ...metadata,
+      contentDesignation: row.content_designation ?? metadata.contentDesignation ?? row.type ?? null,
+      categories: row.categories ?? metadata.categories ?? [],
+      subCategories: row.sub_categories ?? metadata.subCategories ?? [],
+      extraPropertiesSelected: {
+        ...extraPropertiesSelected,
+        BasContentId: row.bas_content_id ?? extraPropertiesSelected.BasContentId ?? null,
+        BasContentFilename: row.bas_content_filename ?? extraPropertiesSelected.BasContentFilename ?? null,
+        Format: row.content_format ?? extraPropertiesSelected.Format ?? null,
+        FinraLetterUrl: row.finra_letter_url ?? extraPropertiesSelected.FinraLetterUrl ?? null,
+        FinraApproved: row.finra_approved ?? extraPropertiesSelected.FinraApproved ?? null,
+        APContentType: row.ap_content_type ?? extraPropertiesSelected.APContentType ?? null,
+        Evergreen: row.evergreen ?? extraPropertiesSelected.Evergreen ?? null,
+      },
+    },
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -94,14 +135,14 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10) || 10));
 
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    const to = from + pageSize;
 
     const supabase = getSupabaseServerClient();
     const listColumns = [
       'id',
       'title',
-      'body',
       'metadata',
+      'type',
       'content_designation',
       'tags',
       'published_at',
@@ -122,7 +163,7 @@ export async function GET(request: NextRequest) {
 
     let dbQuery = supabase
       .from('source_content')
-      .select(listColumns, { count: 'exact' })
+      .select(query ? `${listColumns},body` : listColumns)
       .order('published_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
@@ -137,7 +178,7 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const { tokens, expanded } = parseIntentTokens(query);
-      const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 999);
+      const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 199);
       if (candidateErr) {
         error = candidateErr;
       } else {
@@ -156,7 +197,7 @@ export async function GET(request: NextRequest) {
     } else {
       const normal = await dbQuery.range(from, to);
       data = normal.data as any[] | null;
-      count = normal.count;
+      count = null;
       error = normal.error;
     }
 
@@ -164,63 +205,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const mapped = (data || []).map((row: any) => ({
-      id: row.id,
-      title: decodeHtmlEntities(row.title || ''),
-      body: normalizeBody(row.body || ''),
-      excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
-      type: row.content_designation ?? null,
-      tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
-      publishedAt: row.published_at || null,
-      author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
-      url: row.metadata?.url || null,
-      imageUrl: row.metadata?.imageUrl || null,
-      sourceSystem: row.source_system || null,
-      publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
-      externalId: row.external_id || null,
-      metadata: {
-        ...(row.metadata || {}),
-        contentDesignation: row.content_designation ?? row.metadata?.contentDesignation ?? null,
-        categories: row.categories ?? row.metadata?.categories ?? [],
-        subCategories: row.sub_categories ?? row.metadata?.subCategories ?? [],
-        extraPropertiesSelected: {
-          BasContentId: row.bas_content_id ?? row.metadata?.extraPropertiesSelected?.BasContentId ?? null,
-          BasContentFilename: row.bas_content_filename ?? row.metadata?.extraPropertiesSelected?.BasContentFilename ?? null,
-          Format: row.content_format ?? row.metadata?.extraPropertiesSelected?.Format ?? null,
-          FinraLetterUrl: row.finra_letter_url ?? row.metadata?.extraPropertiesSelected?.FinraLetterUrl ?? null,
-          FinraApproved: row.finra_approved ?? row.metadata?.extraPropertiesSelected?.FinraApproved ?? null,
-          APContentType: row.ap_content_type ?? row.metadata?.extraPropertiesSelected?.APContentType ?? null,
-          Evergreen: row.evergreen ?? row.metadata?.extraPropertiesSelected?.Evergreen ?? null,
-        },
-      },
-    }));
-
-    const [finraResult, lastSyncResult] = await Promise.all([
-      supabase
-        .from('source_content')
-        .select('id', { count: 'exact', head: true })
-        .eq('finra_approved', true),
-      supabase
-        .from('source_content')
-        .select('updated_at')
-        .not('updated_at', 'is', null)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
+    const rows = data || [];
+    const hasNextPage = rows.length > pageSize;
+    const pageRows = rows.slice(0, pageSize);
+    const mapped = pageRows.map(mapSourceContentRow);
+    const total = count ?? (from + mapped.length + (hasNextPage ? 1 : 0));
 
     return NextResponse.json({
       data: mapped,
-      total: count || 0,
+      total,
       page,
       pageSize,
-      totalPages: Math.ceil((count || 0) / pageSize),
+      totalPages: hasNextPage ? page + 1 : page,
+      hasNextPage,
       filters: { availableTags: [], availableTypes: [], availableAuthors: [], availablePublishers: [] },
       meta: {
         sourceCounts: {},
         publisherCounts: {},
-        finraReviewedCount: finraResult.count || 0,
-        lastSyncedAt: (lastSyncResult.data as any)?.updated_at || null,
+        finraReviewedCount: 0,
+        lastSyncedAt: null,
       },
     });
   } catch (error: any) {
