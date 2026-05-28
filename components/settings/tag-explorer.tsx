@@ -25,7 +25,6 @@ type TagMetric = {
   count: number;
   variants: string[];
   hasCaseVariants: boolean;
-  sourceItems: TagSourceItem[];
 };
 
 type TagSourceItem = {
@@ -51,6 +50,11 @@ type TagExplorerResponse = {
     singleUseCount: number;
     variantCount: number;
   };
+};
+
+type TagInUseResponse = {
+  tag: string;
+  sourceItems: TagSourceItem[];
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -374,7 +378,11 @@ function TagInUseDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const sourceItems = tag?.sourceItems || [];
+  const { data, error, isLoading } = useSWR<TagInUseResponse>(
+    open && tag ? `/api/source-content/tags/in-use?tag=${encodeURIComponent(tag.normalized)}` : null,
+    fetcher
+  );
+  const sourceItems = data?.sourceItems || [];
   const copyText = sourceItems.map((item) => item.filename).join('\n');
 
   async function copyFilenames() {
@@ -397,7 +405,7 @@ function TagInUseDialog({
               <DialogDescription className="mt-2 max-w-2xl leading-6">
                 {tag ? (
                   <>
-                    <span className="font-medium text-foreground">{tag.tag}</span> appears in {sourceItems.length.toLocaleString()} source content {sourceItems.length === 1 ? 'item' : 'items'}.
+                    <span className="font-medium text-foreground">{tag.tag}</span> appears in {tag.count.toLocaleString()} source content {tag.count === 1 ? 'item' : 'items'}.
                   </>
                 ) : (
                   'Source content using this tag.'
@@ -417,12 +425,20 @@ function TagInUseDialog({
             </div>
             <Button type="button" variant="outline" onClick={copyFilenames} disabled={!sourceItems.length} className="gap-2">
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? 'Copied' : `Copy ${sourceItems.length.toLocaleString()}`}
+              {copied ? 'Copied' : `Copy ${sourceItems.length ? sourceItems.length.toLocaleString() : ''}`.trim()}
             </Button>
           </div>
 
           <div className="mt-4 max-h-[calc(100vh-17rem)] overflow-y-auto rounded-md border border-border">
-            {sourceItems.length ? (
+            {isLoading ? (
+              <div className="p-4 text-sm text-muted-foreground">
+                Loading filenames...
+              </div>
+            ) : error ? (
+              <div className="p-4 text-sm text-destructive">
+                Failed to load the in-use filename list.
+              </div>
+            ) : sourceItems.length ? (
               <div className="divide-y divide-border">
                 {sourceItems.map((item, index) => (
                   <div key={item.id} className="grid grid-cols-[48px_1fr] gap-3 px-4 py-3 text-sm">

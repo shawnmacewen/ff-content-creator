@@ -21,27 +21,11 @@ function preferredDisplayTag(variants: Map<string, number>) {
   return Array.from(variants.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || 'unknown';
 }
 
-function sourceFilenameForRow(row: any) {
-  return decodeHtmlEntities(String(
-    row.bas_content_filename ||
-    row.metadata?.extraPropertiesSelected?.BasContentFilename ||
-    row.metadata?.raw?.files?.title ||
-    row.metadata?.raw?.files?.[0]?.title ||
-    row.title ||
-    row.id ||
-    'Untitled source'
-  )).trim();
-}
-
 export async function GET() {
   const supabase = getSupabaseServerClient();
   const pageSize = 1000;
   let page = 0;
-  const tagCounts = new Map<string, {
-    count: number;
-    variants: Map<string, number>;
-    sources: Map<string, { id: string; title: string; filename: string }>;
-  }>();
+  const tagCounts = new Map<string, { count: number; variants: Map<string, number> }>();
   let taggedContentCount = 0;
 
   while (true) {
@@ -49,7 +33,7 @@ export async function GET() {
     const to = from + pageSize - 1;
     const { data, error } = await supabase
       .from('source_content')
-      .select('id,title,bas_content_filename,metadata,tags')
+      .select('id,tags')
       .range(from, to);
 
     if (error) {
@@ -60,11 +44,6 @@ export async function GET() {
     for (const row of rows) {
       const tags = Array.isArray(row.tags) ? row.tags : [];
       const uniqueTagsForRow = new Set<string>();
-      const sourceItem = {
-        id: row.id,
-        title: decodeHtmlEntities(String(row.title || 'Untitled source')).trim(),
-        filename: sourceFilenameForRow(row),
-      };
 
       for (const rawTag of tags) {
         const display = decodeHtmlEntities(String(rawTag || '')).trim();
@@ -72,10 +51,9 @@ export async function GET() {
         if (!normalized) continue;
 
         uniqueTagsForRow.add(normalized);
-        const current = tagCounts.get(normalized) || { count: 0, variants: new Map<string, number>(), sources: new Map() };
+        const current = tagCounts.get(normalized) || { count: 0, variants: new Map<string, number>() };
         current.count += 1;
         current.variants.set(display, (current.variants.get(display) || 0) + 1);
-        current.sources.set(sourceItem.id, sourceItem);
         tagCounts.set(normalized, current);
       }
 
@@ -95,8 +73,6 @@ export async function GET() {
         count: entry.count,
         variants,
         hasCaseVariants: variants.length > 1,
-        sourceItems: Array.from(entry.sources.values())
-          .sort((a, b) => a.filename.localeCompare(b.filename) || a.title.localeCompare(b.title)),
       };
     })
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
