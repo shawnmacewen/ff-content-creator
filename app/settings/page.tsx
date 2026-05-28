@@ -134,6 +134,15 @@ export default function SettingsPage() {
   });
   const logs = data?.logs || [];
 
+  const refreshSourceStatsCache = async () => {
+    const response = await fetch('/api/source-content/stats', { method: 'POST' });
+    const json = await response.json();
+    if (!response.ok || !json?.ok) {
+      throw new Error(json?.error || 'Source stats refresh failed');
+    }
+    return json;
+  };
+
   const runSync = async () => {
     setRunning(true);
     setRunResult(null);
@@ -149,7 +158,8 @@ export default function SettingsPage() {
         }),
       });
       const json = await response.json();
-      setRunResult(json);
+      const statsRefresh = response.ok && json?.ok ? await refreshSourceStatsCache() : null;
+      setRunResult({ ...json, statsRefresh });
       mutate();
     } finally {
       setRunning(false);
@@ -209,7 +219,8 @@ export default function SettingsPage() {
         batches,
       };
 
-      setRunResult(result);
+      const statsRefresh = await refreshSourceStatsCache();
+      setRunResult({ ...result, statsRefresh });
       mutate();
 
       let finalBroadridgeCount: number | null = null;
@@ -222,7 +233,7 @@ export default function SettingsPage() {
       }
 
       toast.success(
-        `Batched sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es)${finalBroadridgeCount !== null ? `. Final Broadridge count: ${finalBroadridgeCount}.` : ''}`
+        `Batched sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es)${finalBroadridgeCount !== null ? `. Final Broadridge count: ${finalBroadridgeCount}.` : ''} Source stats refreshed.`
       );
     } catch (error: any) {
       toast.error(error?.message || 'Batched sync failed');
@@ -280,11 +291,12 @@ export default function SettingsPage() {
         batches,
       };
 
-      setRunResult(result);
+      const statsRefresh = await refreshSourceStatsCache();
+      setRunResult({ ...result, statsRefresh });
       mutate();
 
       toast.success(
-        `Sync and Update complete: ${result.totals.processed} processed (${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
+        `Sync and Update complete: ${result.totals.processed} processed (${result.totals.updated} updated) across ${result.batchesRun} batch(es). Source stats refreshed.`
       );
     } catch (error: any) {
       toast.error(error?.message || 'Sync and Update failed');
@@ -297,11 +309,7 @@ export default function SettingsPage() {
     setRefreshingStats(true);
     setRunResult(null);
     try {
-      const response = await fetch('/api/source-content/stats', { method: 'POST' });
-      const json = await response.json();
-      if (!response.ok || !json?.ok) {
-        throw new Error(json?.error || 'Source stats refresh failed');
-      }
+      const json = await refreshSourceStatsCache();
       setRunResult(json);
       toast.success(`Source stats refreshed from ${Number(json.scannedRows || 0).toLocaleString()} rows.`);
     } catch (error: any) {
