@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import {
   BadgeCheck,
   CalendarDays,
@@ -38,40 +38,8 @@ type ReleaseStory = {
   panel: string;
 };
 
-type ScrollRoot = HTMLElement | Window;
-
-function isWindowRoot(root: ScrollRoot): root is Window {
-  return root === window;
-}
-
-function getScrollRoot(section: HTMLElement | null): ScrollRoot {
-  let node = section?.parentElement || null;
-
-  while (node) {
-    const style = window.getComputedStyle(node);
-    const overflowY = `${style.overflowY} ${style.overflow}`;
-    if (/(auto|scroll|overlay)/.test(overflowY) && node.scrollHeight > node.clientHeight) {
-      return node;
-    }
-    node = node.parentElement;
-  }
-
-  return window;
-}
-
-function getScrollViewport(root: ScrollRoot) {
-  if (isWindowRoot(root)) {
-    return {
-      top: 0,
-      height: window.innerHeight,
-    };
-  }
-
-  const rect = root.getBoundingClientRect();
-  return {
-    top: rect.top,
-    height: root.clientHeight,
-  };
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
 }
 
 const changelogGroups = [
@@ -470,11 +438,14 @@ function ParallaxStorySection({
   activeTab: ProductUpdateTab;
   onTabChange: (tab: ProductUpdateTab) => void;
 }) {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const storyRefs = useRef<Array<HTMLElement | null>>([]);
-  const [progress, setProgress] = useState(0);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const activeIndex = Math.min(stories.length - 1, Math.floor(progress * stories.length));
+  const chapterHeight = 720;
+  const maxScroll = Math.max((stories.length - 1) * chapterHeight, 1);
+  const progress = clamp(scrollTop / maxScroll, 0, 1);
+  const activeIndex = clamp(Math.round(scrollTop / chapterHeight), 0, stories.length - 1);
   const activeStory = stories[activeIndex] || stories[0]!;
   const Icon = activeStory.icon;
 
@@ -486,177 +457,100 @@ function ParallaxStorySection({
     return () => media.removeEventListener('change', updateMotion);
   }, []);
 
-  useEffect(() => {
-    let frame = 0;
-    const root = getScrollRoot(sectionRef.current);
-
-    const update = () => {
-      const section = sectionRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const viewport = getScrollViewport(root);
-      const top = rect.top - viewport.top;
-      const scrollable = Math.max(rect.height - viewport.height, 1);
-      const next = Math.min(Math.max(-top / scrollable, 0), 0.999);
-      setProgress(next);
-    };
-
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(update);
-    };
-
-    update();
-    root.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      cancelAnimationFrame(frame);
-      root.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
   const scrollToStory = (index: number) => {
-    storyRefs.current[index]?.scrollIntoView({
-      block: 'center',
+    scrollRef.current?.scrollTo({
+      top: index * chapterHeight,
       behavior: reduceMotion ? 'auto' : 'smooth',
     });
   };
 
-  const layerStyle = (x: number, y: number, rotate = 0, scale = 1, baseTransform = '') => {
-    if (reduceMotion) return undefined;
+  const parallaxStyle = (transform: string, extra?: CSSProperties): CSSProperties | undefined => {
+    if (reduceMotion) return extra;
     return {
-      transform: `${baseTransform} translate3d(${progress * x}px, ${progress * y}px, 0) rotate(${progress * rotate}deg) scale(${scale + progress * 0.08})`,
+      ...extra,
+      transform,
     };
   };
-
-  const tileStyle = (x: number, y: number, rotate = 0, scale = 1, baseTransform = '') => {
-    if (reduceMotion) return undefined;
-    const float = Math.sin(progress * Math.PI);
-    return {
-      transform: `${baseTransform} translate3d(${progress * x}px, ${progress * y + float * 52}px, ${float * 90}px) rotate(${progress * rotate}deg) scale(${scale + float * 0.18})`,
-    };
-  };
-
-  const chapterProgress = useMemo(() => {
-    const segmentStart = activeIndex / stories.length;
-    const segmentSize = 1 / stories.length;
-    return Math.min(Math.max((progress - segmentStart) / segmentSize, 0), 1);
-  }, [activeIndex, progress, stories.length]);
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden rounded-lg border border-border bg-slate-950 text-white shadow-sm">
-      <div className="pointer-events-none sticky top-0 z-0 -mb-[calc(100dvh-1rem)] h-[calc(100dvh-1rem)] min-h-[560px] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(168,85,247,0.28),transparent_30%),linear-gradient(180deg,#08111f_0%,#0f172a_45%,#020617_100%)] transition-colors duration-500" />
-        <div
-          className="absolute -left-32 top-[-18%] h-[68%] w-[72%] rounded-[6rem] opacity-35 blur-3xl"
-          style={{
-            ...layerStyle(110, 95, -7, 1),
-            background: 'linear-gradient(135deg, rgba(6,182,212,0.95), rgba(59,130,246,0.72) 46%, rgba(217,70,239,0.58))',
-          }}
-        />
-        <div
-          className="absolute right-[-20%] top-[10%] h-[72%] w-[70%] rounded-[7rem] opacity-30 blur-3xl"
-          style={{
-            ...layerStyle(-150, 120, 9, 1),
-            background: 'linear-gradient(145deg, rgba(168,85,247,0.92), rgba(236,72,153,0.74) 52%, rgba(251,146,60,0.6))',
-          }}
-        />
-        <div
-          className="absolute bottom-[-28%] left-[16%] h-[60%] w-[76%] rounded-[6rem] opacity-24 blur-3xl"
-          style={{
-            ...layerStyle(90, -170, 6, 1),
-            background: 'linear-gradient(115deg, rgba(20,184,166,0.72), rgba(14,165,233,0.68) 36%, rgba(249,115,22,0.54) 100%)',
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.16] mix-blend-screen"
-          style={{
-            ...layerStyle(-60, 40, 4, 1),
+    <section
+      className="relative h-[calc(100dvh-5.5rem)] min-h-[720px] overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm"
+      onMouseMove={(event) => {
+        if (reduceMotion) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        setMouse({
+          x: (event.clientX - rect.left) / rect.width - 0.5,
+          y: (event.clientY - rect.top) / rect.height - 0.5,
+        });
+      }}
+      onMouseLeave={() => setMouse({ x: 0, y: 0 })}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={parallaxStyle(
+          `translate3d(${mouse.x * -20}px, ${-scrollTop * 0.05 + mouse.y * -20}px, 0) scale(1.06)`,
+          {
             background:
-              'linear-gradient(120deg, transparent 8%, rgba(34,211,238,0.55) 20%, transparent 32%, rgba(217,70,239,0.45) 48%, transparent 61%, rgba(251,146,60,0.42) 76%, transparent 88%)',
-          }}
-        />
-        <div className={`absolute inset-x-0 top-0 h-72 bg-gradient-to-r ${activeStory.accent} opacity-25 blur-3xl transition-all duration-500`} style={layerStyle(80, -70, 4, 1)} />
-        <div className="absolute left-1/2 top-[-14rem] h-[980px] w-[980px] rounded-full border border-white/10 opacity-45" style={layerStyle(-120, 120, -8, 1, 'translateX(-50%)')} />
-        <div className="absolute -right-28 top-40 h-80 w-80 rounded-full border border-cyan-300/20" style={layerStyle(-210, 130, 10, 1)} />
-        <div className="absolute bottom-[-14rem] left-[-10rem] h-[520px] w-[520px] rounded-full border border-violet-300/15" style={layerStyle(140, -150, -12, 1)} />
+              'radial-gradient(circle at 18% 20%, rgba(34,211,238,.28), transparent 28%), radial-gradient(circle at 78% 30%, rgba(217,70,239,.30), transparent 30%), radial-gradient(circle at 45% 78%, rgba(251,146,60,.18), transparent 30%), linear-gradient(135deg,#061a2e,#17162f 52%,#020817)',
+          }
+        )}
+      />
+      <div
+        className="pointer-events-none absolute -left-32 top-56 h-[520px] w-[520px] rounded-full border border-cyan-300/20"
+        style={parallaxStyle(`translateY(${-scrollTop * 0.22}px) rotate(${scrollTop * 0.04}deg)`)}
+      />
+      <div
+        className="pointer-events-none absolute -right-44 top-20 h-[680px] w-[680px] rounded-full border border-fuchsia-300/16"
+        style={parallaxStyle(`translateY(${scrollTop * 0.16}px) rotate(${-scrollTop * 0.035}deg)`)}
+      />
+      <div
+        className="pointer-events-none absolute bottom-[-18rem] left-[18%] h-[620px] w-[620px] rounded-full border border-orange-300/12"
+        style={parallaxStyle(`translate3d(${scrollTop * 0.08}px, ${-scrollTop * 0.18}px, 0) rotate(${scrollTop * 0.025}deg)`)}
+      />
 
-        <div className="absolute inset-y-0 right-0 hidden w-full [perspective:1400px] lg:block">
-          <div className="relative h-full">
-            <div className="absolute left-[8%] top-[10%] h-64 w-48 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-95 shadow-2xl backdrop-blur-xl [transform-style:preserve-3d] xl:h-72 xl:w-56" style={tileStyle(360, 260, -30, 0.95, 'rotate(-13deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-300 p-4">
-                <DatabaseZap className="h-8 w-8 text-white" />
-                <div className="mt-20 text-lg font-semibold xl:mt-24 xl:text-xl">Source intelligence</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Richer source context powers review and generation.</div>
-              </div>
-            </div>
-
-            <div className="absolute left-[48%] top-[24%] h-72 w-56 rounded-3xl border border-white/25 bg-white/18 p-3 opacity-90 shadow-2xl backdrop-blur-xl xl:h-[20rem] xl:w-64" style={tileStyle(-300, -310, 26, 1.02, 'rotate(5deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400 p-4">
-                <WandSparkles className="h-8 w-8 text-white" />
-                <div className="mt-28 text-lg font-semibold xl:mt-32 xl:text-xl">Generation flow</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Outputs show progress, counts, and context.</div>
-              </div>
-            </div>
-
-            <div className="absolute right-[3%] top-[52%] h-56 w-48 rounded-3xl border border-white/20 bg-white/15 p-3 opacity-88 shadow-2xl backdrop-blur-xl xl:h-60 xl:w-52" style={tileStyle(-420, -150, 38, 0.98, 'rotate(14deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-600 to-cyan-400 p-4">
-                <Images className="h-8 w-8 text-white" />
-                <div className="mt-16 text-lg font-semibold xl:mt-20">Visual preview</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Carousel work is reviewed in a social frame.</div>
-              </div>
-            </div>
-
-            <div className="absolute right-[24%] top-[8%] h-48 w-44 rounded-3xl border border-orange-200/20 bg-white/12 p-3 opacity-80 shadow-2xl backdrop-blur-xl xl:h-56 xl:w-52" style={tileStyle(-220, 360, 32, 0.92, 'rotate(18deg)')}>
-              <div className="h-full rounded-2xl bg-gradient-to-br from-orange-400 via-pink-500 to-violet-600 p-4">
-                <PanelTop className="h-8 w-8 text-white" />
-                <div className="mt-14 text-lg font-semibold xl:mt-20">Design system</div>
-                <div className="mt-2 text-xs leading-5 text-white/75">Shared patterns make new screens feel connected.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
-        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:self-start lg:overflow-y-auto lg:pb-2">
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative z-10 grid h-full grid-cols-1 gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[430px_1fr] lg:px-7">
+        <aside className="hidden self-start overflow-hidden rounded-[28px] border border-white/15 bg-white/[0.08] p-5 shadow-2xl backdrop-blur-2xl lg:block">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Product Updates</Badge>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-white/65">{activeStory.period}</span>
-                </div>
-                <h3 className="mt-2 text-lg font-semibold leading-tight text-white sm:text-xl">Visual release story</h3>
+                <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Product Updates</Badge>
+                <h3 className="mt-4 text-3xl font-semibold leading-tight text-white">Visual release story</h3>
+                <p className="mt-3 text-sm leading-6 text-white/65">
+                  Scroll the chapters to review the completed product work as a visual release narrative.
+                </p>
               </div>
-              <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" />
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              <UpdateStat icon={GitCommit} value="30" label="recent commits reviewed" tone="dark" />
-              <UpdateStat icon={BadgeCheck} value="5" label="release groups" tone="dark" />
-              <UpdateStat icon={CalendarDays} value="Weekly" label="summary cadence" tone="dark" />
+            <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" />
+
+            <div className="grid gap-2">
+              <UpdateStat icon={GitCommit} value="533" label="GitHub commits reviewed" tone="dark" />
+              <UpdateStat icon={BadgeCheck} value={String(changelogGroups.length)} label="feature groups" tone="dark" />
+              <UpdateStat icon={CalendarDays} value="Daily" label="release dates" tone="dark" />
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/12 bg-black/25 p-4">
+            <div
+              className="mt-1 rounded-2xl border border-white/12 bg-slate-950/35 p-4 transition-transform duration-300"
+              style={parallaxStyle(`translateY(${-activeIndex * 8}px) scale(${1 + activeIndex * 0.015})`)}
+            >
               <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${activeStory.accent}`}>
                 <Icon className="h-7 w-7" />
               </div>
               <div className="text-sm font-semibold text-cyan-200">{activeStory.kicker}</div>
-              <div className="mt-1 text-xl font-semibold leading-tight">{activeStory.summary}</div>
+              <div className="mt-1 text-xl font-semibold leading-tight text-white">{activeStory.summary}</div>
+              <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-white/50">{activeStory.period}</div>
               <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-cyan-300 transition-[width] duration-150" style={{ width: `${Math.max(7, chapterProgress * 100)}%` }} />
+                <div className="h-full rounded-full bg-cyan-300 transition-[width] duration-150" style={{ width: `${Math.max(7, progress * 100)}%` }} />
               </div>
             </div>
 
-            <div className="mt-4 flex shrink-0 items-center gap-2 pb-1">
+            <div className="flex shrink-0 items-center gap-2 pb-1">
               {stories.map((story, index) => (
                 <button
                   key={story.title}
                   type="button"
                   onClick={() => scrollToStory(index)}
                   className={cn(
-                    'h-2 rounded-full transition-all',
+                    'h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
                     index === activeIndex ? 'w-12 bg-cyan-300' : 'w-5 bg-white/25 hover:bg-white/40'
                   )}
                   aria-label={`Jump to ${story.title}`}
@@ -664,56 +558,94 @@ function ParallaxStorySection({
               ))}
             </div>
           </div>
-        </div>
+        </aside>
 
-        <div className="space-y-8 pb-8">
-          {stories.map((story, index) => {
-            const StoryIcon = story.icon;
-            return (
-              <article
-                key={story.title}
-                ref={(node) => {
-                  storyRefs.current[index] = node;
-                }}
-                className={cn('scroll-mt-8 rounded-3xl border p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:min-h-[calc(100dvh-6rem)]', story.panel)}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">{story.kicker}</Badge>
-                  <span className="text-sm font-semibold text-cyan-200">Chapter {index + 1} of {stories.length}</span>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-white/55">{story.period}</span>
-                </div>
-                <div className={`mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${story.accent}`}>
-                  <StoryIcon className="h-7 w-7" />
-                </div>
-                <h3 className="mt-5 text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{story.title}</h3>
-                <p className="mt-4 max-w-3xl text-sm leading-6 text-white/80 sm:text-base">{story.story}</p>
-                <div className="mt-5 rounded-2xl border border-white/12 bg-black/20 p-4 text-sm leading-6 text-white/78">
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
-                  {story.result}
-                </div>
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">What changed</div>
-                  <ul className="grid gap-2 text-sm leading-5 text-white/76">
-                    {story.details.map((detail) => (
-                      <li key={detail} className="flex gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-1.5">
-                  {story.commitRefs.map((commit) => (
-                    <Badge key={commit} variant="outline" className="border-white/20 bg-black/20 font-mono text-[11px] text-white">
-                      {commit}
-                    </Badge>
-                  ))}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/20">
+          <div className="absolute left-0 top-0 z-30 h-1 bg-cyan-300 transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+          <div className="absolute left-4 top-4 z-30 rounded-full border border-white/15 bg-black/25 px-3 py-1 text-xs font-semibold text-white/70 backdrop-blur lg:hidden">
+            Chapter {activeIndex + 1} / {stories.length}
+          </div>
+          <div
+            ref={scrollRef}
+            className="h-full snap-y snap-mandatory overflow-y-auto scroll-smooth pr-2"
+            onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+          >
+            <div style={{ height: stories.length * chapterHeight }} className="relative">
+              {stories.map((story, index) => {
+                const StoryIcon = story.icon;
+                const local = clamp((scrollTop - index * chapterHeight) / chapterHeight, -1, 1);
+                const distance = Math.abs(local);
+                const visibleOpacity = clamp(1 - distance * 0.45, 0.18, 1);
 
+                return (
+                  <section key={story.title} className="sticky top-0 flex h-[720px] snap-start items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+                    <div
+                      className={`pointer-events-none absolute h-80 w-80 rounded-full bg-gradient-to-br ${story.accent} blur-3xl`}
+                      style={parallaxStyle(`translate(${local * -180}px, ${local * 220}px)`, { opacity: 0.28 * visibleOpacity })}
+                    />
+                    <div
+                      className="absolute right-8 top-28 hidden h-80 w-48 rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur lg:block"
+                      style={parallaxStyle(`translateY(${local * -160}px) rotate(${12 + local * 18}deg) scale(${1 - distance * 0.04})`, { opacity: visibleOpacity })}
+                    >
+                      <div className="h-full rounded-[1.45rem] bg-slate-950 p-3">
+                        <div className={`h-28 rounded-2xl bg-gradient-to-br ${story.accent}`} />
+                        <div className="mt-4 h-2 w-20 rounded-full bg-white/70" />
+                        <div className="mt-3 space-y-2">
+                          <div className="h-2 rounded-full bg-white/25" />
+                          <div className="h-2 w-4/5 rounded-full bg-white/18" />
+                          <div className="h-2 w-2/3 rounded-full bg-white/18" />
+                        </div>
+                        <div className="mt-8 grid grid-cols-3 gap-2">
+                          <div className="h-12 rounded-xl bg-white/10" />
+                          <div className="h-12 rounded-xl bg-white/10" />
+                          <div className="h-12 rounded-xl bg-white/10" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <article
+                      className="relative w-full max-w-3xl rounded-[30px] border border-white/15 bg-slate-900/78 p-6 shadow-2xl backdrop-blur-2xl md:p-9"
+                      style={parallaxStyle(`translateY(${local * 90}px) scale(${1 - distance * 0.08})`, { opacity: visibleOpacity })}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">{story.kicker}</Badge>
+                        <span className="text-sm font-semibold text-cyan-200">Chapter {index + 1} of {stories.length}</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-white/55">{story.period}</span>
+                      </div>
+                      <div className={`mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${story.accent}`}>
+                        <StoryIcon className="h-7 w-7" />
+                      </div>
+                      <h3 className="mt-5 max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{story.title}</h3>
+                      <p className="mt-4 max-w-2xl text-sm leading-6 text-white/80 sm:text-base">{story.story}</p>
+                      <div className="mt-5 rounded-2xl border border-white/12 bg-black/20 p-4 text-sm leading-6 text-white/78">
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
+                        {story.result}
+                      </div>
+                      <div className="mt-5">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">What changed</div>
+                        <ul className="grid gap-2 text-sm leading-5 text-white/76">
+                          {story.details.map((detail) => (
+                            <li key={detail} className="flex gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
+                              <span>{detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-5 flex flex-wrap gap-1.5">
+                        {story.commitRefs.map((commit) => (
+                          <Badge key={commit} variant="outline" className="border-white/20 bg-black/20 font-mono text-[11px] text-white">
+                            {commit}
+                          </Badge>
+                        ))}
+                      </div>
+                    </article>
+                  </section>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
