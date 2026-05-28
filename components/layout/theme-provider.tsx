@@ -20,6 +20,7 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = React.useState<Theme>('light');
+  const [mounted, setMounted] = React.useState(false);
 
   // On mount, read from localStorage or default to light
   React.useEffect(() => {
@@ -27,10 +28,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (stored === 'dark' || stored === 'light') {
       setTheme(stored);
     }
+    setMounted(true);
   }, []);
 
   // Apply/remove the `.dark` class on <html> whenever theme changes
   React.useEffect(() => {
+    if (!mounted) return;
+
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -38,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove('dark');
     }
     localStorage.setItem('ff-theme', theme);
-  }, [theme]);
+  }, [theme, mounted]);
 
   const toggleTheme = React.useCallback(() => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
