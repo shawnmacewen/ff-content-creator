@@ -6,6 +6,7 @@ import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
 import { makeSnippet, normalizeSourceText, scoreTextMatch } from '@/lib/audit/text';
+import { getCanonicalBody } from '@/lib/source-content/body';
 
 const OutSchema = z.object({
   summary: z.string(),
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,external_id,title,body,publisher,source_system,type,metadata,tags,published_at')
+      .select('id,external_id,title,body_text,body,publisher,source_system,type,metadata,tags,published_at')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(scanLimit);
     if (publisher !== 'all') q = q.eq('publisher', publisher);
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
       tags: Array.isArray(r.tags) ? r.tags : [],
       excerpt: '',
       publishedAt: r.published_at,
-      body: normalizeSourceText(String(r.body || '')).slice(0, 3000),
+      body: normalizeSourceText(getCanonicalBody(r)).slice(0, 3000),
     }));
 
     const scoredRows = rows

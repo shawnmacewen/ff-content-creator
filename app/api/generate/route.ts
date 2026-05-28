@@ -5,6 +5,7 @@ import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
+import { getCanonicalBody } from '@/lib/source-content/body';
 
 function assessCompliance(text: string) {
   const checks = [
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
   if (sourceContentIds?.length) {
     const { data, error } = await supabase
       .from('source_content')
-      .select('id,title,author,body')
+      .select('id,title,author,body_text,body')
       .in('id', sourceContentIds);
 
     if (error) {
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
     }
 
     if (data?.length) {
-      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${c.body}`).join('\n\n---\n\n');
+      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${getCanonicalBody(c)}`).join('\n\n---\n\n');
     }
   }
 

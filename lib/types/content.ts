@@ -25,8 +25,9 @@ export interface SourceContent {
   id: string;
   title: string;
   body: string;
-  bodyHtml?: string | null;
+  bodyText?: string | null;
   bodyXml?: string | null;
+  bodyFormat?: string | null;
   excerpt: string;
   type: string;
   tags: string[];

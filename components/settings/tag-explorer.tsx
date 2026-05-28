@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowDownAZ, ExternalLink, Hash, ListFilter, Search, Tags, TriangleAlert } from 'lucide-react';
+import { ArrowDownAZ, Database, ExternalLink, Hash, ListFilter, RefreshCw, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +35,10 @@ type CleanupVariantGroup = {
 };
 
 type TagExplorerResponse = {
+  disabled?: boolean;
+  scanned?: boolean;
+  scannedRows?: number;
+  capped?: boolean;
   tags: TagMetric[];
   summary: {
     uniqueTags: number;
@@ -46,6 +50,8 @@ type TagExplorerResponse = {
 };
 
 const pausedTagExplorerData: TagExplorerResponse = {
+  disabled: true,
+  scanned: false,
   tags: [],
   summary: {
     uniqueTags: 0,
@@ -111,11 +117,33 @@ export default function TagExplorer() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('count-desc');
   const [cleanupOpen, setCleanupOpen] = useState(false);
-  const data = pausedTagExplorerData;
-  const error = null;
-  const isLoading = false;
+  const [data, setData] = useState<TagExplorerResponse>(pausedTagExplorerData);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const tags = useMemo(() => data?.tags || [], [data?.tags]);
+  const handleScan = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/source-content/tags?scan=1', { cache: 'no-store' });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(body?.error || `Tag scan failed with status ${response.status}`);
+      }
+
+      setData(body);
+      setQuery('');
+      setSortMode('count-desc');
+    } catch (err: any) {
+      setError(err?.message || 'Tag scan failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const tags = useMemo(() => data.tags || [], [data.tags]);
   const maxCount = Math.max(...tags.map((tag) => tag.count), 1);
   const singleUseTags = useMemo(
     () => tags.filter((tag) => tag.count === 1).sort((a, b) => a.tag.localeCompare(b.tag)),
@@ -169,6 +197,16 @@ export default function TagExplorer() {
             <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
               Review tag coverage, spot cleanup candidates, and open tagged source content for editorial planning.
             </p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-5 gap-2"
+              onClick={handleScan}
+              disabled={isLoading}
+            >
+              {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+              {isLoading ? 'Scanning tags' : data.scanned ? 'Refresh scan' : 'Scan tags'}
+            </Button>
           </div>
           <div className="grid gap-3 bg-secondary/60 p-6 sm:grid-cols-2 sm:p-7">
             <MetricCard icon={Tags} label="Unique tags" value={data?.summary?.uniqueTags ?? 0} detail="distinct normalized labels" />
@@ -229,7 +267,7 @@ export default function TagExplorer() {
               ))
             ) : (
               <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-                No tags found.
+                {data.scanned ? 'No tags found.' : 'Run a scan to load tag metrics.'}
               </div>
             )}
           </div>
@@ -283,8 +321,31 @@ export default function TagExplorer() {
 
         {error ? (
           <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            Failed to load tag metrics.
+            {error}
           </div>
+        ) : null}
+
+        {!data.scanned && !isLoading ? (
+          <div className="mt-4 rounded-md border border-dashed border-border bg-secondary/40 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h4 className="text-sm font-semibold">Tag metrics are not loaded</h4>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Run a scan only when you need tag cleanup or coverage numbers.
+                </p>
+              </div>
+              <Button type="button" onClick={handleScan} className="gap-2">
+                <Database className="h-4 w-4" />
+                Scan tags
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {data.scanned ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Last scan read {Number(data.scannedRows || 0).toLocaleString()} source rows{data.capped ? ' and reached the scan cap' : ''}.
+          </p>
         ) : null}
 
         <div className="mt-4 overflow-hidden rounded-md border border-border">
@@ -337,7 +398,9 @@ export default function TagExplorer() {
               </div>
             ))
           ) : (
-            <div className="p-4 text-sm text-muted-foreground">No tags match the current filters.</div>
+            <div className="p-4 text-sm text-muted-foreground">
+              {data.scanned ? 'No tags match the current filters.' : 'Scan tags to populate this table.'}
+            </div>
           )}
         </div>
       </section>

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getCanonicalBody } from '@/lib/source-content/body';
 
 function buildSlideImagePrompt(args: {
   theme: {
@@ -87,12 +88,12 @@ export async function POST(req: Request) {
   if (sourceContentIds?.length) {
     const { data, error } = await supabase
       .from('source_content')
-      .select('id,title,author,body')
+      .select('id,title,author,body_text,body')
       .in('id', sourceContentIds);
 
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     if (data?.length) {
-      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${c.body}`).join('\n\n---\n\n');
+      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${getCanonicalBody(c)}`).join('\n\n---\n\n');
     }
   }
 

@@ -9,6 +9,7 @@ import {
   validateAdvisorStreamConfig,
 } from '@/lib/integrations/advisorstream/provider';
 import { appendSyncLog } from '@/lib/source-sync-logs';
+import { decodeHtmlEntities, richMarkupToPlainText } from '@/lib/source-content/body';
 
 async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, articleId: string) {
   const base = baseUrl.replace(/\/$/, '');
@@ -62,36 +63,6 @@ function pickExtraProperties(detailData: any) {
   };
 }
 
-function decodeHtmlEntitiesServer(input: string): string {
-  return String(input || '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
-}
-
-function richMarkupToPlainText(input: string): string {
-  return decodeHtmlEntitiesServer(input)
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/<\/?(section|container|article|corpus|table|thead|tbody|tr|row)[^>]*>/gi, '\n\n')
-    .replace(/<\/?(ul|ol|unordered_list|ordered_list|bullet_list|numbered_list|bullets)[^>]*>/gi, '\n')
-    .replace(/<(li|item|list_item|bullet)[^>]*>/gi, '\n- ')
-    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
-    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
-    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
-    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
-    .replace(/<(th|td|cell|entry)[^>]*>([\s\S]*?)<\/\1>/gi, '$2\t')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\r/g, '')
-    .replace(/\t[ \t]+/g, '\t')
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/\n[ \t]+/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
 function collectStringValuesByKey(input: any, keyMatcher: (key: string) => boolean) {
   const values: Array<{ key: string; value: string }> = [];
   const seen = new Set<any>();
@@ -115,7 +86,7 @@ function collectStringValuesByKey(input: any, keyMatcher: (key: string) => boole
 }
 
 function looksLikeMarkup(input: string) {
-  return /<\/?[a-z][\s\S]*>/i.test(decodeHtmlEntitiesServer(input));
+  return /<\/?[a-z][\s\S]*>/i.test(decodeHtmlEntities(input));
 }
 
 function pickRichBody(detailData: any) {
@@ -140,17 +111,17 @@ function pickRichBody(detailData: any) {
     );
   }).filter((candidate) => looksLikeMarkup(candidate.value));
 
-  const bodyHtml = htmlCandidates[0]?.value || null;
-  const bodyXml = xmlCandidates.find((candidate) => candidate.value !== bodyHtml)?.value || null;
-  const bestPlainSource = bodyHtml || bodyXml || detailData?.content || '';
+  const bodyXml = xmlCandidates[0]?.value || null;
+  const bestPlainSource = bodyXml || htmlCandidates[0]?.value || detailData?.content || '';
+  const bodyFormat = bodyXml ? 'xml' : 'plain';
 
   return {
-    bodyHtml,
     bodyXml,
     bodyPlainText: bestPlainSource ? richMarkupToPlainText(String(bestPlainSource)) : '',
+    bodyFormat,
     sourceFields: {
       html: htmlCandidates[0]?.key || null,
-      xml: xmlCandidates.find((candidate) => candidate.value !== bodyHtml)?.key || null,
+      xml: xmlCandidates[0]?.key || null,
     },
   };
 }
@@ -275,6 +246,8 @@ export async function POST(req: Request) {
       type: item.type || 'article',
       title: item.title || 'Untitled',
       body: item.body || item.summary || '',
+      body_text: item.body || item.summary || '',
+      body_format: 'plain',
       author: item.author || null,
       tags: Array.isArray(item.tags) ? item.tags : [],
       published_at: item.publishedAt || null,
@@ -413,6 +386,8 @@ export async function POST(req: Request) {
         type: item.type,
         title: item.title,
         body: item.body,
+        body_text: item.body,
+        body_format: 'plain',
         author: item.author || null,
         tags: item.tags || [],
         published_at: item.publishedAt || null,
@@ -504,7 +479,8 @@ export async function POST(req: Request) {
         row.ap_content_type = extra.selected.APContentType;
         row.evergreen = extra.selected.Evergreen === null ? null : String(extra.selected.Evergreen).toLowerCase() === 'true';
         if (richBody.bodyPlainText) row.body = richBody.bodyPlainText;
-        row.body_html = richBody.bodyHtml;
+        row.body_text = richBody.bodyPlainText || row.body || '';
+        row.body_format = richBody.bodyFormat;
         row.body_xml = richBody.bodyXml;
 
         row.metadata = {
@@ -518,8 +494,6 @@ export async function POST(req: Request) {
           categories,
           subCategories,
           contentDesignation: detailData?.content_designation || null,
-          bodyHtml: richBody.bodyHtml,
-          bodyXml: richBody.bodyXml,
           richBodySourceFields: richBody.sourceFields,
         };
 
@@ -549,7 +523,7 @@ export async function POST(req: Request) {
 
     let targetQuery = supabase
       .from('source_content')
-      .select('id, external_id, source_system, publisher, published_at, metadata, body')
+      .select('id, external_id, source_system, publisher, published_at, metadata, body, body_text')
       .eq('source_system', 'advisorstream')
       .order('created_at', { ascending: true })
       .range(from, to);
@@ -622,8 +596,9 @@ export async function POST(req: Request) {
         external_id: target.external_id,
         source_system: 'advisorstream',
         publisher,
-        body: richBody.bodyPlainText || target.body || '',
-        body_html: richBody.bodyHtml,
+        body: richBody.bodyPlainText || target.body_text || target.body || '',
+        body_text: richBody.bodyPlainText || target.body_text || target.body || '',
+        body_format: richBody.bodyFormat,
         body_xml: richBody.bodyXml,
         published_at: mappedDate || target.published_at || null,
         content_designation: detailData?.content_designation || null,
@@ -647,8 +622,6 @@ export async function POST(req: Request) {
           categories,
           subCategories,
           contentDesignation: detailData?.content_designation || null,
-          bodyHtml: richBody.bodyHtml,
-          bodyXml: richBody.bodyXml,
           richBodySourceFields: richBody.sourceFields,
           richBodyUpdatedAt: new Date().toISOString(),
         },
@@ -759,8 +732,8 @@ export async function POST(req: Request) {
         external_id: target.external_id,
         source_system: 'advisorstream',
         publisher,
-        ...(richBody.bodyPlainText ? { body: richBody.bodyPlainText } : {}),
-        body_html: richBody.bodyHtml,
+        ...(richBody.bodyPlainText ? { body: richBody.bodyPlainText, body_text: richBody.bodyPlainText } : {}),
+        body_format: richBody.bodyFormat,
         body_xml: richBody.bodyXml,
         published_at: mappedDate,
         content_designation: detailData?.content_designation || null,
@@ -784,8 +757,6 @@ export async function POST(req: Request) {
           categories,
           subCategories,
           contentDesignation: detailData?.content_designation || null,
-          bodyHtml: richBody.bodyHtml,
-          bodyXml: richBody.bodyXml,
           richBodySourceFields: richBody.sourceFields,
           richBodyUpdatedAt: new Date().toISOString(),
         },

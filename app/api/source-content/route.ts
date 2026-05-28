@@ -1,40 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
-
-function decodeHtmlEntities(input: string): string {
-  return input
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
-}
-
-function normalizeBody(input: string): string {
-  const decoded = decodeHtmlEntities(input || '');
-
-  return decoded
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    // structure-friendly replacements
-    .replace(/<\/?(section|container|article|corpus)[^>]*>/gi, '\n\n')
-    .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
-    .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
-    .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
-    .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
-    .replace(/<crossreference[^>]*>([\s\S]*?)<\/crossreference>/gi, '$1')
-    // basic emphasis preservation (markdown-ish)
-    .replace(/<(b|strong)[^>]*>([\s\S]*?)<\/\1>/gi, '**$2**')
-    .replace(/<(i|em)[^>]*>([\s\S]*?)<\/\1>/gi, '*$2*')
-    // strip remaining tags
-    .replace(/<[^>]+>/g, ' ')
-    // normalize whitespace while preserving paragraph breaks
-    .replace(/\r/g, '')
-    .replace(/\t/g, ' ')
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+import { decodeHtmlEntities, getCanonicalBody } from '@/lib/source-content/body';
+import { emptySourceContentSummary, normalizeCachedSummary } from '@/lib/source-content/stats';
 
 function parseIntentTokens(query: string) {
   const cleaned = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
@@ -60,7 +28,7 @@ function parseIntentTokens(query: string) {
 
 function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: string[]) {
   const title = String(row.title || '').toLowerCase();
-  const body = String(row.body || '').toLowerCase();
+  const body = getCanonicalBody(row).toLowerCase();
   const q = query.toLowerCase();
 
   let score = 0;
@@ -89,12 +57,15 @@ function safeMetadata(value: any) {
 function mapSourceContentRow(row: any) {
   const metadata = safeMetadata(row.metadata);
   const extraPropertiesSelected = safeMetadata(metadata.extraPropertiesSelected);
+  const canonicalBody = getCanonicalBody(row);
+  const excerpt = String(metadata.excerpt || canonicalBody || '').slice(0, 220);
 
   return {
     id: row.id,
     title: decodeHtmlEntities(row.title || ''),
-    body: row.body ? normalizeBody(row.body) : '',
-    excerpt: normalizeBody(metadata.excerpt || row.body || '').slice(0, 220),
+    body: canonicalBody,
+    bodyText: row.body_text || canonicalBody || null,
+    excerpt,
     type: row.content_designation ?? row.type ?? null,
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     publishedAt: row.published_at || null,
@@ -131,6 +102,21 @@ async function withDatabaseTimeout<T>(run: (signal: AbortSignal) => PromiseLike<
     return await run(controller.signal);
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function readCachedSummary(supabase: ReturnType<typeof getSupabaseServerClient>) {
+  try {
+    const { data, error } = await supabase
+      .from('source_content_stats')
+      .select('value,refreshed_at')
+      .eq('key', 'source_summary')
+      .maybeSingle();
+
+    if (error || !data?.value) return emptySourceContentSummary;
+    return normalizeCachedSummary(data.value);
+  } catch {
+    return emptySourceContentSummary;
   }
 }
 
@@ -219,7 +205,7 @@ export async function GET(request: NextRequest) {
 
     let dbQuery = supabase
       .from('source_content')
-      .select(query ? `${listColumns},body` : listColumns)
+      .select(query ? `${listColumns},body_text,body` : listColumns)
       .order('published_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
@@ -274,6 +260,7 @@ export async function GET(request: NextRequest) {
     const pageRows = rows.slice(0, pageSize);
     const mapped = pageRows.map(mapSourceContentRow);
     const total = count ?? (from + mapped.length + (hasNextPage ? 1 : 0));
+    const summary = await readCachedSummary(supabase);
 
     return NextResponse.json({
       data: mapped,
@@ -284,10 +271,10 @@ export async function GET(request: NextRequest) {
       hasNextPage,
       filters: { availableTags: [], availableTypes: [], availableAuthors: [], availablePublishers: [] },
       meta: {
-        sourceCounts: {},
-        publisherCounts: {},
-        finraReviewedCount: 0,
-        lastSyncedAt: null,
+        sourceCounts: summary.sourceCounts,
+        publisherCounts: summary.publisherCounts,
+        finraReviewedCount: summary.finraReviewedCount,
+        lastSyncedAt: summary.lastSyncedAt,
       },
     });
   } catch (error: any) {

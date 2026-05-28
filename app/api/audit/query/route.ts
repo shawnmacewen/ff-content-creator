@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
 import { makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
+import { getCanonicalBody } from '@/lib/source-content/body';
 
 export async function POST(req: Request) {
   try {
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,title,body,publisher,source_system,published_at,external_id,type,metadata,tags')
+      .select('id,title,body_text,body,publisher,source_system,published_at,external_id,type,metadata,tags')
       .order('published_at', { ascending: false, nullsFirst: false });
 
     if (structured.publisher) q = q.eq('publisher', structured.publisher);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
 
     const matches = (data || [])
       .map((row: any) => {
-        const cleanBody = normalizeSourceText(row.body || '');
+        const cleanBody = normalizeSourceText(getCanonicalBody(row));
         const hay = `${row.title || ''}\n${cleanBody}`;
         const scored = scoreTextMatch({
           text: hay,

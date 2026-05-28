@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
+import { getBodyFormat, getCanonicalBody } from '@/lib/source-content/body';
 
 export async function GET(
   _request: NextRequest,
@@ -33,13 +34,16 @@ export async function GET(
     return NextResponse.json({ error: 'Source content not found' }, { status: 404 });
   }
 
+  const canonicalBody = getCanonicalBody(data);
+
   return NextResponse.json({
     id: data.id,
     title: data.title,
-    body: data.body,
-    bodyHtml: data.body_html || data.metadata?.bodyHtml || null,
+    body: canonicalBody,
+    bodyText: data.body_text || canonicalBody || null,
     bodyXml: data.body_xml || data.metadata?.bodyXml || null,
-    excerpt: data.metadata?.excerpt || data.body?.slice(0, 220) || '',
+    bodyFormat: getBodyFormat(data),
+    excerpt: data.metadata?.excerpt || canonicalBody.slice(0, 220) || '',
     type: data.type,
     tags: data.tags || [],
     publishedAt: data.published_at || null,

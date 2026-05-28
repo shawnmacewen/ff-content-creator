@@ -26,8 +26,10 @@ const rows = source.map((item) => ({
   source_system: 'sample-seed',
   type: item.type || 'article',
   title: item.title || 'Untitled',
-  body: item.body || item.summary || '',
-  author: item.author || null,
+    body: item.body || item.summary || '',
+    body_text: item.body || item.summary || '',
+    body_format: 'plain',
+    author: item.author || null,
   tags: Array.isArray(item.tags) ? item.tags : [],
   published_at: item.publishedAt || null,
   metadata: {

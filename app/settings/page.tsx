@@ -125,6 +125,7 @@ export default function SettingsPage() {
   const [running, setRunning] = useState(false);
   const [runningBatched, setRunningBatched] = useState(false);
   const [runningSyncUpdate, setRunningSyncUpdate] = useState(false);
+  const [refreshingStats, setRefreshingStats] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
   const shouldPollLogs = tab === 'content-sync' && (running || runningBatched || runningSyncUpdate);
@@ -292,6 +293,24 @@ export default function SettingsPage() {
     }
   };
 
+  const refreshSourceStats = async () => {
+    setRefreshingStats(true);
+    setRunResult(null);
+    try {
+      const response = await fetch('/api/source-content/stats', { method: 'POST' });
+      const json = await response.json();
+      if (!response.ok || !json?.ok) {
+        throw new Error(json?.error || 'Source stats refresh failed');
+      }
+      setRunResult(json);
+      toast.success(`Source stats refreshed from ${Number(json.scannedRows || 0).toLocaleString()} rows.`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Source stats refresh failed');
+    } finally {
+      setRefreshingStats(false);
+    }
+  };
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
@@ -350,6 +369,24 @@ export default function SettingsPage() {
             {runResult ? (
               <pre className="text-xs bg-muted rounded p-2 overflow-auto">{JSON.stringify(runResult, null, 2)}</pre>
             ) : null}
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase text-primary">Cached Source Stats</p>
+              <h2 className="text-lg font-semibold">Refresh Source Filters and Summary</h2>
+              <p className="text-sm text-muted-foreground">
+                Rebuild cached filter options and Source Content summary numbers on demand. Normal page loads read the cache instead of scanning source rows.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={refreshSourceStats}
+              disabled={running || runningBatched || runningSyncUpdate || refreshingStats}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshingStats ? 'animate-spin' : ''}`} />
+              {refreshingStats ? 'Refreshing Source Stats...' : 'Refresh Source Stats'}
+            </Button>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-3">

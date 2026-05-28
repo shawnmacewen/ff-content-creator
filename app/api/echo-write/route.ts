@@ -4,6 +4,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { getServerEnv } from '@/lib/env';
 import { recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getCanonicalBody } from '@/lib/source-content/body';
 
 
 function decodeHtmlEntities(input: string): string {
@@ -194,7 +195,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     const { data: rows, error } = await supabase
       .from('source_content')
-      .select('id,title,body,publisher,content_designation,tags,published_at,bas_content_id')
+      .select('id,title,body_text,body,publisher,content_designation,tags,published_at,bas_content_id')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(1000);
 
@@ -204,7 +205,7 @@ export async function POST(req: Request) {
 
     const ranked = (rows || [])
       .map((row) => {
-        const cleanBody = normalizeXmlToText(String(row.body || ''));
+        const cleanBody = normalizeXmlToText(getCanonicalBody(row));
         return { row, cleanBody, ...scoreRow(row, body.prompt, tokens, cleanBody) };
       })
       .filter((x) => x.score > 0)
