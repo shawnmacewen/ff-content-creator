@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProductUpdatesVisualStory } from '@/components/settings/product-updates';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import type { GeneratedContent } from '@/lib/types/content';
 
@@ -251,19 +252,6 @@ const outcomes = [
   'Show visible editorial throughput',
 ];
 
-const workflowHealth = [
-  { label: 'Content sync ready', icon: DatabaseZap, accent: accents[0] },
-  { label: 'Generation routes online', icon: Sparkles, accent: accents[1] },
-  { label: 'Review workspace connected', icon: ShieldCheck, accent: accents[2] },
-];
-
-const heroSignals = [
-  { label: 'Source', value: 'Synced', accent: accents[0] },
-  { label: 'AI', value: 'Ready', accent: accents[1] },
-  { label: 'Review', value: 'Active', accent: accents[2] },
-  { label: 'Library', value: 'Reusable', accent: accents[3] },
-];
-
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function DashboardPage() {
@@ -328,85 +316,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-8">
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight sm:text-4xl">
-              Turn trusted source content into organized editorial assets.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-blue-50/85 sm:text-base">
-              Editorial brings synced source material, AI-assisted generation, review context,
-              and reusable content assets into one workspace for the internal editorial team.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="bg-white text-[#12306a] hover:bg-blue-50">
-                <Link href="/generate">
-                  Generate Content
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              >
-                <Link href="/settings">Manage Platform</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid content-between gap-6 bg-secondary/60 p-6 sm:p-8">
-            <div>
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Workflow Health
-              </p>
-              <div className="mt-3 grid gap-3">
-                {workflowHealth.map((item) => (
-                  <div key={item.label} className={`flex items-center gap-3 rounded-md border bg-card p-3 ${item.accent.border}`}>
-                    <span className={`flex h-7 w-7 items-center justify-center rounded-md ${item.accent.icon}`}>
-                      <item.icon className="h-4 w-4" />
-                    </span>
-                    <span className="text-sm font-medium">{item.label}</span>
-                    <BadgeCheck className="ml-auto h-4 w-4 text-success" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-md border border-border bg-card p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">Editorial output mix</p>
-                  <p className="text-xs text-muted-foreground">
-                    Social, email, and editorial formats from one workflow.
-                  </p>
-                </div>
-                <BarChart3 className="h-5 w-5 text-primary" />
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {['Social', 'Email', 'Articles'].map((label, index) => (
-                  <div key={label} className="rounded-md bg-muted p-3 text-center">
-                    <div className={`mx-auto mb-2 h-1.5 rounded-full ${accents[index].bar}`} style={{ width: `${85 - index * 16}%` }} />
-                    <p className="text-xs font-medium text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {heroSignals.map((signal) => (
-                <div
-                  key={signal.label}
-                  className={`rounded-md border bg-gradient-to-br p-3 ${signal.accent.border} ${signal.accent.wash}`}
-                >
-                  <p className={`text-[11px] font-semibold uppercase ${signal.accent.text}`}>
-                    {signal.label}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">{signal.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <ProductUpdatesVisualStory showNav={false} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric, index) => (

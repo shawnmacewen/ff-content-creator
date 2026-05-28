@@ -433,10 +433,14 @@ function ParallaxStorySection({
   stories,
   activeTab,
   onTabChange,
+  className,
+  showNav = true,
 }: {
   stories: ReleaseStory[];
   activeTab: ProductUpdateTab;
   onTabChange: (tab: ProductUpdateTab) => void;
+  className?: string;
+  showNav?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -474,7 +478,10 @@ function ParallaxStorySection({
 
   return (
     <section
-      className="relative h-[calc(100dvh-5.5rem)] min-h-[720px] overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm"
+      className={cn(
+        'relative h-[calc(100dvh-5.5rem)] min-h-[720px] overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm',
+        className
+      )}
       onMouseMove={(event) => {
         if (reduceMotion) return;
         const rect = event.currentTarget.getBoundingClientRect();
@@ -520,7 +527,7 @@ function ParallaxStorySection({
                 </p>
               </div>
             </div>
-            <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" />
+            {showNav ? <ProductUpdateNav activeTab={activeTab} onTabChange={onTabChange} tone="dark" /> : null}
 
             <div className="grid gap-2">
               <UpdateStat icon={GitCommit} value="533" label="GitHub commits reviewed" tone="dark" />
@@ -698,19 +705,50 @@ function VisualLogFallback({
 function VisualLog({
   activeTab,
   onTabChange,
+  className,
+  showNav = true,
 }: {
   activeTab: ProductUpdateTab;
   onTabChange: (tab: ProductUpdateTab) => void;
+  className?: string;
+  showNav?: boolean;
 }) {
   return (
     <>
       <div className="motion-reduce:hidden">
-        <ParallaxStorySection stories={releaseStories} activeTab={activeTab} onTabChange={onTabChange} />
+        <ParallaxStorySection
+          stories={releaseStories}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          className={className}
+          showNav={showNav}
+        />
       </div>
       <div className="hidden motion-reduce:block">
         <VisualLogFallback stories={releaseStories} activeTab={activeTab} onTabChange={onTabChange} />
       </div>
     </>
+  );
+}
+
+export function ProductUpdatesVisualStory({
+  className,
+  showNav = true,
+}: {
+  className?: string;
+  showNav?: boolean;
+}) {
+  const [activeTab, setActiveTab] = useState<ProductUpdateTab>('visual-log');
+
+  return activeTab === 'change-log' ? (
+    <ChangeLog activeTab={activeTab} onTabChange={setActiveTab} />
+  ) : (
+    <VisualLog
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      className={className}
+      showNav={showNav}
+    />
   );
 }
 
