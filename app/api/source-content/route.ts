@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
 
 function decodeHtmlEntities(input: string): string {
   return input
@@ -122,7 +123,61 @@ function mapSourceContentRow(row: any) {
   };
 }
 
+async function withDatabaseTimeout<T>(run: (signal: AbortSignal) => PromiseLike<T>, timeoutMs = 4500): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await run(controller.signal);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function fallbackSourceContentResponse(args: {
+  query: string;
+  contentDesignation?: string;
+  tags: string[];
+  publisher?: string;
+  page: number;
+  pageSize: number;
+  reason: string;
+}) {
+  const query = args.query.trim().toLowerCase();
+  const tagSet = new Set(args.tags.map((tag) => tag.toLowerCase()));
+  const filtered = MOCK_SOURCE_CONTENT.filter((content) => {
+    const typeOk = !args.contentDesignation || args.contentDesignation === 'all' || content.type === args.contentDesignation;
+    const publisherOk = !args.publisher || args.publisher === 'all' || content.publisher === args.publisher;
+    const tagOk = !tagSet.size || content.tags.some((tag) => tagSet.has(tag.toLowerCase()));
+    const queryOk = !query || `${content.title} ${content.body} ${content.tags.join(' ')}`.toLowerCase().includes(query);
+    return typeOk && publisherOk && tagOk && queryOk;
+  });
+
+  const from = (args.page - 1) * args.pageSize;
+  const pageItems = filtered.slice(from, from + args.pageSize);
+
+  return NextResponse.json({
+    data: pageItems,
+    total: filtered.length,
+    page: args.page,
+    pageSize: args.pageSize,
+    totalPages: Math.max(1, Math.ceil(filtered.length / args.pageSize)),
+    hasNextPage: from + args.pageSize < filtered.length,
+    filters: { availableTags: [], availableTypes: [], availableAuthors: [], availablePublishers: [] },
+    meta: {
+      sourceCounts: { fallback: filtered.length },
+      publisherCounts: {},
+      finraReviewedCount: 0,
+      lastSyncedAt: null,
+      fallback: true,
+      fallbackReason: args.reason,
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
+  let fallbackArgs: Omit<Parameters<typeof fallbackSourceContentResponse>[0], 'reason'> | null = null;
+
   try {
     const searchParams = request.nextUrl.searchParams;
 
@@ -136,6 +191,7 @@ export async function GET(request: NextRequest) {
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize;
+    fallbackArgs = { query, contentDesignation, tags, publisher, page, pageSize };
 
     const supabase = getSupabaseServerClient();
     const listColumns = [
@@ -178,7 +234,9 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const { tokens, expanded } = parseIntentTokens(query);
-      const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 199);
+      const { data: candidateRows, error: candidateErr } = await withDatabaseTimeout((signal) => (
+        dbQuery.abortSignal(signal).range(0, 199)
+      ));
       if (candidateErr) {
         error = candidateErr;
       } else {
@@ -195,7 +253,7 @@ export async function GET(request: NextRequest) {
         count = scored.length;
       }
     } else {
-      const normal = await dbQuery.range(from, to);
+      const normal = await withDatabaseTimeout((signal) => dbQuery.abortSignal(signal).range(from, to));
       data = normal.data as any[] | null;
       count = null;
       error = normal.error;
@@ -227,6 +285,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
+    if (fallbackArgs) {
+      return fallbackSourceContentResponse({
+        ...fallbackArgs,
+        reason: error?.name === 'AbortError' ? 'database-timeout' : (error?.message || 'database-error'),
+      });
+    }
+
     return NextResponse.json({ error: error?.message || 'Failed to load source content' }, { status: 500 });
   }
 }

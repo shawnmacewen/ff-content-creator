@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
 
 export async function GET(
   _request: NextRequest,
@@ -7,14 +8,28 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = getSupabaseServerClient();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
 
-  const { data, error } = await supabase
-    .from('source_content')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await (async () => {
+    try {
+      return await supabase
+        .from('source_content')
+        .select('*')
+        .eq('id', id)
+        .abortSignal(controller.signal)
+        .single();
+    } catch {
+      return { data: null, error: { message: 'database-timeout' } };
+    } finally {
+      clearTimeout(timeout);
+    }
+  })();
 
   if (error || !data) {
+    const fallback = MOCK_SOURCE_CONTENT.find((content) => content.id === id);
+    if (fallback) return NextResponse.json(fallback);
+
     return NextResponse.json({ error: 'Source content not found' }, { status: 404 });
   }
 
