@@ -30,6 +30,7 @@ interface ApiResponse {
     sourceCounts?: Record<string, number>;
     publisherCounts?: Record<string, number>;
     finraReviewedCount?: number;
+    totalSourceContent?: number;
   };
 }
 
@@ -116,6 +117,7 @@ export default function SourceContentPage() {
 
   const contentItems = Array.isArray(data?.data) ? data.data : [];
   const filters = filterData || data?.filters || emptyFilters;
+  const totalAvailableItems = data?.meta?.totalSourceContent || data?.total || 0;
 
   const handleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -201,7 +203,7 @@ export default function SourceContentPage() {
                   <FolderOpen className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">{data?.total ?? 0} available items</p>
+                  <p className="text-sm font-semibold">{totalAvailableItems.toLocaleString()} available items</p>
                   <p className="text-xs text-muted-foreground">
                     {selectedIds.size} selected for generation
                   </p>

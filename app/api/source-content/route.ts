@@ -275,6 +275,7 @@ export async function GET(request: NextRequest) {
         publisherCounts: summary.publisherCounts,
         finraReviewedCount: summary.finraReviewedCount,
         lastSyncedAt: summary.lastSyncedAt,
+        totalSourceContent: summary.totalSourceContent,
       },
     });
   } catch (error: any) {
