@@ -82,139 +82,148 @@ function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: 
 }
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
+  try {
+    const searchParams = request.nextUrl.searchParams;
 
-  const query = searchParams.get('q') || '';
-  const contentDesignation = searchParams.get('contentDesignation') || searchParams.get('type') || undefined;
-  const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
-  const author = searchParams.get('author') || undefined;
-  const publisher = searchParams.get('publisher') || undefined;
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    const query = searchParams.get('q') || '';
+    const contentDesignation = searchParams.get('contentDesignation') || searchParams.get('type') || undefined;
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
+    const author = searchParams.get('author') || undefined;
+    const publisher = searchParams.get('publisher') || undefined;
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10) || 10));
 
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
-  const supabase = getSupabaseServerClient();
+    const supabase = getSupabaseServerClient();
+    const listColumns = [
+      'id',
+      'title',
+      'body',
+      'metadata',
+      'content_designation',
+      'tags',
+      'published_at',
+      'author',
+      'source_system',
+      'publisher',
+      'external_id',
+      'bas_content_id',
+      'bas_content_filename',
+      'content_format',
+      'finra_letter_url',
+      'finra_approved',
+      'ap_content_type',
+      'evergreen',
+      'categories',
+      'sub_categories',
+    ].join(',');
 
-  let dbQuery = supabase
-    .from('source_content')
-    .select('*', { count: 'exact' })
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false });
+    let dbQuery = supabase
+      .from('source_content')
+      .select(listColumns, { count: 'exact' })
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
 
-  if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
-  if (author) dbQuery = dbQuery.eq('author', author);
-  if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
-  if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
+    if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
+    if (author) dbQuery = dbQuery.eq('author', author);
+    if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
+    if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
 
-  let data: any[] | null = null;
-  let count: number | null = 0;
-  let error: any = null;
+    let data: any[] | null = null;
+    let count: number | null = 0;
+    let error: any = null;
 
-  if (query) {
-    const { tokens, expanded } = parseIntentTokens(query);
-    const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 999);
-    if (candidateErr) {
-      error = candidateErr;
+    if (query) {
+      const { tokens, expanded } = parseIntentTokens(query);
+      const { data: candidateRows, error: candidateErr } = await dbQuery.range(0, 999);
+      if (candidateErr) {
+        error = candidateErr;
+      } else {
+        const scored = ((candidateRows || []) as any[])
+          .map((row) => {
+            const { score, coreMatches } = scoreRowForIntent(row, query, tokens, expanded);
+            return { row, score, coreMatches };
+          })
+          .filter((item) => item.score > 0 && (tokens.length <= 1 || item.coreMatches >= Math.min(2, tokens.length)))
+          .sort((a, b) => b.score - a.score || Number(new Date(b.row.published_at || 0)) - Number(new Date(a.row.published_at || 0)));
+
+        const sliced = scored.slice(from, to + 1).map((s) => s.row);
+        data = sliced;
+        count = scored.length;
+      }
     } else {
-      const scored = (candidateRows || [])
-        .map((row) => {
-          const { score, coreMatches } = scoreRowForIntent(row, query, tokens, expanded);
-          return { row, score, coreMatches };
-        })
-        .filter((item) => item.score > 0 && (tokens.length <= 1 || item.coreMatches >= Math.min(2, tokens.length)))
-        .sort((a, b) => b.score - a.score || Number(new Date(b.row.published_at || 0)) - Number(new Date(a.row.published_at || 0)));
-
-      const sliced = scored.slice(from, to + 1).map((s) => s.row);
-      data = sliced;
-      count = scored.length;
+      const normal = await dbQuery.range(from, to);
+      data = normal.data as any[] | null;
+      count = normal.count;
+      error = normal.error;
     }
-  } else {
-    const normal = await dbQuery.range(from, to);
-    data = normal.data;
-    count = normal.count;
-    error = normal.error;
-  }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  const allRows = (await supabase.from('source_content').select('content_designation,tags,author,publisher,source_system,updated_at')).data || [];
-
-  const availableDesignations = Array.from(new Set(allRows.map((r: any) => r.content_designation).filter(Boolean)));
-  const availableAuthors = Array.from(new Set(allRows.map((r) => r.author).filter(Boolean)));
-  const availablePublishers = Array.from(new Set(allRows.map((r: any) => r.publisher || (r.source_system === 'sample-seed' ? 'sample' : null)).filter(Boolean)));
-  const availableTags = Array.from(new Set(allRows.flatMap((r) => (r.tags || []).map((t: string) => decodeHtmlEntities(String(t))))));
-
-  const mapped = (data || []).map((row: any) => ({
-    id: row.id,
-    title: decodeHtmlEntities(row.title || ''),
-    body: normalizeBody(row.body || ''),
-    excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
-    type: row.content_designation ?? null,
-    tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
-    publishedAt: row.published_at || null,
-    author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
-    url: row.metadata?.url || null,
-    imageUrl: row.metadata?.imageUrl || null,
-    sourceSystem: row.source_system || null,
-    publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
-    externalId: row.external_id || null,
-    metadata: {
-      ...(row.metadata || {}),
-      contentDesignation: row.content_designation ?? row.metadata?.contentDesignation ?? null,
-      categories: row.categories ?? row.metadata?.categories ?? [],
-      subCategories: row.sub_categories ?? row.metadata?.subCategories ?? [],
-      extraPropertiesSelected: {
-        BasContentId: row.bas_content_id ?? row.metadata?.extraPropertiesSelected?.BasContentId ?? null,
-        BasContentFilename: row.bas_content_filename ?? row.metadata?.extraPropertiesSelected?.BasContentFilename ?? null,
-        Format: row.content_format ?? row.metadata?.extraPropertiesSelected?.Format ?? null,
-        FinraLetterUrl: row.finra_letter_url ?? row.metadata?.extraPropertiesSelected?.FinraLetterUrl ?? null,
-        FinraApproved: row.finra_approved ?? row.metadata?.extraPropertiesSelected?.FinraApproved ?? null,
-        APContentType: row.ap_content_type ?? row.metadata?.extraPropertiesSelected?.APContentType ?? null,
-        Evergreen: row.evergreen ?? row.metadata?.extraPropertiesSelected?.Evergreen ?? null,
+    const mapped = (data || []).map((row: any) => ({
+      id: row.id,
+      title: decodeHtmlEntities(row.title || ''),
+      body: normalizeBody(row.body || ''),
+      excerpt: normalizeBody(row.metadata?.excerpt || row.body || '').slice(0, 220),
+      type: row.content_designation ?? null,
+      tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
+      publishedAt: row.published_at || null,
+      author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
+      url: row.metadata?.url || null,
+      imageUrl: row.metadata?.imageUrl || null,
+      sourceSystem: row.source_system || null,
+      publisher: row.publisher || (row.source_system === 'sample-seed' ? 'sample' : null),
+      externalId: row.external_id || null,
+      metadata: {
+        ...(row.metadata || {}),
+        contentDesignation: row.content_designation ?? row.metadata?.contentDesignation ?? null,
+        categories: row.categories ?? row.metadata?.categories ?? [],
+        subCategories: row.sub_categories ?? row.metadata?.subCategories ?? [],
+        extraPropertiesSelected: {
+          BasContentId: row.bas_content_id ?? row.metadata?.extraPropertiesSelected?.BasContentId ?? null,
+          BasContentFilename: row.bas_content_filename ?? row.metadata?.extraPropertiesSelected?.BasContentFilename ?? null,
+          Format: row.content_format ?? row.metadata?.extraPropertiesSelected?.Format ?? null,
+          FinraLetterUrl: row.finra_letter_url ?? row.metadata?.extraPropertiesSelected?.FinraLetterUrl ?? null,
+          FinraApproved: row.finra_approved ?? row.metadata?.extraPropertiesSelected?.FinraApproved ?? null,
+          APContentType: row.ap_content_type ?? row.metadata?.extraPropertiesSelected?.APContentType ?? null,
+          Evergreen: row.evergreen ?? row.metadata?.extraPropertiesSelected?.Evergreen ?? null,
+        },
       },
-    },
-  }));
+    }));
 
-  const sourceCounts = allRows.reduce((acc: Record<string, number>, r: any) => {
-    const key = r.source_system || 'unknown';
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const publisherCounts = allRows.reduce((acc: Record<string, number>, r: any) => {
-    const key = r.publisher || (r.source_system === 'sample-seed' ? 'sample' : 'unknown');
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
+    const [finraResult, lastSyncResult] = await Promise.all([
+      supabase
+        .from('source_content')
+        .select('id', { count: 'exact', head: true })
+        .eq('finra_approved', true),
+      supabase
+        .from('source_content')
+        .select('updated_at')
+        .not('updated_at', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-  // Accurate count for Broadridge rows (all records, not capped by metadata list size)
-  const { count: broadridgeCount } = await supabase
-    .from('source_content')
-    .select('id', { count: 'exact', head: true })
-    .eq('publisher', 'broadridge-forefield');
-  publisherCounts['broadridge-forefield'] = broadridgeCount || 0;
-
-  const { count: finraReviewedCount } = await supabase
-    .from('source_content')
-    .select('id', { count: 'exact', head: true })
-    .eq('finra_approved', true);
-
-  const lastSyncedAt = allRows
-    .map((r: any) => r.updated_at)
-    .filter(Boolean)
-    .sort()
-    .pop() || null;
-
-  return NextResponse.json({
-    data: mapped,
-    total: count || 0,
-    page,
-    pageSize,
-    totalPages: Math.ceil((count || 0) / pageSize),
-    filters: { availableTags, availableTypes: availableDesignations, availableAuthors, availablePublishers },
-    meta: { sourceCounts, publisherCounts, finraReviewedCount: finraReviewedCount || 0, lastSyncedAt },
-  });
+    return NextResponse.json({
+      data: mapped,
+      total: count || 0,
+      page,
+      pageSize,
+      totalPages: Math.ceil((count || 0) / pageSize),
+      filters: { availableTags: [], availableTypes: [], availableAuthors: [], availablePublishers: [] },
+      meta: {
+        sourceCounts: {},
+        publisherCounts: {},
+        finraReviewedCount: finraResult.count || 0,
+        lastSyncedAt: (lastSyncResult.data as any)?.updated_at || null,
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Failed to load source content' }, { status: 500 });
+  }
 }

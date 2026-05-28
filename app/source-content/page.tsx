@@ -32,7 +32,30 @@ interface ApiResponse {
   };
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+interface FilterResponse {
+  availableTags: string[];
+  availableTypes: string[];
+  availableAuthors: string[];
+  availablePublishers: string[];
+}
+
+const emptyFilters: FilterResponse = {
+  availableTags: [],
+  availableTypes: [],
+  availableAuthors: [],
+  availablePublishers: [],
+};
+
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(body?.error || `Request failed with status ${response.status}`);
+  }
+
+  return body;
+};
 
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
@@ -84,6 +107,13 @@ export default function SourceContentPage() {
   const { data, error, isLoading } = useSWR<ApiResponse>(apiUrl(), fetcher, {
     keepPreviousData: true,
   });
+  const { data: filterData } = useSWR<FilterResponse>('/api/source-content/filters', fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+
+  const contentItems = Array.isArray(data?.data) ? data.data : [];
+  const filters = filterData || data?.filters || emptyFilters;
 
   const handleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -129,8 +159,8 @@ export default function SourceContentPage() {
   };
 
   const handleSelectAll = () => {
-    if (data?.data) {
-      const allIds = new Set(data.data.map((c) => c.id));
+    if (contentItems.length) {
+      const allIds = new Set(contentItems.map((c) => c.id));
       setSelectedIds(allIds);
     }
   };
@@ -220,13 +250,13 @@ export default function SourceContentPage() {
         onSearchChange={setSearchQuery}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
-        availableTypes={data?.filters?.availableTypes || []}
+        availableTypes={filters.availableTypes}
         selectedTag={selectedTag}
         onTagChange={setSelectedTag}
-        availableTags={data?.filters?.availableTags || []}
+        availableTags={filters.availableTags}
         selectedPublisher={selectedPublisher}
         onPublisherChange={setSelectedPublisher}
-        availablePublishers={data?.filters?.availablePublishers || []}
+        availablePublishers={filters.availablePublishers}
         onClearFilters={handleClearFilters}
       />
 
@@ -257,7 +287,7 @@ export default function SourceContentPage() {
         <>
           <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
             <span>
-              Showing {data.data.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
+              Showing {contentItems.length} of {data.total} results (page {data.page} of {data.totalPages || 1})
             </span>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -280,7 +310,7 @@ export default function SourceContentPage() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {data.data.map((content) => (
+            {contentItems.map((content) => (
               <ContentCard
                 key={content.id}
                 content={content}
@@ -291,7 +321,7 @@ export default function SourceContentPage() {
               />
             ))}
           </div>
-          {data.data.length === 0 && (
+          {contentItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">No content found matching your filters</p>
               <Button variant="link" onClick={handleClearFilters}>
