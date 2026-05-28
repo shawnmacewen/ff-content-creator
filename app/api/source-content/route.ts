@@ -94,6 +94,14 @@ function mapSourceContentRow(row: any) {
   };
 }
 
+function applyDefaultSourceContentOrder(query: any): any {
+  return query
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false });
+}
+
 async function withDatabaseTimeout<T>(run: (signal: AbortSignal) => PromiseLike<T>, timeoutMs = 4500): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -203,11 +211,9 @@ export async function GET(request: NextRequest) {
       'sub_categories',
     ].join(',');
 
-    let dbQuery = supabase
+    let dbQuery = applyDefaultSourceContentOrder(supabase
       .from('source_content')
-      .select(query ? `${listColumns},body_text,body` : listColumns)
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false });
+      .select(query ? `${listColumns},body_text,body` : listColumns));
 
     if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
     if (author) dbQuery = dbQuery.eq('author', author);
@@ -220,7 +226,7 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const { tokens, expanded } = parseIntentTokens(query);
-      const { data: candidateRows, error: candidateErr } = await withDatabaseTimeout((signal) => (
+      const { data: candidateRows, error: candidateErr } = await withDatabaseTimeout<any>((signal) => (
         dbQuery.abortSignal(signal).range(0, 199)
       ));
       if (candidateErr) {
@@ -242,7 +248,7 @@ export async function GET(request: NextRequest) {
         count = scored.length;
       }
     } else {
-      const normal = await withDatabaseTimeout((signal) => dbQuery.abortSignal(signal).range(from, to));
+      const normal = await withDatabaseTimeout<any>((signal) => dbQuery.abortSignal(signal).range(from, to));
       data = normal.data as any[] | null;
       count = null;
       error = normal.error;
