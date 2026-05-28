@@ -94,7 +94,7 @@ function TabButton({
 
   return (
     <button
-      className={`flex min-h-[92px] items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
+      className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
         active
           ? 'border-primary/60 bg-primary/10 text-primary shadow-sm'
           : 'border-border bg-card hover:border-primary/40 hover:bg-accent/40'
@@ -105,9 +105,8 @@ function TabButton({
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-primary'}`}>
         <Icon className="h-4 w-4" />
       </span>
-      <span>
-        <span className="block text-sm font-semibold">{tabMeta[tab].label}</span>
-        <span className="mt-1 block text-xs leading-5 text-muted-foreground">{tabMeta[tab].detail}</span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold leading-5">{tabMeta[tab].label}</span>
       </span>
     </button>
   );
