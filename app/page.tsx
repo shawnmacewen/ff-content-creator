@@ -1,8 +1,5 @@
-'use client';
-
-import { useEffect, useMemo, useState, type ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import Link from 'next/link';
-import useSWR from 'swr';
 import {
   ArrowRight,
   BadgeCheck,
@@ -28,20 +25,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
-import type { GeneratedContent } from '@/lib/types/content';
 
 type Icon = ComponentType<{ className?: string }>;
-
-type MetricsSummary = {
-  ok: boolean;
-  totals?: {
-    generatedAssets?: number;
-    generatedAssetsThisWeek?: number;
-    generatedImages?: number;
-    generatedImagesThisWeek?: number;
-  };
-};
 
 type Accent = {
   icon: string;
@@ -251,72 +236,38 @@ const outcomes = [
   'Show visible editorial throughput',
 ];
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const dashboardMetrics: { label: string; value: string; detail: string; icon: Icon }[] = [
+  {
+    label: 'Generated assets',
+    value: 'Paused',
+    detail: 'Database metrics are paused during Supabase load testing',
+    icon: Sparkles,
+  },
+  {
+    label: 'This week',
+    value: 'Paused',
+    detail: 'Will resume after the database read path is stabilized',
+    icon: TrendingUp,
+  },
+  {
+    label: 'Generated images',
+    value: 'Paused',
+    detail: 'Image generation counts are not queried on dashboard load',
+    icon: ImageIcon,
+  },
+  {
+    label: 'Saved outputs',
+    value: 'Paused',
+    detail: 'Open Saved Content to load the content library intentionally',
+    icon: Mail,
+  },
+];
 
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const { data } = useSWR<{ data: GeneratedContent[] }>(
-    mounted ? '/api/generated-content' : null,
-    fetcher
-  );
-  const { data: metricsSummary } = useSWR<MetricsSummary>(
-    mounted ? '/api/metrics/summary' : null,
-    fetcher
-  );
-
-  const content = useMemo(
-    () => mapGeneratedContentRows(data?.data || []),
-    [data?.data]
-  );
-
-  const metrics = useMemo(() => {
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const savedThisWeek = content.filter((c) => new Date(c.createdAt) >= weekAgo).length;
-    const socialCount = content.filter((c) => (c.type || '').startsWith('social-')).length;
-    const emailCount = content.filter((c) => (c.type || '').includes('email') || (c.type || '').includes('newsletter')).length;
-    const longFormCount = content.filter((c) => ['article', 'infographic-copy', 'faq', 'video-script'].includes(c.type || '')).length;
-    const generatedAssets = metricsSummary?.totals?.generatedAssets ?? content.length;
-    const generatedThisWeek = metricsSummary?.totals?.generatedAssetsThisWeek ?? savedThisWeek;
-    const generatedImages = metricsSummary?.totals?.generatedImages ?? 0;
-
-    return [
-      {
-        label: 'Generated assets',
-        value: generatedAssets,
-        detail: 'Lifetime content generations',
-        icon: Sparkles,
-      },
-      {
-        label: 'This week',
-        value: generatedThisWeek,
-        detail: 'New reusable assets',
-        icon: TrendingUp,
-      },
-      {
-        label: 'Generated images',
-        value: generatedImages,
-        detail: 'Image generations tracked separately',
-        icon: ImageIcon,
-      },
-      {
-        label: 'Saved outputs',
-        value: content.length,
-        detail: `${socialCount} social, ${emailCount} email, ${longFormCount} editorial`,
-        icon: Mail,
-      },
-    ];
-  }, [content, metricsSummary?.totals]);
-
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric, index) => (
+        {dashboardMetrics.map((metric, index) => (
           <Card key={metric.label} className="overflow-hidden rounded-lg border-border bg-card shadow-sm">
             <div className={`h-1 ${accents[index % accents.length].bar}`} />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

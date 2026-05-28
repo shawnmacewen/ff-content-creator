@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import useSWR from 'swr';
 import { ArrowDownAZ, ExternalLink, Hash, ListFilter, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,16 @@ type TagExplorerResponse = {
   };
 };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const pausedTagExplorerData: TagExplorerResponse = {
+  tags: [],
+  summary: {
+    uniqueTags: 0,
+    totalTagUses: 0,
+    taggedContentCount: 0,
+    singleUseCount: 0,
+    variantCount: 0,
+  },
+};
 
 const sortLabels: Record<SortMode, string> = {
   'count-desc': 'Most used',
@@ -103,7 +111,9 @@ export default function TagExplorer() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('count-desc');
   const [cleanupOpen, setCleanupOpen] = useState(false);
-  const { data, error, isLoading } = useSWR<TagExplorerResponse>('/api/source-content/tags', fetcher);
+  const data = pausedTagExplorerData;
+  const error = null;
+  const isLoading = false;
 
   const tags = useMemo(() => data?.tags || [], [data?.tags]);
   const maxCount = Math.max(...tags.map((tag) => tag.count), 1);
