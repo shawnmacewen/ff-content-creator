@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   DatabaseZap,
   FileSearch,
-  Image as ImageIcon,
   Layers3,
   Mail,
   Megaphone,
@@ -25,6 +24,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getDashboardMetrics } from '@/lib/dashboard/metrics';
+
+export const dynamic = 'force-dynamic';
 
 type Icon = ComponentType<{ className?: string }>;
 
@@ -236,34 +238,72 @@ const outcomes = [
   'Show visible editorial throughput',
 ];
 
-const dashboardMetrics: { label: string; value: string; detail: string; icon: Icon }[] = [
-  {
-    label: 'Generated assets',
-    value: 'Paused',
-    detail: 'Database metrics are paused during Supabase load testing',
-    icon: Sparkles,
-  },
-  {
-    label: 'This week',
-    value: 'Paused',
-    detail: 'Will resume after the database read path is stabilized',
-    icon: TrendingUp,
-  },
-  {
-    label: 'Generated images',
-    value: 'Paused',
-    detail: 'Image generation counts are not queried on dashboard load',
-    icon: ImageIcon,
-  },
-  {
-    label: 'Saved outputs',
-    value: 'Paused',
-    detail: 'Open Saved Content to load the content library intentionally',
-    icon: Mail,
-  },
-];
+function formatMetric(value: number) {
+  return new Intl.NumberFormat('en-US').format(value);
+}
 
-export default function DashboardPage() {
+function buildDashboardMetrics(metrics: Awaited<ReturnType<typeof getDashboardMetrics>>): { label: string; value: string; detail: string; icon: Icon }[] {
+  if (metrics.fallback) {
+    return [
+      {
+        label: 'Generated assets',
+        value: '0',
+        detail: `Metrics unavailable: ${metrics.fallbackReason || 'database-unavailable'}`,
+        icon: Sparkles,
+      },
+      {
+        label: 'This week',
+        value: '0',
+        detail: 'Recent generation counts will return when metrics are available',
+        icon: TrendingUp,
+      },
+      {
+        label: 'Source library',
+        value: '0',
+        detail: 'Cached source summary is not available yet',
+        icon: DatabaseZap,
+      },
+      {
+        label: 'Saved outputs',
+        value: '0',
+        detail: 'Saved content count is not available yet',
+        icon: Mail,
+      },
+    ];
+  }
+
+  return [
+    {
+      label: 'Generated assets',
+      value: formatMetric(metrics.totals.generatedAssets),
+      detail: `${formatMetric(metrics.totals.generatedImages)} generated image${metrics.totals.generatedImages === 1 ? '' : 's'} tracked separately`,
+      icon: Sparkles,
+    },
+    {
+      label: 'This week',
+      value: formatMetric(metrics.totals.generatedAssetsThisWeek),
+      detail: `${formatMetric(metrics.totals.generatedImagesThisWeek)} image generation${metrics.totals.generatedImagesThisWeek === 1 ? '' : 's'} this week`,
+      icon: TrendingUp,
+    },
+    {
+      label: 'Source library',
+      value: formatMetric(metrics.source.totalSourceContent),
+      detail: `${formatMetric(metrics.source.finraReviewedCount)} FINRA reviewed from cached source stats`,
+      icon: DatabaseZap,
+    },
+    {
+      label: 'Saved outputs',
+      value: formatMetric(metrics.totals.savedOutputs),
+      detail: 'Durable drafts in Saved Content',
+      icon: Mail,
+    },
+  ];
+}
+
+export default async function DashboardPage() {
+  const metrics = await getDashboardMetrics();
+  const dashboardMetrics = buildDashboardMetrics(metrics);
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
