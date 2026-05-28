@@ -435,18 +435,20 @@ function ParallaxStorySection({
   onTabChange,
   className,
   showNav = true,
+  compact = false,
 }: {
   stories: ReleaseStory[];
   activeTab: ProductUpdateTab;
   onTabChange: (tab: ProductUpdateTab) => void;
   className?: string;
   showNav?: boolean;
+  compact?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const chapterHeight = 720;
+  const chapterHeight = compact ? 560 : 720;
   const maxScroll = Math.max((stories.length - 1) * chapterHeight, 1);
   const progress = clamp(scrollTop / maxScroll, 0, 1);
   const activeIndex = clamp(Math.round(scrollTop / chapterHeight), 0, stories.length - 1);
@@ -479,7 +481,8 @@ function ParallaxStorySection({
   return (
     <section
       className={cn(
-        'relative h-[calc(100dvh-5.5rem)] min-h-[720px] overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm',
+        'relative overflow-hidden rounded-lg border border-border bg-[#020817] text-white shadow-sm',
+        compact ? 'h-[560px] min-h-[560px]' : 'h-[calc(100dvh-5.5rem)] min-h-[720px]',
         className
       )}
       onMouseMove={(event) => {
@@ -515,14 +518,26 @@ function ParallaxStorySection({
         style={parallaxStyle(`translate3d(${scrollTop * 0.08}px, ${-scrollTop * 0.18}px, 0) rotate(${scrollTop * 0.025}deg)`)}
       />
 
-      <div className="relative z-10 grid h-full grid-cols-1 gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[430px_1fr] lg:px-7">
-        <aside className="hidden self-start overflow-hidden rounded-[28px] border border-white/15 bg-white/[0.08] p-5 shadow-2xl backdrop-blur-2xl lg:block">
-          <div className="flex flex-col gap-4">
+      <div
+        className={cn(
+          'relative z-10 grid h-full min-w-0 grid-cols-1 px-4 sm:px-6',
+          compact
+            ? 'gap-4 py-3 lg:grid-cols-[350px_minmax(0,1fr)] lg:px-5'
+            : 'gap-6 py-5 lg:grid-cols-[430px_minmax(0,1fr)] lg:px-7'
+        )}
+      >
+        <aside
+          className={cn(
+            'hidden self-start overflow-hidden border border-white/15 bg-white/[0.08] shadow-2xl backdrop-blur-2xl lg:block',
+            compact ? 'rounded-3xl p-4' : 'rounded-[28px] p-5'
+          )}
+        >
+          <div className={cn('flex flex-col', compact ? 'gap-3' : 'gap-4')}>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">Product Updates</Badge>
-                <h3 className="mt-4 text-3xl font-semibold leading-tight text-white">Visual release story</h3>
-                <p className="mt-3 text-sm leading-6 text-white/65">
+                <h3 className={cn('font-semibold leading-tight text-white', compact ? 'mt-3 text-2xl' : 'mt-4 text-3xl')}>Visual release story</h3>
+                <p className={cn('text-white/65', compact ? 'mt-2 text-xs leading-5' : 'mt-3 text-sm leading-6')}>
                   Scroll the chapters to review the completed product work as a visual release narrative.
                 </p>
               </div>
@@ -536,16 +551,19 @@ function ParallaxStorySection({
             </div>
 
             <div
-              className="mt-1 rounded-2xl border border-white/12 bg-slate-950/35 p-4 transition-transform duration-300"
+              className={cn(
+                'mt-1 rounded-2xl border border-white/12 bg-slate-950/35 transition-transform duration-300',
+                compact ? 'p-3' : 'p-4'
+              )}
               style={parallaxStyle(`translateY(${-activeIndex * 8}px) scale(${1 + activeIndex * 0.015})`)}
             >
-              <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${activeStory.accent}`}>
-                <Icon className="h-7 w-7" />
+              <div className={cn(`flex items-center justify-center rounded-2xl bg-gradient-to-br ${activeStory.accent}`, compact ? 'mb-3 h-11 w-11' : 'mb-4 h-14 w-14')}>
+                <Icon className={compact ? 'h-5 w-5' : 'h-7 w-7'} />
               </div>
-              <div className="text-sm font-semibold text-cyan-200">{activeStory.kicker}</div>
-              <div className="mt-1 text-xl font-semibold leading-tight text-white">{activeStory.summary}</div>
-              <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-white/50">{activeStory.period}</div>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className={cn('font-semibold text-cyan-200', compact ? 'text-xs' : 'text-sm')}>{activeStory.kicker}</div>
+              <div className={cn('mt-1 font-semibold leading-tight text-white', compact ? 'text-base' : 'text-xl')}>{activeStory.summary}</div>
+              <div className={cn('text-xs font-semibold uppercase tracking-wide text-white/50', compact ? 'mt-2' : 'mt-3')}>{activeStory.period}</div>
+              <div className={cn('overflow-hidden rounded-full bg-white/10', compact ? 'mt-3 h-1' : 'mt-5 h-1.5')}>
                 <div className="h-full rounded-full bg-cyan-300 transition-[width] duration-150" style={{ width: `${Math.max(7, progress * 100)}%` }} />
               </div>
             </div>
@@ -567,14 +585,14 @@ function ParallaxStorySection({
           </div>
         </aside>
 
-        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/20">
+        <div className={cn('relative min-w-0 overflow-hidden border border-white/10 bg-slate-950/20', compact ? 'rounded-3xl' : 'rounded-[28px]')}>
           <div className="absolute left-0 top-0 z-30 h-1 bg-cyan-300 transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
           <div className="absolute left-4 top-4 z-30 rounded-full border border-white/15 bg-black/25 px-3 py-1 text-xs font-semibold text-white/70 backdrop-blur lg:hidden">
             Chapter {activeIndex + 1} / {stories.length}
           </div>
           <div
             ref={scrollRef}
-            className="h-full snap-y snap-mandatory overflow-y-auto scroll-smooth pr-2"
+            className="h-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
           >
             <div style={{ height: stories.length * chapterHeight }} className="relative">
@@ -585,13 +603,19 @@ function ParallaxStorySection({
                 const visibleOpacity = clamp(1 - distance * 0.45, 0.18, 1);
 
                 return (
-                  <section key={story.title} className="sticky top-0 flex h-[720px] snap-start items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+                  <section
+                    key={story.title}
+                    className={cn(
+                      'sticky top-0 flex snap-start items-center justify-center px-4 sm:px-6',
+                      compact ? 'h-[560px] py-6 lg:px-6' : 'h-[720px] py-10 lg:px-8'
+                    )}
+                  >
                     <div
                       className={`pointer-events-none absolute h-80 w-80 rounded-full bg-gradient-to-br ${story.accent} blur-3xl`}
                       style={parallaxStyle(`translate(${local * -180}px, ${local * 220}px)`, { opacity: 0.28 * visibleOpacity })}
                     />
                     <div
-                      className="absolute right-8 top-28 hidden h-80 w-48 rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur lg:block"
+                      className="absolute right-8 top-28 hidden h-80 w-48 rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur 2xl:block"
                       style={parallaxStyle(`translateY(${local * -160}px) rotate(${12 + local * 18}deg) scale(${1 - distance * 0.04})`, { opacity: visibleOpacity })}
                     >
                       <div className="h-full rounded-[1.45rem] bg-slate-950 p-3">
@@ -611,7 +635,10 @@ function ParallaxStorySection({
                     </div>
 
                     <article
-                      className="relative w-full max-w-3xl rounded-[30px] border border-white/15 bg-slate-900/78 p-6 shadow-2xl backdrop-blur-2xl md:p-9"
+                      className={cn(
+                        'relative w-full border border-white/15 bg-slate-900/78 shadow-2xl backdrop-blur-2xl',
+                        compact ? 'max-w-2xl rounded-3xl p-5 md:p-6' : 'max-w-3xl rounded-[30px] p-6 md:p-9'
+                      )}
                       style={parallaxStyle(`translateY(${local * 90}px) scale(${1 - distance * 0.08})`, { opacity: visibleOpacity })}
                     >
                       <div className="flex flex-wrap items-center gap-2">
@@ -619,27 +646,27 @@ function ParallaxStorySection({
                         <span className="text-sm font-semibold text-cyan-200">Chapter {index + 1} of {stories.length}</span>
                         <span className="text-xs font-semibold uppercase tracking-wide text-white/55">{story.period}</span>
                       </div>
-                      <div className={`mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${story.accent}`}>
-                        <StoryIcon className="h-7 w-7" />
+                      <div className={cn(`flex items-center justify-center rounded-2xl bg-gradient-to-br ${story.accent}`, compact ? 'mt-4 h-11 w-11' : 'mt-5 h-14 w-14')}>
+                        <StoryIcon className={compact ? 'h-5 w-5' : 'h-7 w-7'} />
                       </div>
-                      <h3 className="mt-5 max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl xl:text-[2.75rem]">{story.title}</h3>
-                      <p className="mt-4 max-w-2xl text-sm leading-6 text-white/80 sm:text-base">{story.story}</p>
-                      <div className="mt-5 rounded-2xl border border-white/12 bg-black/20 p-4 text-sm leading-6 text-white/78">
+                      <h3 className={cn('max-w-2xl font-semibold leading-tight', compact ? 'mt-4 text-2xl sm:text-3xl' : 'mt-5 text-3xl sm:text-4xl xl:text-[2.75rem]')}>{story.title}</h3>
+                      <p className={cn('max-w-2xl text-white/80', compact ? 'mt-3 text-sm leading-5' : 'mt-4 text-sm leading-6 sm:text-base')}>{story.story}</p>
+                      <div className={cn('rounded-2xl border border-white/12 bg-black/20 text-sm text-white/78', compact ? 'mt-4 p-3 leading-5' : 'mt-5 p-4 leading-6')}>
                         <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/55">Editorial result</div>
                         {story.result}
                       </div>
-                      <div className="mt-5">
+                      <div className={compact ? 'mt-4' : 'mt-5'}>
                         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-200">What changed</div>
-                        <ul className="grid gap-2 text-sm leading-5 text-white/76">
+                        <ul className={cn('grid gap-2 text-sm text-white/76', compact ? 'leading-4' : 'leading-5')}>
                           {story.details.map((detail) => (
-                            <li key={detail} className="flex gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+                            <li key={detail} className={cn('flex gap-2 rounded-2xl border border-white/10 bg-white/[0.06]', compact ? 'p-2.5' : 'p-3')}>
                               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
                               <span>{detail}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <div className="mt-5 flex flex-wrap gap-1.5">
+                      <div className={cn('flex flex-wrap gap-1.5', compact ? 'mt-4' : 'mt-5')}>
                         {story.commitRefs.map((commit) => (
                           <Badge key={commit} variant="outline" className="border-white/20 bg-black/20 font-mono text-[11px] text-white">
                             {commit}
@@ -707,11 +734,13 @@ function VisualLog({
   onTabChange,
   className,
   showNav = true,
+  compact = false,
 }: {
   activeTab: ProductUpdateTab;
   onTabChange: (tab: ProductUpdateTab) => void;
   className?: string;
   showNav?: boolean;
+  compact?: boolean;
 }) {
   return (
     <>
@@ -722,6 +751,7 @@ function VisualLog({
           onTabChange={onTabChange}
           className={className}
           showNav={showNav}
+          compact={compact}
         />
       </div>
       <div className="hidden motion-reduce:block">
@@ -734,9 +764,11 @@ function VisualLog({
 export function ProductUpdatesVisualStory({
   className,
   showNav = true,
+  compact = false,
 }: {
   className?: string;
   showNav?: boolean;
+  compact?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<ProductUpdateTab>('visual-log');
 
@@ -748,6 +780,7 @@ export function ProductUpdatesVisualStory({
       onTabChange={setActiveTab}
       className={className}
       showNav={showNav}
+      compact={compact}
     />
   );
 }

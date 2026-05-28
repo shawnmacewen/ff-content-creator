@@ -316,7 +316,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <ProductUpdatesVisualStory showNav={false} />
+      <ProductUpdatesVisualStory compact showNav={false} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric, index) => (
