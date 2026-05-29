@@ -7,6 +7,8 @@ import {
   BookOpenCheck,
   Check,
   ClipboardList,
+  Code2,
+  Copy,
   FileText,
   Filter,
   GraduationCap,
@@ -1152,6 +1154,93 @@ function QuizPreviewDialog({
   );
 }
 
+function ExportJsonDialog({ packageId }: { packageId?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [payload, setPayload] = React.useState<any>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const formattedPayload = payload ? JSON.stringify(payload, null, 2) : '';
+
+  React.useEffect(() => {
+    if (!open || !packageId) return;
+
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    setCopied(false);
+    fetch(`/api/ce-course/packages/${packageId}/export`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(body?.error || `Export failed with status ${response.status}`);
+        if (!cancelled) setPayload(body?.data || null);
+      })
+      .catch((requestError: any) => {
+        if (!cancelled) setError(requestError?.message || 'Failed to load export JSON.');
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, packageId]);
+
+  const handleCopy = async () => {
+    if (!formattedPayload) return;
+    await navigator.clipboard.writeText(formattedPayload);
+    setCopied(true);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" className="gap-2" disabled={!packageId}>
+          <Code2 className="h-4 w-4" />
+          View Export JSON
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 py-5 text-left">
+          <DialogTitle>CE Package Export JSON</DialogTitle>
+          <div className="text-sm leading-6 text-muted-foreground">
+            Versioned package shape for downstream API retrieval and AdvisorStream format mapping.
+          </div>
+        </DialogHeader>
+        <div className="space-y-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 text-xs text-muted-foreground">
+              {packageId ? `Package ${packageId}` : 'Save this package before exporting.'}
+            </div>
+            <Button type="button" variant="outline" size="sm" className="gap-2" disabled={!formattedPayload} onClick={handleCopy}>
+              <Copy className="h-3.5 w-3.5" />
+              {copied ? 'Copied' : 'Copy JSON'}
+            </Button>
+          </div>
+          {error ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          ) : null}
+          <ScrollArea className="h-[62vh] rounded-md border border-border bg-slate-950">
+            {isLoading ? (
+              <div className="flex h-[62vh] items-center justify-center text-sm text-slate-300">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading export JSON
+              </div>
+            ) : (
+              <pre className="whitespace-pre-wrap break-words p-4 text-xs leading-5 text-slate-100">
+                {formattedPayload || 'No export payload loaded.'}
+              </pre>
+            )}
+          </ScrollArea>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CourseDraftCard({
   draft,
   selectedSources,
@@ -1329,11 +1418,12 @@ function CourseDraftCard({
             </div>
           </ScrollArea>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           <Button type="button" variant="outline" className="gap-2" disabled={isSaving} onClick={onSave}>
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {isSaving ? 'Saving Package' : draft.id ? 'Save Changes' : 'Save Package'}
           </Button>
+          <ExportJsonDialog packageId={draft.id} />
           <Button type="button" variant="outline" className="gap-2" disabled>
             <Send className="h-4 w-4" />
             Send to AdvisorStream
