@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Sparkles,
   FolderOpen,
+  GraduationCap,
   Library,
   Settings,
   FileText,
@@ -41,6 +42,11 @@ const mainNavItems = [
     title: 'Generate Content',
     href: '/generate',
     icon: Sparkles,
+  },
+  {
+    title: 'CE Course Creator',
+    href: '/ce-course-creator',
+    icon: GraduationCap,
   },
   {
     title: 'EchoWrite',
