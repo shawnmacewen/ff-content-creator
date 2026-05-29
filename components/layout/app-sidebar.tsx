@@ -13,7 +13,6 @@ import {
   Share2,
   SearchCheck,
   PenSquare,
-  CircleDot,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -96,9 +95,6 @@ export function AppSidebar() {
             <span className="text-sm font-semibold tracking-[0.08em] text-sidebar-foreground">
               EDITOR[AI]L
             </span>
-            <span className="text-xs text-sidebar-foreground/60">
-              Internal content curation
-            </span>
           </div>
         </Link>
       </SidebarHeader>
@@ -154,15 +150,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
-        <div className="rounded-md border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs text-sidebar-foreground/72">
-          <div className="mb-1 flex items-center gap-2 font-medium text-sidebar-foreground">
-            <CircleDot className="h-3.5 w-3.5 text-sidebar-primary" />
-            Workflow status
-          </div>
-          <p className="leading-relaxed">
-            Content sync, generation, and review tools are online.
-          </p>
-        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

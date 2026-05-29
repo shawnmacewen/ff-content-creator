@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Building2, Compass, Database, Image, Info, Megaphone, Palette, RefreshCw, Tags } from 'lucide-react';
+import { BookOpenCheck, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, RefreshCw, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
 import ProductUpdates from '@/components/settings/product-updates';
+import RoadmapIdeas from '@/components/settings/roadmap-ideas';
 import TagExplorer from '@/components/settings/tag-explorer';
 import TemplateDesignSystem from '@/components/settings/template-design-system';
 import { PageHeader } from '@/components/layout/page-header';
@@ -23,6 +24,7 @@ type SettingsTab =
   | 'content-api-explorer'
   | 'tag-explorer'
   | 'product-updates'
+  | 'roadmap-ideas'
   | 'knowledge-base'
   | 'template-design-system'
   | 'instagram-carousel-2';
@@ -33,6 +35,7 @@ const settingsTabs: SettingsTab[] = [
   'content-api-explorer',
   'tag-explorer',
   'product-updates',
+  'roadmap-ideas',
   'knowledge-base',
   'template-design-system',
   'instagram-carousel-2',
@@ -63,6 +66,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Product Updates',
     detail: 'Review release notes and visual product stories.',
     icon: Megaphone,
+  },
+  'roadmap-ideas': {
+    label: 'Roadmap Ideas',
+    detail: 'Collect upcoming product ideas and compare planning views.',
+    icon: Flag,
   },
   'knowledge-base': {
     label: 'Knowledge Center',
@@ -384,7 +392,7 @@ export default function SettingsPage() {
         ]}
       />
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {settingsTabs.map((settingsTab) => (
           <TabButton
             key={settingsTab}
@@ -518,6 +526,8 @@ export default function SettingsPage() {
         <TagExplorer />
       ) : tab === 'product-updates' ? (
         <ProductUpdates />
+      ) : tab === 'roadmap-ideas' ? (
+        <RoadmapIdeas />
       ) : tab === 'knowledge-base' ? (
         <KnowledgeBase />
       ) : tab === 'template-design-system' ? (
