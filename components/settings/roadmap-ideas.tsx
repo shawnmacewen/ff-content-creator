@@ -498,50 +498,92 @@ function RoadmapIdeaCard({ idea }: { idea: RoadmapIdea }) {
             </li>
           ))}
         </ul>
-        {idea.promptData ? (
-          <div className="mt-4 rounded-md border border-border bg-muted/40 p-3">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-primary">
-              <Captions className="h-3.5 w-3.5" />
-              Prompt data to add
-            </div>
-            <div className="grid gap-2 text-xs leading-5 text-muted-foreground">
-              {idea.promptData.map((item) => (
-                <div key={item} className="flex gap-2">
-                  <BadgeCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {idea.prd ? (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="mt-4 w-full justify-center gap-2">
-                <FileText className="h-4 w-4" />
-                Open PRD
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none overflow-hidden p-0 sm:max-w-[min(920px,calc(100vw-2rem))]">
-              <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
-                <DialogTitle>{idea.prd.title}</DialogTitle>
-                <DialogDescription className="mt-2 leading-6">{idea.prd.description}</DialogDescription>
-              </DialogHeader>
-              <div className="max-h-[calc(100vh-10rem)] overflow-y-auto bg-background px-6 py-5">
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-6 text-muted-foreground">
-                  {idea.prd.content}
-                </pre>
-              </div>
-            </DialogContent>
-          </Dialog>
-        ) : null}
-        {idea.joke ? (
-          <div className="mt-4 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 text-sm font-medium leading-6 text-foreground">
-            {idea.joke}
-          </div>
-        ) : null}
+        <RoadmapDetailsDialog idea={idea} />
       </div>
     </article>
+  );
+}
+
+function RoadmapDetailsDialog({ idea }: { idea: RoadmapIdea }) {
+  const Icon = idea.icon;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="mt-4 w-full justify-center gap-2">
+          <FileText className="h-4 w-4" />
+          Details
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none overflow-hidden p-0 sm:max-w-[min(940px,calc(100vw-2rem))]">
+        <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
+          <div className="flex items-start gap-3">
+            <span className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${idea.accent} text-slate-950`}>
+              <Icon className="h-5 w-5" />
+            </span>
+            <div>
+              <DialogTitle>{idea.title}</DialogTitle>
+              <DialogDescription className="mt-2 leading-6">
+                {idea.theme} - {idea.status} - Impact {idea.impact}/10 - Effort {idea.effort}/10
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto bg-background px-6 py-5">
+          <div className="space-y-5">
+            <section>
+              <h5 className="text-sm font-semibold">Summary</h5>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{idea.summary}</p>
+            </section>
+
+            <section>
+              <h5 className="text-sm font-semibold">Roadmap Details</h5>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                {idea.details.map((detail) => (
+                  <li key={detail} className="flex gap-2">
+                    <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {idea.promptData ? (
+              <section className="rounded-md border border-border bg-muted/40 p-4">
+                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase text-primary">
+                  <Captions className="h-3.5 w-3.5" />
+                  Prompt Data To Add
+                </div>
+                <div className="grid gap-2 text-sm leading-6 text-muted-foreground">
+                  {idea.promptData.map((item) => (
+                    <div key={item} className="flex gap-2">
+                      <BadgeCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {idea.prd ? (
+              <section>
+                <h5 className="text-sm font-semibold">{idea.prd.title}</h5>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{idea.prd.description}</p>
+                <pre className="mt-3 max-h-[420px] overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border bg-muted/35 p-4 font-mono text-xs leading-6 text-muted-foreground">
+                  {idea.prd.content}
+                </pre>
+              </section>
+            ) : null}
+
+            {idea.joke ? (
+              <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-4 text-sm font-medium leading-6 text-foreground">
+                {idea.joke}
+              </section>
+            ) : null}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
