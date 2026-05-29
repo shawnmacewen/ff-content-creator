@@ -687,11 +687,11 @@ export function ContentDetail({
               </DialogClose>
             </div>
 
-            <div className="relative z-10 flex min-h-[38vh] flex-col justify-end px-7 pb-10 pt-24 text-white sm:px-10 lg:px-12">
+            <div className="relative z-10 flex min-h-[32vh] flex-col justify-end px-7 pb-9 pt-20 text-white sm:px-10 lg:px-12">
               <div className="mb-5 inline-flex w-fit items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
                 {designation}
               </div>
-              <h2 className="max-w-4xl text-balance font-serif text-4xl font-semibold leading-[1.05] tracking-normal text-white drop-shadow-2xl sm:text-5xl lg:text-6xl">
+              <h2 className="max-w-4xl text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
                 {content.title}
               </h2>
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/82">
@@ -723,7 +723,7 @@ export function ContentDetail({
             </div>
           ) : null}
 
-          <div className="mx-auto grid max-w-6xl gap-9 px-7 pb-28 pt-9 sm:px-10 md:grid-cols-[0.78fr_1.22fr] lg:px-12">
+          <div className="mx-auto grid max-w-6xl gap-7 px-7 pb-28 pt-8 sm:px-10 md:grid-cols-[0.62fr_1.38fr] lg:px-12">
             <aside className="space-y-8">
               <div className="space-y-5">
                 <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
@@ -735,10 +735,10 @@ export function ContentDetail({
                     const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
                     return (
                       <div key={index} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
-                          <Icon className="h-5 w-5" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
+                          <Icon className="h-4 w-4" />
                         </div>
-                        <p className="pt-1 text-sm font-medium leading-6 text-slate-700">{renderHighlightedText(item)}</p>
+                        <p className="line-clamp-4 pt-1 text-[13px] font-medium leading-5 text-slate-700">{renderHighlightedText(item)}</p>
                       </div>
                     );
                   })}
@@ -782,13 +782,13 @@ export function ContentDetail({
             </aside>
 
             <article className="border-slate-200/80 md:border-l md:pl-10">
-              <div className="space-y-7 break-words text-[15px] leading-8 text-slate-700">
+              <div className="space-y-5 break-words text-sm leading-7 text-slate-700">
                 {visibleBlocks.map((block, index) => (
                   <div
                     key={index}
                     className={cn(
                       block.type === 'paragraph' && index === 0
-                        ? '[&>p]:first-letter:float-left [&>p]:first-letter:mr-3 [&>p]:first-letter:font-serif [&>p]:first-letter:text-7xl [&>p]:first-letter:leading-[0.86] [&>p]:first-letter:text-slate-950'
+                        ? '[&>p]:first-letter:float-left [&>p]:first-letter:mr-3 [&>p]:first-letter:font-serif [&>p]:first-letter:text-5xl [&>p]:first-letter:leading-[0.86] [&>p]:first-letter:text-slate-950'
                         : ''
                     )}
                   >

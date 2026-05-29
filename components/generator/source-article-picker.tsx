@@ -31,9 +31,11 @@ function formatDate(s?: string) {
 export function SourceArticlePicker({
   selectedId,
   onSelect,
+  compact = false,
 }: {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  compact?: boolean;
 }) {
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
@@ -82,6 +84,109 @@ export function SourceArticlePicker({
       return topicOk && searchOk;
     });
   }, [data, topic, query]);
+
+  if (compact) {
+    return (
+      <Card className="overflow-hidden rounded-2xl border bg-card/95 shadow-sm">
+        <CardHeader className="px-3 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Articles</div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              title="Clear selected article"
+              onClick={() => onSelect(null)}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pb-3">
+          <ScrollArea className="h-[640px] overflow-x-hidden">
+            {isLoading ? (
+              <div className="space-y-3 px-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3 px-1">
+                {filtered.map((c) => {
+                  const selected = selectedId === c.id;
+                  let meta: any = c?.metadata;
+                  if (typeof meta === 'string') {
+                    try {
+                      meta = JSON.parse(meta);
+                    } catch {
+                      meta = null;
+                    }
+                  }
+
+                  const fromExtraPropertiesArray = (key: string): string | undefined => {
+                    const arr = meta?.raw?.extra_properties;
+                    if (!Array.isArray(arr)) return undefined;
+                    const hit = arr.find((x: any) => String(x?.key || '') === key);
+                    const v = hit?.stringValue ?? hit?.value ?? hit?.string_value;
+                    return typeof v === 'string' ? v : undefined;
+                  };
+
+                  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+                  const thumb =
+                    (extraMap?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+                    (meta?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
+                    fromExtraPropertiesArray('SocialMediaPlatformImages.LinkedIn') ||
+                    (meta?.SocialMediaPlatformImages?.LinkedIn as string | undefined) ||
+                    (meta?.SocialMediaPlatformImages?.linkedIn as string | undefined) ||
+                    (meta?.SocialMediaPlatformImages?.linkedin as string | undefined) ||
+                    (meta?.socialMediaPlatformImages?.LinkedIn as string | undefined) ||
+                    (meta?.socialMediaPlatformImages?.linkedIn as string | undefined) ||
+                    (meta?.socialMediaPlatformImages?.linkedin as string | undefined) ||
+                    (extraMap?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+                    (meta?.['SocialMediaPlatformImages.Thumbnail'] as string | undefined) ||
+                    fromExtraPropertiesArray('SocialMediaPlatformImages.Thumbnail') ||
+                    (meta?.SocialMediaPlatformImages?.Thumbnail as string | undefined) ||
+                    (meta?.SocialMediaPlatformImages?.thumbnail as string | undefined) ||
+                    (meta?.socialMediaPlatformImages?.Thumbnail as string | undefined) ||
+                    (meta?.socialMediaPlatformImages?.thumbnail as string | undefined) ||
+                    (c?.imageUrl as string | undefined);
+
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => onSelect(selected ? null : c.id)}
+                      title={c.title}
+                      className={cn(
+                        'group relative block h-16 w-full overflow-hidden rounded-xl border bg-muted text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md',
+                        selected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
+                      )}
+                    >
+                      {thumb ? (
+                        <div
+                          className="h-full w-full bg-cover bg-center transition group-hover:scale-105"
+                          style={{ backgroundImage: `url("${String(thumb).trim().replace(/"/g, '\\"')}")` }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-primary/25 via-info/10 to-transparent" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
+                      {selected ? (
+                        <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow">
+                          <Check className="h-3.5 w-3.5" />
+                        </div>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="rounded-md border bg-card shadow-sm">
