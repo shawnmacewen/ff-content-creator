@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, ExternalLink, Loader2, PenSquare, Save, Settings2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ExternalLink, FileText, Loader2, PenSquare, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +29,8 @@ type EchoWriteSource = {
   publisher?: string | null;
   basContentId?: string | null;
   designation?: string | null;
+  publishedAt?: string | null;
+  imageUrl?: string | null;
   score?: number;
   matchedTerms?: string[];
   matchedTopicalTerms?: string[];
@@ -43,6 +45,16 @@ function titleFromContent(content: string) {
     .find(Boolean);
 
   return (firstLine || 'EchoWrite draft').replace(/^#+\s*/, '').slice(0, 100);
+}
+
+function subtitleFromContent(content: string) {
+  return content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .find((line) => !/^#+\s*/.test(line) && line !== titleFromContent(content))
+    ?.replace(/^#+\s*/, '')
+    .slice(0, 180);
 }
 
 function toneFromWritingStyle(style: 'professional' | 'fun' | 'educational') {
@@ -106,6 +118,16 @@ export default function EchoWritePage() {
   const citedSourceCount = useMemo(() => {
     return sourcesWithCitation.filter((s) => s.citationNumber).length;
   }, [sourcesWithCitation]);
+
+  const outputHeroSource = useMemo(() => {
+    return sourcesWithCitation.find((source) => source.citationNumber && source.imageUrl)
+      || sourcesWithCitation.find((source) => source.imageUrl)
+      || sourcesWithCitation[0]
+      || null;
+  }, [sourcesWithCitation]);
+
+  const outputTitle = useMemo(() => titleFromContent(content), [content]);
+  const outputSubtitle = useMemo(() => subtitleFromContent(content), [content]);
 
   const saveSourceIds = useMemo(() => {
     const citedIds = sourcesWithCitation
@@ -427,37 +449,80 @@ Separately (client-side), we:
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h2 className="text-sm font-semibold">Generated Output</h2>
-              {loading ? (
-                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Scanning source content and drafting grounded output...
-                </p>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={copyOutput} disabled={!content.trim()}>Copy</Button>
-              <Button size="sm" onClick={saveDraft} disabled={!content.trim() || saving}>
+        <div className="lg:col-span-3 overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.16)] ring-1 ring-slate-200/70">
+          <div className="group relative min-h-[235px] overflow-hidden rounded-b-[42%_7%] bg-slate-950">
+            {outputHeroSource?.imageUrl ? (
+              <div
+                className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
+                style={{ backgroundImage: `url("${outputHeroSource.imageUrl.replace(/"/g, '\\"')}")` }}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_28%,rgba(147,197,253,0.34),transparent_30%),linear-gradient(135deg,#071326,#18305d_56%,#0f172a)]" />
+            )}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.6)_44%,rgba(15,23,42,0.22)),linear-gradient(0deg,rgba(2,6,23,0.76),transparent_46%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/72 to-transparent" />
+
+            <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={copyOutput}
+                disabled={!content.trim()}
+                className="h-10 rounded-full border-white/20 bg-white/10 px-4 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/20 hover:text-white"
+              >
+                Copy
+              </Button>
+              <Button
+                size="sm"
+                onClick={saveDraft}
+                disabled={!content.trim() || saving}
+                className="h-10 rounded-full bg-white px-4 font-semibold text-slate-950 shadow-lg shadow-black/15 hover:bg-white/90"
+              >
                 <Save className="h-4 w-4" />
                 {saving ? 'Saving...' : 'Save Draft'}
               </Button>
             </div>
+
+            <div className="relative z-10 flex min-h-[235px] flex-col justify-end p-6 text-white sm:p-8">
+              <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
+                <Sparkles className="h-3.5 w-3.5" />
+                Generated Output
+              </div>
+              <h2 className="max-w-[780px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2.15rem]">
+                {content.trim() ? outputTitle : 'Your EchoWrite draft will appear here'}
+              </h2>
+              {content.trim() && outputSubtitle ? (
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">{outputSubtitle}</p>
+              ) : null}
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-white/82">
+                <span className="inline-flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {contentType === 'video-script' ? 'Video script' : 'Editorial article'}
+                </span>
+                {outputHeroSource ? <span className="max-w-[320px] truncate">Grounded by {outputHeroSource.title}</span> : null}
+                {loading ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Drafting...
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </div>
 
-          <EchoWriteEditor
-            value={content}
-            spans={spans}
-            onChange={setContent}
-            showMatches={showMatches}
-            hoveredSourceId={hoverSourceId}
-            onHoverSpan={(sourceId, snippet) => {
-              setHoverSourceId(sourceId);
-              setHoverSnippet(snippet);
-            }}
-          />
+          <div className="px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
+            <EchoWriteEditor
+              value={content}
+              spans={spans}
+              onChange={setContent}
+              showMatches={showMatches}
+              hoveredSourceId={hoverSourceId}
+              onHoverSpan={(sourceId, snippet) => {
+                setHoverSourceId(sourceId);
+                setHoverSnippet(snippet);
+              }}
+            />
+          </div>
         </div>
 
         <div className="lg:col-span-2 w-full rounded-lg border border-border bg-card p-0 overflow-hidden shadow-sm">

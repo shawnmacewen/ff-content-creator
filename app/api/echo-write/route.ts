@@ -32,6 +32,41 @@ function normalizeXmlToText(input: string): string {
     .trim();
 }
 
+function extraPropertyFromArray(meta: any, key: string): string | undefined {
+  const arr = meta?.raw?.extra_properties;
+  if (!Array.isArray(arr)) return undefined;
+
+  const hit = arr.find((item: any) => String(item?.key || '') === key);
+  const value = hit?.stringValue ?? hit?.value ?? hit?.string_value;
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getSourceImageUrl(row: any) {
+  const meta = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const extraMap = meta?.extraProperties || meta?.raw?.extraProperties || null;
+
+  const image =
+    extraMap?.['SocialMediaPlatformImages.LinkedIn'] ||
+    meta?.['SocialMediaPlatformImages.LinkedIn'] ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.LinkedIn') ||
+    meta?.SocialMediaPlatformImages?.LinkedIn ||
+    meta?.SocialMediaPlatformImages?.linkedIn ||
+    meta?.SocialMediaPlatformImages?.linkedin ||
+    meta?.socialMediaPlatformImages?.LinkedIn ||
+    meta?.socialMediaPlatformImages?.linkedIn ||
+    meta?.socialMediaPlatformImages?.linkedin ||
+    extraMap?.['SocialMediaPlatformImages.Thumbnail'] ||
+    meta?.['SocialMediaPlatformImages.Thumbnail'] ||
+    extraPropertyFromArray(meta, 'SocialMediaPlatformImages.Thumbnail') ||
+    meta?.SocialMediaPlatformImages?.Thumbnail ||
+    meta?.SocialMediaPlatformImages?.thumbnail ||
+    meta?.socialMediaPlatformImages?.Thumbnail ||
+    meta?.socialMediaPlatformImages?.thumbnail ||
+    meta?.imageUrl;
+
+  return typeof image === 'string' && image.trim() ? image.trim() : null;
+}
+
 type EchoWriteBody = {
   prompt: string;
   writingStyle: 'professional' | 'fun' | 'educational';
@@ -296,7 +331,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     const { data: rows, error } = await supabase
       .from('source_content')
-      .select('id,title,body_text,body,publisher,content_designation,tags,published_at,bas_content_id')
+      .select('id,title,body_text,body,publisher,content_designation,tags,published_at,bas_content_id,metadata')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(1000);
 
@@ -390,6 +425,8 @@ export async function POST(req: Request) {
         publisher: x.row.publisher,
         basContentId: (x.row as any).bas_content_id || null,
         designation: x.row.content_designation,
+        publishedAt: x.row.published_at || null,
+        imageUrl: getSourceImageUrl(x.row),
         score: x.score,
         matchedTerms: x.matchedTerms,
         matchedTopicalTerms: x.matchedTopicalTerms,
