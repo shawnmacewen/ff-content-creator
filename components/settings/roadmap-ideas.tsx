@@ -58,7 +58,7 @@ const roadmapIdeas: RoadmapIdea[] = [
   },
   {
     title: 'User Customizations',
-    status: 'Next',
+    status: 'Later',
     theme: 'Platform and Content',
     summary: 'Let teams customize the platform wrapper and generation assets around their own brand system.',
     details: [
@@ -120,7 +120,7 @@ const roadmapIdeas: RoadmapIdea[] = [
   },
   {
     title: 'CE Credit Quizzes',
-    status: 'Later',
+    status: 'Now',
     theme: 'Learning and Compliance',
     summary: 'Explore CE-credit workflows that pair advisor education videos with quizzes and completion records.',
     details: [
@@ -138,6 +138,28 @@ const roadmapIdeas: RoadmapIdea[] = [
     effort: 7,
     matrix: { x: 47, y: 59 },
     accent: 'from-blue-300 via-cyan-200 to-white',
+  },
+  {
+    title: 'Generation Speed Pass',
+    status: 'Now',
+    theme: 'Content Generation',
+    summary: 'Improve perceived and actual generation speed by loading individual output pieces as soon as they are ready.',
+    details: [
+      'Break generated output into smaller pieces so text, settings, previews, and supporting UI can appear independently.',
+      'Look for slower image-loading paths and prioritize thumbnails, previews, and generated images that users need first.',
+      'Explore streaming or progressive status updates so users can see content generation moving instead of waiting on one large response.',
+      'Keep the Generate Content screen responsive while longer image or carousel work continues in the background.',
+    ],
+    promptData: [
+      'Timing checkpoints for source loading, prompt assembly, model response, image generation, and preview rendering.',
+      'Which elements can stream first, which should lazy-load, and which should wait for final save/review.',
+      'Fallback states for slow image loads, partial generation, retries, and background progress.',
+    ],
+    icon: Gauge,
+    impact: 9,
+    effort: 6,
+    matrix: { x: 50, y: 18 },
+    accent: 'from-emerald-300 via-cyan-300 to-sky-300',
   },
   {
     title: 'Roadmap Views',
@@ -165,7 +187,7 @@ const roadmapIdeas: RoadmapIdea[] = [
       'Storefront mock for browsing print-ready products and campaign pieces.',
       'My Orders plus very basic billing so the happy path feels real enough to react to.',
     ],
-    joke: 'Product team: “Can we just add print real quick?” Everyone else: 🙄👀🖨️💸🤌',
+    joke: 'Print request arrives. Roadmap quietly opens a new tab called “This Again?”',
     icon: Printer,
     impact: 7,
     effort: 8,
@@ -258,9 +280,9 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="9" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="10" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
-              <RoadmapStat icon={Clock3} value="Next" label="customization pass" tone="dark" />
+              <RoadmapStat icon={Clock3} value="Later" label="customization pass" tone="dark" />
             </div>
           </div>
         </div>
