@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, RefreshCw, Tags } from 'lucide-react';
+import { BookOpenCheck, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, Printer, RefreshCw, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
 import ProductUpdates from '@/components/settings/product-updates';
+import PrintExperiment from '@/components/settings/print-experiment';
 import RoadmapIdeas from '@/components/settings/roadmap-ideas';
 import TagExplorer from '@/components/settings/tag-explorer';
 import TemplateDesignSystem from '@/components/settings/template-design-system';
@@ -26,7 +27,8 @@ type SettingsTab =
   | 'roadmap-ideas'
   | 'knowledge-base'
   | 'template-design-system'
-  | 'instagram-carousel-2';
+  | 'instagram-carousel-2'
+  | 'print';
 
 type SettingsSection = 'workspace' | 'product-lab';
 
@@ -43,6 +45,7 @@ const productLabTabs: SettingsTab[] = [
   'knowledge-base',
   'template-design-system',
   'instagram-carousel-2',
+  'print',
 ];
 
 const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof Database }> = {
@@ -90,6 +93,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Instagram Carousel 2.0',
     detail: 'Tune the carousel generation workspace.',
     icon: Image,
+  },
+  print: {
+    label: 'Print',
+    detail: 'Mock the core print workflow experiments.',
+    icon: Printer,
   },
 };
 
@@ -535,8 +543,10 @@ export default function SettingsClient({ section }: { section: SettingsSection }
         <KnowledgeBase />
       ) : tab === 'template-design-system' ? (
         <TemplateDesignSystem />
-      ) : (
+      ) : tab === 'instagram-carousel-2' ? (
         <InstagramCarousel2Client />
+      ) : (
+        <PrintExperiment />
       )}
     </div>
   );

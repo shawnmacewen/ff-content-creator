@@ -13,6 +13,7 @@ import {
   Mic2,
   Palette,
   PauseCircle,
+  Printer,
   Sparkles,
   type LucideIcon,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ type RoadmapIdea = {
   summary: string;
   details: string[];
   promptData?: string[];
+  joke?: string;
   icon: LucideIcon;
   impact: number;
   effort: number;
@@ -146,6 +148,23 @@ const roadmapIdeas: RoadmapIdea[] = [
     matrix: { x: 33, y: 72 },
     accent: 'from-orange-300 via-amber-200 to-emerald-200',
   },
+  {
+    title: 'Print',
+    status: 'Later',
+    theme: 'Experimental Print',
+    summary: 'Mock the first print workflow surface so Editorial can start exploring a future print product area.',
+    details: [
+      'Landing page and SSO entry for getting print users into the right workspace.',
+      'Storefront mock for browsing print-ready products and campaign pieces.',
+      'My Orders plus very basic billing so the happy path feels real enough to react to.',
+    ],
+    joke: 'Product team: “Can we just add print real quick?” Everyone else: 🙄👀🖨️💸🤌',
+    icon: Printer,
+    impact: 7,
+    effort: 8,
+    matrix: { x: 77, y: 78 },
+    accent: 'from-pink-300 via-yellow-200 to-cyan-300',
+  },
 ];
 
 const lanes: RoadmapStatus[] = ['Now', 'Next', 'Later'];
@@ -193,7 +212,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="6" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="7" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Next" label="teleprompter pass" tone="dark" />
             </div>
@@ -270,6 +289,11 @@ function RoadmapIdeaCard({ idea }: { idea: RoadmapIdea }) {
                 </div>
               ))}
             </div>
+          </div>
+        ) : null}
+        {idea.joke ? (
+          <div className="mt-4 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 text-sm font-medium leading-6 text-foreground">
+            {idea.joke}
           </div>
         ) : null}
       </div>
