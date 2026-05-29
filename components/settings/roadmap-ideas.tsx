@@ -6,6 +6,7 @@ import {
   BarChart3,
   Captions,
   Clock3,
+  FileText,
   Flag,
   GalleryHorizontalEnd,
   Gauge,
@@ -19,6 +20,14 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type RoadmapView = 'lanes' | 'matrix';
@@ -31,6 +40,11 @@ type RoadmapIdea = {
   summary: string;
   details: string[];
   promptData?: string[];
+  prd?: {
+    title: string;
+    description: string;
+    content: string;
+  };
   joke?: string;
   icon: LucideIcon;
   impact: number;
@@ -38,6 +52,108 @@ type RoadmapIdea = {
   matrix: { x: number; y: number };
   accent: string;
 };
+
+const ceCourseCreationPrd = `# PRD: CE Course Creation
+
+## Overview
+
+CE Course Creation helps the Editorial team build continuing education course packages from existing Broadridge Forefield source content. The first version focuses on creating a complete quiz-based CE package from selected articles. Sora video generation is a later enhancement.
+
+## Primary User
+
+The primary user is the Editorial team. They use the tool to create CE course packages, review the generated quiz material, and prepare courses for submission to governing bodies or downstream delivery systems.
+
+## Problem
+
+Today, CE course creation requires the team to gather related Forefield articles, read the material, create a quiz, prepare answer keys, and package the course for another system. The reading set may include one article or several related articles. Learners typically read a small bundle of articles and then answer a quiz sized to the amount of reading.
+
+## Goals
+
+- Let an Editorial user select 1 to 5 existing source content items.
+- Help users find related content by tag, category, or theme.
+- Generate a full CE course package from selected content.
+- Generate multiple-choice quiz questions with citations back to the source articles.
+- Provide a demo quiz-taking experience for internal review.
+- Prepare a future path for one-button delivery to AdvisorStream.
+- Leave room for later course submission automation, such as email-based submission to governing bodies.
+- Defer Sora video generation until quiz/course creation works well.
+
+## First Version Scope
+
+The first version should generate:
+
+- Course title.
+- Learning objective.
+- Selected article list.
+- Quiz.
+- Answer key.
+- Passing score.
+- Completion notes.
+- Source citations for each quiz question.
+- Preview/take-quiz demo experience.
+
+## Source Selection
+
+Users should be able to manually select 1 to 5 Forefield content items from existing sources.
+
+The source selection experience should include:
+
+- Tag filtering toggle.
+- Category/theme filtering for topics such as Bonds, 529 Plans, and Homeowners Insurance.
+- Recommendations for related articles under the same theme or category.
+- Clear selected-source review before generation.
+
+## Quiz Rules
+
+- Question type: multiple choice only.
+- Choices per question: 4.
+- Minimum questions: 10.
+- Maximum questions: 25.
+- Target generation rule: roughly 5 questions per selected article.
+- If only one article is selected, still generate at least 10 questions.
+- Difficulty: easy to medium.
+- Tone: confirm the learner read and understood the content, not trick questions.
+- Passing score: 60%.
+- Citations: each question should cite the source article it came from.
+
+## Demo Quiz Experience
+
+The app should provide a simple learner-style preview so Editorial can test and demo the quiz before sending it elsewhere.
+
+The preview should show:
+
+- Course title.
+- Learning objective.
+- Reading list.
+- Quiz questions.
+- Four choices per question.
+- Result state based on the 60% passing score.
+- Answer key and source citations for review.
+
+## Out of Scope for First Version
+
+- Audit trail.
+- Approval workflow.
+- Governing body submission automation.
+- Sora video generation.
+- Full learner account management.
+- Production quiz hosting as the final learner destination.
+
+## Later Enhancements
+
+- One-button "Send Quiz to AdvisorStream" workflow.
+- Automated course submission support for governing bodies, possibly through an email workflow.
+- Sora video generation from the selected course articles.
+- Video module packaging with runtime, completion threshold, and attestation text.
+- Export formats for external CE/course systems.
+
+## Open Questions
+
+- Which exact source fields should be shown in the course reading list?
+- What export format does AdvisorStream need?
+- Should generated quiz questions be editable before export?
+- Should source citations be visible to learners, reviewers only, or both?
+- Which governing bodies have the most important submission requirements?`;
 
 const roadmapIdeas: RoadmapIdea[] = [
   {
@@ -119,20 +235,28 @@ const roadmapIdeas: RoadmapIdea[] = [
     accent: 'from-teal-300 via-cyan-300 to-blue-300',
   },
   {
-    title: 'CE Credit Quizzes',
+    title: 'CE Course Creator',
     status: 'Now',
     theme: 'Learning and Compliance',
-    summary: 'Explore CE-credit workflows that pair advisor education videos with quizzes and completion records.',
+    summary: 'Build CE course packages from selected Forefield content, starting with quiz generation.',
     details: [
-      'Generate quiz questions from approved source material, video scripts, or course outlines.',
-      'Track CE-credit eligibility, passing score, completion state, and review status for each quiz.',
-      'Connect quiz results back to video modules so teams can package education, assessment, and evidence together.',
+      'Let Editorial select 1 to 5 Forefield source pieces and generate a full course package.',
+      'Use tag filtering and theme/category recommendations to find related articles such as Bonds, 529 Plans, or Homeowners Insurance.',
+      'Generate title, learning objective, article list, quiz, answer key, passing score, completion notes, and source citations.',
+      'Add a demo quiz-taking preview with a 60% passing score so the team can test the course before export.',
+      'Later, support one-button Send Quiz to AdvisorStream.',
+      'Later, explore automated course submission to governing bodies, possibly through email workflow support.',
     ],
     promptData: [
-      'Learning objective, CE-credit category, and required passing score.',
-      'Question count, difficulty mix, answer explanations, and source citations.',
-      'Video runtime, completion threshold, attestation copy, and review owner.',
+      'Selected source IDs, tags, categories, theme, titles, article bodies, and source citations.',
+      'Question count from 10 to 25, with roughly 5 easy-to-medium multiple-choice questions per article.',
+      'Four answer choices per question, correct answer, explanation, citation, and learner-facing completion notes.',
     ],
+    prd: {
+      title: 'CE Course Creation PRD',
+      description: 'Draft product requirements for creating CE course packages from Forefield source content.',
+      content: ceCourseCreationPrd,
+    },
     icon: BadgeCheck,
     impact: 8,
     effort: 7,
@@ -358,6 +482,27 @@ function RoadmapIdeaCard({ idea }: { idea: RoadmapIdea }) {
               ))}
             </div>
           </div>
+        ) : null}
+        {idea.prd ? (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="mt-4 w-full justify-center gap-2">
+                <FileText className="h-4 w-4" />
+                Open PRD
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none overflow-hidden p-0 sm:max-w-[min(920px,calc(100vw-2rem))]">
+              <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
+                <DialogTitle>{idea.prd.title}</DialogTitle>
+                <DialogDescription className="mt-2 leading-6">{idea.prd.description}</DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[calc(100vh-10rem)] overflow-y-auto bg-background px-6 py-5">
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-6 text-muted-foreground">
+                  {idea.prd.content}
+                </pre>
+              </div>
+            </DialogContent>
+          </Dialog>
         ) : null}
         {idea.joke ? (
           <div className="mt-4 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 text-sm font-medium leading-6 text-foreground">
