@@ -11,6 +11,7 @@ import {
   FileText,
   Filter,
   GraduationCap,
+  Loader2,
   Save,
   Search,
   Send,
@@ -55,6 +56,10 @@ type FilterResponse = {
 type CourseDraft = {
   title: string;
   objective: string;
+  description?: string;
+  theme?: string;
+  readingListSummary?: string;
+  coreThemes?: string[];
   questionCount: number;
   passingScore: number;
   completionNotes: string;
@@ -69,6 +74,8 @@ type DraftQuestion = {
   choices: string[];
   answerIndex: number;
   citation: string;
+  explanation?: string;
+  difficulty?: 'easy' | 'medium';
 };
 
 const fetcher = async (url: string) => {
@@ -147,7 +154,7 @@ function buildCourseDraft(sources: SourceContent[]): CourseDraft | null {
 
   const theme = chooseTheme(sources);
   const questionCount = clampQuestionCount(sources.length);
-  const questions = Array.from({ length: questionCount }, (_, index) => {
+  const questions: DraftQuestion[] = Array.from({ length: questionCount }, (_, index) => {
     const source = sources[index % sources.length];
     const sourceTitle = decodeLite(source.title || 'Selected article');
     const citation = `${sourceTitle}${source.publisher ? `, ${source.publisher}` : ''}`;
@@ -165,16 +172,59 @@ function buildCourseDraft(sources: SourceContent[]): CourseDraft | null {
       ],
       answerIndex: 0,
       citation,
+      explanation: 'This draft placeholder should be replaced by generated source-grounded rationale.',
+      difficulty: 'easy',
     };
   });
 
   return {
     title: `${theme} CE Course`,
     objective: `Help learners understand key planning considerations, common client questions, and practical advisor talking points related to ${theme}.`,
+    description: `A CE course package based on ${sources.length} selected Forefield source ${sources.length === 1 ? 'article' : 'articles'}.`,
+    theme,
+    readingListSummary: sources.map((source) => decodeLite(source.title || 'Untitled source')).join('; '),
+    coreThemes: [theme],
     questionCount,
     passingScore: 60,
     completionNotes: 'Learners should review the selected reading list, complete the multiple-choice quiz, and meet the passing score before the course package is sent downstream.',
     questions,
+  };
+}
+
+function normalizeGeneratedDraft(coursePackage: any): CourseDraft {
+  const questions = Array.isArray(coursePackage?.questions) ? coursePackage.questions : [];
+
+  return {
+    title: String(coursePackage?.title || 'Untitled CE Course'),
+    objective: String(coursePackage?.objective || ''),
+    description: String(coursePackage?.description || ''),
+    theme: String(coursePackage?.theme || ''),
+    readingListSummary: String(coursePackage?.readingListSummary || ''),
+    coreThemes: Array.isArray(coursePackage?.coreThemes) ? coursePackage.coreThemes.map((item: any) => String(item)).filter(Boolean) : [],
+    questionCount: questions.length,
+    passingScore: 60,
+    completionNotes: String(coursePackage?.completionNotes || ''),
+    questions: questions.map((question: any, index: number) => {
+      const choices = Array.isArray(question?.choices) ? question.choices : [];
+      const labels = ['A', 'B', 'C', 'D'];
+      const correctLabel = String(question?.correctChoiceLabel || 'A').toUpperCase();
+      const answerIndex = Math.max(0, labels.indexOf(correctLabel));
+
+      return {
+        id: String(question?.id || `q-${index + 1}`),
+        sourceId: String(question?.sourceId || ''),
+        sourceTitle: String(question?.sourceTitle || 'Selected source'),
+        question: String(question?.question || ''),
+        choices: labels.map((label, choiceIndex) => {
+          const choice = choices[choiceIndex];
+          return String(choice?.text || choice || `${label}. Review the source material.`);
+        }),
+        answerIndex,
+        citation: String(question?.citation || question?.sourceTitle || 'Selected source'),
+        explanation: String(question?.explanation || ''),
+        difficulty: question?.difficulty === 'medium' ? 'medium' : 'easy',
+      };
+    }),
   };
 }
 
@@ -195,6 +245,8 @@ export default function CeCourseCreatorClient() {
   const [page, setPage] = React.useState(1);
   const [selectedSources, setSelectedSources] = React.useState<Map<string, SourceContent>>(new Map());
   const [draft, setDraft] = React.useState<CourseDraft | null>(null);
+  const [generationError, setGenerationError] = React.useState<string | null>(null);
+  const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -252,9 +304,26 @@ export default function CeCourseCreatorClient() {
     setTagFiltersOpen(false);
   };
 
-  const handleBuildDraft = () => {
-    const nextDraft = buildCourseDraft(selectedList);
-    setDraft(nextDraft);
+  const handleBuildDraft = async () => {
+    if (!canBuild || isGeneratingDraft) return;
+
+    setGenerationError(null);
+    setIsGeneratingDraft(true);
+    try {
+      const response = await fetch('/api/ce-course/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceContentIds: selectedList.map((source) => source.id) }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || `Generation failed with status ${response.status}`);
+      setDraft(normalizeGeneratedDraft(payload?.coursePackage));
+    } catch (error: any) {
+      setGenerationError(error?.message || 'Generated package failed; showing local draft shell instead.');
+      setDraft(buildCourseDraft(selectedList));
+    } finally {
+      setIsGeneratingDraft(false);
+    }
   };
 
   const updateDraftField = (field: 'title' | 'objective' | 'completionNotes', value: string) => {
@@ -299,12 +368,12 @@ export default function CeCourseCreatorClient() {
         actions={
           <Button
             type="button"
-            disabled={!canBuild}
+            disabled={!canBuild || isGeneratingDraft}
             onClick={handleBuildDraft}
             className="gap-2"
           >
-            <Sparkles className="h-4 w-4" />
-            Build Draft Package
+            {isGeneratingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {isGeneratingDraft ? 'Generating Package' : 'Generate Course Package'}
           </Button>
         }
       />
@@ -478,8 +547,13 @@ export default function CeCourseCreatorClient() {
         </section>
 
         <aside className="space-y-4">
-          <SelectedSourcesCard selectedSources={selectedList} onRemove={removeSource} onBuild={handleBuildDraft} canBuild={canBuild} />
-          <CourseDraftCard draft={draft} selectedSources={selectedList} onBuild={handleBuildDraft} onUpdateField={updateDraftField} onUpdateQuestion={updateQuestion} />
+          {generationError ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+              {generationError}
+            </div>
+          ) : null}
+          <SelectedSourcesCard selectedSources={selectedList} onRemove={removeSource} onBuild={handleBuildDraft} canBuild={canBuild} isGenerating={isGeneratingDraft} />
+          <CourseDraftCard draft={draft} selectedSources={selectedList} onBuild={handleBuildDraft} onUpdateField={updateDraftField} onUpdateQuestion={updateQuestion} isGenerating={isGeneratingDraft} />
         </aside>
       </div>
     </main>
@@ -524,13 +598,15 @@ function SourceDetailDialog({ source }: { source: SourceContent }) {
 function SelectedSourcesCard({
   selectedSources,
   canBuild,
+  isGenerating,
   onRemove,
   onBuild,
 }: {
   selectedSources: SourceContent[];
   canBuild: boolean;
+  isGenerating: boolean;
   onRemove: (id: string) => void;
-  onBuild: () => void;
+  onBuild: () => void | Promise<void>;
 }) {
   return (
     <Card>
@@ -559,9 +635,9 @@ function SelectedSourcesCard({
             Add source articles from the selector to start building a CE package.
           </div>
         )}
-        <Button type="button" className="w-full gap-2" disabled={!canBuild} onClick={onBuild}>
-          <Sparkles className="h-4 w-4" />
-          Build Draft Package
+        <Button type="button" className="w-full gap-2" disabled={!canBuild || isGenerating} onClick={onBuild}>
+          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {isGenerating ? 'Generating Package' : 'Generate Course Package'}
         </Button>
       </CardContent>
     </Card>
@@ -574,12 +650,14 @@ function CourseDraftCard({
   onBuild,
   onUpdateField,
   onUpdateQuestion,
+  isGenerating,
 }: {
   draft: CourseDraft | null;
   selectedSources: SourceContent[];
-  onBuild: () => void;
+  onBuild: () => void | Promise<void>;
   onUpdateField: (field: 'title' | 'objective' | 'completionNotes', value: string) => void;
   onUpdateQuestion: (questionId: string, value: string) => void;
+  isGenerating: boolean;
 }) {
   if (!draft) {
     return (
@@ -599,9 +677,9 @@ function CourseDraftCard({
               <div className="mt-1 text-sm font-semibold">60%</div>
             </div>
           </div>
-          <Button type="button" variant="outline" className="w-full gap-2" disabled={!selectedSources.length} onClick={onBuild}>
-            <ClipboardList className="h-4 w-4" />
-            Preview Draft Structure
+          <Button type="button" variant="outline" className="w-full gap-2" disabled={!selectedSources.length || isGenerating} onClick={onBuild}>
+            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
+            {isGenerating ? 'Generating Package' : 'Generate Course Package'}
           </Button>
         </CardContent>
       </Card>
@@ -615,7 +693,7 @@ function CourseDraftCard({
           <BookOpenCheck className="h-5 w-5 text-primary" />
           Editable Course Package
         </CardTitle>
-        <p className="text-sm text-muted-foreground">This is a local draft shell. Generation, saving, and outbound API retrieval will attach to this structure next.</p>
+        <p className="text-sm text-muted-foreground">Generated from selected source content. Saving and outbound API retrieval will attach to this structure next.</p>
       </CardHeader>
       <CardContent className="space-y-4 p-4">
         <div className="space-y-2">
@@ -626,6 +704,13 @@ function CourseDraftCard({
           <label className="text-xs font-semibold uppercase text-muted-foreground" htmlFor="course-objective">Learning objective</label>
           <Textarea id="course-objective" value={draft.objective} onChange={(event) => onUpdateField('objective', event.target.value)} className="min-h-24" />
         </div>
+        {draft.description || draft.readingListSummary || draft.coreThemes?.length ? (
+          <div className="rounded-md border border-border bg-muted/30 p-3 text-xs leading-5 text-muted-foreground">
+            {draft.description ? <p>{draft.description}</p> : null}
+            {draft.readingListSummary ? <p className="mt-2">Reading list: {draft.readingListSummary}</p> : null}
+            {draft.coreThemes?.length ? <p className="mt-2">Themes: {draft.coreThemes.join(', ')}</p> : null}
+          </div>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-md border border-border bg-muted/30 p-3">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Sources</div>
@@ -654,7 +739,7 @@ function CourseDraftCard({
               {draft.questions.slice(0, 10).map((question, index) => (
                 <div key={question.id} className="rounded-md border border-border bg-background p-3">
                   <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                    Question {index + 1} - Citation: {question.citation}
+                    Question {index + 1} - {question.difficulty || 'easy'} - Citation: {question.citation}
                   </div>
                   <Textarea
                     value={question.question}
@@ -674,6 +759,11 @@ function CourseDraftCard({
                       </div>
                     ))}
                   </div>
+                  {question.explanation ? (
+                    <div className="mt-3 rounded-md bg-muted/40 p-2 text-xs leading-5 text-muted-foreground">
+                      {question.explanation}
+                    </div>
+                  ) : null}
                 </div>
               ))}
               {draft.questions.length > 10 ? (

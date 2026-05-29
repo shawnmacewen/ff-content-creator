@@ -5,6 +5,7 @@ type GenerationTool =
   | 'echowrite'
   | 'carousel-plan'
   | 'carousel-image'
+  | 'ce-course-creator'
   | 'image-generation'
   | 'image-test';
 
