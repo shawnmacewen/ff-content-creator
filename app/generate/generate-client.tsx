@@ -13,7 +13,6 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
-import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { Badge } from '@/components/ui/badge';
@@ -34,17 +33,6 @@ import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-function decodeEntitiesLite(input: string): string {
-  const s = String(input || '');
-  return s
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
-}
-
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -60,31 +48,15 @@ export default function GeneratePage() {
 
   const detailContent = selectedSource?.data ?? selectedSource ?? null;
 
-  const normalizedBodyPreview = (() => {
-    const raw = String(detailContent?.body || '');
-    // Best-effort XML-ish normalization (mirrors ContentDetail behavior, but safe for this page).
-    const decoded = decodeEntitiesLite(raw);
+  const handleSourceSelect = useCallback((id: string | null) => {
+    setSelectedSourceIds(id ? [id] : []);
+    setDetailOpen(Boolean(id));
+  }, []);
 
-    const text = decoded
-      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-      .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
-      .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
-      .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
-      .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\r/g, '')
-      .replace(/\t/g, ' ')
-      // collapse runs of spaces
-      .replace(/[ ]{2,}/g, ' ')
-      // trim spaces around newlines and collapse blank lines
-      .replace(/[ \t]+\n/g, '\n')
-      .replace(/\n[ \t]+/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+  const handleUseDetailArticle = useCallback(() => {
+    toast.success('Article selected for generation');
+  }, []);
 
-    if (!text) return '';
-    return text;
-  })();
   const [mode, setMode] = useState<GenerationMode>('kit');
 
   const [kitOutputTab, setKitOutputTab] = useState<'carousel' | ContentType | 'all'>('all');
@@ -614,28 +586,10 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div
-              className={cn(
-                'grid items-start gap-6',
-                'xl:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,470px)_minmax(0,1fr)]'
-              )}
-            >
-              <div className="xl:sticky xl:top-24">
-                <SourceArticlePicker
-                  selectedId={selectedSourceIds[0] ?? null}
-                  onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-                />
-              </div>
-
-              <SelectedArticlePreview
-                selectedSource={selectedSource}
-                detailContent={detailContent}
-                bodyPreview={normalizedBodyPreview}
-                onViewDetails={() => setDetailOpen(true)}
-                onClear={() => setSelectedSourceIds([])}
-                onUseArticle={() => toast.success('Article selected for generation')}
-              />
-            </div>
+            <SourceArticlePicker
+              selectedId={selectedSourceIds[0] ?? null}
+              onSelect={handleSourceSelect}
+            />
           </div>
 
           <div className="flex justify-end gap-2">
@@ -819,28 +773,10 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div
-              className={cn(
-                'grid items-start gap-6',
-                'xl:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,470px)_minmax(0,1fr)]'
-              )}
-            >
-              <div className="xl:sticky xl:top-24">
-                <SourceArticlePicker
-                  selectedId={selectedSourceIds[0] ?? null}
-                  onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-                />
-              </div>
-
-              <SelectedArticlePreview
-                selectedSource={selectedSource}
-                detailContent={detailContent}
-                bodyPreview={normalizedBodyPreview}
-                onViewDetails={() => setDetailOpen(true)}
-                onClear={() => setSelectedSourceIds([])}
-                onUseArticle={() => toast.success('Article selected for generation')}
-              />
-            </div>
+            <SourceArticlePicker
+              selectedId={selectedSourceIds[0] ?? null}
+              onSelect={handleSourceSelect}
+            />
           </div>
 
 
@@ -899,6 +835,7 @@ export default function GeneratePage() {
         content={detailContent}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        onUseForGeneration={handleUseDetailArticle}
       />
     </div>
   );
