@@ -31,6 +31,8 @@ type EchoWriteSource = {
   designation?: string | null;
   score?: number;
   matchedTerms?: string[];
+  matchedTopicalTerms?: string[];
+  matchedAnchorTerms?: string[];
   bodySnippet?: string;
 };
 
@@ -349,12 +351,13 @@ export default function EchoWritePage() {
 1) Retrieval (which sources get used)
 When you click Generate, /api/echo-write does:
 - pulls up to 1000 source_content rows (most recent first)
-- scores them against your prompt using simple lexical matching:
-  - phrase match + token overlap in title and body
+- separates generic task words from subject terms in your prompt
+- scores title/body matches with stronger weight for subject terms
+- filters out weak candidates that do not match enough subject terms
 - sorts by score
-- takes the top 12 as “retrieved” candidates
+- takes the strongest matches as “retrieved” candidates
 
-So yes: we’re effectively grounding on max 12 sources per generation right now.
+This keeps broad articles from being used just because they share words like “impact,” “financial,” or “script.”
 
 2) Grounding / prompt context
 Those top sources are concatenated into the SOURCE CONTEXT block (title + some metadata + body snippet) and sent to OpenAI.
@@ -515,9 +518,9 @@ Separately (client-side), we:
                         ) : null}
                       </div>
 
-                      {s.matchedTerms?.length ? (
+                      {(s.matchedTopicalTerms?.length || s.matchedTerms?.length) ? (
                         <div className="mt-2 flex flex-wrap gap-1">
-                          {s.matchedTerms.slice(0, 5).map((term) => (
+                          {(s.matchedTopicalTerms?.length ? s.matchedTopicalTerms : s.matchedTerms || []).slice(0, 5).map((term) => (
                             <span key={term} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-secondary-foreground">
                               {term}
                             </span>

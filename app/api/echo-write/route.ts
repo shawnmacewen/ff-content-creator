@@ -74,6 +74,49 @@ const STOP_WORDS = new Set([
   'your',
 ]);
 
+const ECHOWRITE_TASK_WORDS = new Set([
+  'article',
+  'blog',
+  'brief',
+  'caption',
+  'content',
+  'create',
+  'draft',
+  'email',
+  'explain',
+  'generate',
+  'headline',
+  'newsletter',
+  'piece',
+  'post',
+  'prompt',
+  'script',
+  'story',
+  'video',
+  'write',
+]);
+
+const BROAD_CONTEXT_WORDS = new Set([
+  'advice',
+  'advisor',
+  'advisors',
+  'client',
+  'clients',
+  'effect',
+  'effects',
+  'financial',
+  'finance',
+  'impact',
+  'impacts',
+  'market',
+  'markets',
+  'money',
+  'planning',
+  'price',
+  'prices',
+  'strategy',
+]);
+
 function styleInstruction(style: EchoWriteBody['writingStyle']) {
   if (style === 'fun') return 'Use engaging, lively pacing, conversational vocabulary, and a friendly CTA.';
   if (style === 'educational') return 'Use teacher-like clarity, structured explanations, and actionable educational CTA.';
@@ -153,36 +196,94 @@ function tokenize(input: string) {
   ));
 }
 
-function scoreRow(row: any, query: string, tokens: string[], cleanBody: string) {
-  const title = String(row.title || '').toLowerCase();
-  const body = cleanBody.toLowerCase();
+function normalizeSearchText(input: string) {
+  return ` ${String(input || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()} `;
+}
+
+function tokenSet(input: string) {
+  return new Set(tokenize(input));
+}
+
+function buildSearchTerms(prompt: string) {
+  const allTokens = tokenize(prompt);
+  const topicalTokens = allTokens.filter((token) => !ECHOWRITE_TASK_WORDS.has(token));
+  const anchorTokens = topicalTokens.filter((token) => !BROAD_CONTEXT_WORDS.has(token));
+
+  return {
+    allTokens,
+    topicalTokens,
+    anchorTokens,
+  };
+}
+
+function minimumRequiredTopicMatches(terms: ReturnType<typeof buildSearchTerms>) {
+  if (terms.anchorTokens.length >= 2) return 2;
+  if (terms.anchorTokens.length === 1) return 1;
+  if (terms.topicalTokens.length >= 4) return 3;
+  if (terms.topicalTokens.length >= 2) return 2;
+  return terms.topicalTokens.length;
+}
+
+function scoreRow(
+  row: any,
+  query: string,
+  terms: ReturnType<typeof buildSearchTerms>,
+  cleanBody: string,
+) {
+  const titleText = String(row.title || '');
+  const title = normalizeSearchText(titleText);
+  const body = normalizeSearchText(cleanBody);
+  const titleTokens = tokenSet(titleText);
+  const bodyTokens = tokenSet(cleanBody);
   const q = query.toLowerCase().trim();
   let score = 0;
 
-  if (q && title.includes(q)) score += 28;
-  if (q && body.includes(q)) score += 14;
+  if (q && title.includes(` ${q} `)) score += 28;
+  if (q && body.includes(` ${q} `)) score += 14;
 
   const matchedTerms: string[] = [];
-  for (const t of tokens) {
-    if (title.includes(t)) {
-      score += 8;
+  const matchedTopicalTerms: string[] = [];
+  const matchedAnchorTerms: string[] = [];
+
+  for (const t of terms.allTokens) {
+    const matchedTitle = titleTokens.has(t);
+    const matchedBody = bodyTokens.has(t);
+    if (matchedTitle) {
+      score += terms.anchorTokens.includes(t) ? 14 : 8;
       matchedTerms.push(t);
-    } else if (body.includes(t)) {
-      score += 3;
+    } else if (matchedBody) {
+      score += terms.anchorTokens.includes(t) ? 6 : 3;
       matchedTerms.push(t);
+    }
+
+    if (matchedTitle || matchedBody) {
+      if (terms.topicalTokens.includes(t)) matchedTopicalTerms.push(t);
+      if (terms.anchorTokens.includes(t)) matchedAnchorTerms.push(t);
     }
   }
 
-  for (let i = 0; i < tokens.length - 1; i += 1) {
-    const phrase = `${tokens[i]} ${tokens[i + 1]}`;
+  for (let i = 0; i < terms.topicalTokens.length - 1; i += 1) {
+    const phrase = ` ${terms.topicalTokens[i]} ${terms.topicalTokens[i + 1]} `;
     if (title.includes(phrase)) score += 10;
     else if (body.includes(phrase)) score += 5;
   }
 
-  const coverage = tokens.length ? matchedTerms.length / tokens.length : 0;
-  score += Math.round(coverage * 10);
+  const uniqueMatchedTerms = Array.from(new Set(matchedTerms));
+  const uniqueTopicalTerms = Array.from(new Set(matchedTopicalTerms));
+  const uniqueAnchorTerms = Array.from(new Set(matchedAnchorTerms));
+  const coverage = terms.allTokens.length ? uniqueMatchedTerms.length / terms.allTokens.length : 0;
+  const topicalCoverage = terms.topicalTokens.length ? uniqueTopicalTerms.length / terms.topicalTokens.length : 0;
+  score += Math.round(coverage * 8);
+  score += Math.round(topicalCoverage * 14);
 
-  return { score, matched: matchedTerms.length, matchedTerms: Array.from(new Set(matchedTerms)) };
+  return {
+    score,
+    matched: uniqueMatchedTerms.length,
+    matchedTerms: uniqueMatchedTerms,
+    matchedTopicalTerms: uniqueTopicalTerms,
+    matchedAnchorTerms: uniqueAnchorTerms,
+    topicalCoverage,
+  };
 }
 
 export async function POST(req: Request) {
@@ -201,20 +302,30 @@ export async function POST(req: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    const tokens = tokenize(body.prompt);
+    const terms = buildSearchTerms(body.prompt);
+    const minTopicMatches = minimumRequiredTopicMatches(terms);
 
     const ranked = (rows || [])
       .map((row) => {
         const cleanBody = normalizeXmlToText(getCanonicalBody(row));
-        return { row, cleanBody, ...scoreRow(row, body.prompt, tokens, cleanBody) };
+        return { row, cleanBody, ...scoreRow(row, body.prompt, terms, cleanBody) };
       })
-      .filter((x) => x.score > 0)
+      .filter((x) => {
+        if (x.score <= 0) return false;
+        if (!minTopicMatches) return true;
+
+        const topicMatchCount = terms.anchorTokens.length
+          ? x.matchedAnchorTerms.length
+          : x.matchedTopicalTerms.length;
+
+        return topicMatchCount >= minTopicMatches;
+      })
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(0, Math.min(12, Number(body.maxSources ?? 6))));
 
     const context = ranked
       .map((x, idx) => {
-        return `Source ${idx + 1} | ${decodeHtmlEntities(String(x.row.title || ''))}\nDesignation: ${x.row.content_designation || 'n/a'}\nBasContentId: ${(x.row as any).bas_content_id || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\nMatched terms: ${x.matchedTerms.join(', ') || 'n/a'}\n\n${x.cleanBody.slice(0, 1800)}`;
+        return `Source ${idx + 1} | ${decodeHtmlEntities(String(x.row.title || ''))}\nDesignation: ${x.row.content_designation || 'n/a'}\nBasContentId: ${(x.row as any).bas_content_id || 'n/a'}\nTags: ${(x.row.tags || []).join(', ')}\nMatched subject terms: ${x.matchedTopicalTerms.join(', ') || 'n/a'}\nMatched anchor terms: ${x.matchedAnchorTerms.join(', ') || 'n/a'}\n\n${x.cleanBody.slice(0, 1800)}`;
       })
       .join('\n\n---\n\n');
 
@@ -281,6 +392,8 @@ export async function POST(req: Request) {
         designation: x.row.content_designation,
         score: x.score,
         matchedTerms: x.matchedTerms,
+        matchedTopicalTerms: x.matchedTopicalTerms,
+        matchedAnchorTerms: x.matchedAnchorTerms,
         bodySnippet: x.cleanBody.slice(0, 2200),
       })),
     });
