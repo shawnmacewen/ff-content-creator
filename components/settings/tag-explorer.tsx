@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowDownAZ, ChevronRight, Database, ExternalLink, Hash, ListFilter, RefreshCw, Search, Tags, TriangleAlert } from 'lucide-react';
+import { ArrowDownAZ, Database, ExternalLink, Hash, ListFilter, RefreshCw, Search, Tags, TriangleAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/page-header';
 import {
   Dialog,
   DialogContent,
@@ -187,49 +188,45 @@ export default function TagExplorer() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Content metadata
-            </Badge>
-            <h2 className="text-2xl font-semibold leading-tight">Tag Explorer</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              Review tag coverage, spot cleanup candidates, and open tagged source content for editorial planning.
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-5 gap-2"
-              onClick={handleScan}
-              disabled={isLoading}
-            >
-              {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
-              {isLoading ? 'Scanning tags' : data.scanned ? 'Refresh scan' : 'Scan tags'}
-            </Button>
-          </div>
-          <div className="grid gap-3 bg-secondary/60 p-6 sm:grid-cols-2 sm:p-7">
-            <MetricCard icon={Tags} label="Unique tags" value={data?.summary?.uniqueTags ?? 0} detail="distinct normalized labels" />
-            <MetricCard icon={Hash} label="Tag uses" value={data?.summary?.totalTagUses ?? 0} detail="total assignments" />
-            <MetricCard icon={ListFilter} label="Tagged items" value={data?.summary?.taggedContentCount ?? 0} detail="content with at least one tag" />
-            <button
-              type="button"
-              aria-label="Open cleanup check details"
-              onClick={() => setCleanupOpen(true)}
-              className="group rounded-md text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <MetricCard
-                icon={TriangleAlert}
-                label="Cleanup checks"
-                value={cleanupChecks}
-                detail="single-use + similar groups"
-                actionLabel="View details"
-                tone="warning"
-              />
-            </button>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Content metadata"
+        title="Tag Explorer"
+        description="Review tag coverage, spot cleanup candidates, and open tagged source content for editorial planning."
+        actions={(
+          <Button
+            type="button"
+            variant="secondary"
+            className="gap-2"
+            onClick={handleScan}
+            disabled={isLoading}
+          >
+            {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+            {isLoading ? 'Scanning tags' : data.scanned ? 'Refresh scan' : 'Scan tags'}
+          </Button>
+        )}
+        metrics={[
+          { label: `${data?.summary?.uniqueTags ?? 0} unique tags`, detail: 'Distinct labels', icon: Tags },
+          { label: `${data?.summary?.totalTagUses ?? 0} tag uses`, detail: 'Total assignments', icon: Hash },
+          { label: `${data?.summary?.taggedContentCount ?? 0} tagged items`, detail: 'Content with tags', icon: ListFilter },
+          {
+            label: `${cleanupChecks} cleanup checks`,
+            detail: 'Single-use + similar groups',
+            icon: TriangleAlert,
+            iconClassName: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200',
+            trailing: (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-8 px-2 text-xs"
+                onClick={() => setCleanupOpen(true)}
+              >
+                View
+              </Button>
+            ),
+          },
+        ]}
+      />
 
       <CleanupDialog
         open={cleanupOpen}
@@ -576,51 +573,6 @@ function CleanupSummaryCard({
         </Button>
       </div>
       <p className="mt-3 text-xs leading-5 text-muted-foreground">{detail}</p>
-    </div>
-  );
-}
-
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  actionLabel,
-  tone = 'default',
-}: {
-  icon: typeof Tags;
-  label: string;
-  value: number;
-  detail: string;
-  actionLabel?: string;
-  tone?: 'default' | 'warning';
-}) {
-  return (
-    <div className={cn(
-      'h-full rounded-md border bg-card p-4',
-      tone === 'warning'
-        ? 'border-amber-300 bg-amber-50/70 ring-1 ring-amber-200 transition group-hover:border-amber-400 group-hover:bg-amber-50 dark:border-amber-500/35 dark:bg-amber-500/10 dark:ring-amber-500/20'
-        : 'border-border'
-    )}>
-      <div className="flex items-start gap-3">
-        <span className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
-          tone === 'warning' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-primary/10 text-primary'
-        )}>
-          <Icon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-semibold tabular-nums">{value.toLocaleString()}</p>
-          <p className="text-xs font-medium text-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground">{detail}</p>
-          {actionLabel ? (
-            <span className="mt-3 inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white transition group-hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950">
-              {actionLabel}
-              <ChevronRight className="h-3.5 w-3.5" />
-            </span>
-          ) : null}
-        </div>
-      </div>
     </div>
   );
 }

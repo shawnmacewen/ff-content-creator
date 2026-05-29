@@ -10,7 +10,7 @@ import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { Clock, FolderOpen, Settings, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/page-header';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -185,70 +185,41 @@ export default function SourceContentPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Source inventory
-            </Badge>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Source Content</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              Browse synced advisor content and send selected articles into the generation workflow.
-            </p>
-          </div>
-          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
-            <div className="rounded-md border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <FolderOpen className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold">{totalAvailableItems.toLocaleString()} available items</p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedIds.size} selected for generation
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-md border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-info text-info-foreground">
-                  <span className="text-[10px] font-bold leading-none tracking-normal text-white">FINRA</span>
-                </span>
-                <div>
-                  <p className="text-sm font-semibold">{data?.meta?.finraReviewedCount ?? 0} FINRA reviewed</p>
-                  <p className="text-xs text-muted-foreground">
-                    approved source content pieces
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-md border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <Clock className="h-4 w-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">Last sync</p>
-                  <p className="text-xs text-muted-foreground">
-                    {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'}
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  <Link href="/settings?tab=content-sync" aria-label="Open Content Sync settings">
-                    <Settings className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Source inventory"
+        title="Source Content"
+        description="Browse synced advisor content and send selected articles into the generation workflow."
+        metrics={[
+          {
+            label: `${totalAvailableItems.toLocaleString()} available`,
+            detail: `${selectedIds.size} selected for generation`,
+            icon: FolderOpen,
+          },
+          {
+            label: `${data?.meta?.finraReviewedCount ?? 0} FINRA reviewed`,
+            detail: 'Approved source pieces',
+            icon: FolderOpen,
+            iconClassName: 'bg-info text-info-foreground',
+          },
+          {
+            label: 'Last sync',
+            detail: data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a',
+            icon: Clock,
+            trailing: (
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="ml-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                <Link href="/settings?tab=content-sync" aria-label="Open Content Sync settings">
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </Button>
+            ),
+          },
+        ]}
+      />
 
       <ContentFilters
         searchQuery={searchQuery}

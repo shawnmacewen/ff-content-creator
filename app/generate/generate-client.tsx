@@ -15,12 +15,11 @@ import { KitGeneratedOutput } from '@/components/generator/kit-generated-output'
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/page-header';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
-  ArrowLeft,
   BadgeCheck,
   DatabaseZap,
   Layers3,
@@ -377,47 +376,16 @@ export default function GeneratePage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="-ml-2 mb-5 text-blue-50 hover:bg-white/10 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Campaign generation workflow
-            </Badge>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">
-              Generate coordinated advisor content from one approved source.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              Select a source, tune the generation controls, and review channel-ready assets in a single process.
-            </p>
-          </div>
-          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
-            {[
-              { label: 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
-              { label: mode === 'kit' ? 'Campaign kit mode' : 'Single asset mode', icon: Layers3, active: true },
-              { label: 'Review output before saving', icon: BadgeCheck, active: Boolean(generatedContent || kitOutputs?.length) },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
-                <span className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-md',
-                  item.active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}>
-                  <item.icon className="h-4 w-4" />
-                </span>
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Campaign generation workflow"
+        title="Generate coordinated advisor content from one approved source."
+        description="Select a source, tune the generation controls, and review channel-ready assets in a single process."
+        metrics={[
+          { label: mode === 'kit' ? 'Campaign Kit mode' : 'Single Asset mode', icon: Layers3, active: true },
+          { label: 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
+          { label: 'Review Output', icon: BadgeCheck, active: Boolean(generatedContent || kitOutputs?.length) },
+        ]}
+      />
 
       <GenerationModeToggle mode={mode} onChange={setMode} />
 

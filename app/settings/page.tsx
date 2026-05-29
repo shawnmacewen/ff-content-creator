@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Compass, Database, Image, Info, Megaphone, Palette, RefreshCw, Tags } from 'lucide-react';
+import { BookOpenCheck, Building2, Compass, Database, Image, Info, Megaphone, Palette, RefreshCw, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
@@ -11,11 +11,14 @@ import KnowledgeBase from '@/components/settings/knowledge-base';
 import ProductUpdates from '@/components/settings/product-updates';
 import TagExplorer from '@/components/settings/tag-explorer';
 import TemplateDesignSystem from '@/components/settings/template-design-system';
+import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type SettingsTab =
+  | 'custom-profile'
   | 'content-sync'
   | 'content-api-explorer'
   | 'tag-explorer'
@@ -25,6 +28,7 @@ type SettingsTab =
   | 'instagram-carousel-2';
 
 const settingsTabs: SettingsTab[] = [
+  'custom-profile',
   'content-sync',
   'content-api-explorer',
   'tag-explorer',
@@ -35,6 +39,11 @@ const settingsTabs: SettingsTab[] = [
 ];
 
 const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof Database }> = {
+  'custom-profile': {
+    label: 'Custom Profile',
+    detail: 'Prepare brand, platform, and company profile controls.',
+    icon: Building2,
+  },
   'content-sync': {
     label: 'Content Sync',
     detail: 'Run provider imports and review sync progress.',
@@ -109,6 +118,47 @@ function TabButton({
         <span className="block text-sm font-semibold leading-5">{tabMeta[tab].label}</span>
       </span>
     </button>
+  );
+}
+
+function CustomProfileSettings() {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-5">
+        <div>
+          <p className="text-xs font-semibold uppercase text-primary">Platform Identity</p>
+          <h2 className="text-lg font-semibold">Custom Profile</h2>
+          <p className="text-sm text-muted-foreground">
+            Placeholder settings for future platform labels, company profile details, and reusable brand assets.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Workspace label</label>
+            <Input value="EDITOR[AI]L" readOnly />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Company profile</label>
+            <Input value="Advisor content team" readOnly />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Primary color</label>
+            <Input value="#143a7b" readOnly />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Accent color</label>
+            <Input value="#0f6f8f" readOnly />
+          </div>
+        </div>
+      </div>
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase text-primary">Coming next</p>
+        <h2 className="mt-1 text-lg font-semibold">Generation profile inputs</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          This area will hold logo, colors, white-label platform naming, and company voice examples that can be reused by generation tools.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -321,6 +371,19 @@ export default function SettingsPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
+      <PageHeader
+        eyebrow="Workspace controls"
+        title="Settings"
+        description="Manage source sync, app help, carousel tuning, and workspace profile controls."
+        metrics={[
+          {
+            label: tabMeta[tab].label,
+            detail: tabMeta[tab].detail,
+            icon: tabMeta[tab].icon,
+          },
+        ]}
+      />
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
         {settingsTabs.map((settingsTab) => (
           <TabButton
@@ -332,7 +395,9 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {tab === 'content-sync' ? (
+      {tab === 'custom-profile' ? (
+        <CustomProfileSettings />
+      ) : tab === 'content-sync' ? (
         <>
           <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
             <div>

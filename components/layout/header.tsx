@@ -14,6 +14,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/layout/theme-provider';
+import Link from 'next/link';
 
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
@@ -49,22 +50,30 @@ export function Header() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs text-muted-foreground md:flex">
-        <span className="h-2 w-2 rounded-full bg-success" />
-        Platform workspace
-      </div>
+      <Button
+        asChild
+        variant="link"
+        size="sm"
+        className="hidden h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground md:inline-flex"
+      >
+        <Link href="/settings?tab=custom-profile" prefetch={false}>
+          <span className="h-2 w-2 rounded-full bg-success" />
+          Custom Profile
+        </Link>
+      </Button>
       <Button
         variant="ghost"
-        size="icon"
+        size="sm"
         onClick={toggleTheme}
         aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-        className="ml-auto h-8 w-8 text-muted-foreground hover:text-foreground"
+        className="h-8 px-2 text-muted-foreground hover:text-foreground"
       >
         {theme === 'light' ? (
           <Moon className="h-4 w-4" />
         ) : (
           <Sun className="h-4 w-4" />
         )}
+        <span className="hidden text-xs sm:inline">{theme === 'light' ? 'Dark' : 'Light'}</span>
       </Button>
     </header>
   );

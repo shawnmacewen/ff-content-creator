@@ -21,8 +21,8 @@ import {
   TrendingUp,
   UsersRound,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/page-header';
 
 const accents = [
   {
@@ -211,47 +211,31 @@ const outcomeExamples = [
 export default function TemplateDesignSystem() {
   return (
     <div className="flex flex-col gap-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Template alignment reference
-            </Badge>
-            <h2 className="max-w-3xl text-3xl font-semibold leading-tight">
-              Template Design System
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              A review board for the color, workflow, scenario, pillar, and outcome examples
-              identified from the shared template image.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button asChild className="bg-white text-[#12306a] hover:bg-blue-50">
-                <Link href="/">Compare Dashboard</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              >
-                <Link href="/settings?tab=knowledge-base">Open Knowledge Center</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
-            {accents.slice(0, 4).map((accent) => (
-              <div key={accent.name} className={`rounded-md border bg-card p-3 ${accent.border}`}>
-                <div className="flex items-center gap-3">
-                  <span className={`h-3 w-3 rounded-full ${accent.bar}`} />
-                  <div>
-                    <p className="text-sm font-semibold">{accent.name}</p>
-                    <p className="text-xs text-muted-foreground">{accent.token}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Template alignment reference"
+        title="Template Design System"
+        description="A review board for the color, workflow, scenario, pillar, and outcome examples identified from the shared template image."
+        actions={(
+          <>
+            <Button asChild className="bg-white text-[#12306a] hover:bg-blue-50">
+              <Link href="/">Compare Dashboard</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            >
+              <Link href="/settings?tab=knowledge-base">Open Knowledge Center</Link>
+            </Button>
+          </>
+        )}
+        metrics={accents.slice(0, 4).map((accent) => ({
+          label: accent.name,
+          detail: accent.token,
+          icon: Sparkles,
+          iconClassName: accent.icon,
+        }))}
+      />
 
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

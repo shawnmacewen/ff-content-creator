@@ -19,7 +19,7 @@ import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
 import { Library, Search, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function LibraryPage() {
   const router = useRouter();
@@ -135,32 +135,18 @@ export default function LibraryPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
-            <Badge className="mb-4 border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Saved workspace
-            </Badge>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight">Saved Content</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50/85">
-              Manage saved drafts, reviewed assets, and reusable campaign content.
-            </p>
-          </div>
-          <div className="grid content-center gap-3 bg-secondary/60 p-6 sm:p-7">
-            <div className="rounded-md border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <Library className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold">{content.length} saved items</p>
-                  <p className="text-xs text-muted-foreground">Drafts, review items, and published assets.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Saved workspace"
+        title="Saved Content"
+        description="Manage saved drafts, reviewed assets, and reusable campaign content."
+        metrics={[
+          {
+            label: `${content.length} saved items`,
+            detail: 'Drafts, review items, and published assets.',
+            icon: Library,
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-end rounded-lg border border-border bg-card p-4 shadow-sm">
         <Button onClick={() => router.push('/generate')} className="gap-2">
