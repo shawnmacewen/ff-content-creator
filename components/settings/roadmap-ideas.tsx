@@ -71,6 +71,7 @@ Today, CE course creation requires the team to gather related Forefield articles
 
 - Let an Editorial user select 1 to 5 existing source content items.
 - Help users find related content by tag, category, or theme.
+- Filter and eventually restrict by content designation/type once compliance confirms which source types are appropriate for CE course packages.
 - Generate a full CE course package from selected content.
 - Generate multiple-choice quiz questions with citations back to the source articles.
 - Provide a demo quiz-taking experience for internal review.
@@ -103,6 +104,7 @@ Users should be able to manually select 1 to 5 Forefield content items from exis
 The source selection experience should include:
 
 - Tag filtering toggle.
+- Content designation filtering.
 - Category/theme filtering for topics such as Bonds, 529 Plans, and Homeowners Insurance.
 - Recommendations for related articles under the same theme or category.
 - Clear selected-source review before generation.
@@ -177,6 +179,7 @@ The outbound API format is intentionally deferred. AdvisorStream integration may
 ## Open Questions
 
 - Which exact source fields should be shown in the course reading list?
+- Which content designations/types should be allowed, warned, or blocked for CE course creation?
 - What fields should be included in the first Supabase CE course package table?
 - Should source detail during quiz preview reuse the existing source View Details component directly or use a lighter CE-specific variant?
 - What export or retrieval format will AdvisorStream eventually need?
@@ -270,6 +273,7 @@ const roadmapIdeas: RoadmapIdea[] = [
     details: [
       'Let Editorial select 1 to 5 Forefield source pieces and generate a full course package.',
       'Use tag filtering and theme/category recommendations to find related articles such as Bonds, 529 Plans, or Homeowners Insurance.',
+      'Add content designation filtering now, then restrict or warn on unsupported content types once the exact CE-safe list is confirmed.',
       'Generate title, learning objective, article list, quiz, answer key, passing score, completion notes, and source citations.',
       'Add a demo quiz-taking preview with a 60% passing score so the team can test the course before export.',
       'Save CE course packages in Supabase so the team can reopen and edit quizzes after saving.',

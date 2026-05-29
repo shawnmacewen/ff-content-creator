@@ -7,7 +7,6 @@ import {
   BookOpenCheck,
   Check,
   ClipboardList,
-  ExternalLink,
   FileText,
   Filter,
   GraduationCap,
@@ -22,19 +21,19 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { ContentDetail } from '@/components/source-content/content-detail';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { tagLabelClass } from '@/lib/content-label-colors';
+import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 
@@ -116,6 +115,11 @@ function formatDate(value?: string) {
 
 function getPrimaryTag(source: SourceContent) {
   return decodeLite(source.tags?.[0] || source.type || 'Source');
+}
+
+function getContentDesignation(source: SourceContent) {
+  const designation = source.metadata?.contentDesignation || source.type || 'Editorial Source';
+  return decodeLite(String(designation));
 }
 
 function getSourceBody(source: SourceContent) {
@@ -265,10 +269,11 @@ function buildSavePayload(draft: CourseDraft, selectedSources: SourceContent[]) 
   };
 }
 
-function buildApiUrl(query: string, tag: string, page: number) {
+function buildApiUrl(query: string, tag: string, contentDesignation: string, page: number) {
   const params = new URLSearchParams();
   if (query.trim()) params.set('q', query.trim());
   if (tag && tag !== 'all') params.set('tags', tag);
+  if (contentDesignation && contentDesignation !== 'all') params.set('contentDesignation', contentDesignation);
   params.set('page', String(page));
   params.set('pageSize', '20');
   return `/api/source-content?${params.toString()}`;
@@ -279,8 +284,11 @@ export default function CeCourseCreatorClient() {
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
   const [tagFiltersOpen, setTagFiltersOpen] = React.useState(true);
   const [selectedTag, setSelectedTag] = React.useState('all');
+  const [selectedDesignation, setSelectedDesignation] = React.useState('all');
   const [page, setPage] = React.useState(1);
   const [selectedSources, setSelectedSources] = React.useState<Map<string, SourceContent>>(new Map());
+  const [detailContent, setDetailContent] = React.useState<SourceContent | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<CourseDraft | null>(null);
   const [generationError, setGenerationError] = React.useState<string | null>(null);
   const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
@@ -297,7 +305,7 @@ export default function CeCourseCreatorClient() {
   }, [query]);
 
   const { data, error, isLoading } = useSWR<SourceContentResponse>(
-    buildApiUrl(debouncedQuery, tagFiltersOpen ? selectedTag : 'all', page),
+    buildApiUrl(debouncedQuery, tagFiltersOpen ? selectedTag : 'all', selectedDesignation, page),
     fetcher,
     { keepPreviousData: true, shouldRetryOnError: false }
   );
@@ -314,6 +322,11 @@ export default function CeCourseCreatorClient() {
     const fromFilters = filterData?.availableTags || [];
     const fromSources = sources.flatMap((source) => source.tags || []);
     return Array.from(new Set([...fromFilters, ...fromSources].map((tag) => decodeLite(String(tag))).filter(Boolean))).sort((a, b) => a.localeCompare(b)).slice(0, 80);
+  }, [filterData, sources]);
+  const availableDesignations = React.useMemo(() => {
+    const fromFilters = filterData?.availableTypes || [];
+    const fromSources = sources.map(getContentDesignation);
+    return Array.from(new Set([...fromFilters, ...fromSources].map((item) => decodeLite(String(item))).filter(Boolean))).sort((a, b) => a.localeCompare(b));
   }, [filterData, sources]);
 
   const toggleSource = (source: SourceContent) => {
@@ -345,7 +358,22 @@ export default function CeCourseCreatorClient() {
   const applyTheme = (theme: string) => {
     setQuery(theme);
     setSelectedTag('all');
+    setSelectedDesignation('all');
     setTagFiltersOpen(false);
+  };
+
+  const handleViewDetail = async (source: SourceContent) => {
+    setDetailContent(source);
+    setDetailOpen(true);
+
+    try {
+      const response = await fetch(`/api/source-content/${source.id}`);
+      if (!response.ok) return;
+      const detail = await response.json();
+      if (detail?.id === source.id) setDetailContent(detail);
+    } catch {
+      // Keep the lightweight list row open if the detail fetch fails.
+    }
   };
 
   const handleBuildDraft = async () => {
@@ -486,6 +514,32 @@ export default function CeCourseCreatorClient() {
                 </div>
               </div>
 
+              <div className="flex flex-col gap-2 rounded-md border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold">Content designation</div>
+                  <p className="text-xs text-muted-foreground">Filter CE source candidates by designation before selecting articles.</p>
+                </div>
+                <Select
+                  value={selectedDesignation}
+                  onValueChange={(value) => {
+                    setSelectedDesignation(value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full bg-white sm:w-[220px]">
+                    <SelectValue placeholder="All designations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All designations</SelectItem>
+                    {availableDesignations.map((designation) => (
+                      <SelectItem key={designation} value={designation}>
+                        {designation}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 {themeSuggestions.map((theme) => (
                   <Button key={theme} type="button" variant="outline" size="sm" onClick={() => applyTheme(theme)}>
@@ -544,7 +598,7 @@ export default function CeCourseCreatorClient() {
                     sources.map((source) => {
                       const selected = selectedSources.has(source.id);
                       const disabled = !selected && selectedSources.size >= 5;
-                      const primaryTag = getPrimaryTag(source);
+                      const designation = getContentDesignation(source);
                       const body = getSourceBody(source);
 
                       return (
@@ -572,8 +626,8 @@ export default function CeCourseCreatorClient() {
                             </button>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <Badge variant="outline" className={cn('max-w-[220px] truncate rounded-full text-[11px]', tagLabelClass(primaryTag))}>
-                                  {primaryTag}
+                                <Badge variant="outline" className={cn('max-w-[220px] truncate rounded-full text-[11px]', designationLabelClass(designation))}>
+                                  {designation}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">{formatDate(source.publishedAt)}</span>
                                 {source.publisher ? <span className="text-xs text-muted-foreground">{source.publisher}</span> : null}
@@ -590,7 +644,9 @@ export default function CeCourseCreatorClient() {
                                     {category}
                                   </span>
                                 ))}
-                                <SourceDetailDialog source={source} />
+                                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => handleViewDetail(source)}>
+                                  View details
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -647,42 +703,12 @@ export default function CeCourseCreatorClient() {
           />
         </aside>
       </div>
+      <ContentDetail
+        content={detailContent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </main>
-  );
-}
-
-function SourceDetailDialog({ source }: { source: SourceContent }) {
-  const body = decodeLite(getSourceBody(source) || 'No body text available for this source.');
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs">
-          <ExternalLink className="h-3.5 w-3.5" />
-          View details
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none overflow-hidden p-0 sm:max-w-[min(820px,calc(100vw-2rem))]">
-        <DialogHeader className="border-b border-border bg-card px-6 py-5 pr-12 text-left">
-          <DialogTitle>{decodeLite(source.title || 'Source detail')}</DialogTitle>
-          <DialogDescription className="mt-2">
-            {source.publisher || source.author || 'Forefield source'} - {formatDate(source.publishedAt)}
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="max-h-[calc(100vh-10rem)]">
-          <div className="space-y-4 px-6 py-5">
-            <div className="flex flex-wrap gap-2">
-              {getSourceCategories(source).map((category) => (
-                <Badge key={category} variant="outline" className={tagLabelClass(category)}>
-                  {category}
-                </Badge>
-              ))}
-            </div>
-            <p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{body}</p>
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
   );
 }
 
