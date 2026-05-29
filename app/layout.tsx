@@ -28,13 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
-      <body className={`${_geist.variable} ${_geistMono.variable} font-sans antialiased`}>
+      <body className={`${_geist.variable} ${_geistMono.variable} h-svh overflow-hidden font-sans antialiased`}>
         <ThemeProvider>
-          <SidebarProvider>
+          <SidebarProvider className="h-svh overflow-hidden">
             <AppSidebar />
-            <SidebarInset className="bg-background">
+            <SidebarInset className="min-h-0 overflow-hidden bg-background">
               <Header />
-              <main className="flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
+              <main className="min-h-0 flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
                 {children}
               </main>
             </SidebarInset>

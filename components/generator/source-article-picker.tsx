@@ -217,7 +217,7 @@ export function SourceArticlePicker({
   }
 
   return (
-    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'flex h-full flex-col rounded-2xl shadow-[0_14px_42px_rgba(15,23,42,0.08)]' : 'rounded-[1.5rem]', className)}>
+    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'flex h-full min-h-0 flex-col gap-0 rounded-2xl shadow-[0_14px_42px_rgba(15,23,42,0.08)]' : 'rounded-[1.5rem]', className)}>
       <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-3 py-2.5 sm:px-3')}>
         {splitView ? null : (
           <div className="min-w-0">
@@ -293,7 +293,7 @@ export function SourceArticlePicker({
       </CardHeader>
 
       <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'flex min-h-0 flex-1 flex-col px-3 pb-2.5 sm:px-3')}>
-        <ScrollArea className={cn('overflow-hidden rounded-[1.25rem]', splitView ? 'min-h-0 flex-1' : 'h-[560px]')}>
+        <ScrollArea className={cn('overflow-hidden rounded-[1.25rem]', splitView ? 'h-full min-h-0 flex-1' : 'h-[560px]')}>
           {isLoading ? (
             <div className={cn('grid gap-4 pr-3 pb-4', splitView && 'gap-2 pr-2', !splitView && 'lg:grid-cols-2')}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
