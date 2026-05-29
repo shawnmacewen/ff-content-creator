@@ -132,6 +132,19 @@ function buildTakeaways(article: any, bodyPreview: string) {
   ];
 }
 
+function compactTakeaway(input: string) {
+  const text = decodeEntities(input)
+    .replace(/\s+/g, ' ')
+    .replace(/^[•\-–—]\s*/, '')
+    .trim();
+
+  if (text.length <= 92) return text;
+
+  const clipped = text.slice(0, 92);
+  const lastSpace = clipped.lastIndexOf(' ');
+  return `${clipped.slice(0, lastSpace > 60 ? lastSpace : clipped.length).replace(/[,.!?;:]$/, '')}...`;
+}
+
 function getBodyParagraphs(article: any, bodyPreview: string) {
   const preferred = String(article?.excerpt || '').trim()
     ? `${article.excerpt}\n\n${bodyPreview}`
@@ -245,7 +258,7 @@ export function SelectedArticlePreview({
           <div className="mb-5 inline-flex w-fit items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
             {decodeEntities(designation)}
           </div>
-          <h3 className="max-w-[940px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
+          <h3 className="max-w-[900px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2.35rem] lg:text-[2.85rem]">
             {title}
           </h3>
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-white/82">
@@ -259,64 +272,55 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className="relative z-10 space-y-7 px-7 pb-28 pt-7 sm:px-9">
-        <div>
+      <div className="relative z-10 grid gap-8 px-7 pb-28 pt-8 sm:px-9 lg:grid-cols-[0.42fr_0.58fr] lg:gap-10">
+        <aside className="space-y-5">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
+            <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
               <Sparkles className="h-5 w-5 text-blue-600" />
               Key Takeaways
             </div>
             <button
               type="button"
               onClick={onViewDetails}
-              className="hidden rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 md:inline-flex"
+              className="hidden rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 md:inline-flex"
             >
               Full article details
             </button>
           </div>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+
+          <div className="space-y-5">
             {takeaways.slice(0, 3).map((item, index) => {
               const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
               return (
-                <div key={index} className="flex min-w-0 gap-3 rounded-2xl bg-slate-50/80 p-4 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.16)]">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_24px_rgba(6,182,212,0.10)]">
+                <div key={index} className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
                     <Icon className="h-4 w-4" />
                   </div>
-                  <p className="line-clamp-3 text-[13px] font-medium leading-5 text-slate-700">{decodeEntities(item)}</p>
+                  <p className="truncate text-sm font-semibold leading-6 text-slate-700" title={decodeEntities(item)}>
+                    {compactTakeaway(item)}
+                  </p>
                 </div>
               );
             })}
           </div>
-        </div>
+        </aside>
 
-        <article>
-          <div className="mb-4 flex items-end justify-between gap-4 border-t border-slate-200/80 pt-7">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Editorial Snapshot</div>
-              <h4 className="mt-2 font-serif text-xl font-semibold leading-tight text-slate-950">Fast read before generation</h4>
-            </div>
-            <div className="hidden text-right text-xs font-medium text-slate-400 lg:block">
-              Showing a condensed preview to keep the workspace readable.
-            </div>
-          </div>
-
-          <div className="grid gap-x-8 gap-y-5 xl:grid-cols-2">
+        <article className="border-slate-200/80 lg:border-l lg:pl-10">
+          <div className="space-y-5 break-words text-sm leading-7 text-slate-700">
             {paragraphs.length ? (
-              paragraphs.slice(0, 4).map((paragraph, index) => (
+              paragraphs.slice(0, 3).map((paragraph, index) => (
                 <p
                   key={index}
                   className={cn(
-                    'line-clamp-4 text-sm leading-7 text-slate-700',
-                    index === 0 && 'xl:row-span-2 xl:line-clamp-[8] xl:text-[0.96rem] xl:leading-7 xl:first-letter:float-left xl:first-letter:mr-3 xl:first-letter:font-serif xl:first-letter:text-5xl xl:first-letter:leading-[0.86] xl:first-letter:text-slate-950'
+                    'line-clamp-4',
+                    index === 0 && 'line-clamp-5 text-[0.95rem] leading-7 first-letter:float-left first-letter:mr-3 first-letter:font-serif first-letter:text-5xl first-letter:leading-[0.86] first-letter:text-slate-950'
                   )}
                 >
                   {decodeEntities(paragraph)}
                 </p>
               ))
             ) : (
-              <p className="text-base leading-8 text-slate-600">
-                Open the source details to inspect the full provider article body and metadata.
-              </p>
+              <p>Open the source details to inspect the full provider article body and metadata.</p>
             )}
           </div>
         </article>
