@@ -2,6 +2,7 @@
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -10,13 +11,25 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
+import { overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ExternalLink, User, Calendar, Copy, Check, FileText, X } from 'lucide-react';
+import {
+  Bookmark,
+  Calendar,
+  Check,
+  Copy,
+  ExternalLink,
+  MoreHorizontal,
+  Sparkles,
+  TrendingUp,
+  User,
+  Users,
+  WandSparkles,
+  X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type RichBlock =
@@ -483,7 +496,31 @@ export function ContentDetail({
     { label: 'Categories', value: meta?.categories },
     { label: 'Sub-categories', value: meta?.subCategories },
   ];
-  const extraProperties = Object.entries((meta?.extraProperties || {}) as Record<string, any>);
+  const publisherLabel = getPublisherLabel(content);
+  const publishedDate = content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable';
+  const designation = meta?.contentDesignation || content.type || 'Editorial Source';
+  const bodyParagraphs = richBlocks.filter((block): block is Extract<RichBlock, { type: 'paragraph' }> => block.type === 'paragraph');
+  const takeawaySource = [
+    content.excerpt,
+    ...bodyParagraphs.map((block) => block.text),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const takeaways = takeawaySource
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 42)
+    .slice(0, 3);
+  const resolvedTakeaways = takeaways.length
+    ? takeaways
+    : [
+        `${content.title} is available as an approved source for content generation.`,
+        'Review the article body and metadata before using it as campaign source material.',
+        'Use the source actions to copy text, open the original, or send the article into generation.',
+      ];
+  const visibleBlocks = richBlocks.length ? richBlocks : plainTextBlocks(displayBodyText);
 
   const renderMetadataValue = (value: unknown) => {
     const text = metadataValue(value);
@@ -595,212 +632,203 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[86vh] max-h-[92vh] w-[92vw] max-w-[92vw] flex-col overflow-hidden rounded-lg border-border bg-background p-0 sm:max-w-[92vw]">
-        <div className="grid min-h-0 flex-1 overflow-hidden grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="flex min-w-0 flex-col overflow-hidden">
-            <DialogHeader className="border-b border-border px-6 py-5 text-left">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg border border-border bg-gradient-to-br from-primary/18 via-info/8 to-secondary md:w-48">
-                  {thumbnailUrl ? (
-                    <div
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-primary/45">
-                      <FileText className="h-9 w-9" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 via-transparent to-transparent" />
-                </div>
+      <DialogContent
+        showCloseButton={false}
+        className="h-[90vh] max-h-[94vh] w-[94vw] max-w-[1180px] overflow-hidden rounded-[2rem] border-0 bg-white p-0 shadow-[0_32px_110px_rgba(15,23,42,0.28)] sm:max-w-[1180px]"
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>{content.title}</DialogTitle>
+          <DialogDescription>{publisherLabel} source article preview</DialogDescription>
+        </DialogHeader>
 
-                <div className="min-w-0 flex-1 space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {content.type ? (
-                      <Badge
-                        variant="outline"
-                        className={cn('text-[11px] font-medium', designationLabelClass(content.type))}
-                      >
-                        {content.type}
-                      </Badge>
-                    ) : null}
-                    {isFinraApproved ? (
-                      <Badge className="bg-primary text-[10px] text-primary-foreground hover:bg-primary">
-                        FINRA reviewed
-                      </Badge>
-                    ) : null}
-                  </div>
+        <ScrollArea className="h-full bg-[radial-gradient(circle_at_8%_18%,rgba(125,211,252,0.18),transparent_32%),radial-gradient(circle_at_92%_78%,rgba(167,139,250,0.18),transparent_34%),linear-gradient(180deg,#f8fafc,#ffffff_42%)]">
+          <section className="group relative isolate min-h-[38vh] overflow-hidden bg-slate-950">
+            {thumbnailUrl ? (
+              <div
+                className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
+                style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(147,197,253,0.42),transparent_30%),linear-gradient(135deg,#071326,#19356a_52%,#0f172a)]" />
+            )}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.92),rgba(15,23,42,0.62)_42%,rgba(15,23,42,0.14)),linear-gradient(0deg,rgba(2,6,23,0.8),transparent_48%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent" />
+            <div className="pointer-events-none absolute -left-20 bottom-10 h-56 w-56 rounded-full bg-sky-300/20 blur-3xl" />
+            <div className="pointer-events-none absolute right-10 top-20 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl" />
 
-                  <div>
-                    <DialogTitle className="text-xl leading-tight text-foreground">
-                      {content.title}
-                    </DialogTitle>
-                    <DialogDescription className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                      <span className="inline-flex items-center gap-1 text-primary">
-                        <User className="h-3.5 w-3.5" />
-                        {getPublisherLabel(content)}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable'}
-                      </span>
-                    </DialogDescription>
-                  </div>
-
-                  {content.tags.length ? (
-                    <div className="flex max-h-14 flex-wrap gap-1.5 overflow-hidden">
-                      {content.tags.slice(0, 8).map((tag) => (
-                        <Badge key={tag} variant="outline" className={cn('text-xs font-normal', tagLabelClass(tag))}>
-                          {tag}
-                        </Badge>
-                      ))}
-                      {content.tags.length > 8 ? (
-                        <Badge variant="outline" className={cn('text-xs font-normal', overflowLabelClass())}>
-                          +{content.tags.length - 8}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </DialogHeader>
-
-            {highlightSnippetsClean.length ? (
-              <div className="border-b border-border px-6 py-4">
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                  <div className="text-xs font-semibold text-foreground">Used in this output</div>
-                  <div className="mt-2 space-y-2">
-                    {highlightSnippetsClean.slice(0, 3).map((s, i) => (
-                      <div
-                        key={i}
-                        className="rounded-md bg-background px-2 py-1 text-xs leading-relaxed text-foreground ring-1 ring-primary/20"
-                      >
-                        "{s}"
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-[11px] text-muted-foreground">
-                    Best-effort evidence from EchoWrite matching; excerpts may be paraphrased.
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-6 py-5">
-                <div className="max-w-none space-y-4 break-words text-sm leading-6 text-foreground/90">
-                  {richBlocks.map((block, index) => renderRichBlock(block, index))}
-                </div>
-              </div>
-            </ScrollArea>
-          </div>
-
-          <aside className="flex min-h-0 flex-col border-t border-border bg-muted/25 lg:border-l lg:border-t-0">
-            <div className="border-b border-border px-5 py-4">
-              <h3 className="text-sm font-semibold text-foreground">Source details</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Provider metadata and approval signals.</p>
+            <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20"
+                title="Copy article text"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Save'}
+              </button>
+              {content.url ? (
+                <a
+                  href={content.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-black/50"
+                  title="View source"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </a>
+              ) : (
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white/70 shadow-lg shadow-black/20 backdrop-blur-md">
+                  <MoreHorizontal className="h-5 w-5" />
+                </span>
+              )}
+              <DialogClose className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-white">
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close article preview</span>
+              </DialogClose>
             </div>
 
-            <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-              <div className="space-y-5 px-5 py-4">
-                <div className="space-y-2">
-                  <div className="rounded-md border border-border bg-background p-3">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Designation</div>
-                    <div className="mt-1 break-words text-sm font-semibold text-foreground">
-                      {meta?.contentDesignation || content.type || 'n/a'}
-                    </div>
-                  </div>
-                  <div className="rounded-md border border-border bg-background p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">FINRA</div>
-                        <div className="mt-1 text-sm font-semibold text-foreground">
-                          {isFinraApproved ? 'Reviewed' : 'Not reviewed'}
-                        </div>
-                      </div>
-                      <span
-                        className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
-                          isFinraApproved ? 'bg-success/15 text-success' : 'bg-destructive/10 text-destructive'
-                        )}
-                        title={isFinraApproved ? 'FINRA reviewed' : 'Not FINRA reviewed'}
-                      >
-                        {isFinraApproved ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <div className="relative z-10 flex min-h-[38vh] flex-col justify-end px-7 pb-10 pt-24 text-white sm:px-10 lg:px-12">
+              <div className="mb-5 inline-flex w-fit items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
+                {designation}
+              </div>
+              <h2 className="max-w-4xl text-balance font-serif text-4xl font-semibold leading-[1.05] tracking-normal text-white drop-shadow-2xl sm:text-5xl lg:text-6xl">
+                {content.title}
+              </h2>
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/82">
+                <span className="inline-flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  {publisherLabel}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  {publishedDate}
+                </span>
+                {isFinraApproved ? <span>FINRA reviewed</span> : null}
+              </div>
+            </div>
+          </section>
 
-                <div className="space-y-3">
-                  {sourceDetails.map((item) => (
-                    <div key={item.label} className="min-w-0 rounded-md border border-border bg-background px-3 py-2">
-                      <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
-                      <div className="mt-1 break-words text-xs leading-5 text-foreground">
-                        {renderMetadataValue(item.value)}
-                      </div>
+          {highlightSnippetsClean.length ? (
+            <div className="mx-auto max-w-6xl px-7 pt-8 sm:px-10 lg:px-12">
+              <div className="rounded-2xl border border-primary/15 bg-white/72 p-4 shadow-[0_18px_60px_rgba(37,99,235,0.10)] backdrop-blur">
+                <div className="text-xs font-semibold uppercase tracking-wide text-primary">Used in this output</div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {highlightSnippetsClean.slice(0, 3).map((s, i) => (
+                    <div key={i} className="rounded-xl bg-primary/5 px-3 py-2 text-xs leading-relaxed text-slate-700 ring-1 ring-primary/15">
+                      "{s}"
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          ) : null}
 
-                <div className="border-t border-border pt-4">
-                  <div className="mb-2 text-xs font-semibold text-foreground">Extra properties</div>
-                  {extraProperties.length ? (
-                    <div className="space-y-2">
-                      {extraProperties.map(([key, value]) => (
-                        <div key={key} className="min-w-0 rounded-md bg-background px-3 py-2 text-xs leading-5">
-                          <div className="font-medium text-muted-foreground">{key}</div>
-                          <div className="mt-0.5 break-words text-foreground">{renderMetadataValue(value)}</div>
+          <div className="mx-auto grid max-w-6xl gap-9 px-7 pb-28 pt-9 sm:px-10 md:grid-cols-[0.78fr_1.22fr] lg:px-12">
+            <aside className="space-y-8">
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
+                  <Sparkles className="h-5 w-5 text-blue-600" />
+                  Key Takeaways
+                </div>
+                <div className="space-y-6">
+                  {resolvedTakeaways.map((item, index) => {
+                    const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
+                    return (
+                      <div key={index} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
+                          <Icon className="h-5 w-5" />
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-md border border-dashed border-border bg-background px-3 py-3 text-xs text-muted-foreground">
-                      No extra properties available.
-                    </div>
-                  )}
+                        <p className="pt-1 text-sm font-medium leading-6 text-slate-700">{renderHighlightedText(item)}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </ScrollArea>
-          </aside>
-        </div>
 
-        <Separator />
+              <div className="space-y-4 border-t border-slate-200/80 pt-6">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Source Signals</div>
+                <div className="space-y-3 text-sm text-slate-600">
+                  <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+                    <span>Designation</span>
+                    <span className="text-right font-semibold text-slate-950">{designation}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+                    <span>Approval</span>
+                    <span className="font-semibold text-slate-950">{isFinraApproved ? 'FINRA reviewed' : 'Not reviewed'}</span>
+                  </div>
+                  {sourceDetails.slice(0, 4).map((item) => (
+                    <div key={item.label} className="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
+                      <span>{item.label}</span>
+                      <div className="max-w-[58%] text-right text-xs font-medium leading-5 text-slate-700">{renderMetadataValue(item.value)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        <div className="flex shrink-0 flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopy}>
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4 mr-1" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-1" />
-                  Copy Text
-                </>
-              )}
-            </Button>
-            {content.url && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={content.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  View Source
-                </a>
-              </Button>
-            )}
+              {content.tags.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {content.tags.slice(0, 8).map((tag) => (
+                    <Badge key={tag} variant="outline" className={cn('rounded-full text-xs font-normal', tagLabelClass(tag))}>
+                      {tag}
+                    </Badge>
+                  ))}
+                  {content.tags.length > 8 ? (
+                    <Badge variant="outline" className={cn('rounded-full text-xs font-normal', overflowLabelClass())}>
+                      +{content.tags.length - 8}
+                    </Badge>
+                  ) : null}
+                </div>
+              ) : null}
+            </aside>
+
+            <article className="border-slate-200/80 md:border-l md:pl-10">
+              <div className="space-y-7 break-words text-[15px] leading-8 text-slate-700">
+                {visibleBlocks.map((block, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      block.type === 'paragraph' && index === 0
+                        ? '[&>p]:first-letter:float-left [&>p]:first-letter:mr-3 [&>p]:first-letter:font-serif [&>p]:first-letter:text-7xl [&>p]:first-letter:leading-[0.86] [&>p]:first-letter:text-slate-950'
+                        : ''
+                    )}
+                  >
+                    {renderRichBlock(block, index)}
+                  </div>
+                ))}
+              </div>
+            </article>
           </div>
-          {onUseForGeneration && (
-            <Button
-              className="sm:ml-auto"
-              onClick={() => {
-                onUseForGeneration(content);
-                onOpenChange(false);
-              }}
-            >
-              Use for Generation
-            </Button>
-          )}
+        </ScrollArea>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-5">
+          <div className="pointer-events-auto flex w-full max-w-4xl flex-col gap-3 rounded-3xl border border-white/20 bg-slate-950/88 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="h-11 rounded-2xl border-white/15 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white" onClick={handleCopy}>
+                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy Text'}
+              </Button>
+              {content.url ? (
+                <Button variant="outline" className="h-11 rounded-2xl border-white/15 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white" asChild>
+                  <a href={content.url} target="_blank" rel="noopener noreferrer">
+                    View Source
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+            {onUseForGeneration ? (
+              <Button
+                className="h-11 rounded-2xl bg-[linear-gradient(135deg,#5b8cff,#9b4dff)] px-7 font-semibold text-white shadow-[0_0_28px_rgba(99,102,241,0.42)] transition hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(139,92,246,0.56)]"
+                onClick={() => {
+                  onUseForGeneration(content);
+                  onOpenChange(false);
+                }}
+              >
+                <WandSparkles className="mr-2 h-4 w-4" />
+                Use This Article
+              </Button>
+            ) : null}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
