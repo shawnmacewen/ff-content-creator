@@ -437,7 +437,7 @@ Separately (client-side), we:
 
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3 overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.16)] ring-1 ring-slate-200/70">
-          <div className="group relative min-h-[235px] overflow-hidden rounded-b-[42%_7%] bg-slate-950">
+          <div className="group relative min-h-[235px] overflow-hidden bg-slate-950">
             {outputHeroSource?.imageUrl ? (
               <div
                 className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
@@ -447,7 +447,7 @@ Separately (client-side), we:
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_28%,rgba(147,197,253,0.34),transparent_30%),linear-gradient(135deg,#071326,#18305d_56%,#0f172a)]" />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.6)_44%,rgba(15,23,42,0.22)),linear-gradient(0deg,rgba(2,6,23,0.76),transparent_46%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/72 to-transparent" />
+            <div className="absolute inset-x-0 -bottom-4 h-36 bg-gradient-to-t from-white from-[10%] via-white/88 via-[42%] to-transparent" />
 
             <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
               <Button

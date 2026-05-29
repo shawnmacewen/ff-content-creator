@@ -203,29 +203,20 @@ export function SourceArticlePicker({
   return (
     <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'rounded-2xl shadow-[0_14px_42px_rgba(15,23,42,0.08)]' : 'rounded-[1.5rem]')}>
       <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-3 py-2.5 sm:px-3')}>
-        <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', splitView && 'flex-row items-center gap-2')}>
+        {splitView ? null : (
           <div className="min-w-0">
-            <div className={cn('inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
-              <Sparkles className={cn('h-3.5 w-3.5', splitView && 'h-3 w-3')} />
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800">
+              <Sparkles className="h-3.5 w-3.5" />
               Editorial Sources
             </div>
-            {splitView ? null : (
-              <>
-                <div className="mt-3 text-xl font-semibold tracking-normal text-slate-950">Choose the source article</div>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Select an article to preview and use it as generation context.
-                </p>
-              </>
-            )}
+            <div className="mt-3 text-xl font-semibold tracking-normal text-slate-950">Choose the source article</div>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Select an article to preview and use it as generation context.
+            </p>
           </div>
+        )}
 
-          <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
-            <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
-            {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} sources`}
-          </div>
-        </div>
-
-        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'gap-1.5 xl:flex-col xl:items-stretch')}>
+        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'gap-1.5')}>
           <div className="relative flex-1">
             <Search className={cn('absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400', splitView && 'left-3 h-3.5 w-3.5')} />
             <Input
@@ -235,7 +226,22 @@ export function SourceArticlePicker({
               className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-9 rounded-lg pl-8 text-xs')}
             />
           </div>
-          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center">
+        </div>
+
+        <div className={cn('flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between', splitView && 'gap-1.5')}>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {splitView ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
+                <Sparkles className="h-3 w-3" />
+                Editorial Sources
+              </div>
+            ) : null}
+            <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
+              <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
+              {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} sources`}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center lg:justify-end">
             <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-8 rounded-lg px-2.5 text-xs')}>
               <Filter className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
               Filter

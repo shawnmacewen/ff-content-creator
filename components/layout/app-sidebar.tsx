@@ -85,7 +85,7 @@ const contentTypeItems = [
 const sidebarSlogans = [
   'AI Content Engine',
   'Content Studio',
-  'Content Transformation Engine',
+  'Transformation Engine',
   'Content Operations',
 ];
 

@@ -4,6 +4,11 @@
 
 - Revisit `data/content-samples-export.json` later and decide import path (JSON reimport script vs SQL seed ingestion).
 
+- Roadmap: make the Generate Content "Tone" area contextual to the selected KIT/settings items:
+  - Tone controls should adapt to the type of settings/KIT items selected instead of feeling generic.
+  - The flow should feel more like a checkout/cart experience: users select desired content items, each item is added to a generation list, then users configure those items before generating.
+  - Preserve this as a future UX/product task, not an immediate implementation request.
+
 ## Next Up (in progress)
 
 - Evaluate "template-rendered text" vs "AI-rendered text in image" for enterprise use:

@@ -932,21 +932,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                   ) : null}
 
                   <div className="flex flex-col gap-2">
-                    {SlideCountControl}
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        className="rounded-2xl bg-primary hover:bg-primary/90"
-                        onClick={runCarouselGeneration}
-                        disabled={isLoading || !topic.trim()}
-                      >
-                        {props.generateLabel ?? 'Generate Carousel'}
-                      </Button>
+                    <div className="flex flex-wrap items-end gap-2">
+                      {SlideCountControl}
 
                       <Button
                         type="button"
                         variant={showAdvancedPromptInput ? 'default' : 'outline'}
-                        className="rounded-2xl"
+                        className="h-9 rounded-2xl"
                         onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
@@ -979,7 +971,16 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                             />
                           </DialogContent>
                         </Dialog>
-                      
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        className="rounded-2xl bg-primary hover:bg-primary/90"
+                        onClick={runCarouselGeneration}
+                        disabled={isLoading || !topic.trim()}
+                      >
+                        {props.generateLabel ?? 'Generate Carousel'}
+                      </Button>
 
                       {isLoading ? (
                         <div className="ml-2 flex items-center gap-2">
@@ -1109,21 +1110,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                   ) : null}
 
                   <div className="flex flex-col gap-2">
-                    {SlideCountControl}
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        className="rounded-2xl bg-primary hover:bg-primary/90"
-                        onClick={runCarouselGeneration}
-                        disabled={isLoading || !topic.trim()}
-                      >
-                        {props.generateLabel ?? 'Generate Carousel'}
-                      </Button>
+                    <div className="flex flex-wrap items-end gap-2">
+                      {SlideCountControl}
 
                       <Button
                         type="button"
                         variant={showAdvancedPromptInput ? 'default' : 'outline'}
-                        className="rounded-2xl"
+                        className="h-9 rounded-2xl"
                         onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
@@ -1156,7 +1149,16 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                             />
                           </DialogContent>
                         </Dialog>
-                      
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        className="rounded-2xl bg-primary hover:bg-primary/90"
+                        onClick={runCarouselGeneration}
+                        disabled={isLoading || !topic.trim()}
+                      >
+                        {props.generateLabel ?? 'Generate Carousel'}
+                      </Button>
 
                       {isLoading ? (
                         <div className="ml-2 flex items-center gap-2">

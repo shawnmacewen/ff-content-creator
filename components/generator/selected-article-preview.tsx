@@ -222,7 +222,7 @@ export function SelectedArticlePreview({
 
   return (
     <section className="group relative isolate flex min-h-[640px] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
-      <div className="relative min-h-[270px] overflow-hidden rounded-b-[42%_7%] bg-slate-950 2xl:min-h-[300px]">
+      <div className="relative min-h-[270px] overflow-hidden bg-slate-950 2xl:min-h-[300px]">
         {imageUrl ? (
           <div
             className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
@@ -232,7 +232,7 @@ export function SelectedArticlePreview({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_35%,rgba(147,197,253,0.35),transparent_30%),linear-gradient(135deg,#071326,#18305d_55%,#0f172a)]" />
         )}
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.58)_42%,rgba(15,23,42,0.18)),linear-gradient(0deg,rgba(2,6,23,0.74),transparent_46%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white via-white/70 to-transparent" />
+        <div className="absolute inset-x-0 -bottom-4 h-40 bg-gradient-to-t from-white from-[10%] via-white/88 via-[42%] to-transparent" />
 
         <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
           <button
