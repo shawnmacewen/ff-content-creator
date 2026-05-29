@@ -31,7 +31,7 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card/95 px-4 shadow-sm backdrop-blur-sm">
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card/95 px-4 shadow-sm backdrop-blur-sm lg:hidden">
       <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
       <Separator orientation="vertical" className="mr-1 h-5" />
       <Breadcrumb className="flex-1">

@@ -26,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -87,16 +88,19 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        <Link href="/" prefetch={false} className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
-            <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-          </div>
-          <div className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-sidebar-foreground">
-              EDITOR[AI]L
-            </span>
-          </div>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/" prefetch={false} className="flex min-w-0 flex-1 items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
+              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="text-[13px] font-semibold tracking-[0.08em] text-sidebar-foreground">
+                EDITOR[AI]L
+              </span>
+            </div>
+          </Link>
+          <SidebarTrigger className="hidden h-7 w-7 shrink-0 text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:inline-flex" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2.5">
