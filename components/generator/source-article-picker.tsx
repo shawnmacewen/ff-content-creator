@@ -201,22 +201,26 @@ export function SourceArticlePicker({
   }
 
   return (
-    <Card className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]">
-      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-3 px-3 pb-3 pt-4 sm:px-4')}>
-        <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', splitView && 'gap-3 lg:flex-row lg:items-start')}>
+    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'rounded-2xl shadow-[0_14px_42px_rgba(15,23,42,0.08)]' : 'rounded-[1.5rem]')}>
+      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2.5 px-3 py-3 sm:px-3')}>
+        <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', splitView && 'flex-row items-center gap-2')}>
           <div className="min-w-0">
-            <div className={cn('inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800', splitView && 'px-2.5 py-0.5 text-[11px]')}>
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className={cn('inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
+              <Sparkles className={cn('h-3.5 w-3.5', splitView && 'h-3 w-3')} />
               Editorial Sources
             </div>
-            <div className={cn('mt-3 font-semibold tracking-normal text-slate-950', splitView ? 'mt-2 text-base' : 'text-xl')}>Choose the source article</div>
-            <p className={cn('mt-1 leading-6 text-slate-500', splitView ? 'hidden' : 'text-sm')}>
-              Select an article to preview and use it as generation context.
-            </p>
+            {splitView ? null : (
+              <>
+                <div className="mt-3 text-xl font-semibold tracking-normal text-slate-950">Choose the source article</div>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Select an article to preview and use it as generation context.
+                </p>
+              </>
+            )}
           </div>
 
-          <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'px-2.5 py-1.5')}>
-            <FileText className="h-4 w-4 text-slate-400" />
+          <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
+            <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
             {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} sources`}
           </div>
         </div>
@@ -228,22 +232,22 @@ export function SourceArticlePicker({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search title, topic, keyword, or tag..."
-              className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-10 rounded-xl pl-9 text-xs')}
+              className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-9 rounded-lg pl-8 text-xs')}
             />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-10 rounded-xl px-3 text-xs')}>
-              <Filter className="h-4 w-4" />
+            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-9 rounded-lg px-2.5 text-xs')}>
+              <Filter className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
               Filter
             </Button>
-            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-10 rounded-xl px-3 text-xs')}>
+            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-9 rounded-lg px-2.5 text-xs')}>
               Newest First
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
             </Button>
           </div>
         </div>
 
-        <div className={cn('flex gap-2 overflow-x-auto pb-1', splitView && 'gap-1.5')}>
+        <div className={cn('flex gap-2 overflow-x-auto pb-1', splitView && 'flex-wrap gap-1.5 overflow-visible pb-0')}>
           {topics.map((t) => {
             const active = t === topic;
             return (
@@ -253,7 +257,7 @@ export function SourceArticlePicker({
                 onClick={() => setTopic(t)}
                 className={cn(
                   'shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors',
-                  splitView && 'px-3 py-1.5 text-[11px]',
+                  splitView && 'px-2.5 py-1 text-[10px]',
                   active
                     ? 'border-slate-950 bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.20)]'
                     : 'border-slate-200 bg-white/78 text-slate-500 hover:border-cyan-200 hover:text-slate-900'
@@ -266,7 +270,7 @@ export function SourceArticlePicker({
         </div>
       </CardHeader>
 
-      <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'px-3 pb-3 sm:px-4')}>
+      <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'px-3 pb-3 sm:px-3')}>
         <ScrollArea className={cn('overflow-hidden rounded-[1.25rem]', splitView ? 'h-[690px]' : 'h-[560px]')}>
           {isLoading ? (
             <div className={cn('grid gap-4 pr-3 pb-4', splitView && 'gap-3 pr-2', !splitView && 'lg:grid-cols-2')}>
@@ -355,7 +359,7 @@ export function SourceArticlePicker({
           )}
         </ScrollArea>
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 text-xs font-medium text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className={cn('mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 text-xs font-medium text-slate-500 sm:flex-row sm:items-center sm:justify-between', splitView && 'mt-3 pt-3 text-[11px]')}>
           <span>{selectedId ? '1 article selected for generation context.' : 'Select an article to open the full preview.'}</span>
           {selectedId ? (
             <button type="button" onClick={() => onSelect(null)} className="w-fit rounded-full px-2 py-1 text-cyan-700 transition hover:bg-cyan-50">
