@@ -723,7 +723,7 @@ export function ContentDetail({
             </div>
           ) : null}
 
-          <div className="mx-auto grid max-w-6xl gap-7 px-7 pb-28 pt-8 sm:px-10 md:grid-cols-[0.62fr_1.38fr] lg:px-12">
+          <div className="mx-auto grid max-w-6xl gap-7 px-7 pb-44 pt-8 sm:px-10 md:grid-cols-[0.62fr_1.38fr] lg:px-12">
             <aside className="space-y-8">
               <div className="space-y-5">
                 <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
