@@ -61,6 +61,20 @@ function getThumb(c: SourceContent) {
   const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
 
   return (
+    (extraMap?.['SocialMediaPlatformImages.Twitter'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.Twitter'] as string | undefined) ||
+    fromExtraPropertiesArray(meta, 'SocialMediaPlatformImages.Twitter') ||
+    (meta?.SocialMediaPlatformImages?.Twitter as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.twitter as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.Twitter as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.twitter as string | undefined) ||
+    (extraMap?.['SocialMediaPlatformImages.X'] as string | undefined) ||
+    (meta?.['SocialMediaPlatformImages.X'] as string | undefined) ||
+    fromExtraPropertiesArray(meta, 'SocialMediaPlatformImages.X') ||
+    (meta?.SocialMediaPlatformImages?.X as string | undefined) ||
+    (meta?.SocialMediaPlatformImages?.x as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.X as string | undefined) ||
+    (meta?.socialMediaPlatformImages?.x as string | undefined) ||
     (extraMap?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
     (meta?.['SocialMediaPlatformImages.LinkedIn'] as string | undefined) ||
     fromExtraPropertiesArray(meta, 'SocialMediaPlatformImages.LinkedIn') ||
@@ -311,7 +325,7 @@ export function SourceArticlePicker({
                       selected ? 'border-cyan-300 ring-2 ring-cyan-200/80' : 'border-slate-200/80'
                     )}
                   >
-                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-slate-950', splitView ? 'w-[26%]' : 'w-[38%]')}>
+                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-slate-950', splitView ? 'w-[24%]' : 'w-[36%]')}>
                       {thumb ? (
                         <img
                           src={String(thumb).trim()}
@@ -322,10 +336,11 @@ export function SourceArticlePicker({
                       ) : (
                         <div className="h-full w-full bg-[radial-gradient(circle_at_70%_35%,rgba(147,197,253,0.38),transparent_34%),linear-gradient(135deg,#071326,#18305d_56%,#0f172a)]" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 to-white/30" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-white/45" />
+                      <div className={cn('absolute inset-y-0 -right-px bg-gradient-to-r from-transparent via-white/82 to-white', splitView ? 'w-8' : 'w-14')} />
                     </div>
 
-                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[24%] min-h-[94px] p-2.5 sm:p-2.5' : 'ml-[34%] min-h-44')}>
+                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[28%] min-h-[94px] p-2.5 sm:p-2.5' : 'ml-[40%] min-h-44')}>
                       <div className="flex items-start justify-between gap-2">
                         <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[180px] px-2 py-0 text-[10px]', tagLabelClass(primaryLabel))}>
                           {decodeLite(primaryLabel)}
