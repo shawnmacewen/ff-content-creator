@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -80,6 +81,45 @@ const contentTypeItems = [
   },
 ];
 
+const sidebarSlogans = [
+  'AI Content Engine',
+  'Content Studio',
+  'Content Transformation Engine',
+  'Content Operations',
+];
+
+function RotatingSidebarSlogan() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    let swapTimeout: ReturnType<typeof setTimeout> | undefined;
+    const interval = setInterval(() => {
+      setVisible(false);
+      swapTimeout = setTimeout(() => {
+        setIndex((current) => (current + 1) % sidebarSlogans.length);
+        setVisible(true);
+      }, 260);
+    }, 4300);
+
+    return () => {
+      clearInterval(interval);
+      if (swapTimeout) clearTimeout(swapTimeout);
+    };
+  }, []);
+
+  return (
+    <span
+      className={cn(
+        'sidebar-slogan-pulse block min-h-4 truncate text-xs leading-4 text-sidebar-foreground/85 transition-opacity duration-300 ease-out',
+        visible ? 'opacity-100' : 'opacity-0'
+      )}
+    >
+      {sidebarSlogans[index]}
+    </span>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
@@ -95,6 +135,7 @@ export function AppSidebar() {
             <span className="text-sm font-semibold tracking-[0.08em] text-sidebar-foreground">
               EDITOR[AI]L
             </span>
+            <RotatingSidebarSlogan />
           </div>
         </Link>
       </SidebarHeader>
