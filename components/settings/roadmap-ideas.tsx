@@ -82,6 +82,7 @@ const roadmapIdeas: RoadmapIdea[] = [
       'Add a teleprompter view for generated video scripts with large readable text, scrolling controls, and presenter-friendly spacing.',
       'Include basic controls for scroll speed, font size, line spacing, countdown, and mirror mode.',
       'Allow users to jump between hook, main points, compliance line, and CTA sections.',
+      'Leave room for CE-credit video modules that need runtime, completion, and attestation data.',
     ],
     promptData: [
       'Target runtime and words-per-minute pacing.',
@@ -116,6 +117,27 @@ const roadmapIdeas: RoadmapIdea[] = [
     effort: 4,
     matrix: { x: 20, y: 43 },
     accent: 'from-teal-300 via-cyan-300 to-blue-300',
+  },
+  {
+    title: 'CE Credit Quizzes',
+    status: 'Later',
+    theme: 'Learning and Compliance',
+    summary: 'Explore CE-credit workflows that pair advisor education videos with quizzes and completion records.',
+    details: [
+      'Generate quiz questions from approved source material, video scripts, or course outlines.',
+      'Track CE-credit eligibility, passing score, completion state, and review status for each quiz.',
+      'Connect quiz results back to video modules so teams can package education, assessment, and evidence together.',
+    ],
+    promptData: [
+      'Learning objective, CE-credit category, and required passing score.',
+      'Question count, difficulty mix, answer explanations, and source citations.',
+      'Video runtime, completion threshold, attestation copy, and review owner.',
+    ],
+    icon: BadgeCheck,
+    impact: 8,
+    effort: 7,
+    matrix: { x: 47, y: 59 },
+    accent: 'from-blue-300 via-cyan-200 to-white',
   },
   {
     title: 'Roadmap Views',
@@ -214,7 +236,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="7" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="8" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Next" label="customization pass" tone="dark" />
             </div>
