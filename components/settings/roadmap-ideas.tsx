@@ -12,7 +12,6 @@ import {
   ImagePlus,
   Layers3,
   Mic2,
-  Palette,
   PauseCircle,
   Printer,
   Sparkles,
@@ -49,7 +48,7 @@ const roadmapIdeas: RoadmapIdea[] = [
     details: [
       'Add a larger style menu for layout, mood, density, typography, and slide rhythm.',
       'Keep existing carousel review modes, but let the generation plan pick a stronger style direction before image creation.',
-      'Include style matching so new carousels can borrow visual cues from a selected example, brand profile, or prior approved output.',
+      'Keep output style choices focused on carousel composition, format, and presentation rather than full brand-system setup.',
     ],
     icon: GalleryHorizontalEnd,
     impact: 9,
@@ -58,20 +57,21 @@ const roadmapIdeas: RoadmapIdea[] = [
     accent: 'from-cyan-400 via-emerald-300 to-lime-300',
   },
   {
-    title: 'Style Matching',
-    status: 'Now',
-    theme: 'Brand Consistency',
-    summary: 'Make generated assets feel closer to approved brand examples instead of starting from a generic design prompt.',
+    title: 'User Customizations',
+    status: 'Next',
+    theme: 'Platform and Content',
+    summary: 'Let teams customize the platform wrapper and generation assets around their own brand system.',
     details: [
-      'Let users pick a style reference from saved outputs, uploaded examples, or future Custom Profile assets.',
-      'Extract reusable cues such as palette, type weight, composition, spacing, and image treatment.',
-      'Show a short style summary before generation so reviewers can confirm the intended look.',
+      'Add white-label platform naming, brand colors, logo uploads, and reusable asset controls.',
+      'Support content overlays for logos, campaign marks, approved visual treatments, and brand style references.',
+      'Include optional disclaimer blocks that can be reused across generated content and review workflows.',
+      'Let future generators borrow approved palette, type, spacing, and image-treatment cues from the team profile.',
     ],
-    icon: Palette,
+    icon: BadgeCheck,
     impact: 8,
-    effort: 7,
-    matrix: { x: 82, y: 31 },
-    accent: 'from-amber-300 via-rose-300 to-fuchsia-300',
+    effort: 6,
+    matrix: { x: 58, y: 38 },
+    accent: 'from-lime-300 via-cyan-300 to-blue-300',
   },
   {
     title: 'Script Teleprompter',
@@ -116,22 +116,6 @@ const roadmapIdeas: RoadmapIdea[] = [
     effort: 4,
     matrix: { x: 20, y: 43 },
     accent: 'from-teal-300 via-cyan-300 to-blue-300',
-  },
-  {
-    title: 'User Customizations',
-    status: 'Next',
-    theme: 'Platform and Content',
-    summary: 'Let teams customize the platform wrapper and generation assets around their own brand system.',
-    details: [
-      'Add white-label platform naming, brand colors, logo uploads, and reusable asset controls.',
-      'Support content overlays for logos, campaign marks, and approved visual treatments.',
-      'Include optional disclaimer blocks that can be reused across generated content and review workflows.',
-    ],
-    icon: BadgeCheck,
-    impact: 8,
-    effort: 6,
-    matrix: { x: 58, y: 38 },
-    accent: 'from-lime-300 via-cyan-300 to-blue-300',
   },
   {
     title: 'Roadmap Views',
@@ -230,9 +214,9 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="8" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="7" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
-              <RoadmapStat icon={Clock3} value="Next" label="teleprompter pass" tone="dark" />
+              <RoadmapStat icon={Clock3} value="Next" label="customization pass" tone="dark" />
             </div>
           </div>
         </div>
