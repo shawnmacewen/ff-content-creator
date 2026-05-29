@@ -115,6 +115,22 @@ const roadmapIdeas: RoadmapIdea[] = [
     accent: 'from-teal-300 via-cyan-300 to-blue-300',
   },
   {
+    title: 'User Customizations',
+    status: 'Next',
+    theme: 'Platform and Content',
+    summary: 'Let teams customize the platform wrapper and generation assets around their own brand system.',
+    details: [
+      'Add white-label platform naming, brand colors, logo uploads, and reusable asset controls.',
+      'Support content overlays for logos, campaign marks, and approved visual treatments.',
+      'Include optional disclaimer blocks that can be reused across generated content and review workflows.',
+    ],
+    icon: BadgeCheck,
+    impact: 8,
+    effort: 6,
+    matrix: { x: 58, y: 38 },
+    accent: 'from-lime-300 via-cyan-300 to-blue-300',
+  },
+  {
     title: 'Roadmap Views',
     status: 'Later',
     theme: 'Planning Workspace',
@@ -177,7 +193,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="5" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="6" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Next" label="teleprompter pass" tone="dark" />
             </div>

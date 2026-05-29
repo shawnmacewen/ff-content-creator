@@ -613,7 +613,7 @@ export default function KnowledgeBase() {
                 </p>
               </div>
               <Button asChild variant="outline" size="sm">
-                <Link href="/settings?tab=instagram-carousel-2">
+                <Link href="/product-lab?tab=instagram-carousel-2">
                   Open Carousel 2.0
                   <ImageIcon className="h-4 w-4" />
                 </Link>

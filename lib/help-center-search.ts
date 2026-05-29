@@ -64,7 +64,7 @@ function tokenize(input: string) {
 }
 
 function guideHref(guideId: string) {
-  return `/settings?tab=knowledge-base#guide-${guideId}`;
+  return `/product-lab?tab=knowledge-base#guide-${guideId}`;
 }
 
 export function getHelpEntries(): HelpEntry[] {

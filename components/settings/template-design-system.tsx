@@ -225,7 +225,7 @@ export default function TemplateDesignSystem() {
               variant="outline"
               className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
-              <Link href="/settings?tab=knowledge-base">Open Knowledge Center</Link>
+              <Link href="/product-lab?tab=knowledge-base">Open Knowledge Center</Link>
             </Button>
           </>
         )}

@@ -14,6 +14,7 @@ import {
   Share2,
   SearchCheck,
   PenSquare,
+  FlaskConical,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -204,7 +205,23 @@ export function AppSidebar() {
             >
               <Link href="/settings" prefetch={false}>
                 <Settings className="h-4 w-4" />
-                <span>Settings</span>
+                <span>Workspace</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/product-lab'}
+              className={cn(
+                'h-9 rounded-md text-sidebar-foreground/78 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                pathname === '/product-lab' &&
+                  'bg-sidebar-accent text-sidebar-accent-foreground'
+              )}
+            >
+              <Link href="/product-lab" prefetch={false}>
+                <FlaskConical className="h-4 w-4" />
+                <span>Product Lab</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -23,7 +23,8 @@ const routeLabels: Record<string, string> = {
   '/source-content': 'Source Content',
   '/library': 'Saved Content',
   '/audit': 'Content Scan',
-  '/settings': 'Settings',
+  '/settings': 'Workspace',
+  '/product-lab': 'Product Lab',
 };
 
 export function Header() {
