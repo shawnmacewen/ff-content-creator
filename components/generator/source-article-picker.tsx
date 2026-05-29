@@ -325,7 +325,7 @@ export function SourceArticlePicker({
                       selected ? 'border-cyan-300 ring-2 ring-cyan-200/80' : 'border-slate-200/80'
                     )}
                   >
-                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-slate-950', splitView ? 'w-[24%]' : 'w-[36%]')}>
+                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]', splitView ? 'w-[24%]' : 'w-[36%]')}>
                       {thumb ? (
                         <img
                           src={String(thumb).trim()}
@@ -334,7 +334,7 @@ export function SourceArticlePicker({
                           referrerPolicy="no-referrer"
                         />
                       ) : (
-                        <div className="h-full w-full bg-[radial-gradient(circle_at_70%_35%,rgba(147,197,253,0.38),transparent_34%),linear-gradient(135deg,#071326,#18305d_56%,#0f172a)]" />
+                        <div className="h-full w-full bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-white/45" />
                       <div className={cn('absolute inset-y-0 -right-px bg-gradient-to-r from-transparent via-white/82 to-white', splitView ? 'w-8' : 'w-14')} />
