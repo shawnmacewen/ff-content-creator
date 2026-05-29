@@ -20,8 +20,6 @@ import {
   Calendar,
   Check,
   Copy,
-  ExternalLink,
-  MoreHorizontal,
   Sparkles,
   TrendingUp,
   User,
@@ -530,15 +528,9 @@ export function ContentDetail({
 
     return (
       <div className="flex min-w-0 items-center gap-2">
-        <a
-          href={text}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 flex-1 truncate text-primary underline-offset-2 hover:underline"
-          title={text}
-        >
+        <span className="min-w-0 flex-1 truncate text-slate-700" title={text}>
           {text}
-        </a>
+        </span>
         <Button
           type="button"
           variant="outline"
@@ -665,21 +657,6 @@ export function ContentDetail({
                 {copied ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
                 {copied ? 'Copied' : 'Save'}
               </button>
-              {content.url ? (
-                <a
-                  href={content.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-black/50"
-                  title="View source"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </a>
-              ) : (
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white/70 shadow-lg shadow-black/20 backdrop-blur-md">
-                  <MoreHorizontal className="h-5 w-5" />
-                </span>
-              )}
               <DialogClose className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-white">
                 <X className="h-5 w-5" />
                 <span className="sr-only">Close article preview</span>
@@ -806,14 +783,6 @@ export function ContentDetail({
                 {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                 {copied ? 'Copied' : 'Copy Text'}
               </Button>
-              {content.url ? (
-                <Button variant="outline" className="h-11 rounded-2xl border-white/15 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white" asChild>
-                  <a href={content.url} target="_blank" rel="noopener noreferrer">
-                    View Source
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              ) : null}
             </div>
             {onUseForGeneration ? (
               <Button

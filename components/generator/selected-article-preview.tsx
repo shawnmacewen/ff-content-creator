@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import {
   Bookmark,
   Calendar,
-  ExternalLink,
   FileText,
   Sparkles,
   TrendingUp,
@@ -201,7 +200,6 @@ export function SelectedArticlePreview({
   const designation = String(getDesignation(article));
   const filename = getFilename(article);
   const publishedAt = article.publishedAt || article.published_at;
-  const url = article.url;
   const takeaways = buildTakeaways(article, bodyPreview);
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
@@ -230,18 +228,6 @@ export function SelectedArticlePreview({
             <Bookmark className="h-4 w-4" />
             Save
           </button>
-          {url ? (
-            <a
-              href={String(url)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-black/35 px-4 text-sm font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-black/50"
-              title="Open full source article"
-            >
-              Full Article
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          ) : null}
           <button
             type="button"
             onClick={onClear}
@@ -318,20 +304,7 @@ export function SelectedArticlePreview({
       </div>
 
       <div className="z-20 mt-auto bg-slate-950/95 px-7 py-5 shadow-[0_-18px_50px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:px-10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {url ? (
-            <Button variant="outline" className="h-12 rounded-2xl border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white" asChild>
-              <a href={String(url)} target="_blank" rel="noopener noreferrer">
-                View Source
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          ) : (
-            <Button variant="outline" className="h-12 rounded-2xl border-white/15 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white" disabled>
-              View Source
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Button
             className="h-12 rounded-2xl bg-[linear-gradient(135deg,#5b8cff,#9b4dff)] px-8 font-semibold text-white shadow-[0_0_28px_rgba(99,102,241,0.42)] transition hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(139,92,246,0.56)]"
             onClick={onUseArticle}

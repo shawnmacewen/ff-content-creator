@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, PenSquare, Save, Settings2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ExternalLink, Loader2, PenSquare, Save, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -553,6 +553,7 @@ Separately (client-side), we:
                             }}
                           >
                             View Details
+                            <ExternalLink className="ml-1.5 h-3 w-3" />
                           </Button>
                         </div>
                       </div>

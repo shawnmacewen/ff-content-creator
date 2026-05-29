@@ -179,20 +179,8 @@ export function ContentCard({
                 className="h-8 px-2"
               >
                 View Details
+                <ExternalLink className="ml-1.5 h-3 w-3" />
               </Button>
-              {content.url && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="h-8 px-2"
-                >
-                  <a href={content.url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Source
-                  </a>
-                </Button>
-              )}
             </div>
           </div>
         </div>
