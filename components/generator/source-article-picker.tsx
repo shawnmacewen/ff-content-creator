@@ -88,7 +88,7 @@ export function SourceArticlePicker({
       <CardHeader className="pb-4">
 
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-4 flex flex-col gap-3 2xl:flex-row 2xl:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -98,12 +98,12 @@ export function SourceArticlePicker({
               className="h-10 rounded-md pl-9 bg-muted/40"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" className="h-10 rounded-md gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Button type="button" variant="outline" className="h-10 justify-center rounded-md gap-2">
               <Filter className="h-4 w-4" />
               Filter
             </Button>
-            <Button type="button" variant="outline" className="h-10 rounded-md gap-2">
+            <Button type="button" variant="outline" className="h-10 justify-center rounded-md gap-2">
               Newest First
               <ChevronDown className="h-4 w-4" />
             </Button>

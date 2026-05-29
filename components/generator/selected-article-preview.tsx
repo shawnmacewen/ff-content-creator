@@ -197,11 +197,11 @@ export function SelectedArticlePreview({
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
 
   return (
-    <section className="group relative isolate min-h-[760px] overflow-hidden rounded-[2rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
+    <section className="group relative isolate min-h-[680px] overflow-hidden rounded-[2rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
       <div className="pointer-events-none absolute -left-24 top-24 h-48 w-48 rounded-full bg-sky-300/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 bottom-20 h-56 w-56 rounded-full bg-violet-300/25 blur-3xl" />
 
-      <div className="relative min-h-[360px] overflow-hidden rounded-b-[46%_8%] bg-slate-950">
+      <div className="relative min-h-[320px] overflow-hidden rounded-b-[42%_7%] bg-slate-950">
         {imageUrl ? (
           <div
             className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
@@ -241,11 +241,11 @@ export function SelectedArticlePreview({
           </button>
         </div>
 
-        <div className="relative z-10 flex min-h-[360px] flex-col justify-end p-8 text-white sm:p-10">
+        <div className="relative z-10 flex min-h-[320px] flex-col justify-end p-8 text-white sm:p-10">
           <div className="mb-5 inline-flex w-fit items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
             {decodeEntities(designation)}
           </div>
-          <h3 className="max-w-[760px] text-balance font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-2xl sm:text-5xl lg:text-6xl">
+          <h3 className="max-w-[880px] text-balance font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-2xl sm:text-5xl lg:text-6xl">
             {title}
           </h3>
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-white/82">
@@ -259,36 +259,55 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className="relative z-10 grid gap-9 px-7 pb-28 pt-9 md:grid-cols-[0.82fr_1.18fr] sm:px-10">
-        <aside className="space-y-6">
-          <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
-            <Sparkles className="h-5 w-5 text-blue-600" />
-            Key Takeaways
+      <div className="relative z-10 space-y-8 px-7 pb-28 pt-8 sm:px-10">
+        <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              Key Takeaways
+            </div>
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="hidden rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 md:inline-flex"
+            >
+              Full article details
+            </button>
           </div>
-          <div className="space-y-6">
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
             {takeaways.slice(0, 3).map((item, index) => {
               const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
               return (
-                <div key={index} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
-                    <Icon className="h-5 w-5" />
+                <div key={index} className="flex min-w-0 gap-3 rounded-2xl bg-slate-50/80 p-4 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.16)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_24px_rgba(6,182,212,0.10)]">
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <p className="pt-1 text-sm font-medium leading-6 text-slate-700">{decodeEntities(item)}</p>
+                  <p className="line-clamp-4 text-sm font-medium leading-6 text-slate-700">{decodeEntities(item)}</p>
                 </div>
               );
             })}
           </div>
-        </aside>
+        </div>
 
-        <article className="border-slate-200/80 md:border-l md:pl-9">
-          <div className="space-y-6 text-slate-700">
+        <article>
+          <div className="mb-4 flex items-end justify-between gap-4 border-t border-slate-200/80 pt-7">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Editorial Snapshot</div>
+              <h4 className="mt-2 font-serif text-2xl font-semibold leading-tight text-slate-950">Fast read before generation</h4>
+            </div>
+            <div className="hidden text-right text-xs font-medium text-slate-400 lg:block">
+              Showing a condensed preview to keep the workspace readable.
+            </div>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-5 xl:grid-cols-2">
             {paragraphs.length ? (
-              paragraphs.map((paragraph, index) => (
+              paragraphs.slice(0, 4).map((paragraph, index) => (
                 <p
                   key={index}
                   className={cn(
-                    'text-base leading-8',
-                    index === 0 && 'first-letter:float-left first-letter:mr-3 first-letter:font-serif first-letter:text-7xl first-letter:leading-[0.86] first-letter:text-slate-950'
+                    'line-clamp-4 text-base leading-8 text-slate-700',
+                    index === 0 && 'xl:row-span-2 xl:line-clamp-[9] xl:text-[1.05rem] xl:leading-8 xl:first-letter:float-left xl:first-letter:mr-3 xl:first-letter:font-serif xl:first-letter:text-7xl xl:first-letter:leading-[0.86] xl:first-letter:text-slate-950'
                   )}
                 >
                   {decodeEntities(paragraph)}
