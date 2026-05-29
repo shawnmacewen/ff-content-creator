@@ -606,15 +606,15 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
               <div>
                 <h2 className="text-lg font-semibold">Select Content</h2>
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(390px,44%)_minmax(0,56%)]">
+            <div className="grid items-start gap-4 xl:grid-cols-[minmax(340px,38%)_minmax(0,62%)] 2xl:grid-cols-[minmax(360px,40%)_minmax(0,60%)]">
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
@@ -652,8 +652,8 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">4</span>
               <div>
                 <h2 className="text-lg font-semibold">Generated Output</h2>
@@ -806,15 +806,15 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
               <div>
                 <h2 className="text-lg font-semibold">Select Content</h2>
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(390px,44%)_minmax(0,56%)]">
+            <div className="grid items-start gap-4 xl:grid-cols-[minmax(340px,38%)_minmax(0,62%)] 2xl:grid-cols-[minmax(360px,40%)_minmax(0,60%)]">
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}

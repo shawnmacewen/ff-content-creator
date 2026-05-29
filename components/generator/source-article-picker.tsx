@@ -202,48 +202,48 @@ export function SourceArticlePicker({
 
   return (
     <Card className="overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]">
-      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-4 px-4 sm:px-5')}>
-        <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', splitView && 'lg:flex-col lg:items-start')}>
+      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-3 px-3 pb-3 pt-4 sm:px-4')}>
+        <div className={cn('flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between', splitView && 'gap-3 lg:flex-row lg:items-start')}>
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800">
+            <div className={cn('inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800', splitView && 'px-2.5 py-0.5 text-[11px]')}>
               <Sparkles className="h-3.5 w-3.5" />
               Editorial Sources
             </div>
-            <div className={cn('mt-3 font-semibold tracking-normal text-slate-950', splitView ? 'text-lg' : 'text-xl')}>Choose the source article</div>
-            <p className={cn('mt-1 leading-6 text-slate-500', splitView ? 'text-xs' : 'text-sm')}>
+            <div className={cn('mt-3 font-semibold tracking-normal text-slate-950', splitView ? 'mt-2 text-base' : 'text-xl')}>Choose the source article</div>
+            <p className={cn('mt-1 leading-6 text-slate-500', splitView ? 'hidden' : 'text-sm')}>
               Select an article to preview and use it as generation context.
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm">
+          <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'px-2.5 py-1.5')}>
             <FileText className="h-4 w-4 text-slate-400" />
             {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} sources`}
           </div>
         </div>
 
-        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'xl:flex-col xl:items-stretch')}>
+        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'gap-2 xl:flex-col xl:items-stretch')}>
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className={cn('absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400', splitView && 'left-3 h-3.5 w-3.5')} />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search title, topic, keyword, or tag..."
-              className="h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200"
+              className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-10 rounded-xl pl-9 text-xs')}
             />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-            <Button type="button" variant="outline" className="h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm">
+            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-10 rounded-xl px-3 text-xs')}>
               <Filter className="h-4 w-4" />
               Filter
             </Button>
-            <Button type="button" variant="outline" className="h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm">
+            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-10 rounded-xl px-3 text-xs')}>
               Newest First
               <ChevronDown className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className={cn('flex gap-2 overflow-x-auto pb-1', splitView && 'gap-1.5')}>
           {topics.map((t) => {
             const active = t === topic;
             return (
@@ -253,6 +253,7 @@ export function SourceArticlePicker({
                 onClick={() => setTopic(t)}
                 className={cn(
                   'shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors',
+                  splitView && 'px-3 py-1.5 text-[11px]',
                   active
                     ? 'border-slate-950 bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.20)]'
                     : 'border-slate-200 bg-white/78 text-slate-500 hover:border-cyan-200 hover:text-slate-900'
@@ -265,16 +266,16 @@ export function SourceArticlePicker({
         </div>
       </CardHeader>
 
-      <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'px-4 sm:px-5')}>
-        <ScrollArea className={cn('overflow-hidden rounded-[1.25rem]', splitView ? 'h-[650px]' : 'h-[560px]')}>
+      <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'px-3 pb-3 sm:px-4')}>
+        <ScrollArea className={cn('overflow-hidden rounded-[1.25rem]', splitView ? 'h-[690px]' : 'h-[560px]')}>
           {isLoading ? (
-            <div className={cn('grid gap-4 pr-3 pb-4', !splitView && 'lg:grid-cols-2')}>
+            <div className={cn('grid gap-4 pr-3 pb-4', splitView && 'gap-3 pr-2', !splitView && 'lg:grid-cols-2')}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className={cn('rounded-[1.25rem] bg-slate-200/70 animate-pulse', splitView ? 'h-40' : 'h-44')} />
+                <div key={i} className={cn('rounded-[1.25rem] bg-slate-200/70 animate-pulse', splitView ? 'h-28' : 'h-44')} />
               ))}
             </div>
           ) : (
-            <div className={cn('grid gap-4 pr-3 pb-4', !splitView && 'lg:grid-cols-2')}>
+            <div className={cn('grid gap-4 pr-3 pb-4', splitView && 'gap-3 pr-2', !splitView && 'lg:grid-cols-2')}>
               {filtered.length === 0 ? (
                 <div className="lg:col-span-2 rounded-[1.5rem] border border-dashed border-slate-200 bg-white/70 p-10 text-center text-sm text-slate-500">
                   No articles found.
@@ -294,11 +295,11 @@ export function SourceArticlePicker({
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
                       'group relative overflow-hidden rounded-[1.25rem] border bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(15,23,42,0.16)]',
-                      splitView ? 'min-h-36' : 'min-h-44',
+                      splitView ? 'min-h-[118px] rounded-2xl' : 'min-h-44',
                       selected ? 'border-cyan-300 ring-2 ring-cyan-200/80' : 'border-slate-200/80'
                     )}
                   >
-                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-slate-950', splitView ? 'w-[34%]' : 'w-[38%]')}>
+                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-slate-950', splitView ? 'w-[30%]' : 'w-[38%]')}>
                       {thumb ? (
                         <img
                           src={String(thumb).trim()}
@@ -312,14 +313,15 @@ export function SourceArticlePicker({
                       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 to-white/30" />
                     </div>
 
-                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[31%] min-h-36' : 'ml-[34%] min-h-44')}>
+                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[27%] min-h-[118px] p-3 sm:p-3.5' : 'ml-[34%] min-h-44')}>
                       <div className="flex items-start justify-between gap-3">
-                        <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', tagLabelClass(primaryLabel))}>
+                        <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[150px] px-2 py-0 text-[10px]', tagLabelClass(primaryLabel))}>
                           {decodeLite(primaryLabel)}
                         </Badge>
                         <span
                           className={cn(
                             'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm',
+                            splitView && 'h-7 w-7',
                             selected ? 'border-cyan-300 bg-cyan-500 text-white' : 'border-slate-200 bg-white/90 text-transparent'
                           )}
                           aria-hidden
@@ -328,16 +330,16 @@ export function SourceArticlePicker({
                         </span>
                       </div>
 
-                      <div className={cn('min-w-0 flex-1', splitView ? 'mt-3' : 'mt-4')}>
+                      <div className={cn('min-w-0 flex-1', splitView ? 'mt-2' : 'mt-4')}>
                         <div className={cn('line-clamp-2 font-semibold leading-snug text-slate-950', splitView ? 'text-[15px]' : 'text-base')}>
                           {decodeLite(c.title || 'Untitled article')}
                         </div>
-                        <div className={cn('mt-2 line-clamp-2 leading-6 text-slate-500', splitView ? 'text-xs' : 'text-sm')}>
+                        <div className={cn('mt-2 line-clamp-2 leading-6 text-slate-500', splitView ? 'mt-1 line-clamp-1 text-xs leading-5' : 'text-sm')}>
                           {decodeLite(c.excerpt || 'Open the article preview to review source details and full body content.')}
                         </div>
                       </div>
 
-                      <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-500', splitView ? 'mt-3' : 'mt-4')}>
+                      <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-500', splitView ? 'mt-2 gap-x-3 text-[11px]' : 'mt-4')}>
                         <span className="inline-flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5" />
                           {formatDate(c.publishedAt) || 'Date unavailable'}
