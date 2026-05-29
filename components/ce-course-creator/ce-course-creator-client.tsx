@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Code2,
   Copy,
+  FileQuestion,
   FileText,
   Filter,
   GraduationCap,
@@ -1311,6 +1312,89 @@ function ExportJsonDialog({ packageId }: { packageId?: string }) {
   );
 }
 
+function ApiGuideDialog({ packageId }: { packageId?: string }) {
+  const listEndpoint = '/api/ce-course/public/packages?status=ready&limit=50';
+  const detailEndpoint = packageId
+    ? `/api/ce-course/public/packages/${packageId}`
+    : '/api/ce-course/public/packages/{packageId}';
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" className="gap-2">
+          <FileQuestion className="h-4 w-4" />
+          API Guide
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 py-5 text-left">
+          <DialogTitle>CE Course API Guide</DialogTitle>
+          <div className="text-sm leading-6 text-muted-foreground">
+            Public-ish read API for retrieving standardized CE course metadata and complete package JSON.
+          </div>
+        </DialogHeader>
+        <ScrollArea className="max-h-[calc(92vh-8rem)]">
+          <div className="space-y-5 p-6 text-sm leading-6">
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">Security</h3>
+              <p className="text-muted-foreground">
+                If `CE_COURSE_API_TOKEN` is configured on the server, callers must send either `Authorization: Bearer &lt;token&gt;` or `x-api-key: &lt;token&gt;`. If the env var is not configured, the endpoints remain open for internal/dev use.
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">List packages</h3>
+              <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{`GET ${listEndpoint}`}</pre>
+              <p className="text-muted-foreground">
+                Returns package metadata: package ID, status, title, objective, theme, source count, question count, passing score, readiness summary, and the detail URL.
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">Retrieve package</h3>
+              <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{`GET ${detailEndpoint}`}</pre>
+              <p className="text-muted-foreground">
+                Returns the full standardized package payload using `ce-course-package.v1`: course metadata, source reading list, quiz questions, choices, answer key, citations, readiness, and downstream status flags.
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">Example request</h3>
+              <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{`curl -H "Authorization: Bearer $CE_COURSE_API_TOKEN" \\
+  "${detailEndpoint}"`}</pre>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">Core schema</h3>
+              <pre className="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{`{
+  "data": {
+    "formatVersion": "ce-course-package.v1",
+    "packageId": "uuid",
+    "status": "draft | ready | sent | archived",
+    "title": "Course title",
+    "objective": "Learning objective",
+    "readingList": [{ "sourceContentId": "id", "title": "...", "contentDesignation": "..." }],
+    "quiz": [{
+      "id": "q-1",
+      "question": "...",
+      "choices": [{ "label": "A", "text": "..." }],
+      "correctChoiceLabel": "A",
+      "answerKey": "...",
+      "citation": "...",
+      "explanation": "..."
+    }],
+    "quizRules": { "minimumQuestions": 10, "maximumQuestions": 25, "passingScore": 60 },
+    "readiness": { "complete": true, "completedChecks": 8, "totalChecks": 8 }
+  }
+}`}</pre>
+            </section>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CourseReadinessPanel({
   draft,
   selectedSources,
@@ -1535,12 +1619,13 @@ function CourseDraftCard({
             </div>
           </ScrollArea>
         </div>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <Button type="button" variant="outline" className="gap-2" disabled={isSaving} onClick={onSave}>
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {isSaving ? 'Saving Package' : draft.id ? 'Save Changes' : 'Save Package'}
           </Button>
           <ExportJsonDialog packageId={draft.id} />
+          <ApiGuideDialog packageId={draft.id} />
           <Button type="button" variant="outline" className="gap-2" disabled>
             <Send className="h-4 w-4" />
             Send to AdvisorStream
