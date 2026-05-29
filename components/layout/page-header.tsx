@@ -41,15 +41,15 @@ export function PageHeader({
           </p>
           {actions ? <div className="mt-5 flex flex-wrap gap-3">{actions}</div> : null}
         </div>
-        <div className="flex content-center items-center gap-3 overflow-x-auto bg-secondary/60 p-6 sm:p-7">
+        <div className="flex flex-col justify-center gap-4 bg-secondary/60 p-6 sm:p-7">
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="flex min-h-[70px] min-w-[180px] flex-1 items-center gap-3 rounded-md border border-border bg-card p-4"
+              className="flex items-start gap-3 border-b border-border/60 pb-4 last:border-b-0 last:pb-0"
             >
               <span
                 className={cn(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+                  'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md',
                   metric.active === false
                     ? 'bg-muted text-muted-foreground'
                     : metric.iconClassName || 'bg-primary text-primary-foreground'
@@ -57,13 +57,13 @@ export function PageHeader({
               >
                 <metric.icon className="h-4 w-4" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{metric.label}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold leading-5">{metric.label}</p>
                 {metric.detail ? (
-                  <p className="truncate text-xs text-muted-foreground">{metric.detail}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{metric.detail}</p>
                 ) : null}
               </div>
-              {metric.trailing}
+              {metric.trailing ? <div className="shrink-0">{metric.trailing}</div> : null}
             </div>
           ))}
         </div>
