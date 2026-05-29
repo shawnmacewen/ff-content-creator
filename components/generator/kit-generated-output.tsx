@@ -4,10 +4,11 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles } from 'lucide-react';
+import { Check, Copy, Sparkles } from 'lucide-react';
 import type { ContentType } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
+import { PlatformOutputPreview } from '@/components/generator/platform-output-preview';
 
 export type KitOutput = {
   type: ContentType;
@@ -37,6 +38,7 @@ export function KitGeneratedOutput({
     [selectedTypes]
   );
   const [activeInternal, setActiveInternal] = React.useState<ContentType>(types[0]);
+  const [copiedType, setCopiedType] = React.useState<ContentType | null>(null);
 
   React.useEffect(() => {
     if (!types.includes(activeInternal)) setActiveInternal(types[0]);
@@ -45,7 +47,41 @@ export function KitGeneratedOutput({
   const hasAnyOutput = !!outputs?.some((o) => o.content && o.content.trim().length > 0);
   const effectiveActive = activeType === 'all' ? 'all' : (activeType ?? activeInternal);
 
+  const copyOutput = async (type: ContentType, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedType(type);
+    window.setTimeout(() => setCopiedType((prev) => (prev === type ? null : prev)), 2000);
+  };
 
+  const renderOutput = (type: ContentType) => {
+    const out = outputs?.find((o) => o.type === type);
+    const txt = out?.content || '';
+    const label = out?.label || CONTENT_TYPE_MAP[type]?.label || type;
+
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="text-sm font-semibold">{label}</div>
+            <div className="text-xs text-muted-foreground">Previewed in the channel format a reader would see.</div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={!txt}
+            onClick={() => copyOutput(type, txt)}
+          >
+            {copiedType === type ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiedType === type ? 'Copied' : 'Copy'}
+          </Button>
+        </div>
+        <div className="rounded-2xl border bg-muted/20 p-3 sm:p-5">
+          <PlatformOutputPreview type={type} label={label} content={txt} />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
@@ -79,8 +115,6 @@ export function KitGeneratedOutput({
             </TabsList>
 
             {types.map((t) => {
-              const out = outputs?.find((o) => o.type === t);
-              const txt = out?.content || '';
               return (
                 <TabsContent key={t} value={t} className="mt-4">
                   {!hasAnyOutput ? (
@@ -88,12 +122,7 @@ export function KitGeneratedOutput({
                       Generated output will appear here after you click Generate.
                     </div>
                   ) : (
-                    <div className="rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm">
-                      <div className="mb-2 text-xs font-medium text-muted-foreground">
-                        {out?.label || CONTENT_TYPE_MAP[t]?.label || t}
-                      </div>
-                      <div className="whitespace-pre-wrap">{txt || '—'}</div>
-                    </div>
+                    renderOutput(t)
                   )}
                 </TabsContent>
               );
@@ -108,30 +137,16 @@ export function KitGeneratedOutput({
             ) : effectiveActive === 'all' ? (
               <div className="space-y-3">
                 {types.map((t) => {
-                  const out = outputs?.find((o) => o.type === t);
-                  const txt = out?.content || '';
                   return (
-                    <div key={t} className="rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm">
-                      <div className="mb-2 text-xs font-medium text-muted-foreground">
-                        {out?.label || CONTENT_TYPE_MAP[t]?.label || t}
-                      </div>
-                      <div className="whitespace-pre-wrap">{txt || '—'}</div>
+                    <div key={t} className="rounded-2xl border bg-background p-4 shadow-sm">
+                      {renderOutput(t)}
                     </div>
                   );
                 })}
               </div>
             ) : (
               (() => {
-                const out = outputs?.find((o) => o.type === effectiveActive);
-                const txt = out?.content || '';
-                return (
-                  <div className="rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm">
-                    <div className="mb-2 text-xs font-medium text-muted-foreground">
-                      {out?.label || CONTENT_TYPE_MAP[effectiveActive]?.label || effectiveActive}
-                    </div>
-                    <div className="whitespace-pre-wrap">{txt || '—'}</div>
-                  </div>
-                );
+                return renderOutput(effectiveActive);
               })()
             )}
           </div>

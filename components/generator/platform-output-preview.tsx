@@ -1,0 +1,277 @@
+'use client';
+
+import * as React from 'react';
+import {
+  BatteryFull,
+  Bookmark,
+  CheckCircle2,
+  Heart,
+  Linkedin,
+  Mail,
+  MessageCircle,
+  MoreHorizontal,
+  Repeat2,
+  Send,
+  Share,
+  Signal,
+  Wifi,
+} from 'lucide-react';
+import type { ContentType } from '@/lib/types/content';
+import { CONTENT_TYPE_MAP } from '@/lib/content-config';
+import { cn } from '@/lib/utils';
+
+function cleanGeneratedText(content: string) {
+  return String(content || '')
+    .replace(/\n*Image URL:\s*.*$/im, '')
+    .replace(/\n*Image generation status:\s*.*$/im, '')
+    .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]')
+    .trim();
+}
+
+function firstMeaningfulLine(text: string) {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean) || '';
+}
+
+function parseEmail(content: string) {
+  const text = cleanGeneratedText(content);
+  const lines = text.split('\n');
+  const subjectIndex = lines.findIndex((line) => /^subject\s*:/i.test(line.trim()));
+  const preheaderIndex = lines.findIndex((line) => /^preheader\s*:/i.test(line.trim()));
+
+  const subject = subjectIndex >= 0
+    ? lines[subjectIndex].replace(/^subject\s*:\s*/i, '').trim()
+    : firstMeaningfulLine(text).replace(/^#+\s*/, '').trim() || 'Generated campaign draft';
+
+  const preheader = preheaderIndex >= 0
+    ? lines[preheaderIndex].replace(/^preheader\s*:\s*/i, '').trim()
+    : 'Editorial preview';
+
+  const body = lines
+    .filter((_, index) => index !== subjectIndex && index !== preheaderIndex)
+    .join('\n')
+    .replace(/^#+\s*.*$/m, '')
+    .trim();
+
+  return { subject, preheader, body: body || text };
+}
+
+function PhoneShell({ children, variant = 'light' }: { children: React.ReactNode; variant?: 'light' | 'dark' }) {
+  const dark = variant === 'dark';
+
+  return (
+    <div className="mx-auto w-full max-w-[390px] rounded-[2.5rem] border border-foreground/10 bg-black p-2 shadow-[0_20px_55px_rgba(15,23,42,0.22)]">
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-[2rem] text-sm',
+          dark ? 'bg-black text-white' : 'bg-slate-100 text-slate-950'
+        )}
+      >
+        <div className="pointer-events-none absolute left-1/2 top-2 z-20 h-7 w-24 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]" />
+        <div className="flex h-10 items-center justify-between px-7 pt-2 text-[13px] font-semibold">
+          <span>9:41</span>
+          <div className="flex items-center gap-1.5">
+            <Signal className="h-3.5 w-3.5" />
+            <Wifi className="h-3.5 w-3.5" />
+            <BatteryFull className="h-4 w-4" />
+          </div>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Avatar({ className }: { className?: string }) {
+  return (
+    <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-base font-black text-white', className)}>
+      E
+    </div>
+  );
+}
+
+function LinkedInPreview({ content }: { content: string }) {
+  const text = cleanGeneratedText(content);
+
+  return (
+    <PhoneShell>
+      <div className="border-b border-slate-200 bg-white px-4 py-3">
+        <div className="flex items-center gap-2 text-[#0a66c2]">
+          <Linkedin className="h-6 w-6 fill-current" />
+          <span className="text-base font-bold">LinkedIn</span>
+        </div>
+      </div>
+      <div className="min-h-[520px] bg-slate-100 p-3">
+        <article className="rounded-xl bg-white shadow-sm">
+          <div className="flex items-start gap-3 px-4 py-3">
+            <Avatar />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="font-semibold">editorial</span>
+                <CheckCircle2 className="h-3.5 w-3.5 fill-[#0a66c2] text-white" />
+              </div>
+              <div className="text-[11px] leading-tight text-slate-500">Editorial content team · Now</div>
+            </div>
+            <MoreHorizontal className="h-5 w-5 text-slate-500" />
+          </div>
+          <div className="whitespace-pre-wrap px-4 pb-4 text-[14px] leading-relaxed text-slate-900">
+            {text || 'Generated LinkedIn copy will appear here.'}
+          </div>
+          <div className="border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500">12 reactions · 3 comments</div>
+          <div className="grid grid-cols-4 border-t border-slate-100 px-1 py-1 text-[12px] font-medium text-slate-600">
+            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Like</button>
+            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Comment</button>
+            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Repost</button>
+            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Send</button>
+          </div>
+        </article>
+      </div>
+    </PhoneShell>
+  );
+}
+
+function TwitterPreview({ content }: { content: string }) {
+  const text = cleanGeneratedText(content);
+
+  return (
+    <PhoneShell variant="dark">
+      <div className="border-b border-white/10 px-4 py-3 text-center text-base font-bold">X</div>
+      <div className="min-h-[520px] bg-black">
+        <article className="border-b border-white/10 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <Avatar />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <span className="font-bold">editorial</span>
+                <CheckCircle2 className="h-3.5 w-3.5 fill-sky-500 text-black" />
+                <span className="text-white/55">@editorial · 1m</span>
+              </div>
+              <div className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed text-white">
+                {text || 'Generated X post will appear here.'}
+              </div>
+              <div className="mt-4 flex items-center justify-between text-white/55">
+                <MessageCircle className="h-5 w-5" />
+                <Repeat2 className="h-5 w-5" />
+                <Heart className="h-5 w-5" />
+                <Share className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </PhoneShell>
+  );
+}
+
+function InstagramCaptionPreview({ content }: { content: string }) {
+  const text = cleanGeneratedText(content);
+
+  return (
+    <PhoneShell variant="dark">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div className="text-2xl font-semibold tracking-normal" style={{ fontFamily: 'Brush Script MT, Segoe Script, cursive' }}>Instagram</div>
+        <div className="flex items-center gap-4">
+          <Heart className="h-6 w-6" />
+          <Send className="h-6 w-6" />
+        </div>
+      </div>
+      <div className="min-h-[520px] bg-black">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="ring-2 ring-emerald-300/50" />
+            <span className="font-bold">editorial</span>
+          </div>
+          <MoreHorizontal className="h-5 w-5" />
+        </div>
+        <div className="mx-5 aspect-square rounded-xl bg-gradient-to-br from-sky-100 via-white to-emerald-100" />
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-5">
+            <Heart className="h-6 w-6" />
+            <MessageCircle className="h-6 w-6" />
+            <Send className="h-6 w-6" />
+          </div>
+          <Bookmark className="h-6 w-6" />
+        </div>
+        <div className="whitespace-pre-wrap px-5 pb-6 text-[14px] leading-relaxed">
+          <span className="font-bold">editorial </span>{text || 'Generated Instagram caption will appear here.'}
+        </div>
+      </div>
+    </PhoneShell>
+  );
+}
+
+function EmailPreview({ content, label }: { content: string; label?: string }) {
+  const email = parseEmail(content);
+
+  return (
+    <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border bg-white text-slate-950 shadow-sm">
+      <div className="border-b bg-slate-50 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <Mail className="h-4 w-4" />
+          {label || 'Marketing Email'}
+        </div>
+      </div>
+      <div className="grid gap-0 md:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="border-b bg-slate-50 p-3 md:border-b-0 md:border-r">
+          <div className="rounded-lg bg-white p-3 shadow-sm">
+            <div className="text-xs font-semibold text-slate-900">editorial</div>
+            <div className="mt-1 line-clamp-2 text-xs text-slate-600">{email.subject}</div>
+          </div>
+        </aside>
+        <article className="min-h-[430px] p-5">
+          <div className="border-b pb-4">
+            <h3 className="text-xl font-semibold leading-snug">{email.subject}</h3>
+            <div className="mt-2 text-sm text-slate-500">{email.preheader}</div>
+            <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+              <Avatar className="h-8 w-8 text-sm" />
+              <div>
+                <div className="font-medium text-slate-800">Editorial Team</div>
+                <div>to advisor audience</div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+            {email.body || 'Generated email copy will appear here.'}
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+function DocumentPreview({ content, type, label }: { content: string; type: ContentType; label?: string }) {
+  const text = cleanGeneratedText(content);
+  const typeLabel = label || CONTENT_TYPE_MAP[type]?.label || type;
+
+  return (
+    <div className="mx-auto w-full max-w-3xl rounded-2xl border bg-background p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3 border-b pb-3">
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{typeLabel}</div>
+          <h3 className="mt-1 text-lg font-semibold">Generated draft preview</h3>
+        </div>
+      </div>
+      <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+        {text || 'Generated copy will appear here.'}
+      </div>
+    </div>
+  );
+}
+
+export function PlatformOutputPreview({
+  type,
+  label,
+  content,
+}: {
+  type: ContentType;
+  label?: string;
+  content: string;
+}) {
+  if (type === 'social-linkedin') return <LinkedInPreview content={content} />;
+  if (type === 'social-twitter') return <TwitterPreview content={content} />;
+  if (type === 'social-instagram') return <InstagramCaptionPreview content={content} />;
+  if (type === 'email-marketing' || type === 'newsletter') return <EmailPreview content={content} label={label} />;
+  return <DocumentPreview content={content} type={type} label={label} />;
+}
