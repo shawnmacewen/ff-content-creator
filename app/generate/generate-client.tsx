@@ -614,7 +614,7 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div className="grid items-start gap-3 xl:grid-cols-[minmax(320px,36%)_minmax(0,64%)] 2xl:grid-cols-[minmax(340px,38%)_minmax(0,62%)]">
+            <div className="grid items-start gap-3 xl:grid-cols-[minmax(360px,39%)_minmax(0,61%)] 2xl:grid-cols-[minmax(390px,40%)_minmax(0,60%)]">
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
@@ -814,7 +814,7 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div className="grid items-start gap-3 xl:grid-cols-[minmax(320px,36%)_minmax(0,64%)] 2xl:grid-cols-[minmax(340px,38%)_minmax(0,62%)]">
+            <div className="grid items-start gap-3 xl:grid-cols-[minmax(360px,39%)_minmax(0,61%)] 2xl:grid-cols-[minmax(390px,40%)_minmax(0,60%)]">
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
