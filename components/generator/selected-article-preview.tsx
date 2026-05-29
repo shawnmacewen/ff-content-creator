@@ -186,18 +186,20 @@ export function SelectedArticlePreview({
   bodyPreview,
   onClear,
   onUseArticle,
+  className,
 }: {
   selectedSource: any;
   detailContent?: any;
   bodyPreview: string;
   onClear: () => void;
   onUseArticle: () => void;
+  className?: string;
 }) {
   const article = selectedSource?.data ?? selectedSource ?? null;
 
   if (!article) {
     return (
-      <div className="flex min-h-[640px] items-center justify-center overflow-hidden rounded-[1.5rem] border border-dashed border-primary/20 bg-[linear-gradient(135deg,rgba(248,250,252,0.96),rgba(239,246,255,0.72))] p-8 text-center shadow-sm">
+      <div className={cn('flex min-h-[640px] items-center justify-center overflow-hidden rounded-[1.5rem] border border-dashed border-primary/20 bg-[linear-gradient(135deg,rgba(248,250,252,0.96),rgba(239,246,255,0.72))] p-8 text-center shadow-sm', className)}>
         <div className="max-w-sm space-y-3">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <FileText className="h-6 w-6" />
@@ -221,7 +223,7 @@ export function SelectedArticlePreview({
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
 
   return (
-    <section className="group relative isolate flex min-h-[640px] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70">
+    <section className={cn('group relative isolate flex min-h-[640px] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70', className)}>
       <div className="relative min-h-[270px] overflow-hidden bg-slate-950 2xl:min-h-[300px]">
         {imageUrl ? (
           <div
