@@ -13,6 +13,7 @@ import {
   Share2,
   SearchCheck,
   PenSquare,
+  CircleDot,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -86,30 +87,33 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        <Link href="/" prefetch={false} className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
-            <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+      <SidebarHeader className="border-b border-sidebar-border px-5 py-5">
+        <Link href="/" prefetch={false} className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div className="flex min-w-0 flex-col">
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-sidebar-foreground">
+            <span className="text-sm font-semibold tracking-[0.08em] text-sidebar-foreground">
               EDITOR[AI]L
+            </span>
+            <span className="text-xs text-sidebar-foreground/60">
+              Internal content curation
             </span>
           </div>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-2.5">
-        <SidebarGroup className="p-1.5">
+      <SidebarContent className="px-2 py-3">
+        <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
+            <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
                     className={cn(
-                      'h-8 rounded-md px-2 text-[13px] text-sidebar-foreground/78 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:h-3.5 [&>svg]:w-3.5',
+                      'h-9 rounded-md text-sidebar-foreground/78 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                       pathname === item.href &&
                         'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
                     )}
@@ -125,17 +129,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="p-1.5 pt-2">
-          <SidebarGroupLabel className="h-6 px-2 text-[11px] text-sidebar-foreground/50">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">
             Quick Create
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-0">
+            <SidebarMenu>
               {contentTypeItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    className="h-6 rounded-md px-2 text-xs text-sidebar-foreground/72 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:h-3 [&>svg]:w-3"
+                    className="h-9 rounded-md text-sidebar-foreground/72 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
                     <Link href={item.href} prefetch={false}>
                       <item.icon className="h-4 w-4" />
@@ -149,14 +153,23 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
-        <SidebarMenu className="gap-0.5">
+      <SidebarFooter className="border-t border-sidebar-border p-4">
+        <div className="rounded-md border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs text-sidebar-foreground/72">
+          <div className="mb-1 flex items-center gap-2 font-medium text-sidebar-foreground">
+            <CircleDot className="h-3.5 w-3.5 text-sidebar-primary" />
+            Workflow status
+          </div>
+          <p className="leading-relaxed">
+            Content sync, generation, and review tools are online.
+          </p>
+        </div>
+        <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               isActive={pathname === '/settings'}
               className={cn(
-                'h-8 rounded-md px-2 text-[13px] text-sidebar-foreground/78 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:h-3.5 [&>svg]:w-3.5',
+                'h-9 rounded-md text-sidebar-foreground/78 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                 pathname === '/settings' &&
                   'bg-sidebar-accent text-sidebar-accent-foreground'
               )}
@@ -168,7 +181,7 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="px-2 pt-1 font-mono text-[9px] leading-none text-sidebar-foreground/45">
+        <div className="px-2 pt-1 font-mono text-[10px] leading-none text-sidebar-foreground/45">
           SHA {gitSha}
         </div>
       </SidebarFooter>
