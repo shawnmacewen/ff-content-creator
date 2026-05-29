@@ -154,11 +154,8 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'Select at least one content type' }), { status: 400 });
     }
 
-    const outputs: Array<{ type: ContentType; label: string; content: string }> = [];
     const images: Record<string, string> = {};
-    const sectionScores: Array<{ label: string; grade: string; confidence: number; findings: string[] }> = [];
-
-    for (const asset of assets) {
+    const outputs = await Promise.all(assets.map(async (asset) => {
       const systemPrompt = buildSystemPrompt(asset.type, tone);
       const userPrompt = buildUserPrompt(asset.type, sourceText, customPrompt, additionalContext);
       const result = await generateText({
@@ -181,9 +178,9 @@ export async function POST(req: Request) {
         }
       }
 
-      outputs.push({ type: asset.type, label: asset.label, content: sectionText });
-      sectionScores.push({ label: asset.label, ...assessCompliance(sectionText) });
-    }
+      return { type: asset.type, label: asset.label, content: sectionText };
+    }));
+    const sectionScores = outputs.map((output) => ({ label: output.label, ...assessCompliance(output.content) }));
 
     const combined = outputs.map((o) => `## ${o.label}\n\n${o.content}`).join('\n\n---\n\n');
     const overall = assessCompliance(combined);

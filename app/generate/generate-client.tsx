@@ -173,13 +173,14 @@ export default function GeneratePage() {
     const handle = kitCarousel2Ref.current;
     if (!handle) return;
 
-    (async () => {
-      try {
-        await handle.generate();
-      } finally {
+    void handle.generate()
+      .catch((err) => {
+        console.error('KIT carousel generation error:', err);
+        toast.error('Carousel image generation failed');
+      })
+      .finally(() => {
         setPendingKitCarouselGenerate(false);
-      }
-    })();
+      });
   }, [pendingKitCarouselGenerate, kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
   const toggleKitType = (t: ContentType) => {
@@ -215,10 +216,13 @@ export default function GeneratePage() {
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
       includeInstagramCarouselImages;
+    const shouldGenerateInlineInstagramImage = kitTypes.includes('social-instagram') &&
+      instagramKitVariant === 'single' &&
+      includeInstagramSingleImages;
 
     try {
-      // 1) Generate KIT text first so non-Instagram outputs show ASAP.
-      await fetch('/api/generate', {
+      // Generate KIT text first so non-Instagram outputs show ASAP.
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,54 +230,40 @@ export default function GeneratePage() {
           type: kitTypes[0],
           mode: 'kit',
           selectedTypes: kitTypes,
-          includeInstagramImage,
+          includeInstagramImage: shouldGenerateInlineInstagramImage,
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
           additionalContext,
         }),
-      }).then(async (response) => {
-        if (!response.ok) throw new Error('KIT generation failed');
-        const payload = await response.json().catch(() => ({}));
-        const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
-        setKitOutputs(outputs);
-        setIsGeneratingKit(false);
       });
 
-      // 2) Then generate carousel images (if enabled). Keep Generate disabled until done.
+      if (!response.ok) throw new Error('KIT generation failed');
+      const payload = await response.json().catch(() => ({}));
+      const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
+      setKitOutputs(outputs);
+      setIsGeneratingKit(false);
+
+      // Carousel images run asynchronously so text outputs stay usable while image generation continues.
       if (shouldGenerateCarousel) {
         if (kitCarousel2Ref.current) {
-          await kitCarousel2Ref.current.generate();
-        } else {
-          // If the carousel section isn't mounted yet, queue it and wait until effect runs.
-          setPendingKitCarouselGenerate(true);
-          // Best-effort wait: poll until pending is cleared or ref appears.
-          // (This avoids finishing the button-disabled state prematurely.)
-          await new Promise<void>((resolve) => {
-            const start = Date.now();
-            const timer = setInterval(() => {
-              const timedOut = Date.now() - start > 5 * 60_000;
-              const handle = kitCarousel2Ref.current;
-              if (timedOut) {
-                clearInterval(timer);
-                resolve();
-              } else if (handle) {
-                clearInterval(timer);
-                handle.generate().finally(() => resolve());
-              }
-            }, 250);
+          void kitCarousel2Ref.current.generate().catch((err) => {
+            console.error('KIT carousel generation error:', err);
+            toast.error('Carousel image generation failed');
           });
+        } else {
+          setPendingKitCarouselGenerate(true);
         }
       }
 
-      toast.success('KIT generated');
+      toast.success(shouldGenerateCarousel ? 'KIT copy generated; carousel images are running' : 'KIT generated');
     } catch (err) {
       console.error('KIT generation error:', err);
       toast.error('Failed to generate kit');
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramImage, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
