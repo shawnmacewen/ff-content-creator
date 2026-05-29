@@ -120,6 +120,7 @@ export default function GeneratePage() {
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
+  const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
   // Carousel 2.0 settings (KIT multipost)
   const [kitCarouselSlideCount, setKitCarouselSlideCount] = useState<number>(3);
@@ -236,6 +237,7 @@ export default function GeneratePage() {
         const payload = await response.json().catch(() => ({}));
         const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
         setKitOutputs(outputs);
+        setIsGeneratingKit(false);
       });
 
       // 2) Then generate carousel images (if enabled). Keep Generate disabled until done.
@@ -788,15 +790,11 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
+            {(isGeneratingKit && !hasRenderedKitOutputs) ? (
               <div className="mb-4">
                 <GeneratingOutputState
-                  label={isGeneratingKit ? 'Generating editorial assets' : 'Generating carousel images'}
-                  detail={
-                    isGeneratingKit
-                      ? 'The selected content formats are being drafted and will appear here as soon as the request completes.'
-                      : 'Carousel images are being produced. The current button indicator stays visible, and this area shows the larger progress state.'
-                  }
+                  label="Generating editorial assets"
+                  detail="The selected content formats are being drafted and will appear here as soon as the request completes."
                 />
               </div>
             ) : null}
