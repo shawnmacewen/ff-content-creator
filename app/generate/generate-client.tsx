@@ -617,16 +617,13 @@ export default function GeneratePage() {
             <div
               className={cn(
                 'grid items-start gap-6',
-                selectedSourceId
-                  ? 'xl:grid-cols-[96px_minmax(0,1fr)]'
-                  : 'xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(340px,460px)_minmax(0,1fr)]'
+                'xl:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,470px)_minmax(0,1fr)]'
               )}
             >
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
                   onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-                  compact={Boolean(selectedSourceId)}
                 />
               </div>
 
@@ -825,16 +822,13 @@ export default function GeneratePage() {
             <div
               className={cn(
                 'grid items-start gap-6',
-                selectedSourceId
-                  ? 'xl:grid-cols-[96px_minmax(0,1fr)]'
-                  : 'xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(340px,460px)_minmax(0,1fr)]'
+                'xl:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,470px)_minmax(0,1fr)]'
               )}
             >
               <div className="xl:sticky xl:top-24">
                 <SourceArticlePicker
                   selectedId={selectedSourceIds[0] ?? null}
                   onSelect={(id) => setSelectedSourceIds(id ? [id] : [])}
-                  compact={Boolean(selectedSourceId)}
                 />
               </div>
 

@@ -239,9 +239,10 @@ export function SelectedArticlePreview({
           <button
             type="button"
             onClick={onViewDetails}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-black/50"
-            title="More details"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-black/35 px-4 text-sm font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-black/50"
+            title="Full article details"
           >
+            Full Article
             <MoreHorizontal className="h-5 w-5" />
           </button>
           <button
@@ -272,23 +273,16 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className="relative z-10 grid gap-8 px-7 pb-28 pt-8 sm:px-9 lg:grid-cols-[0.42fr_0.58fr] lg:gap-10">
+      <div className="relative z-10 space-y-7 px-7 pb-28 pt-8 sm:px-9">
         <aside className="space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
               <Sparkles className="h-5 w-5 text-blue-600" />
               Key Takeaways
             </div>
-            <button
-              type="button"
-              onClick={onViewDetails}
-              className="hidden rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200 hover:text-blue-700 md:inline-flex"
-            >
-              Full article details
-            </button>
           </div>
 
-          <div className="space-y-5">
+          <div className="grid gap-5 lg:grid-cols-3">
             {takeaways.slice(0, 3).map((item, index) => {
               const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
               return (
@@ -305,7 +299,7 @@ export function SelectedArticlePreview({
           </div>
         </aside>
 
-        <article className="border-slate-200/80 lg:border-l lg:pl-10">
+        <article className="border-t border-slate-200/80 pt-7">
           <div className="space-y-5 break-words text-sm leading-7 text-slate-700">
             {paragraphs.length ? (
               paragraphs.slice(0, 3).map((paragraph, index) => (
