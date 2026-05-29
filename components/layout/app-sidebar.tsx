@@ -44,11 +44,6 @@ const mainNavItems = [
     icon: Sparkles,
   },
   {
-    title: 'CE Course Creator',
-    href: '/ce-course-creator',
-    icon: GraduationCap,
-  },
-  {
     title: 'EchoWrite',
     href: '/echo-write',
     icon: PenSquare,
@@ -67,6 +62,11 @@ const mainNavItems = [
     title: 'Content Scan',
     href: '/audit',
     icon: SearchCheck,
+  },
+  {
+    title: 'CE Course Creator',
+    href: '/ce-course-creator',
+    icon: GraduationCap,
   },
 ];
 
