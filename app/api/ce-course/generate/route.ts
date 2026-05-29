@@ -92,6 +92,7 @@ function normalizePackage(input: z.infer<typeof CoursePackageSchema>, sources: R
   const sourceIds = new Set(sources.map((source) => source.id));
   const fallbackSource = sources[0];
 
+  const seenQuestionText = new Set<string>();
   const questions = input.questions.slice(0, questionCount).map((question, index) => {
     const source = sourceIds.has(question.sourceId) ? sourceById.get(question.sourceId)! : fallbackSource;
     const choices = question.choices.slice(0, 4);
@@ -100,11 +101,18 @@ function normalizePackage(input: z.infer<typeof CoursePackageSchema>, sources: R
       choices.push({ label, text: 'Review the source material for this option.' });
     }
 
+    const questionText = question.question.trim();
+    const normalizedQuestionText = questionText.toLowerCase();
+    const dedupedQuestionText = seenQuestionText.has(normalizedQuestionText)
+      ? `${questionText} (from ${source.title})`
+      : questionText;
+    seenQuestionText.add(normalizedQuestionText);
+
     return {
       id: question.id || `q-${index + 1}`,
       sourceId: source.id,
       sourceTitle: question.sourceTitle || source.title,
-      question: question.question,
+      question: dedupedQuestionText,
       choices: choices.map((choice, choiceIndex) => ({
         label: ['A', 'B', 'C', 'D'][choiceIndex],
         text: choice.text,
@@ -174,6 +182,8 @@ export async function POST(req: Request) {
         '- Multiple choice only.',
         '- Exactly four choices per question, labels A, B, C, D.',
         '- Exactly one correct answer.',
+        '- Do not repeat the same question, wording pattern, or correct answer across the quiz.',
+        '- Make each answer choice plausible but clearly distinguishable from the source-backed correct answer.',
         '- Difficulty must be easy or medium. Do not write trick questions.',
         '- Questions should confirm the learner read and understood the material.',
         '- Each question must cite one selected source using its sourceId and title.',

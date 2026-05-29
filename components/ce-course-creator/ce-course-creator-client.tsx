@@ -11,11 +11,13 @@ import {
   Filter,
   GraduationCap,
   History,
+  Eye,
   Loader2,
   Save,
   Search,
   Send,
   Sparkles,
+  Trash2,
   X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
@@ -23,6 +25,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ContentDetail } from '@/components/source-content/content-detail';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -76,6 +85,7 @@ type CourseDraft = {
   questionCount: number;
   passingScore: number;
   completionNotes: string;
+  status?: string;
   questions: DraftQuestion[];
 };
 
@@ -205,6 +215,7 @@ function buildCourseDraft(sources: SourceContent[]): CourseDraft | null {
     questionCount,
     passingScore: 60,
     completionNotes: 'Learners should review the selected reading list, complete the multiple-choice quiz, and meet the passing score before the course package is sent downstream.',
+    status: 'draft',
     questions,
   };
 }
@@ -223,6 +234,7 @@ function normalizeGeneratedDraft(coursePackage: any, id?: string): CourseDraft {
     questionCount: questions.length,
     passingScore: Number(coursePackage?.passingScore || 60),
     completionNotes: String(coursePackage?.completionNotes || ''),
+    status: String(coursePackage?.status || 'draft'),
     questions: questions.map((question: any, index: number) => {
       const choices = Array.isArray(question?.choices) ? question.choices : [];
       const labels = ['A', 'B', 'C', 'D'];
@@ -280,7 +292,7 @@ function buildSavePayload(draft: CourseDraft, selectedSources: SourceContent[]) 
     })),
     passingScore: draft.passingScore,
     completionNotes: draft.completionNotes,
-    status: 'draft',
+    status: draft.status || 'draft',
   };
 }
 
@@ -336,6 +348,7 @@ function packagePayloadFromRow(row: any) {
     coreThemes: packagePayload.coreThemes || row?.core_themes || [],
     passingScore: packagePayload.passingScore || row?.passing_score || 60,
     completionNotes: packagePayload.completionNotes || row?.completion_notes,
+    status: packagePayload.status || row?.status || 'draft',
     questions: packagePayload.questions || row?.questions || [],
   };
 }
@@ -367,6 +380,7 @@ export default function CeCourseCreatorClient() {
   const [saveMessage, setSaveMessage] = React.useState<string | null>(null);
   const [isSavingPackage, setIsSavingPackage] = React.useState(false);
   const [openingPackageId, setOpeningPackageId] = React.useState<string | null>(null);
+  const [deletingPackageId, setDeletingPackageId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -481,16 +495,41 @@ export default function CeCourseCreatorClient() {
     }
   };
 
-  const updateDraftField = (field: 'title' | 'objective' | 'completionNotes', value: string) => {
+  const updateDraftField = (field: 'title' | 'objective' | 'completionNotes' | 'status', value: string) => {
     setDraft((current) => current ? { ...current, [field]: value } : current);
   };
 
-  const updateQuestion = (questionId: string, value: string) => {
+  const updateQuestionField = (questionId: string, field: 'question' | 'citation' | 'explanation' | 'difficulty', value: string) => {
     setDraft((current) => {
       if (!current) return current;
       return {
         ...current,
-        questions: current.questions.map((question) => question.id === questionId ? { ...question, question: value } : question),
+        questions: current.questions.map((question) => question.id === questionId ? { ...question, [field]: value } : question),
+      };
+    });
+  };
+
+  const updateQuestionChoice = (questionId: string, choiceIndex: number, value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        questions: current.questions.map((question) => {
+          if (question.id !== questionId) return question;
+          const choices = [...question.choices];
+          choices[choiceIndex] = value;
+          return { ...question, choices };
+        }),
+      };
+    });
+  };
+
+  const updateQuestionAnswer = (questionId: string, answerIndex: number) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        questions: current.questions.map((question) => question.id === questionId ? { ...question, answerIndex } : question),
       };
     });
   };
@@ -542,6 +581,26 @@ export default function CeCourseCreatorClient() {
       setSaveError(error?.message || 'Failed to open CE course package.');
     } finally {
       setOpeningPackageId(null);
+    }
+  };
+
+  const handleDeleteSavedPackage = async (packageId: string) => {
+    if (!packageId || deletingPackageId) return;
+
+    setDeletingPackageId(packageId);
+    setSaveError(null);
+    setSaveMessage(null);
+    try {
+      const response = await fetch(`/api/ce-course/packages/${packageId}`, { method: 'DELETE' });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || `Delete failed with status ${response.status}`);
+      if (draft?.id === packageId) setDraft((current) => current ? { ...current, id: undefined } : current);
+      setSaveMessage(`Deleted package ${packageId.slice(0, 8)}.`);
+      mutateSavedPackages();
+    } catch (error: any) {
+      setSaveError(error?.message || 'Failed to delete CE course package.');
+    } finally {
+      setDeletingPackageId(null);
     }
   };
 
@@ -799,7 +858,9 @@ export default function CeCourseCreatorClient() {
             packages={savedPackagesData?.data || []}
             isLoading={isLoadingSavedPackages}
             openingPackageId={openingPackageId}
+            deletingPackageId={deletingPackageId}
             onOpenPackage={handleOpenSavedPackage}
+            onDeletePackage={handleDeleteSavedPackage}
           />
           <SelectedSourcesCard selectedSources={selectedList} onRemove={removeSource} onBuild={handleBuildDraft} canBuild={canBuild} isGenerating={isGeneratingDraft} />
           <CourseDraftCard
@@ -808,7 +869,9 @@ export default function CeCourseCreatorClient() {
             onBuild={handleBuildDraft}
             onSave={handleSavePackage}
             onUpdateField={updateDraftField}
-            onUpdateQuestion={updateQuestion}
+            onUpdateQuestionField={updateQuestionField}
+            onUpdateQuestionChoice={updateQuestionChoice}
+            onUpdateQuestionAnswer={updateQuestionAnswer}
             isGenerating={isGeneratingDraft}
             isSaving={isSavingPackage}
           />
@@ -876,13 +939,24 @@ function SavedCoursePackagesCard({
   packages,
   isLoading,
   openingPackageId,
+  deletingPackageId,
   onOpenPackage,
+  onDeletePackage,
 }: {
   packages: SavedPackageSummary[];
   isLoading: boolean;
   openingPackageId: string | null;
+  deletingPackageId: string | null;
   onOpenPackage: (id: string) => void | Promise<void>;
+  onDeletePackage: (id: string) => void | Promise<void>;
 }) {
+  const [query, setQuery] = React.useState('');
+  const filteredPackages = packages.filter((pkg) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return `${pkg.title || ''} ${pkg.objective || ''} ${pkg.theme || ''} ${pkg.status || ''}`.toLowerCase().includes(q);
+  });
+
   return (
     <Card>
       <CardHeader className="border-b border-border">
@@ -893,13 +967,23 @@ function SavedCoursePackagesCard({
         <p className="text-sm text-muted-foreground">Reopen an editable CE draft saved to Supabase.</p>
       </CardHeader>
       <CardContent className="space-y-3 p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search saved packages..."
+            className="h-9 pl-9 text-sm"
+          />
+        </div>
         {isLoading ? (
           [1, 2, 3].map((item) => (
             <div key={item} className="h-16 animate-pulse rounded-md border border-border bg-muted" />
           ))
-        ) : packages.length ? (
-          packages.slice(0, 5).map((pkg) => {
+        ) : filteredPackages.length ? (
+          filteredPackages.slice(0, 5).map((pkg) => {
             const isOpening = openingPackageId === pkg.id;
+            const isDeleting = deletingPackageId === pkg.id;
             const sourceCount = Array.isArray(pkg.source_content_ids) ? pkg.source_content_ids.length : 0;
             return (
               <div key={pkg.id} className="rounded-md border border-border bg-background p-3">
@@ -909,21 +993,35 @@ function SavedCoursePackagesCard({
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span>{sourceCount} sources</span>
                       <span>{pkg.passing_score || 60}% pass</span>
+                      <span>{pkg.status || 'draft'}</span>
                       <span>{pkg.updated_at ? formatDate(pkg.updated_at) : 'Not dated'}</span>
                     </div>
                     {pkg.theme ? <div className="mt-2 text-xs text-muted-foreground">Theme: {pkg.theme}</div> : null}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 shrink-0 gap-1.5"
-                    disabled={Boolean(openingPackageId)}
-                    onClick={() => onOpenPackage(pkg.id)}
-                  >
-                    {isOpening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                    Open
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5"
+                      disabled={Boolean(openingPackageId || deletingPackageId)}
+                      onClick={() => onOpenPackage(pkg.id)}
+                    >
+                      {isOpening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                      Open
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      disabled={Boolean(openingPackageId || deletingPackageId)}
+                      onClick={() => onDeletePackage(pkg.id)}
+                      aria-label="Delete saved package"
+                    >
+                      {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
@@ -938,13 +1036,131 @@ function SavedCoursePackagesCard({
   );
 }
 
+function QuizPreviewDialog({
+  draft,
+  selectedSources,
+}: {
+  draft: CourseDraft;
+  selectedSources: SourceContent[];
+}) {
+  const [answers, setAnswers] = React.useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = React.useState(false);
+  const correctCount = draft.questions.reduce((count, question) => count + (answers[question.id] === question.answerIndex ? 1 : 0), 0);
+  const score = draft.questions.length ? Math.round((correctCount / draft.questions.length) * 100) : 0;
+  const passed = score >= draft.passingScore;
+
+  React.useEffect(() => {
+    setAnswers({});
+    setSubmitted(false);
+  }, [draft.id, draft.questions.length]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5">
+          <Eye className="h-3.5 w-3.5" />
+          Demo Quiz
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 py-5 text-left">
+          <DialogTitle>{draft.title}</DialogTitle>
+          <div className="text-sm leading-6 text-muted-foreground">{draft.objective}</div>
+        </DialogHeader>
+        <ScrollArea className="max-h-[calc(92vh-9rem)]">
+          <div className="space-y-5 p-6">
+            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+              <div className="rounded-md border border-border bg-muted/30 p-4">
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Reading list</div>
+                <div className="mt-3 space-y-2">
+                  {selectedSources.length ? selectedSources.map((source, index) => (
+                    <div key={source.id} className="text-sm">
+                      {index + 1}. {decodeLite(source.title || 'Untitled source')}
+                    </div>
+                  )) : <div className="text-sm text-muted-foreground">No source list available.</div>}
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-muted/30 p-4">
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Passing score</div>
+                <div className="mt-2 text-2xl font-semibold">{draft.passingScore}%</div>
+                {submitted ? (
+                  <Badge className={cn('mt-3', passed ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white')}>
+                    {score}% - {passed ? 'Pass' : 'Review'}
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {draft.questions.map((question, index) => (
+                <div key={question.id} className="rounded-md border border-border bg-background p-4">
+                  <div className="mb-3 text-sm font-semibold">Question {index + 1}</div>
+                  <p className="text-sm leading-6">{question.question}</p>
+                  <div className="mt-4 grid gap-2">
+                    {question.choices.map((choice, choiceIndex) => {
+                      const selected = answers[question.id] === choiceIndex;
+                      const correct = question.answerIndex === choiceIndex;
+                      return (
+                        <button
+                          key={`${question.id}-preview-${choiceIndex}`}
+                          type="button"
+                          onClick={() => {
+                            if (!submitted) setAnswers((current) => ({ ...current, [question.id]: choiceIndex }));
+                          }}
+                          className={cn(
+                            'rounded-md border px-3 py-2 text-left text-sm transition-colors',
+                            selected ? 'border-primary bg-primary/10' : 'border-border bg-muted/20',
+                            submitted && correct && 'border-emerald-300 bg-emerald-50 text-emerald-900',
+                            submitted && selected && !correct && 'border-amber-300 bg-amber-50 text-amber-900'
+                          )}
+                        >
+                          {String.fromCharCode(65 + choiceIndex)}. {choice}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 text-xs leading-5 text-muted-foreground">
+                    Source: {question.citation}
+                  </div>
+                  {submitted ? (
+                    <div className="mt-3 rounded-md bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
+                      {question.explanation || 'No explanation provided.'}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollArea>
+        <div className="flex items-center justify-between gap-3 border-t border-border p-4">
+          <div className="text-xs text-muted-foreground">
+            {Object.keys(answers).length}/{draft.questions.length} answered
+          </div>
+          <div className="flex gap-2">
+            {submitted ? (
+              <Button type="button" variant="outline" onClick={() => setSubmitted(false)}>
+                Resume Editing Answers
+              </Button>
+            ) : null}
+            <Button type="button" disabled={Object.keys(answers).length !== draft.questions.length} onClick={() => setSubmitted(true)}>
+              Score Quiz
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CourseDraftCard({
   draft,
   selectedSources,
   onBuild,
   onSave,
   onUpdateField,
-  onUpdateQuestion,
+  onUpdateQuestionField,
+  onUpdateQuestionChoice,
+  onUpdateQuestionAnswer,
   isGenerating,
   isSaving,
 }: {
@@ -952,8 +1168,10 @@ function CourseDraftCard({
   selectedSources: SourceContent[];
   onBuild: () => void | Promise<void>;
   onSave: () => void | Promise<void>;
-  onUpdateField: (field: 'title' | 'objective' | 'completionNotes', value: string) => void;
-  onUpdateQuestion: (questionId: string, value: string) => void;
+  onUpdateField: (field: 'title' | 'objective' | 'completionNotes' | 'status', value: string) => void;
+  onUpdateQuestionField: (questionId: string, field: 'question' | 'citation' | 'explanation' | 'difficulty', value: string) => void;
+  onUpdateQuestionChoice: (questionId: string, choiceIndex: number, value: string) => void;
+  onUpdateQuestionAnswer: (questionId: string, answerIndex: number) => void;
   isGenerating: boolean;
   isSaving: boolean;
 }) {
@@ -1025,51 +1243,89 @@ function CourseDraftCard({
           </div>
         </div>
         <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase text-muted-foreground" htmlFor="course-status">Package status</label>
+          <Select value={draft.status || 'draft'} onValueChange={(value) => onUpdateField('status', value)}>
+            <SelectTrigger id="course-status" className="h-9 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="ready">Ready</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
           <label className="text-xs font-semibold uppercase text-muted-foreground" htmlFor="completion-notes">Completion notes</label>
           <Textarea id="completion-notes" value={draft.completionNotes} onChange={(event) => onUpdateField('completionNotes', event.target.value)} className="min-h-24" />
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold">Quiz preview</h3>
-            <Badge variant="outline">Editable</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">Editable</Badge>
+              <QuizPreviewDialog draft={draft} selectedSources={selectedSources} />
+            </div>
           </div>
-          <ScrollArea className="h-[360px] rounded-md border border-border">
+          <ScrollArea className="h-[520px] rounded-md border border-border">
             <div className="space-y-3 p-3">
-              {draft.questions.slice(0, 10).map((question, index) => (
+              {draft.questions.map((question, index) => (
                 <div key={question.id} className="rounded-md border border-border bg-background p-3">
-                  <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                    Question {index + 1} - {question.difficulty || 'easy'} - Citation: {question.citation}
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase text-muted-foreground">
+                    <span>Question {index + 1}</span>
+                    <Select value={question.difficulty || 'easy'} onValueChange={(value) => onUpdateQuestionField(question.id, 'difficulty', value)}>
+                      <SelectTrigger className="h-8 w-[120px] bg-white text-xs normal-case">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Textarea
                     value={question.question}
-                    onChange={(event) => onUpdateQuestion(question.id, event.target.value)}
+                    onChange={(event) => onUpdateQuestionField(question.id, 'question', event.target.value)}
                     className="min-h-20 text-sm"
                   />
                   <div className="mt-3 grid gap-2">
                     {question.choices.map((choice, choiceIndex) => (
-                      <div
-                        key={`${question.id}-${choice}`}
-                        className={cn(
-                          'rounded-md border px-3 py-2 text-xs',
-                          choiceIndex === question.answerIndex ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-border bg-muted/30 text-muted-foreground'
-                        )}
-                      >
-                        {String.fromCharCode(65 + choiceIndex)}. {choice}
+                      <div key={`${question.id}-${choiceIndex}`} className="grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
+                        <Button
+                          type="button"
+                          variant={choiceIndex === question.answerIndex ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-8 w-12"
+                          onClick={() => onUpdateQuestionAnswer(question.id, choiceIndex)}
+                          title="Mark correct answer"
+                        >
+                          {String.fromCharCode(65 + choiceIndex)}
+                        </Button>
+                        <Input
+                          value={choice}
+                          onChange={(event) => onUpdateQuestionChoice(question.id, choiceIndex, event.target.value)}
+                          className={cn(choiceIndex === question.answerIndex && 'border-emerald-300 bg-emerald-50')}
+                        />
                       </div>
                     ))}
                   </div>
-                  {question.explanation ? (
-                    <div className="mt-3 rounded-md bg-muted/40 p-2 text-xs leading-5 text-muted-foreground">
-                      {question.explanation}
-                    </div>
-                  ) : null}
+                  <div className="mt-3 grid gap-2">
+                    <Input
+                      value={question.citation}
+                      onChange={(event) => onUpdateQuestionField(question.id, 'citation', event.target.value)}
+                      placeholder="Citation"
+                      className="text-xs"
+                    />
+                    <Textarea
+                      value={question.explanation || ''}
+                      onChange={(event) => onUpdateQuestionField(question.id, 'explanation', event.target.value)}
+                      placeholder="Explanation for the answer key"
+                      className="min-h-16 text-xs"
+                    />
+                  </div>
                 </div>
               ))}
-              {draft.questions.length > 10 ? (
-                <div className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-                  {draft.questions.length - 10} additional questions are planned for the full generated quiz.
-                </div>
-              ) : null}
             </div>
           </ScrollArea>
         </div>
