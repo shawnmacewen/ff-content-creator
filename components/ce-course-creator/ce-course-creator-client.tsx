@@ -54,6 +54,7 @@ type FilterResponse = {
 };
 
 type CourseDraft = {
+  id?: string;
   title: string;
   objective: string;
   description?: string;
@@ -228,6 +229,42 @@ function normalizeGeneratedDraft(coursePackage: any): CourseDraft {
   };
 }
 
+function buildSavePayload(draft: CourseDraft, selectedSources: SourceContent[]) {
+  return {
+    title: draft.title,
+    objective: draft.objective,
+    description: draft.description || '',
+    theme: draft.theme || '',
+    readingListSummary: draft.readingListSummary || '',
+    coreThemes: draft.coreThemes || [],
+    sourceContentIds: selectedSources.map((source) => source.id),
+    readingList: selectedSources.map((source) => ({
+      id: source.id,
+      title: decodeLite(source.title || 'Untitled source'),
+      publisher: source.publisher || '',
+      publishedAt: source.publishedAt || null,
+      tags: getSourceCategories(source),
+    })),
+    questions: draft.questions.map((question) => ({
+      id: question.id,
+      sourceId: question.sourceId,
+      sourceTitle: question.sourceTitle,
+      question: question.question,
+      choices: question.choices.map((choice, index) => ({
+        label: String.fromCharCode(65 + index),
+        text: choice,
+      })),
+      correctChoiceLabel: String.fromCharCode(65 + question.answerIndex),
+      explanation: question.explanation || '',
+      citation: question.citation,
+      difficulty: question.difficulty || 'easy',
+    })),
+    passingScore: draft.passingScore,
+    completionNotes: draft.completionNotes,
+    status: 'draft',
+  };
+}
+
 function buildApiUrl(query: string, tag: string, page: number) {
   const params = new URLSearchParams();
   if (query.trim()) params.set('q', query.trim());
@@ -247,6 +284,9 @@ export default function CeCourseCreatorClient() {
   const [draft, setDraft] = React.useState<CourseDraft | null>(null);
   const [generationError, setGenerationError] = React.useState<string | null>(null);
   const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = React.useState<string | null>(null);
+  const [isSavingPackage, setIsSavingPackage] = React.useState(false);
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -287,6 +327,8 @@ export default function CeCourseCreatorClient() {
       return next;
     });
     setDraft(null);
+    setSaveError(null);
+    setSaveMessage(null);
   };
 
   const removeSource = (id: string) => {
@@ -296,6 +338,8 @@ export default function CeCourseCreatorClient() {
       return next;
     });
     setDraft(null);
+    setSaveError(null);
+    setSaveMessage(null);
   };
 
   const applyTheme = (theme: string) => {
@@ -318,9 +362,12 @@ export default function CeCourseCreatorClient() {
       const payload = await response.json().catch(() => null);
       if (!response.ok) throw new Error(payload?.error || `Generation failed with status ${response.status}`);
       setDraft(normalizeGeneratedDraft(payload?.coursePackage));
+      setSaveError(null);
+      setSaveMessage(null);
     } catch (error: any) {
       setGenerationError(error?.message || 'Generated package failed; showing local draft shell instead.');
       setDraft(buildCourseDraft(selectedList));
+      setSaveMessage(null);
     } finally {
       setIsGeneratingDraft(false);
     }
@@ -338,6 +385,31 @@ export default function CeCourseCreatorClient() {
         questions: current.questions.map((question) => question.id === questionId ? { ...question, question: value } : question),
       };
     });
+  };
+
+  const handleSavePackage = async () => {
+    if (!draft || isSavingPackage) return;
+
+    setSaveError(null);
+    setSaveMessage(null);
+    setIsSavingPackage(true);
+    try {
+      const endpoint = draft.id ? `/api/ce-course/packages/${draft.id}` : '/api/ce-course/packages';
+      const response = await fetch(endpoint, {
+        method: draft.id ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildSavePayload(draft, selectedList)),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || `Save failed with status ${response.status}`);
+      const packageId = String(payload?.data?.id || draft.id || '');
+      setDraft((current) => current ? { ...current, id: packageId } : current);
+      setSaveMessage(packageId ? `Saved package ${packageId.slice(0, 8)}.` : 'Saved package.');
+    } catch (error: any) {
+      setSaveError(error?.message || 'Failed to save CE course package.');
+    } finally {
+      setIsSavingPackage(false);
+    }
   };
 
   return (
@@ -552,8 +624,27 @@ export default function CeCourseCreatorClient() {
               {generationError}
             </div>
           ) : null}
+          {saveError ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs leading-5 text-destructive">
+              {saveError}
+            </div>
+          ) : null}
+          {saveMessage ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
+              {saveMessage}
+            </div>
+          ) : null}
           <SelectedSourcesCard selectedSources={selectedList} onRemove={removeSource} onBuild={handleBuildDraft} canBuild={canBuild} isGenerating={isGeneratingDraft} />
-          <CourseDraftCard draft={draft} selectedSources={selectedList} onBuild={handleBuildDraft} onUpdateField={updateDraftField} onUpdateQuestion={updateQuestion} isGenerating={isGeneratingDraft} />
+          <CourseDraftCard
+            draft={draft}
+            selectedSources={selectedList}
+            onBuild={handleBuildDraft}
+            onSave={handleSavePackage}
+            onUpdateField={updateDraftField}
+            onUpdateQuestion={updateQuestion}
+            isGenerating={isGeneratingDraft}
+            isSaving={isSavingPackage}
+          />
         </aside>
       </div>
     </main>
@@ -648,16 +739,20 @@ function CourseDraftCard({
   draft,
   selectedSources,
   onBuild,
+  onSave,
   onUpdateField,
   onUpdateQuestion,
   isGenerating,
+  isSaving,
 }: {
   draft: CourseDraft | null;
   selectedSources: SourceContent[];
   onBuild: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
   onUpdateField: (field: 'title' | 'objective' | 'completionNotes', value: string) => void;
   onUpdateQuestion: (questionId: string, value: string) => void;
   isGenerating: boolean;
+  isSaving: boolean;
 }) {
   if (!draft) {
     return (
@@ -694,6 +789,7 @@ function CourseDraftCard({
           Editable Course Package
         </CardTitle>
         <p className="text-sm text-muted-foreground">Generated from selected source content. Saving and outbound API retrieval will attach to this structure next.</p>
+        {draft.id ? <p className="text-xs text-muted-foreground">Saved package ID: {draft.id}</p> : null}
       </CardHeader>
       <CardContent className="space-y-4 p-4">
         <div className="space-y-2">
@@ -775,9 +871,9 @@ function CourseDraftCard({
           </ScrollArea>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button type="button" variant="outline" className="gap-2" disabled>
-            <Save className="h-4 w-4" />
-            Save Package
+          <Button type="button" variant="outline" className="gap-2" disabled={isSaving} onClick={onSave}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSaving ? 'Saving Package' : draft.id ? 'Save Changes' : 'Save Package'}
           </Button>
           <Button type="button" variant="outline" className="gap-2" disabled>
             <Send className="h-4 w-4" />
@@ -785,7 +881,7 @@ function CourseDraftCard({
           </Button>
         </div>
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs leading-5 text-muted-foreground">
-          Save, quiz generation, and AdvisorStream delivery are intentionally disabled in this first UI slice.
+          Packages save to the CE course table as editable drafts. AdvisorStream delivery remains disabled until the export format is confirmed.
         </div>
       </CardContent>
     </Card>
