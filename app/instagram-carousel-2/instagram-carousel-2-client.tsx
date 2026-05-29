@@ -709,6 +709,112 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     </Tooltip>
   );
 
+  const SlideCountControl = (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1">
+        <label className="text-xs text-muted-foreground">Slides</label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+              aria-label="Slides help"
+            >
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={6} className="max-w-[320px]">
+            <div className="space-y-1">
+              <div>We generate 1536x512 masterplates (3 slides per plate) and crop into 512x512 slides.</div>
+              <div>Only 3 / 6 / 9 are enabled right now.</div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      {SlideCountSelect}
+    </div>
+  );
+
+  const AdditionalCarouselOptions = (
+    <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label className="text-sm">
+          <div className="mb-1 text-xs text-muted-foreground">Model</div>
+          <select
+            className="h-9 w-full rounded-2xl border bg-background px-3 text-sm"
+            value={model}
+            onChange={(e) => setModel(e.target.value as any)}
+            disabled={isLoading}
+          >
+            <option value="gpt-image-2">gpt-image-2 (default)</option>
+            <option value="gpt-image-1">gpt-image-1</option>
+          </select>
+        </label>
+
+        <label className="text-sm">
+          <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+            MasterPlate Cohesion Method
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
+                  aria-label="MasterPlate Cohesion Method help"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={6} className="max-w-[340px]">
+                <div className="space-y-1">
+                  <div className="font-medium">Prompt Based</div>
+                  <div>Uses text-only continuation instructions across masterplates.</div>
+                  <div className="mt-2 font-medium">Image Reference</div>
+                  <div>Sends a prior masterplate image back to the image model as a reference to improve visual continuity across plates.</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <select
+            className="h-9 w-full rounded-2xl border bg-background px-3 text-sm"
+            value={cohesionMethod}
+            onChange={(e) => setCohesionMethod(e.target.value as any)}
+            disabled={isLoading}
+          >
+            <option value="prompt">Prompt Based</option>
+            <option value="image-ref">Image Reference</option>
+          </select>
+        </label>
+
+        <label className="text-sm">
+          <div className="mb-1 text-xs text-muted-foreground">Image Ref</div>
+          <select
+            className="h-9 w-full rounded-2xl border bg-background px-3 text-sm"
+            value={imageRefMode}
+            onChange={(e) => setImageRefMode(e.target.value as any)}
+            disabled={isLoading || cohesionMethod !== 'image-ref'}
+          >
+            <option value="previous">Previous masterplate</option>
+            <option value="first">First masterplate</option>
+          </select>
+        </label>
+
+        <label
+          className="inline-flex select-none items-center gap-2 self-end pb-2 text-sm text-muted-foreground"
+          title="When enabled, adds a minimal instruction to make backgrounds more seamless across seams/masterplates (no style change)."
+        >
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-primary"
+            checked={moreSeamlessBackground}
+            onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
+            disabled={isLoading}
+          />
+          More Seamless background
+        </label>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -814,120 +920,19 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                   )}
 
                   {showAdvancedPromptInput ? (
-                    <textarea
-                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
-                    />
+                    <div className="space-y-3">
+                      {AdditionalCarouselOptions}
+                      <textarea
+                        className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
+                      />
+                    </div>
                   ) : null}
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-muted-foreground">Slides</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
-                              aria-label="Slides help"
-                            >
-                              <Info className="h-3.5 w-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[320px]">
-                            <div className="space-y-1">
-                              <div>We generate 1536×512 masterplates (3 slides per plate) and crop into 512×512 slides.</div>
-                              <div>Only 3 / 6 / 9 are enabled right now.</div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      {SlideCountSelect}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="text-xs text-muted-foreground">Model</label>
-                      <select
-                        className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value as any)}
-                        disabled={isLoading}
-                      >
-                        <option value="gpt-image-2">gpt-image-2 (default)</option>
-                        <option value="gpt-image-1">gpt-image-1</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
-                              aria-label="MasterPlate Cohesion Method help"
-                            >
-                              <Info className="h-3.5 w-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[340px]">
-                            <div className="space-y-1">
-                              <div className="font-medium">Prompt Based</div>
-                              <div>Uses text-only continuation instructions across masterplates.</div>
-                              <div className="mt-2 font-medium">Image Reference</div>
-                              <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      <select
-                        className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                        value={cohesionMethod}
-                        onChange={(e) => setCohesionMethod(e.target.value as any)}
-                        disabled={isLoading}
-                      >
-                        <option value="prompt">Prompt Based</option>
-                        <option value="image-ref">Image Reference</option>
-                      </select>
-
-                      {cohesionMethod === 'image-ref' ? (
-                        <>
-                          <label
-                            className="ml-2 text-xs text-muted-foreground"
-                            title="Choose which prior masterplate to use as the reference image for generating the next masterplate."
-                          >
-                            Image Ref
-                          </label>
-                          <select
-                            className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                            value={imageRefMode}
-                            onChange={(e) => setImageRefMode(e.target.value as any)}
-                            disabled={isLoading}
-                          >
-                            <option value="previous">Previous masterplate</option>
-                            <option value="first">First masterplate</option>
-                          </select>
-
-                          <label
-                            className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground"
-                            title="When enabled, adds a minimal instruction to make backgrounds more seamless across seams/masterplates (no style change)."
-                          >
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 accent-primary"
-                              checked={moreSeamlessBackground}
-                              onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
-                              disabled={isLoading}
-                            />
-                            More Seamless background
-                          </label>
-                        </>
-                      ) : null}
-                    </div>
+                    {SlideCountControl}
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
@@ -945,7 +950,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                         onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
-                        Advanced
+                        Additional Options
                       </Button>
 
                       
@@ -1092,115 +1097,19 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                   )}
 
                   {showAdvancedPromptInput ? (
-                    <textarea
-                      className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
-                    />
+                    <div className="space-y-3">
+                      {AdditionalCarouselOptions}
+                      <textarea
+                        className="min-h-[120px] w-full resize-y rounded-2xl border bg-background p-4 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Advanced prompt override (used only when no Source is selected, or for debugging)"
+                      />
+                    </div>
                   ) : null}
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-muted-foreground">Slides</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
-                              aria-label="Slides help"
-                            >
-                              <Info className="h-3.5 w-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[320px]">
-                            <div className="space-y-1">
-                              <div>We generate 1536×512 masterplates (3 slides per plate) and crop into 512×512 slides.</div>
-                              <div>Only 3 / 6 / 9 are enabled right now.</div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      {SlideCountSelect}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="text-xs text-muted-foreground">Model</label>
-                      <select
-                        className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value as any)}
-                        disabled={isLoading}
-                      >
-                        <option value="gpt-image-2">gpt-image-2 (default)</option>
-                        <option value="gpt-image-1">gpt-image-1</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-muted-foreground">MasterPlate Cohesion Method</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground"
-                              aria-label="MasterPlate Cohesion Method help"
-                            >
-                              <Info className="h-3.5 w-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[340px]">
-                            <div className="space-y-1">
-                              <div className="font-medium">Prompt Based</div>
-                              <div>Uses text-only continuation instructions across masterplates.</div>
-                              <div className="mt-2 font-medium">Image Reference</div>
-                              <div>Sends a prior masterplate image back to the image model as a reference (image edits) to improve visual continuity across plates.</div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      <select
-                        className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                        value={cohesionMethod}
-                        onChange={(e) => setCohesionMethod(e.target.value as any)}
-                        disabled={isLoading}
-                      >
-                        <option value="prompt">Prompt Based</option>
-                        <option value="image-ref">Image Reference</option>
-                      </select>
-
-                      {cohesionMethod === 'image-ref' ? (
-                        <>
-                          <label className="ml-2 text-xs text-muted-foreground">Image Ref</label>
-                          <select
-                            className="h-9 rounded-2xl border bg-background px-3 text-sm"
-                            value={imageRefMode}
-                            onChange={(e) => setImageRefMode(e.target.value as any)}
-                            disabled={isLoading}
-                          >
-                            <option value="previous">Previous masterplate</option>
-                            <option value="first">First masterplate</option>
-                          </select>
-
-                          <label
-                            className="ml-2 inline-flex select-none items-center gap-2 text-xs text-muted-foreground"
-                            title="When enabled, adds a minimal instruction to make backgrounds more seamless across seams/masterplates (no style change)."
-                          >
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 accent-primary"
-                              checked={moreSeamlessBackground}
-                              onChange={(e) => setMoreSeamlessBackground(e.target.checked)}
-                              disabled={isLoading}
-                            />
-                            More Seamless background
-                          </label>
-                        </>
-                      ) : null}
-                    </div>
+                    {SlideCountControl}
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
@@ -1218,7 +1127,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                         onClick={() => setShowAdvancedPromptInput(!showAdvancedPromptInput)}
                         disabled={isLoading}
                       >
-                        Advanced
+                        Additional Options
                       </Button>
 
                       

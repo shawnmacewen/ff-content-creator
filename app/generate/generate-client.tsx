@@ -455,57 +455,9 @@ export default function GeneratePage() {
                           <option value={9}>9</option>
                         </select>
                       </label>
-
-                      <label className="text-sm">
-                        <div className="text-xs text-muted-foreground mb-1">Model</div>
-                        <select
-                          className="w-full rounded-md border bg-background px-3 py-2"
-                          value={kitCarouselModel}
-                          onChange={(e) => setKitCarouselModel(e.target.value as any)}
-                        >
-                          <option value="gpt-image-2">gpt-image-2</option>
-                          <option value="gpt-image-1">gpt-image-1</option>
-                        </select>
-                      </label>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <label className="text-sm">
-                        <div className="text-xs text-muted-foreground mb-1">Cohesion</div>
-                        <select
-                          className="w-full rounded-md border bg-background px-3 py-2"
-                          value={kitCarouselCohesionMethod}
-                          onChange={(e) => setKitCarouselCohesionMethod(e.target.value as any)}
-                        >
-                          <option value="prompt">Prompt Based</option>
-                          <option value="image-ref">Image Reference</option>
-                        </select>
-                      </label>
-
-                      <label className="text-sm">
-                        <div className="text-xs text-muted-foreground mb-1">Image Ref Mode</div>
-                        <select
-                          className="w-full rounded-md border bg-background px-3 py-2"
-                          value={kitCarouselImageRefMode}
-                          onChange={(e) => setKitCarouselImageRefMode(e.target.value as any)}
-                          disabled={kitCarouselCohesionMethod !== 'image-ref'}
-                        >
-                          <option value="previous">Previous</option>
-                          <option value="first">First</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <label className="inline-flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={kitCarouselMoreSeamlessBackground}
-                          onChange={(e) => setKitCarouselMoreSeamlessBackground(e.target.checked)}
-                        />
-                        More Seamless background
-                      </label>
-
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -513,7 +465,7 @@ export default function GeneratePage() {
                           className="rounded-md"
                           onClick={() => setKitCarouselAdvanced((v) => !v)}
                         >
-                          Advanced
+                          Additional Options
                         </Button>
 
                         <Button
@@ -530,7 +482,55 @@ export default function GeneratePage() {
                     </div>
 
                     {kitCarouselAdvanced ? (
-                      <div className="space-y-2">
+                      <div className="space-y-3 rounded-md border bg-muted/20 p-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="text-sm">
+                            <div className="text-xs text-muted-foreground mb-1">Model</div>
+                            <select
+                              className="w-full rounded-md border bg-background px-3 py-2"
+                              value={kitCarouselModel}
+                              onChange={(e) => setKitCarouselModel(e.target.value as any)}
+                            >
+                              <option value="gpt-image-2">gpt-image-2</option>
+                              <option value="gpt-image-1">gpt-image-1</option>
+                            </select>
+                          </label>
+
+                          <label className="text-sm">
+                            <div className="text-xs text-muted-foreground mb-1">Cohesion</div>
+                            <select
+                              className="w-full rounded-md border bg-background px-3 py-2"
+                              value={kitCarouselCohesionMethod}
+                              onChange={(e) => setKitCarouselCohesionMethod(e.target.value as any)}
+                            >
+                              <option value="prompt">Prompt Based</option>
+                              <option value="image-ref">Image Reference</option>
+                            </select>
+                          </label>
+
+                          <label className="text-sm">
+                            <div className="text-xs text-muted-foreground mb-1">Image Ref Mode</div>
+                            <select
+                              className="w-full rounded-md border bg-background px-3 py-2"
+                              value={kitCarouselImageRefMode}
+                              onChange={(e) => setKitCarouselImageRefMode(e.target.value as any)}
+                              disabled={kitCarouselCohesionMethod !== 'image-ref'}
+                            >
+                              <option value="previous">Previous</option>
+                              <option value="first">First</option>
+                            </select>
+                          </label>
+
+                          <label className="inline-flex items-center gap-2 self-end pb-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={kitCarouselMoreSeamlessBackground}
+                              onChange={(e) => setKitCarouselMoreSeamlessBackground(e.target.checked)}
+                            />
+                            More Seamless background
+                          </label>
+                        </div>
+
                         <div className="text-xs font-semibold text-muted-foreground">Carousel prompt (optional add-on)</div>
                         <textarea
                           className="w-full min-h-[84px] rounded-md border bg-background px-3 py-2 text-sm"
