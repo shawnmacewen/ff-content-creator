@@ -9,6 +9,7 @@ import {
   Flag,
   GalleryHorizontalEnd,
   Gauge,
+  ImagePlus,
   Layers3,
   Mic2,
   Palette,
@@ -165,6 +166,23 @@ const roadmapIdeas: RoadmapIdea[] = [
     matrix: { x: 77, y: 78 },
     accent: 'from-pink-300 via-yellow-200 to-cyan-300',
   },
+  {
+    title: 'Infographic Inception',
+    status: 'Later',
+    theme: 'Infographic Remix',
+    summary: 'Go beyond infographic copy by generating a new infographic from another infographic.',
+    details: [
+      'Upload or select an existing infographic as the source material.',
+      'Extract the core claims, hierarchy, visual sections, and reusable chart ideas.',
+      'Generate a fresh infographic concept with new layout, wording, and brand treatment instead of copying the original.',
+    ],
+    joke: 'An infographic inside an infographic inside an infographic. The charts are looking at the charts like 👀📊🌀🤯',
+    icon: ImagePlus,
+    impact: 7,
+    effort: 7,
+    matrix: { x: 66, y: 67 },
+    accent: 'from-violet-300 via-sky-300 to-emerald-200',
+  },
 ];
 
 const lanes: RoadmapStatus[] = ['Now', 'Next', 'Later'];
@@ -212,7 +230,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="7" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="8" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Next" label="teleprompter pass" tone="dark" />
             </div>
