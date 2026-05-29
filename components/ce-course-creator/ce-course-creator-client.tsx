@@ -10,6 +10,7 @@ import {
   FileText,
   Filter,
   GraduationCap,
+  History,
   Loader2,
   Save,
   Search,
@@ -50,6 +51,18 @@ type FilterResponse = {
   availableTypes: string[];
   availableAuthors: string[];
   availablePublishers: string[];
+};
+
+type SavedPackageSummary = {
+  id: string;
+  title: string;
+  objective?: string;
+  theme?: string | null;
+  source_content_ids?: string[];
+  passing_score?: number;
+  status?: string;
+  updated_at?: string;
+  created_at?: string;
 };
 
 type CourseDraft = {
@@ -196,10 +209,11 @@ function buildCourseDraft(sources: SourceContent[]): CourseDraft | null {
   };
 }
 
-function normalizeGeneratedDraft(coursePackage: any): CourseDraft {
+function normalizeGeneratedDraft(coursePackage: any, id?: string): CourseDraft {
   const questions = Array.isArray(coursePackage?.questions) ? coursePackage.questions : [];
 
   return {
+    id,
     title: String(coursePackage?.title || 'Untitled CE Course'),
     objective: String(coursePackage?.objective || ''),
     description: String(coursePackage?.description || ''),
@@ -207,7 +221,7 @@ function normalizeGeneratedDraft(coursePackage: any): CourseDraft {
     readingListSummary: String(coursePackage?.readingListSummary || ''),
     coreThemes: Array.isArray(coursePackage?.coreThemes) ? coursePackage.coreThemes.map((item: any) => String(item)).filter(Boolean) : [],
     questionCount: questions.length,
-    passingScore: 60,
+    passingScore: Number(coursePackage?.passingScore || 60),
     completionNotes: String(coursePackage?.completionNotes || ''),
     questions: questions.map((question: any, index: number) => {
       const choices = Array.isArray(question?.choices) ? question.choices : [];
@@ -247,6 +261,7 @@ function buildSavePayload(draft: CourseDraft, selectedSources: SourceContent[]) 
       title: decodeLite(source.title || 'Untitled source'),
       publisher: source.publisher || '',
       publishedAt: source.publishedAt || null,
+      contentDesignation: getContentDesignation(source),
       tags: getSourceCategories(source),
     })),
     questions: draft.questions.map((question) => ({
@@ -266,6 +281,62 @@ function buildSavePayload(draft: CourseDraft, selectedSources: SourceContent[]) 
     passingScore: draft.passingScore,
     completionNotes: draft.completionNotes,
     status: 'draft',
+  };
+}
+
+function sourceFromSavedReadingItem(item: any, fallbackId: string): SourceContent {
+  const id = String(item?.id || fallbackId || '');
+  const title = decodeLite(String(item?.title || 'Saved source'));
+  const contentDesignation = String(item?.contentDesignation || 'Editorial Source');
+  const tags = Array.isArray(item?.tags) ? item.tags.map((tag: any) => decodeLite(String(tag))).filter(Boolean) : [];
+
+  return {
+    id,
+    title,
+    body: '',
+    excerpt: '',
+    type: contentDesignation,
+    tags,
+    publishedAt: item?.publishedAt || '',
+    author: '',
+    publisher: item?.publisher || '',
+    metadata: {
+      contentDesignation,
+      categories: tags,
+      subCategories: [],
+    },
+  };
+}
+
+function buildSourcesFromSavedPackage(row: any) {
+  const packagePayload = row?.package_payload || {};
+  const readingList = Array.isArray(row?.reading_list)
+    ? row.reading_list
+    : Array.isArray(packagePayload?.readingList)
+      ? packagePayload.readingList
+      : [];
+  const ids = Array.isArray(row?.source_content_ids)
+    ? row.source_content_ids.map((id: any) => String(id)).filter(Boolean)
+    : Array.isArray(packagePayload?.sourceContentIds)
+      ? packagePayload.sourceContentIds.map((id: any) => String(id)).filter(Boolean)
+      : [];
+
+  const maxLength = Math.max(readingList.length, ids.length);
+  return Array.from({ length: maxLength }, (_, index) => sourceFromSavedReadingItem(readingList[index], ids[index])).filter((source) => source.id);
+}
+
+function packagePayloadFromRow(row: any) {
+  const packagePayload = row?.package_payload || {};
+  return {
+    title: packagePayload.title || row?.title,
+    objective: packagePayload.objective || row?.objective,
+    description: packagePayload.description || row?.description,
+    theme: packagePayload.theme || row?.theme,
+    readingListSummary: packagePayload.readingListSummary || row?.reading_list_summary,
+    coreThemes: packagePayload.coreThemes || row?.core_themes || [],
+    passingScore: packagePayload.passingScore || row?.passing_score || 60,
+    completionNotes: packagePayload.completionNotes || row?.completion_notes,
+    questions: packagePayload.questions || row?.questions || [],
   };
 }
 
@@ -295,6 +366,7 @@ export default function CeCourseCreatorClient() {
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [saveMessage, setSaveMessage] = React.useState<string | null>(null);
   const [isSavingPackage, setIsSavingPackage] = React.useState(false);
+  const [openingPackageId, setOpeningPackageId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -310,6 +382,14 @@ export default function CeCourseCreatorClient() {
     { keepPreviousData: true, shouldRetryOnError: false }
   );
   const { data: filterData } = useSWR<FilterResponse>('/api/source-content/filters', fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+  const {
+    data: savedPackagesData,
+    mutate: mutateSavedPackages,
+    isLoading: isLoadingSavedPackages,
+  } = useSWR<{ data: SavedPackageSummary[] }>('/api/ce-course/packages', fetcher, {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
   });
@@ -433,10 +513,35 @@ export default function CeCourseCreatorClient() {
       const packageId = String(payload?.data?.id || draft.id || '');
       setDraft((current) => current ? { ...current, id: packageId } : current);
       setSaveMessage(packageId ? `Saved package ${packageId.slice(0, 8)}.` : 'Saved package.');
+      mutateSavedPackages();
     } catch (error: any) {
       setSaveError(error?.message || 'Failed to save CE course package.');
     } finally {
       setIsSavingPackage(false);
+    }
+  };
+
+  const handleOpenSavedPackage = async (packageId: string) => {
+    if (!packageId || openingPackageId) return;
+
+    setOpeningPackageId(packageId);
+    setSaveError(null);
+    setSaveMessage(null);
+    setGenerationError(null);
+    try {
+      const response = await fetch(`/api/ce-course/packages/${packageId}`);
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || `Open failed with status ${response.status}`);
+
+      const row = payload?.data;
+      const savedSources = buildSourcesFromSavedPackage(row);
+      setSelectedSources(new Map(savedSources.map((source) => [source.id, source])));
+      setDraft(normalizeGeneratedDraft(packagePayloadFromRow(row), String(row.id)));
+      setSaveMessage(`Opened package ${String(row.id).slice(0, 8)}.`);
+    } catch (error: any) {
+      setSaveError(error?.message || 'Failed to open CE course package.');
+    } finally {
+      setOpeningPackageId(null);
     }
   };
 
@@ -690,6 +795,12 @@ export default function CeCourseCreatorClient() {
               {saveMessage}
             </div>
           ) : null}
+          <SavedCoursePackagesCard
+            packages={savedPackagesData?.data || []}
+            isLoading={isLoadingSavedPackages}
+            openingPackageId={openingPackageId}
+            onOpenPackage={handleOpenSavedPackage}
+          />
           <SelectedSourcesCard selectedSources={selectedList} onRemove={removeSource} onBuild={handleBuildDraft} canBuild={canBuild} isGenerating={isGeneratingDraft} />
           <CourseDraftCard
             draft={draft}
@@ -740,7 +851,7 @@ function SelectedSourcesCard({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="line-clamp-2 text-sm font-semibold leading-5">{decodeLite(source.title || 'Untitled source')}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{getPrimaryTag(source)} - {formatDate(source.publishedAt)}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{getContentDesignation(source)} - {formatDate(source.publishedAt)}</div>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => onRemove(source.id)}>
                 <X className="h-4 w-4" />
@@ -756,6 +867,72 @@ function SelectedSourcesCard({
           {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           {isGenerating ? 'Generating Package' : 'Generate Course Package'}
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SavedCoursePackagesCard({
+  packages,
+  isLoading,
+  openingPackageId,
+  onOpenPackage,
+}: {
+  packages: SavedPackageSummary[];
+  isLoading: boolean;
+  openingPackageId: string | null;
+  onOpenPackage: (id: string) => void | Promise<void>;
+}) {
+  return (
+    <Card>
+      <CardHeader className="border-b border-border">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <History className="h-4 w-4 text-primary" />
+          Saved Course Packages
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">Reopen an editable CE draft saved to Supabase.</p>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4">
+        {isLoading ? (
+          [1, 2, 3].map((item) => (
+            <div key={item} className="h-16 animate-pulse rounded-md border border-border bg-muted" />
+          ))
+        ) : packages.length ? (
+          packages.slice(0, 5).map((pkg) => {
+            const isOpening = openingPackageId === pkg.id;
+            const sourceCount = Array.isArray(pkg.source_content_ids) ? pkg.source_content_ids.length : 0;
+            return (
+              <div key={pkg.id} className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="line-clamp-2 text-sm font-semibold leading-5">{decodeLite(pkg.title || 'Untitled CE package')}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{sourceCount} sources</span>
+                      <span>{pkg.passing_score || 60}% pass</span>
+                      <span>{pkg.updated_at ? formatDate(pkg.updated_at) : 'Not dated'}</span>
+                    </div>
+                    {pkg.theme ? <div className="mt-2 text-xs text-muted-foreground">Theme: {pkg.theme}</div> : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 gap-1.5"
+                    disabled={Boolean(openingPackageId)}
+                    onClick={() => onOpenPackage(pkg.id)}
+                  >
+                    {isOpening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    Open
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+            Saved CE packages will appear here after the first package is saved.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
