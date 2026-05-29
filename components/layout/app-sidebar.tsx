@@ -86,6 +86,7 @@ const sidebarSlogans = [
   'AI Content Engine',
   'Content Studio',
   'Transformation Engine',
+  'Campaign Factory',
   'Content Operations',
 ];
 
