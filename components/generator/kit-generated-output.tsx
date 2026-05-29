@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, Copy, Sparkles } from 'lucide-react';
@@ -85,25 +85,20 @@ export function KitGeneratedOutput({
 
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">Generated Output</CardTitle>
-          <div className="flex items-center gap-2">
-            {onGenerate ? (
-              <Button
-                size="sm"
-                className="rounded-2xl bg-primary hover:bg-primary/90"
-                onClick={onGenerate}
-                disabled={!!isGenerating}
-              >
-                {isGenerating ? 'Generating…' : 'Generate'}
-              </Button>
-            ) : null}
+      <CardContent className="space-y-4 pt-6">
+        {onGenerate ? (
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              className="rounded-2xl bg-primary hover:bg-primary/90"
+              onClick={onGenerate}
+              disabled={!!isGenerating}
+            >
+              {isGenerating ? 'Generating…' : 'Generate'}
+            </Button>
           </div>
-        </div>
-      </CardHeader>
+        ) : null}
 
-      <CardContent className="space-y-4">
         {showTabs && effectiveActive !== 'all' ? (
           <Tabs value={effectiveActive} onValueChange={(v) => setActiveInternal(v as ContentType)} className="w-full">
             <TabsList className={cn('w-full justify-start', types.length > 3 && 'flex-wrap h-auto')}>
