@@ -13,10 +13,10 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
+import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { Badge } from '@/components/ui/badge';
-import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
@@ -622,143 +622,14 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-lg border bg-background p-4 min-w-0">
-                {selectedSource ? (
-                  <div className="space-y-3 min-w-0">
-                    <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start">
-                      <div className="h-44 w-full shrink-0 overflow-hidden rounded-md bg-muted sm:h-52 xl:h-40 xl:w-56">
-                        {(() => {
-                          let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                          if (typeof meta === 'string') {
-                            try {
-                              meta = JSON.parse(meta);
-                            } catch {
-                              meta = null;
-                            }
-                          }
-
-                          const fromExtraPropertiesArray = (key: string): string | undefined => {
-                            const arr = meta?.raw?.extra_properties;
-                            if (!Array.isArray(arr)) return undefined;
-                            const hit = arr.find((x: any) => String(x?.key || '') === key);
-                            const v = hit?.stringValue ?? hit?.value ?? hit?.string_value;
-                            return typeof v === 'string' ? v : undefined;
-                          };
-
-                          const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
-
-                          const thumb =
-                            // Prefer LinkedIn URL from CMS metadata
-                            extraMap?.['SocialMediaPlatformImages.LinkedIn'] ||
-                            meta?.['SocialMediaPlatformImages.LinkedIn'] ||
-                            fromExtraPropertiesArray('SocialMediaPlatformImages.LinkedIn') ||
-                            meta?.SocialMediaPlatformImages?.LinkedIn ||
-                            meta?.SocialMediaPlatformImages?.linkedIn ||
-                            meta?.SocialMediaPlatformImages?.linkedin ||
-                            meta?.socialMediaPlatformImages?.LinkedIn ||
-                            meta?.socialMediaPlatformImages?.linkedIn ||
-                            meta?.socialMediaPlatformImages?.linkedin ||
-                            // Fallbacks
-                            extraMap?.['SocialMediaPlatformImages.Thumbnail'] ||
-                            meta?.['SocialMediaPlatformImages.Thumbnail'] ||
-                            fromExtraPropertiesArray('SocialMediaPlatformImages.Thumbnail') ||
-                            meta?.SocialMediaPlatformImages?.Thumbnail ||
-                            meta?.SocialMediaPlatformImages?.thumbnail ||
-                            meta?.socialMediaPlatformImages?.Thumbnail ||
-                            meta?.socialMediaPlatformImages?.thumbnail ||
-                            selectedSource?.data?.imageUrl ||
-                            selectedSource?.imageUrl;
-
-                          if (!thumb) return null;
-                          return (
-                            <img
-                              src={String(thumb).trim()}
-                              alt=""
-                              className="h-full w-full object-contain"
-                              referrerPolicy="no-referrer"
-                            />
-                          );
-                        })()}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-semibold">Selected Content</div>
-                        <div className="line-clamp-3 break-words text-sm font-medium">
-                          {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
-                        </div>
-                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                          {(() => {
-                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                            if (typeof meta === 'string') {
-                              try { meta = JSON.parse(meta); } catch { meta = null; }
-                            }
-                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
-                            const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
-                            if (!designation) return null;
-                            return (
-                              <Badge variant="outline" className={cn('rounded-full text-[11px]', designationLabelClass(String(designation)))}>
-                                {String(designation)}
-                              </Badge>
-                            );
-                          })()}
-                          {(() => {
-                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                            if (typeof meta === 'string') {
-                              try { meta = JSON.parse(meta); } catch { meta = null; }
-                            }
-                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
-                            const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
-                            if (!fn) return null;
-                            return (
-                              <span className="min-w-0 break-all text-[11px] text-muted-foreground">{String(fn)}</span>
-                            );
-                          })()}
-                        </div>
-                        {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
-                          <div className="text-[11px] text-muted-foreground">
-                            {String(selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt).split('T')[0]}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
-                      <div className="text-xs text-muted-foreground line-clamp-3">
-                        {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
-                      </div>
-                    ) : null}
-
-                    <div className="rounded-md border bg-card p-3 max-h-[320px] overflow-auto">
-                      {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
-                        <div className="mb-2 flex flex-wrap gap-2">
-                          {detailContent.tags.slice(0, 8).map((tag: string) => (
-                            <Badge key={tag} variant="outline" className={cn('rounded-full text-[11px]', tagLabelClass(String(tag)))}>
-                              {decodeEntitiesLite(String(tag))}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                      <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
-                      <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
-                    </div>
-
-                    <div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-md"
-                        onClick={() => setDetailOpen(true)}
-                        disabled={!selectedSourceId}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">Select a source article to preview it here.</div>
-                )}
-              </div>
+              <SelectedArticlePreview
+                selectedSource={selectedSource}
+                detailContent={detailContent}
+                bodyPreview={normalizedBodyPreview}
+                onViewDetails={() => setDetailOpen(true)}
+                onClear={() => setSelectedSourceIds([])}
+                onUseArticle={() => toast.success('Article selected for generation')}
+              />
             </div>
           </div>
 
@@ -951,121 +822,14 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <div className="rounded-lg border bg-background p-4 min-w-0">
-                {selectedSource ? (
-                  <div className="space-y-3 min-w-0">
-                    <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start">
-                      <div className="h-44 w-full shrink-0 overflow-hidden rounded-md bg-muted sm:h-52 xl:h-40 xl:w-56">
-                        {(() => {
-                          let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                          if (typeof meta === 'string') {
-                            try {
-                              meta = JSON.parse(meta);
-                            } catch {
-                              meta = null;
-                            }
-                          }
-
-                          const thumb =
-                            meta?.SocialMediaPlatformImages?.Thumbnail ||
-                            meta?.SocialMediaPlatformImages?.thumbnail ||
-                            meta?.socialMediaPlatformImages?.Thumbnail ||
-                            meta?.socialMediaPlatformImages?.thumbnail ||
-                            selectedSource?.data?.imageUrl ||
-                            selectedSource?.imageUrl ||
-                            // TEMP default thumbnail for testing
-                            'https://www.broadridgeadvisor.com/images/SocialMediaImages/Twitter/100825CA_TW.jpg';
-
-                          if (!thumb) return null;
-                          return (
-                            <img
-                              src={String(thumb).trim()}
-                              alt=""
-                              className="h-full w-full object-contain"
-                              referrerPolicy="no-referrer"
-                            />
-                          );
-                        })()}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-semibold">Selected Content</div>
-                        <div className="line-clamp-3 break-words text-sm font-medium">
-                          {decodeEntitiesLite(String(selectedSource?.data?.title ?? selectedSource?.title ?? 'Untitled'))}
-                        </div>
-                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                          {(() => {
-                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                            if (typeof meta === 'string') {
-                              try { meta = JSON.parse(meta); } catch { meta = null; }
-                            }
-                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
-                            const designation = extra?.ContentDesignation || extra?.contentDesignation || extra?.Designation || extra?.designation || extra?.APContentType || null;
-                            if (!designation) return null;
-                            return (
-                              <Badge variant="outline" className={cn('rounded-full text-[11px]', designationLabelClass(String(designation)))}>
-                                {String(designation)}
-                              </Badge>
-                            );
-                          })()}
-                          {(() => {
-                            let meta: any = selectedSource?.data?.metadata ?? selectedSource?.metadata;
-                            if (typeof meta === 'string') {
-                              try { meta = JSON.parse(meta); } catch { meta = null; }
-                            }
-                            const extra: any = meta?.extraProperties || meta?.raw?.extraProperties || {};
-                            const fn = extra?.BasContentFilename || extra?.basContentFilename || null;
-                            if (!fn) return null;
-                            return (
-                              <span className="min-w-0 break-all text-[11px] text-muted-foreground">{String(fn)}</span>
-                            );
-                          })()}
-                        </div>
-                        {(selectedSource?.data?.publishedAt || selectedSource?.publishedAt) ? (
-                          <div className="text-[11px] text-muted-foreground">
-                            {String(selectedSource?.data?.publishedAt ?? selectedSource?.publishedAt).split('T')[0]}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {(selectedSource?.data?.excerpt ?? selectedSource?.excerpt) ? (
-                      <div className="text-xs text-muted-foreground line-clamp-3">
-                        {String(selectedSource?.data?.excerpt ?? selectedSource?.excerpt)}
-                      </div>
-                    ) : null}
-
-                    <div className="rounded-md border bg-card p-3 max-h-[320px] overflow-auto">
-                      {(detailContent?.tags && Array.isArray(detailContent.tags) && detailContent.tags.length) ? (
-                        <div className="mb-2 flex flex-wrap gap-2">
-                          {detailContent.tags.slice(0, 8).map((tag: string) => (
-                            <Badge key={tag} variant="outline" className={cn('rounded-full text-[11px]', tagLabelClass(String(tag)))}>
-                              {decodeEntitiesLite(String(tag))}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                      <div className="text-[11px] font-semibold text-muted-foreground mb-2">Body preview</div>
-                      <div className="text-xs whitespace-pre-wrap leading-relaxed">{normalizedBodyPreview}</div>
-                    </div>
-
-                    <div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-md"
-                        onClick={() => setDetailOpen(true)}
-                        disabled={!selectedSourceId}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">Select a source article to preview it here.</div>
-                )}
-              </div>
+              <SelectedArticlePreview
+                selectedSource={selectedSource}
+                detailContent={detailContent}
+                bodyPreview={normalizedBodyPreview}
+                onViewDetails={() => setDetailOpen(true)}
+                onClear={() => setSelectedSourceIds([])}
+                onUseArticle={() => toast.success('Article selected for generation')}
+              />
             </div>
           </div>
 
