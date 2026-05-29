@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import useSWR from 'swr';
-import { ContentDetail } from '@/components/source-content/content-detail';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,6 +12,7 @@ import { GenerationPreview } from '@/components/generator/generation-preview';
 import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
+import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,17 @@ import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+function decodeEntitiesLite(input: string): string {
+  const s = String(input || '');
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
+
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -44,13 +55,30 @@ export default function GeneratePage() {
     selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
     fetcher
   );
-  const [detailOpen, setDetailOpen] = useState(false);
-
   const detailContent = selectedSource?.data ?? selectedSource ?? null;
+
+  const normalizedBodyPreview = (() => {
+    const raw = String(detailContent?.body || detailContent?.bodyText || '');
+    const decoded = decodeEntitiesLite(raw);
+
+    return decoded
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+      .replace(/<paragraph[^>]*>([\s\S]*?)<\/paragraph>/gi, '$1\n\n')
+      .replace(/<container_text[^>]*>([\s\S]*?)<\/container_text>/gi, '\n\n$1\n')
+      .replace(/<document_title[^>]*>([\s\S]*?)<\/document_title>/gi, '\n\n$1\n')
+      .replace(/<short_title[^>]*>([\s\S]*?)<\/short_title>/gi, '\n\n$1\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/\t/g, ' ')
+      .replace(/[ ]{2,}/g, ' ')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  })();
 
   const handleSourceSelect = useCallback((id: string | null) => {
     setSelectedSourceIds(id ? [id] : []);
-    setDetailOpen(Boolean(id));
   }, []);
 
   const handleUseDetailArticle = useCallback(() => {
@@ -586,10 +614,23 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <SourceArticlePicker
-              selectedId={selectedSourceIds[0] ?? null}
-              onSelect={handleSourceSelect}
-            />
+            <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(390px,44%)_minmax(0,56%)]">
+              <div className="xl:sticky xl:top-24">
+                <SourceArticlePicker
+                  selectedId={selectedSourceIds[0] ?? null}
+                  onSelect={handleSourceSelect}
+                  splitView
+                />
+              </div>
+
+              <SelectedArticlePreview
+                selectedSource={selectedSource}
+                detailContent={detailContent}
+                bodyPreview={normalizedBodyPreview}
+                onClear={() => setSelectedSourceIds([])}
+                onUseArticle={handleUseDetailArticle}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -773,10 +814,23 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <SourceArticlePicker
-              selectedId={selectedSourceIds[0] ?? null}
-              onSelect={handleSourceSelect}
-            />
+            <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(390px,44%)_minmax(0,56%)]">
+              <div className="xl:sticky xl:top-24">
+                <SourceArticlePicker
+                  selectedId={selectedSourceIds[0] ?? null}
+                  onSelect={handleSourceSelect}
+                  splitView
+                />
+              </div>
+
+              <SelectedArticlePreview
+                selectedSource={selectedSource}
+                detailContent={detailContent}
+                bodyPreview={normalizedBodyPreview}
+                onClear={() => setSelectedSourceIds([])}
+                onUseArticle={handleUseDetailArticle}
+              />
+            </div>
           </div>
 
 
@@ -830,13 +884,6 @@ export default function GeneratePage() {
           </div>
         </div>
       )}
-
-      <ContentDetail
-        content={detailContent}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onUseForGeneration={handleUseDetailArticle}
-      />
     </div>
   );
 }
