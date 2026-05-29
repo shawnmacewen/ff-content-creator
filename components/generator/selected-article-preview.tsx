@@ -112,35 +112,51 @@ function sentenceList(text: string) {
     .replace(/\s+/g, ' ')
     .split(/(?<=[.!?])\s+/)
     .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 32);
-}
-
-function buildTakeaways(article: any, bodyPreview: string) {
-  const source = String(article?.excerpt || bodyPreview || article?.bodyText || article?.body || '');
-  const sentences = sentenceList(source);
-  const fallbackTitle = decodeEntities(String(article?.title || 'Selected article'));
-  const items = sentences.slice(0, 3);
-
-  if (items.length) return items;
-
-  return [
-    `${fallbackTitle} is selected as the source anchor for this generation.`,
-    'Use this source to ground the kit in existing editorial material.',
-    'Open the full source view for provider details and complete article text.',
-  ];
+    .filter((sentence) => sentence.length > 24);
 }
 
 function compactTakeaway(input: string) {
   const text = decodeEntities(input)
     .replace(/\s+/g, ' ')
     .replace(/^[•\-–—]\s*/, '')
+    .replace(/^(did you know that|learn how|discover how)\s+/i, '')
     .trim();
 
-  if (text.length <= 92) return text;
+  if (text.length <= 58) return text.replace(/[.!?;:]$/, '');
 
-  const clipped = text.slice(0, 92);
+  const clipped = text.slice(0, 58);
   const lastSpace = clipped.lastIndexOf(' ');
-  return `${clipped.slice(0, lastSpace > 60 ? lastSpace : clipped.length).replace(/[,.!?;:]$/, '')}...`;
+  return `${clipped.slice(0, lastSpace > 36 ? lastSpace : clipped.length).replace(/[,.!?;:]$/, '')}...`;
+}
+
+function buildTakeaways(article: any, bodyPreview: string) {
+  const source = String(article?.excerpt || bodyPreview || article?.bodyText || article?.body || article?.title || '');
+  const sentences = sentenceList(source);
+  const fallbackTitle = decodeEntities(String(article?.title || 'Selected article'));
+  const candidates = sentences.flatMap((sentence) =>
+    sentence
+      .split(/(?:;|:|\s+-\s+|\s+because\s+|\s+while\s+|\s+and\s+)/i)
+      .map(compactTakeaway)
+      .filter((item) => item.length >= 14)
+  );
+
+  const items = Array.from(new Set(candidates)).slice(0, 3);
+
+  if (items.length >= 2) return items;
+
+  if (items.length === 1) {
+    return [
+      items[0],
+      compactTakeaway(fallbackTitle),
+      'Use this source for grounded generation context',
+    ].filter((item, index, list) => item && list.indexOf(item) === index).slice(0, 3);
+  }
+
+  return [
+    compactTakeaway(fallbackTitle),
+    'Use this source for grounded generation context',
+    'Review the article text before generating assets',
+  ];
 }
 
 function getBodyParagraphs(article: any, bodyPreview: string) {
@@ -256,8 +272,8 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className="relative z-10 grid flex-1 gap-8 px-7 pb-8 pt-8 md:grid-cols-[0.72fr_1fr] sm:px-9">
-        <aside className="space-y-5">
+      <div className="relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 md:grid-cols-[0.68fr_1fr] sm:px-8">
+        <aside className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
               <Sparkles className="h-5 w-5 text-blue-600" />
@@ -265,16 +281,16 @@ export function SelectedArticlePreview({
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-3.5">
             {takeaways.slice(0, 3).map((item, index) => {
               const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
               return (
-                <div key={index} className="grid grid-cols-[44px_minmax(0,1fr)] items-start gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
+                <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
                     <Icon className="h-4 w-4" />
                   </div>
-                  <p className="pt-0.5 text-sm font-semibold leading-6 text-slate-700" title={decodeEntities(item)}>
-                    {compactTakeaway(item)}
+                  <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700" title={decodeEntities(item)}>
+                    {item}
                   </p>
                 </div>
               );
@@ -282,15 +298,15 @@ export function SelectedArticlePreview({
           </div>
         </aside>
 
-        <article className="border-slate-200/80 md:border-l md:pl-8">
-          <div className="space-y-5 break-words text-sm leading-7 text-slate-700">
+        <article className="border-slate-200/80 md:border-l md:pl-6">
+          <div className="space-y-3.5 break-words text-[13px] leading-6 text-slate-700">
             {paragraphs.length ? (
               paragraphs.slice(0, 3).map((paragraph, index) => (
                 <p
                   key={index}
                   className={cn(
                     'line-clamp-4',
-                    index === 0 && 'line-clamp-5 text-[0.95rem] leading-7 first-letter:float-left first-letter:mr-3 first-letter:font-serif first-letter:text-5xl first-letter:leading-[0.86] first-letter:text-slate-950'
+                    index === 0 && 'line-clamp-5 text-sm leading-6 first-letter:float-left first-letter:mr-2 first-letter:font-serif first-letter:text-4xl first-letter:leading-[0.86] first-letter:text-slate-950'
                   )}
                 >
                   {decodeEntities(paragraph)}
