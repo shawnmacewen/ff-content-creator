@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
@@ -634,14 +633,14 @@ export function ContentDetail({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="h-[90vh] max-h-[94vh] w-[94vw] max-w-[1180px] overflow-hidden rounded-[2rem] border-0 bg-white p-0 shadow-[0_32px_110px_rgba(15,23,42,0.28)] sm:max-w-[1180px]"
+        className="flex h-[90vh] max-h-[94vh] w-[94vw] max-w-[1180px] flex-col gap-0 overflow-hidden rounded-[2rem] border-0 bg-white p-0 shadow-[0_32px_110px_rgba(15,23,42,0.28)] sm:max-w-[1180px]"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{content.title}</DialogTitle>
           <DialogDescription>{publisherLabel} source article preview</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-full bg-[radial-gradient(circle_at_8%_18%,rgba(125,211,252,0.18),transparent_32%),radial-gradient(circle_at_92%_78%,rgba(167,139,250,0.18),transparent_34%),linear-gradient(180deg,#f8fafc,#ffffff_42%)]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_8%_18%,rgba(125,211,252,0.18),transparent_32%),radial-gradient(circle_at_92%_78%,rgba(167,139,250,0.18),transparent_34%),linear-gradient(180deg,#f8fafc,#ffffff_42%)]">
           <section className="group relative isolate min-h-[38vh] overflow-hidden bg-slate-950">
             {thumbnailUrl ? (
               <div
@@ -798,7 +797,7 @@ export function ContentDetail({
               </div>
             </article>
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-5">
           <div className="pointer-events-auto flex w-full max-w-4xl flex-col gap-3 rounded-3xl border border-white/20 bg-slate-950/88 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
