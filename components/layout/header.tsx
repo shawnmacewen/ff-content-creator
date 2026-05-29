@@ -1,6 +1,6 @@
 'use client';
 
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +14,6 @@ import {
 import { usePathname } from 'next/navigation';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/layout/theme-provider';
-import { cn } from '@/lib/utils';
 
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
@@ -30,17 +29,9 @@ export function Header() {
   const pathname = usePathname();
   const pageTitle = routeLabels[pathname] || 'Page';
   const { theme, toggleTheme } = useTheme();
-  const { state } = useSidebar();
 
   return (
-    <header
-      className={cn(
-        'flex h-16 shrink-0 translate-y-0 items-center gap-3 overflow-hidden border-b border-border bg-card/95 px-4 opacity-100 shadow-sm backdrop-blur-sm transition-[height,opacity,transform,box-shadow,border-color] duration-300 ease-out',
-        state === 'expanded'
-          ? 'lg:h-0 lg:-translate-y-2 lg:border-transparent lg:opacity-0 lg:shadow-none'
-          : 'lg:h-16 lg:translate-y-0 lg:border-border lg:opacity-100 lg:shadow-sm'
-      )}
-    >
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card/95 px-4 shadow-sm backdrop-blur-sm lg:hidden">
       <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
       <Separator orientation="vertical" className="mr-1 h-5" />
       <Breadcrumb className="flex-1">
