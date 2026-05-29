@@ -68,18 +68,87 @@ function normalizeQuestions(row: Record<string, any>, packagePayload: Record<str
   });
 }
 
+function buildReadinessSummary(payload: {
+  title: string;
+  objective: string;
+  readingList: any[];
+  quiz: any[];
+  passingScore: number;
+  packageId: string;
+}) {
+  const checks = [
+    {
+      key: 'course_basics',
+      label: 'Course basics',
+      complete: Boolean(payload.title.trim() && payload.objective.trim()),
+    },
+    {
+      key: 'source_package',
+      label: 'Source package',
+      complete: payload.readingList.length >= 1 && payload.readingList.length <= 5,
+    },
+    {
+      key: 'quiz_size',
+      label: 'Quiz size',
+      complete: payload.quiz.length >= 10 && payload.quiz.length <= 25,
+    },
+    {
+      key: 'question_structure',
+      label: 'Question structure',
+      complete: payload.quiz.every((question) => (
+        String(question.question || '').trim() &&
+        Array.isArray(question.choices) &&
+        question.choices.length === 4 &&
+        question.choices.every((choice: any) => String(choice?.text || '').trim()) &&
+        ['A', 'B', 'C', 'D'].includes(String(question.correctChoiceLabel || '').toUpperCase())
+      )),
+    },
+    {
+      key: 'source_citations',
+      label: 'Source citations',
+      complete: payload.quiz.every((question) => String(question.citation || '').trim()),
+    },
+    {
+      key: 'answer_explanations',
+      label: 'Answer explanations',
+      complete: payload.quiz.every((question) => String(question.explanation || '').trim()),
+    },
+    {
+      key: 'passing_score',
+      label: 'Passing score',
+      complete: payload.passingScore >= 1 && payload.passingScore <= 100,
+    },
+    {
+      key: 'saved_package',
+      label: 'Saved package',
+      complete: Boolean(payload.packageId),
+    },
+  ];
+
+  return {
+    complete: checks.every((check) => check.complete),
+    completedChecks: checks.filter((check) => check.complete).length,
+    totalChecks: checks.length,
+    checks,
+  };
+}
+
 function buildExportPayload(row: Record<string, any>) {
   const packagePayload = asObject(row.package_payload);
   const readingList = normalizeReadingList(row, packagePayload);
   const quiz = normalizeQuestions(row, packagePayload);
+  const packageId = String(row.id || '');
+  const title = String(packagePayload.title || row.title || '');
+  const objective = String(packagePayload.objective || row.objective || '');
+  const passingScore = Number(packagePayload.passingScore || row.passing_score || 60);
 
   return {
     formatVersion: 'ce-course-package.v1',
     exportedAt: new Date().toISOString(),
-    packageId: String(row.id || ''),
+    packageId,
     status: String(packagePayload.status || row.status || 'draft'),
-    title: String(packagePayload.title || row.title || ''),
-    objective: String(packagePayload.objective || row.objective || ''),
+    title,
+    objective,
     description: String(packagePayload.description || row.description || ''),
     theme: String(packagePayload.theme || row.theme || ''),
     coreThemes: asStringArray(packagePayload.coreThemes || row.core_themes),
@@ -93,10 +162,11 @@ function buildExportPayload(row: Record<string, any>) {
       maximumQuestions: 25,
       choicesPerQuestion: 4,
       targetDifficulty: 'easy-to-medium',
-      passingScore: Number(packagePayload.passingScore || row.passing_score || 60),
+      passingScore,
       materialsAvailableDuringQuiz: true,
       citationsRequired: true,
     },
+    readiness: buildReadinessSummary({ title, objective, readingList, quiz, passingScore, packageId }),
     completionNotes: String(packagePayload.completionNotes || row.completion_notes || ''),
     downstream: {
       advisorStreamStatus: 'pending-format-confirmation',

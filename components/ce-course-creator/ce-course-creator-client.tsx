@@ -3,6 +3,7 @@
 import * as React from 'react';
 import useSWR from 'swr';
 import {
+  AlertCircle,
   BadgeCheck,
   BookOpenCheck,
   Check,
@@ -101,6 +102,12 @@ type DraftQuestion = {
   citation: string;
   explanation?: string;
   difficulty?: 'easy' | 'medium';
+};
+
+type ReadinessItem = {
+  label: string;
+  detail: string;
+  complete: boolean;
 };
 
 const fetcher = async (url: string) => {
@@ -353,6 +360,69 @@ function packagePayloadFromRow(row: any) {
     status: packagePayload.status || row?.status || 'draft',
     questions: packagePayload.questions || row?.questions || [],
   };
+}
+
+function getCourseReadiness(draft: CourseDraft, selectedSources: SourceContent[]): ReadinessItem[] {
+  const titleReady = Boolean(draft.title.trim());
+  const objectiveReady = Boolean(draft.objective.trim());
+  const sourceCountReady = selectedSources.length >= 1 && selectedSources.length <= 5;
+  const questionCountReady = draft.questions.length >= 10 && draft.questions.length <= 25;
+  const allQuestionsReady = draft.questions.every((question) => {
+    const choices = question.choices || [];
+    return (
+      question.question.trim() &&
+      choices.length === 4 &&
+      choices.every((choice) => choice.trim()) &&
+      question.answerIndex >= 0 &&
+      question.answerIndex < 4
+    );
+  });
+  const citationsReady = draft.questions.every((question) => question.citation.trim() && question.sourceTitle.trim());
+  const explanationsReady = draft.questions.every((question) => (question.explanation || '').trim());
+  const passingScoreReady = draft.passingScore >= 1 && draft.passingScore <= 100;
+
+  return [
+    {
+      label: 'Course basics',
+      detail: titleReady && objectiveReady ? 'Title and learning objective are filled in.' : 'Add a course title and learning objective.',
+      complete: titleReady && objectiveReady,
+    },
+    {
+      label: 'Source package',
+      detail: sourceCountReady ? `${selectedSources.length} source article${selectedSources.length === 1 ? '' : 's'} selected.` : 'Select 1 to 5 source articles.',
+      complete: sourceCountReady,
+    },
+    {
+      label: 'Quiz size',
+      detail: questionCountReady ? `${draft.questions.length} questions within the 10-25 CE range.` : 'Keep the quiz between 10 and 25 questions.',
+      complete: questionCountReady,
+    },
+    {
+      label: 'Question structure',
+      detail: allQuestionsReady ? 'Every question has text, four choices, and a correct answer.' : 'Each question needs text, four choices, and one correct answer.',
+      complete: allQuestionsReady,
+    },
+    {
+      label: 'Source citations',
+      detail: citationsReady ? 'Every question cites the source material.' : 'Add citations/source references to every question.',
+      complete: citationsReady,
+    },
+    {
+      label: 'Answer explanations',
+      detail: explanationsReady ? 'Answer key explanations are filled in.' : 'Add answer explanations for review and demo mode.',
+      complete: explanationsReady,
+    },
+    {
+      label: 'Passing score',
+      detail: passingScoreReady ? `${draft.passingScore}% passing score is set.` : 'Set a valid passing score.',
+      complete: passingScoreReady,
+    },
+    {
+      label: 'Saved package',
+      detail: draft.id ? 'Package is saved and can be exported.' : 'Save the package before exporting or downstream delivery.',
+      complete: Boolean(draft.id),
+    },
+  ];
 }
 
 function buildApiUrl(query: string, tag: string, contentDesignation: string, page: number) {
@@ -1241,6 +1311,52 @@ function ExportJsonDialog({ packageId }: { packageId?: string }) {
   );
 }
 
+function CourseReadinessPanel({
+  draft,
+  selectedSources,
+}: {
+  draft: CourseDraft;
+  selectedSources: SourceContent[];
+}) {
+  const readiness = getCourseReadiness(draft, selectedSources);
+  const completeCount = readiness.filter((item) => item.complete).length;
+  const ready = completeCount === readiness.length;
+
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-sm font-semibold">Package readiness</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {completeCount}/{readiness.length} checks complete before export or downstream delivery.
+          </div>
+        </div>
+        <Badge className={cn(ready ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white')}>
+          {ready ? 'Ready' : 'Needs review'}
+        </Badge>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {readiness.map((item) => (
+          <div key={item.label} className="grid gap-2 rounded-md border border-border bg-background p-3 sm:grid-cols-[auto_1fr]">
+            <span
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full',
+                item.complete ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+              )}
+            >
+              {item.complete ? <Check className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+            </span>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold">{item.label}</div>
+              <div className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CourseDraftCard({
   draft,
   selectedSources,
@@ -1317,6 +1433,7 @@ function CourseDraftCard({
             {draft.coreThemes?.length ? <p className="mt-2">Themes: {draft.coreThemes.join(', ')}</p> : null}
           </div>
         ) : null}
+        <CourseReadinessPanel draft={draft} selectedSources={selectedSources} />
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-md border border-border bg-muted/30 p-3">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Sources</div>
