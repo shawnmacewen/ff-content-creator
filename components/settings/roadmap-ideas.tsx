@@ -173,6 +173,28 @@ const roadmapIdeas: RoadmapIdea[] = [
     accent: 'from-pink-300 via-yellow-200 to-cyan-300',
   },
   {
+    title: 'Uploaded Asset Remix',
+    status: 'Later',
+    theme: 'Asset Generation',
+    summary: 'Let users upload approved visual assets as references for generating new campaign assets much later.',
+    details: [
+      'Support uploaded reference assets such as character art, team cartoons, campaign icons, and approved illustration styles.',
+      'Use those assets to guide new image generation without forcing users to rebuild the visual direction from scratch.',
+      'Keep review controls clear so teams can approve whether generated assets are close enough to the uploaded reference set.',
+      'Example: upload JIMA team cartoons and generate new campaign visuals in the same general character style.',
+    ],
+    promptData: [
+      'Reference asset type, usage rights, visual style notes, and allowed transformations.',
+      'Brand guardrails for character likeness, palette, poses, background treatment, and campaign context.',
+      'Reviewer notes for what must stay consistent versus what the model can reinterpret.',
+    ],
+    icon: ImagePlus,
+    impact: 7,
+    effort: 9,
+    matrix: { x: 86, y: 70 },
+    accent: 'from-cyan-200 via-blue-200 to-fuchsia-200',
+  },
+  {
     title: 'Infographic Inception',
     status: 'Later',
     theme: 'Infographic Remix',
@@ -236,7 +258,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="8" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="9" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Next" label="customization pass" tone="dark" />
             </div>
