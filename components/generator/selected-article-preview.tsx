@@ -191,10 +191,10 @@ export function SelectedArticlePreview({
 
         <div className="absolute left-5 right-5 top-5 z-20 flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-3">
-            <div className="inline-flex w-fit max-w-full items-center rounded-full border border-white/55 bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-blue-950 shadow-lg shadow-slate-950/15 backdrop-blur">
+            <div className="inline-flex w-fit max-w-full items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
               <span className="truncate">{decodeEntities(designation)}</span>
             </div>
-            <h3 className="line-clamp-3 max-w-[820px] text-balance rounded-[1.15rem] border border-white/55 bg-white/88 px-5 py-4 font-serif text-2xl font-semibold leading-[1.08] tracking-normal text-slate-950 shadow-2xl shadow-slate-950/18 backdrop-blur-md sm:text-[2rem] 2xl:text-[2.45rem]">
+            <h3 className="line-clamp-3 max-w-[820px] text-balance font-serif text-2xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2rem] 2xl:text-[2.45rem]">
               {title}
             </h3>
           </div>
@@ -203,7 +203,7 @@ export function SelectedArticlePreview({
             <button
               type="button"
               onClick={onUseArticle}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/88 px-4 text-sm font-semibold text-blue-950 shadow-lg shadow-black/15 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20"
               title="Save"
             >
               <Bookmark className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function SelectedArticlePreview({
             <button
               type="button"
               onClick={onClear}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/92 text-slate-700 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-white"
               title="Clear selected article"
             >
               <X className="h-5 w-5" />
@@ -221,7 +221,7 @@ export function SelectedArticlePreview({
         </div>
 
         <div className="relative z-10 flex min-h-[270px] flex-col justify-end p-5 sm:p-6 2xl:min-h-[300px]">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-white/65 bg-white/88 px-4 py-3 text-sm font-semibold text-blue-950 shadow-xl shadow-slate-950/12 backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-800">
             <span className="inline-flex items-center gap-2">
               <Calendar className="h-4 w-4 text-blue-700" />
               {formatDate(publishedAt)}
