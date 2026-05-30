@@ -84,6 +84,7 @@ export default function EchoWritePage() {
   const [lastModel, setLastModel] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [setupCollapsed, setSetupCollapsed] = useState(false);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
@@ -151,6 +152,8 @@ export default function EchoWritePage() {
       hasRetrievedSources: sources.length > 0,
     };
   }, [content, sources.length, spans]);
+  const hasGeneratedOutput = Boolean(content.trim() || sources.length);
+  const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
 
   const generate = async () => {
     setLoading(true);
@@ -178,6 +181,7 @@ export default function EchoWritePage() {
       setLastModel(String(json?.debug?.model || ''));
       setHoverSourceId(null);
       setHoverSnippet(null);
+      setSetupCollapsed(true);
       toast.success('EchoWrite draft generated');
     } catch (err: any) {
       const message = err?.message || 'EchoWrite generation failed';
@@ -256,17 +260,36 @@ export default function EchoWritePage() {
         ]}
       />
 
-      <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+      {hasGeneratedOutput ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-md"
+            onClick={() => setSetupCollapsed((value) => !value)}
+          >
+            {isSetupCollapsed ? 'Show generation options' : 'Hide generation options'}
+          </Button>
+        </div>
+      ) : null}
+
+      <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 p-0 opacity-0' : 'max-h-[760px] translate-y-0 opacity-100'}`}>
         <Textarea
           placeholder="Describe the content you want generated..."
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            setPrompt(e.target.value);
+            setSetupCollapsed(false);
+          }}
           rows={4}
         />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
-            <Select value={writingStyle} onValueChange={(v: any) => setWritingStyle(v)}>
+            <Select value={writingStyle} onValueChange={(v: any) => {
+              setWritingStyle(v);
+              setSetupCollapsed(false);
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="professional">Professional</SelectItem>
@@ -277,7 +300,10 @@ export default function EchoWritePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Content Type</div>
-            <Select value={contentType} onValueChange={(v: any) => setContentType(v)}>
+            <Select value={contentType} onValueChange={(v: any) => {
+              setContentType(v);
+              setSetupCollapsed(false);
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="article">Article</SelectItem>
@@ -287,7 +313,10 @@ export default function EchoWritePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Length</div>
-            <Select value={length} onValueChange={(v: any) => setLength(v)}>
+            <Select value={length} onValueChange={(v: any) => {
+              setLength(v);
+              setSetupCollapsed(false);
+            }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="short">Short</SelectItem>
@@ -298,7 +327,10 @@ export default function EchoWritePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Target Word Count</div>
-            <Input value={targetWordCount} onChange={(e) => setTargetWordCount(e.target.value)} placeholder="Optional" />
+            <Input value={targetWordCount} onChange={(e) => {
+              setTargetWordCount(e.target.value);
+              setSetupCollapsed(false);
+            }} placeholder="Optional" />
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Max Articles to Reference</div>
@@ -307,7 +339,10 @@ export default function EchoWritePage() {
               min={0}
               max={12}
               value={maxSources}
-              onChange={(e) => setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)))}
+              onChange={(e) => {
+                setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)));
+                setSetupCollapsed(false);
+              }}
             />
           </div>
         </div>
@@ -444,43 +479,47 @@ Separately (client-side), we:
                 style={{ backgroundImage: `url("${outputHeroSource.imageUrl.replace(/"/g, '\\"')}")` }}
               />
             ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_28%,rgba(147,197,253,0.34),transparent_30%),linear-gradient(135deg,#071326,#18305d_56%,#0f172a)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_22%,rgba(244,114,182,0.42),transparent_30%),radial-gradient(circle_at_62%_70%,rgba(168,85,247,0.22),transparent_28%),linear-gradient(135deg,#06172f_0%,#123b7a_52%,#db2777_118%)]" />
             )}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.6)_44%,rgba(15,23,42,0.22)),linear-gradient(0deg,rgba(2,6,23,0.76),transparent_46%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_16%,rgba(244,114,182,0.18),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.58)_46%,rgba(83,20,84,0.34)),linear-gradient(0deg,rgba(2,6,23,0.78),transparent_46%)]" />
             <div className="absolute inset-x-0 -bottom-4 h-36 bg-gradient-to-t from-white from-[10%] via-white/88 via-[42%] to-transparent" />
 
-            <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={copyOutput}
-                disabled={!content.trim()}
-                className="h-10 rounded-full border-white/20 bg-white/10 px-4 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/20 hover:text-white"
-              >
-                Copy
-              </Button>
-              <Button
-                size="sm"
-                onClick={saveDraft}
-                disabled={!content.trim() || saving}
-                className="h-10 rounded-full bg-white px-4 font-semibold text-slate-950 shadow-lg shadow-black/15 hover:bg-white/90"
-              >
-                <Save className="h-4 w-4" />
-                {saving ? 'Saving...' : 'Save Draft'}
-              </Button>
-            </div>
-
-            <div className="relative z-10 flex min-h-[235px] flex-col justify-end p-6 text-white sm:p-8">
-              <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
-                <Sparkles className="h-3.5 w-3.5" />
+            <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between gap-3">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/14 px-3.5 py-1.5 text-xs font-semibold text-cyan-50 shadow-lg shadow-cyan-950/20 backdrop-blur">
+                <Sparkles className="h-3.5 w-3.5 text-pink-200" />
                 Generated Output
               </div>
-              <h2 className="max-w-[780px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2.15rem]">
-                {content.trim() ? outputTitle : 'Your EchoWrite draft will appear here'}
-              </h2>
-              {content.trim() && outputSubtitle ? (
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">{outputSubtitle}</p>
-              ) : null}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={copyOutput}
+                  disabled={!content.trim()}
+                  className="h-10 rounded-full border-white/20 bg-white/10 px-4 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/20 hover:text-white"
+                >
+                  Copy
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={saveDraft}
+                  disabled={!content.trim() || saving}
+                  className="h-10 rounded-full bg-white px-4 font-semibold text-slate-950 shadow-lg shadow-black/15 hover:bg-white/90"
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? 'Saving...' : 'Save Draft'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative z-10 flex min-h-[235px] flex-col justify-between p-6 pt-20 text-white sm:p-8 sm:pt-20">
+              <div>
+                <h2 className="max-w-[780px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2.15rem]">
+                  {content.trim() ? outputTitle : 'Your EchoWrite draft will appear here'}
+                </h2>
+                {content.trim() && outputSubtitle ? (
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">{outputSubtitle}</p>
+                ) : null}
+              </div>
               <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-white/82">
                 <span className="inline-flex items-center gap-2">
                   <FileText className="h-4 w-4" />
