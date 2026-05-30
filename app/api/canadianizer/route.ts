@@ -228,7 +228,7 @@ export async function POST(req: Request) {
           '- Use natural Quebec/Canadian French. Prefer Quebec financial terminology where appropriate, while keeping the article clear for advisors and clients.',
           '- Do not invent new financial, legal, tax, regulatory, government, or plan details that are not present in the English Canadian article.',
           '- Keep Markdown structure intact.',
-          '- If the English article is in Extreme Maple Mode, translate the comedy into playful Quebec/Canadian French while preserving that it is internal-only and not publish-ready.',
+          '- If the English article is in Maple Mode, translate the comedy into playful Quebec/Canadian French while preserving that it is internal-only and not publish-ready.',
           '',
           'Context:',
           `Audience: ${audience}`,

@@ -249,6 +249,7 @@ export default function CanadianizerClient() {
   const [model, setModel] = React.useState('gpt-4o-mini');
   const [languagePackage, setLanguagePackage] = React.useState<'both' | 'english' | 'french'>('both');
   const [outputLanguage, setOutputLanguage] = React.useState<'english' | 'french'>('english');
+  const [controlsCollapsed, setControlsCollapsed] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<CanadianizedResult | null>(null);
@@ -279,9 +280,14 @@ export default function CanadianizerClient() {
     if (result?.config?.languagePackage === 'english') setOutputLanguage('english');
   }, [result]);
 
+  React.useEffect(() => {
+    if (result) setControlsCollapsed(true);
+  }, [result]);
+
   const selectSource = async (source: SourceContent) => {
     setError(null);
     setResult(null);
+    setControlsCollapsed(false);
     setSelectedSource(source);
     try {
       const response = await fetch(`/api/source-content/${source.id}`);
@@ -339,7 +345,7 @@ export default function CanadianizerClient() {
           },
           {
             label: 'Canadian equivalency',
-            detail: extremeMode ? 'Extreme mode adds intentionally over-Canadian comic styling' : 'Tax, plan, savings, and market concepts are converted when a reasonable Canadian match exists',
+            detail: extremeMode ? 'Maple Mode adds intentionally over-Canadian comic styling' : 'Tax, plan, savings, and market concepts are converted when a reasonable Canadian match exists',
             icon: extremeMode ? Leaf : Flag,
             iconClassName: 'bg-red-600 text-white',
           },
@@ -364,8 +370,13 @@ export default function CanadianizerClient() {
         }
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(520px,1.1fr)]">
-        <section className="space-y-4">
+      <div className="flex flex-col gap-5 xl:flex-row">
+        <section
+          className={cn(
+            'space-y-4 transition-all duration-500 ease-in-out xl:shrink-0 xl:overflow-hidden',
+            controlsCollapsed ? 'xl:w-0 xl:-translate-x-6 xl:opacity-0' : 'xl:w-[42%] xl:translate-x-0 xl:opacity-100'
+          )}
+        >
           <Card>
             <CardHeader className="space-y-4 border-b border-border">
               <div>
@@ -533,7 +544,7 @@ export default function CanadianizerClient() {
                     <Leaf className="h-4 w-4" />
                   </span>
                   <div>
-                    <div className="text-sm font-semibold">Extreme maple mode</div>
+                    <div className="text-sm font-semibold">Maple Mode</div>
                     <div className="text-xs leading-5 text-muted-foreground">
                       For internal use only. 🍁
                     </div>
@@ -545,7 +556,7 @@ export default function CanadianizerClient() {
           </Card>
         </section>
 
-        <section className="space-y-4">
+        <section className="min-w-0 flex-1 space-y-4 transition-all duration-500 ease-in-out">
           {error ? (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           ) : null}
@@ -558,6 +569,14 @@ export default function CanadianizerClient() {
                 </div>
                 {result ? (
                   <div className="flex flex-wrap items-start gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setControlsCollapsed((value) => !value)}
+                    >
+                      {controlsCollapsed ? 'Show Setup' : 'Hide Setup'}
+                    </Button>
                     <PromptLogDialog result={result} />
                     {result.frenchArticleMarkdown && result.config?.languagePackage !== 'french' ? (
                       <div className="rounded-md border border-border bg-background p-1">
