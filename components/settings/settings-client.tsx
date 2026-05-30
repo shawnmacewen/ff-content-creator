@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, Printer, RefreshCw, Tags } from 'lucide-react';
+import { BookOpenCheck, Bot, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, Printer, RefreshCw, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
 import ProductUpdates from '@/components/settings/product-updates';
+import PhilosophyLab from '@/components/settings/philosophy-lab';
 import PrintExperiment from '@/components/settings/print-experiment';
 import RoadmapIdeas from '@/components/settings/roadmap-ideas';
 import TagExplorer from '@/components/settings/tag-explorer';
@@ -28,6 +29,7 @@ type SettingsTab =
   | 'knowledge-base'
   | 'template-design-system'
   | 'instagram-carousel-2'
+  | 'philosophy'
   | 'print';
 
 type SettingsSection = 'workspace' | 'product-lab';
@@ -45,6 +47,7 @@ const productLabTabs: SettingsTab[] = [
   'knowledge-base',
   'template-design-system',
   'instagram-carousel-2',
+  'philosophy',
   'print',
 ];
 
@@ -93,6 +96,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Instagram Carousel 2.0',
     detail: 'Tune the carousel generation workspace.',
     icon: Image,
+  },
+  philosophy: {
+    label: 'Philosophy',
+    detail: 'Explore the agent setup and platform principles.',
+    icon: Bot,
   },
   print: {
     label: 'Print',
@@ -545,6 +553,8 @@ export default function SettingsClient({ section }: { section: SettingsSection }
         <TemplateDesignSystem />
       ) : tab === 'instagram-carousel-2' ? (
         <InstagramCarousel2Client />
+      ) : tab === 'philosophy' ? (
+        <PhilosophyLab />
       ) : (
         <PrintExperiment />
       )}

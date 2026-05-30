@@ -8,6 +8,7 @@ import {
   FileText,
   Flag,
   Info,
+  Leaf,
   Loader2,
   Search,
   Sparkles,
@@ -160,6 +161,7 @@ export default function CanadianizerClient() {
   const [tone, setTone] = React.useState('Editorial, clear, engaging');
   const [length, setLength] = React.useState('similar');
   const [includeDisclosure, setIncludeDisclosure] = React.useState(true);
+  const [extremeMode, setExtremeMode] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<CanadianizedResult | null>(null);
@@ -211,6 +213,7 @@ export default function CanadianizerClient() {
           tone,
           length,
           includeDisclosure,
+          mode: extremeMode ? 'extreme' : 'normal',
         }),
       });
       const payload = await response.json().catch(() => null);
@@ -237,8 +240,8 @@ export default function CanadianizerClient() {
           },
           {
             label: 'Canadian equivalency',
-            detail: 'Tax, plan, savings, and market concepts are converted when a reasonable Canadian match exists',
-            icon: Flag,
+            detail: extremeMode ? 'Extreme mode adds intentionally over-Canadian comic styling' : 'Tax, plan, savings, and market concepts are converted when a reasonable Canadian match exists',
+            icon: extremeMode ? Leaf : Flag,
             iconClassName: 'bg-red-600 text-white',
           },
           {
@@ -389,6 +392,20 @@ export default function CanadianizerClient() {
                   <div className="text-xs text-muted-foreground">Adds a short review-safe disclosure-style line.</div>
                 </div>
                 <Switch checked={includeDisclosure} onCheckedChange={setIncludeDisclosure} />
+              </div>
+              <div className={cn('flex items-center justify-between rounded-md border p-3', extremeMode ? 'border-red-200 bg-red-50' : 'border-border bg-muted/20')}>
+                <div className="flex items-start gap-3">
+                  <span className={cn('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md', extremeMode ? 'bg-red-600 text-white' : 'bg-background text-primary')}>
+                    <Leaf className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold">Extreme maple mode</div>
+                    <div className="text-xs leading-5 text-muted-foreground">
+                      Turns the professional adaptation into an intentionally over-Canadian comedic draft for internal fun.
+                    </div>
+                  </div>
+                </div>
+                <Switch checked={extremeMode} onCheckedChange={setExtremeMode} />
               </div>
             </CardContent>
           </Card>

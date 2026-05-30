@@ -78,6 +78,7 @@ export async function POST(req: Request) {
     const tone = String(body?.tone || 'Editorial, clear, engaging').trim();
     const length = String(body?.length || 'similar').trim();
     const includeDisclosure = Boolean(body?.includeDisclosure ?? true);
+    const mode = body?.mode === 'extreme' ? 'extreme' : 'normal';
 
     if (!sourceContentId) {
       return Response.json({ error: 'Select one source content item to Canadianize.' }, { status: 400 });
@@ -102,11 +103,12 @@ export async function POST(req: Request) {
     }
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+    const isExtreme = mode === 'extreme';
 
     const result = await generateObject({
       model: openai(env.OPENAI_MODEL),
       schema: CanadianizerSchema,
-      temperature: 0.22,
+      temperature: isExtreme ? 0.72 : 0.22,
       prompt: [
         'You are an expert Canadian financial editorial strategist adapting U.S. financial education content for a Canadian audience.',
         'Your job is not to mechanically translate words. Your job is to preserve the useful client education intent, then rebuild the article around Canadian equivalents when a reasonable equivalent exists.',
@@ -134,11 +136,27 @@ export async function POST(req: Request) {
         '- complianceNotes should flag review concerns and places where a Canadian SME should verify details.',
         includeDisclosure ? '- Include a brief non-advice/disclosure note near the end of the article.' : '- Do not add a formal disclosure note in the article.',
         '',
+        isExtreme
+          ? [
+              'EXTREME MAPLE MODE:',
+              '- This is an internal comedy mode. Keep the financial concept adaptation directionally useful, but make the voice overtly, playfully Canadian.',
+              '- Use light Canadian humour, maple-forward metaphors, rink/weather/cottage-season references, and friendly "eh" energy where it fits.',
+              '- Do not use offensive stereotypes, slurs, or jokes about protected groups.',
+              '- Do not make the financial facts more confident than the source supports. The comedy should be in the voice, not in fabricated tax or legal claims.',
+              '- editorialNotes must explicitly say this is not publish-ready without toning down the comedic style.',
+            ].join('\n')
+          : [
+              'NORMAL MODE:',
+              '- Keep the voice professional, polished, and credible for an enterprise editorial workflow.',
+              '- Avoid forced Canadian slang. Use Canadian context and terminology without making the article feel like parody.',
+            ].join('\n'),
+        '',
         'Configuration:',
         `Audience: ${audience}`,
         `Province/region: ${province}`,
         `Tone: ${tone}`,
         `Length: ${length}`,
+        `Mode: ${mode}`,
         '',
         'SOURCE METADATA:',
         `id: ${source.id}`,
@@ -172,6 +190,7 @@ export async function POST(req: Request) {
         tone,
         length,
         includeDisclosure,
+        mode,
       },
     };
 
@@ -185,6 +204,7 @@ export async function POST(req: Request) {
         sourceContentId: source.id,
         matchScore,
         matchScoreLabel: canadianized.matchScoreLabel,
+        mode,
       },
     });
 
