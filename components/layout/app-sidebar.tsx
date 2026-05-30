@@ -70,7 +70,7 @@ const mainNavItems = [
     icon: GraduationCap,
   },
   {
-    title: 'Canadianizer Eh?',
+    title: 'Canadianizer',
     href: '/canadianizer',
     icon: Leaf,
   },
