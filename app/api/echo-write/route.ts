@@ -74,7 +74,15 @@ type EchoWriteBody = {
   length: 'short' | 'medium' | 'long';
   targetWordCount?: number;
   maxSources?: number;
+  model?: string;
 };
+
+const ECHOWRITE_MODELS = new Set([
+  'gpt-4o-mini',
+  'gpt-4.1',
+  'gpt-5.2',
+  'gpt-5.5',
+]);
 
 const STOP_WORDS = new Set([
   'about',
@@ -366,9 +374,11 @@ export async function POST(req: Request) {
 
     const env = getServerEnv();
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-    const modelName = body.contentType === 'video-script'
+    const fallbackModel = body.contentType === 'video-script'
       ? env.ECHOWRITE_VIDEO_MODEL
       : env.ECHOWRITE_MODEL;
+    const requestedModel = String(body.model || '').trim();
+    const modelName = ECHOWRITE_MODELS.has(requestedModel) ? requestedModel : fallbackModel;
 
     const contentTypeInstruction = body.contentType === 'video-script'
       ? videoScriptStructureInstruction(body.length, body.targetWordCount)

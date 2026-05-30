@@ -39,6 +39,13 @@ type EchoWriteSource = {
   bodySnippet?: string;
 };
 
+const MODEL_OPTIONS = [
+  { value: 'gpt-4o-mini', label: 'GPT-4o mini - fast/current default' },
+  { value: 'gpt-4.1', label: 'GPT-4.1 - stronger non-reasoning' },
+  { value: 'gpt-5.2', label: 'GPT-5.2 - strong comparison model' },
+  { value: 'gpt-5.5', label: 'GPT-5.5 - latest/strongest' },
+];
+
 function titleFromContent(content: string) {
   const firstLine = content
     .split('\n')
@@ -71,6 +78,7 @@ export default function EchoWritePage() {
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [targetWordCount, setTargetWordCount] = useState('');
   const [maxSources, setMaxSources] = useState(6);
+  const [model, setModel] = useState('gpt-4o-mini');
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -170,6 +178,7 @@ export default function EchoWritePage() {
           contentType,
           length,
           maxSources,
+          model,
           targetWordCount: targetWordCount ? Number(targetWordCount) : undefined,
         }),
       });
@@ -297,7 +306,7 @@ export default function EchoWritePage() {
       />
 
       <div className="space-y-3">
-        <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 border-0 p-0 opacity-0 shadow-none' : 'max-h-[760px] translate-y-0 opacity-100'}`}>
+        <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 border-0 p-0 opacity-0 shadow-none' : 'max-h-[860px] translate-y-0 opacity-100'}`}>
           <Textarea
             placeholder="Describe the content you want generated..."
             value={prompt}
@@ -307,7 +316,7 @@ export default function EchoWritePage() {
             }}
             rows={4}
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <div>
               <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
               <Select value={writingStyle} onValueChange={(v: any) => {
@@ -368,6 +377,20 @@ export default function EchoWritePage() {
                   setSetupCollapsed(false);
                 }}
               />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">OpenAI Model</div>
+              <Select value={model} onValueChange={(value) => {
+                setModel(value);
+                setSetupCollapsed(false);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MODEL_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="flex items-center gap-2">
