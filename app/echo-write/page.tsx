@@ -153,10 +153,12 @@ export default function EchoWritePage() {
     };
   }, [content, sources.length, spans]);
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
-  const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
+  const canCollapseSetup = hasGeneratedOutput || loading;
+  const isSetupCollapsed = setupCollapsed && canCollapseSetup;
 
   const generate = async () => {
     setLoading(true);
+    setSetupCollapsed(true);
     setError(null);
     try {
       const res = await fetch('/api/echo-write', {
@@ -186,6 +188,7 @@ export default function EchoWritePage() {
     } catch (err: any) {
       const message = err?.message || 'EchoWrite generation failed';
       setError(message);
+      setSetupCollapsed(false);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -260,125 +263,127 @@ export default function EchoWritePage() {
         ]}
       />
 
-      {hasGeneratedOutput ? (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-md"
-            onClick={() => setSetupCollapsed((value) => !value)}
-          >
-            {isSetupCollapsed ? 'Show generation options' : 'Hide generation options'}
-          </Button>
-        </div>
-      ) : null}
-
-      <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 p-0 opacity-0' : 'max-h-[760px] translate-y-0 opacity-100'}`}>
-        <Textarea
-          placeholder="Describe the content you want generated..."
-          value={prompt}
-          onChange={(e) => {
-            setPrompt(e.target.value);
-            setSetupCollapsed(false);
-          }}
-          rows={4}
-        />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
-            <Select value={writingStyle} onValueChange={(v: any) => {
-              setWritingStyle(v);
-              setSetupCollapsed(false);
-            }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="professional">Professional</SelectItem>
-                <SelectItem value="fun">Fun</SelectItem>
-                <SelectItem value="educational">Educational</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Content Type</div>
-            <Select value={contentType} onValueChange={(v: any) => {
-              setContentType(v);
-              setSetupCollapsed(false);
-            }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="article">Article</SelectItem>
-                <SelectItem value="video-script">Video Script</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Length</div>
-            <Select value={length} onValueChange={(v: any) => {
-              setLength(v);
-              setSetupCollapsed(false);
-            }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="short">Short</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="long">Long</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Target Word Count</div>
-            <Input value={targetWordCount} onChange={(e) => {
-              setTargetWordCount(e.target.value);
-              setSetupCollapsed(false);
-            }} placeholder="Optional" />
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Max Articles to Reference</div>
-            <Input
-              type="number"
-              min={0}
-              max={12}
-              value={maxSources}
-              onChange={(e) => {
-                setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)));
-                setSetupCollapsed(false);
-              }}
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={generate} disabled={loading || !prompt.trim()}>
-            {loading ? 'Generating...' : 'Generate'}
-          </Button>
-          <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim() || !content.trim()}>
-            Regenerate
-          </Button>
-          <div className="flex-1" />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setHowItWorksOpen(true)}
-            title="How EchoWrite works (retrieval + grounding + highlights)"
-          >
-            <span className="text-xs font-semibold">i</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setPromptOpen(true)}
-            title="View last generation prompt"
-          >
-            <Settings2 className="h-4 w-4" />
-          </Button>
-        </div>
-        {error ? (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{error}</span>
+      <div className="space-y-3">
+        {canCollapseSetup ? (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-md border-blue-200 bg-white px-4 font-semibold text-blue-950 shadow-sm hover:border-blue-300 hover:bg-blue-50"
+              onClick={() => setSetupCollapsed((value) => !value)}
+            >
+              {isSetupCollapsed ? 'Show generation options' : 'Hide generation options'}
+            </Button>
           </div>
         ) : null}
+
+        <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 border-0 p-0 opacity-0 shadow-none' : 'max-h-[760px] translate-y-0 opacity-100'}`}>
+          <Textarea
+            placeholder="Describe the content you want generated..."
+            value={prompt}
+            onChange={(e) => {
+              setPrompt(e.target.value);
+              setSetupCollapsed(false);
+            }}
+            rows={4}
+          />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
+              <Select value={writingStyle} onValueChange={(v: any) => {
+                setWritingStyle(v);
+                setSetupCollapsed(false);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="fun">Fun</SelectItem>
+                  <SelectItem value="educational">Educational</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Content Type</div>
+              <Select value={contentType} onValueChange={(v: any) => {
+                setContentType(v);
+                setSetupCollapsed(false);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="article">Article</SelectItem>
+                  <SelectItem value="video-script">Video Script</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Length</div>
+              <Select value={length} onValueChange={(v: any) => {
+                setLength(v);
+                setSetupCollapsed(false);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short">Short</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="long">Long</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Target Word Count</div>
+              <Input value={targetWordCount} onChange={(e) => {
+                setTargetWordCount(e.target.value);
+                setSetupCollapsed(false);
+              }} placeholder="Optional" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Max Articles to Reference</div>
+              <Input
+                type="number"
+                min={0}
+                max={12}
+                value={maxSources}
+                onChange={(e) => {
+                  setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)));
+                  setSetupCollapsed(false);
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={generate} disabled={loading || !prompt.trim()}>
+              {loading ? 'Generating...' : 'Generate'}
+            </Button>
+            <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim() || !content.trim()}>
+              Regenerate
+            </Button>
+            <div className="flex-1" />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setHowItWorksOpen(true)}
+              title="How EchoWrite works (retrieval + grounding + highlights)"
+            >
+              <span className="text-xs font-semibold">i</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPromptOpen(true)}
+              title="View last generation prompt"
+            >
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </div>
+          {error ? (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
@@ -481,7 +486,7 @@ Separately (client-side), we:
             ) : (
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_22%,rgba(244,114,182,0.42),transparent_30%),radial-gradient(circle_at_62%_70%,rgba(168,85,247,0.22),transparent_28%),linear-gradient(135deg,#06172f_0%,#123b7a_52%,#db2777_118%)]" />
             )}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_92%_16%,rgba(244,114,182,0.18),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.58)_46%,rgba(83,20,84,0.34)),linear-gradient(0deg,rgba(2,6,23,0.78),transparent_46%)]" />
+            <div className={outputHeroSource?.imageUrl ? 'absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.86),rgba(15,23,42,0.52)_48%,rgba(15,23,42,0.24)),linear-gradient(0deg,rgba(2,6,23,0.74),transparent_46%)]' : 'absolute inset-0 bg-[radial-gradient(circle_at_92%_16%,rgba(244,114,182,0.18),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.58)_46%,rgba(83,20,84,0.34)),linear-gradient(0deg,rgba(2,6,23,0.78),transparent_46%)]'} />
             <div className="absolute inset-x-0 -bottom-4 h-36 bg-gradient-to-t from-white from-[10%] via-white/88 via-[42%] to-transparent" />
 
             <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between gap-3">
