@@ -27,40 +27,25 @@ type PhilosophyCard = {
 const agentDocuments = [
   {
     name: 'AGENTS.md',
-    label: 'Workspace Rules',
-    excerpt: 'Read the repo before changing it. Keep changes small and reviewable. Prefer existing project patterns. Run validation when available. Report clearly what changed and what remains.',
-  },
-  {
-    name: 'SOUL.md',
-    label: 'Project Agent Shape',
-    excerpt: 'Editorial is focused on the application repo. It should be concise, practical, code-focused, and avoid drifting into RallyClaw system administration.',
-  },
-  {
-    name: 'IDENTITY.md',
-    label: 'Agent Identity',
-    excerpt: 'Editorial is a dedicated coding agent for the Editorial application project, previously known as ff-content-creator.',
-  },
-  {
-    name: 'USER.md',
-    label: 'Operator Preferences',
-    excerpt: 'Rolly prefers practical engineering work: inspect before changing, avoid hidden state, document handoff state, validate changes, and report concrete commits.',
+    label: 'Project Agent Spec',
+    excerpt: 'A project-level agent file gives future contributors the operating rules for the built-in coding partner: inspect before changing, follow local patterns, keep work reviewable, validate when possible, and report changes clearly.',
   },
 ];
 
 const philosophyCards: PhilosophyCard[] = [
   {
     title: 'Agent as product collaborator',
-    kicker: 'How the builder behaves',
+    kicker: 'What comes with the project',
     icon: Bot,
     accent: 'from-sky-500 via-cyan-300 to-emerald-300',
-    body: 'The agent should act like a focused product engineer: inspect context, make small changes, verify them, and keep enough notes that the next turn can continue cleanly.',
+    body: 'The agent is part of the project handoff, not a separate mystery tool. Its instructions, habits, and working assumptions should travel with the code so another builder can continue with the same context.',
   },
   {
     title: 'Editorial is an operating system',
-    kicker: 'What the platform is becoming',
+    kicker: 'The other side of the coin',
     icon: Layers3,
     accent: 'from-violet-500 via-fuchsia-400 to-rose-300',
-    body: 'The app is not just a generator. It is becoming a content operations workspace for source review, adaptation, campaign creation, compliance-aware drafts, and downstream delivery.',
+    body: 'Platform architecture explains how the product works. Agent philosophy explains how the project is worked on. Together they make the system easier to understand, extend, and recover later.',
   },
   {
     title: 'Human review stays central',
@@ -76,7 +61,7 @@ const platformPillars = [
   'Transform trusted source material into useful editorial assets.',
   'Make generated output reviewable, editable, and attributable.',
   'Support specialized workflows like CE courses and Canadian adaptations.',
-  'Keep downstream delivery flexible through stable package/API shapes.',
+  'Keep downstream delivery flexible through stable package, export, and API shapes.',
 ];
 
 const changeLevers = [
@@ -112,10 +97,10 @@ export default function PhilosophyLab() {
             <Badge className="bg-white/12 text-white hover:bg-white/18">Product Lab sketch</Badge>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">Agent Philosophy</h1>
             <p className="mt-4 text-sm leading-7 text-white/72 md:text-base">
-              An AI agent is a software collaborator with instructions, tools, memory, and a working style. The better its philosophy matches the product and team, the more useful its code, design, and judgment become.
+              An AI agent is a software collaborator with instructions, tools, project context, and a working style. For Editorial, the point is to make that collaborator visible inside the project instead of leaving it as hidden chat history.
             </p>
             <p className="mt-3 text-sm leading-7 text-white/72 md:text-base">
-              This page is a place to inspect how the Editorial agent is currently framed, then decide what to change so it can build this platform with better taste, stronger defaults, and fewer repeated explanations.
+              The project should carry its own agent specifications, design documents, change logs, and platform notes so a future contributor can understand both the app and the way the app has been built.
             </p>
           </div>
           <div className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur">
@@ -125,14 +110,14 @@ export default function PhilosophyLab() {
               </span>
               <div>
                 <div className="text-sm font-semibold">Current operating idea</div>
-                <div className="text-xs text-white/60">Focused product engineer for Editorial</div>
+                <div className="text-xs text-white/60">A project-aware agent built into Editorial</div>
               </div>
             </div>
             <div className="mt-4 space-y-2 text-xs leading-5 text-white/72">
-              <p>Inspect first.</p>
-              <p>Prefer existing project patterns.</p>
-              <p>Validate when possible.</p>
-              <p>Report commits, risks, and next steps clearly.</p>
+              <p>Understand the design intent.</p>
+              <p>Follow the project's existing patterns.</p>
+              <p>Keep changes small and traceable.</p>
+              <p>Leave useful handoff notes for the next contributor.</p>
             </div>
           </div>
         </div>
@@ -167,7 +152,7 @@ export default function PhilosophyLab() {
               <p className="text-xs font-semibold uppercase text-primary">Platform Philosophy</p>
               <h2 className="text-xl font-semibold">What we are building</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Editorial is an internal content workspace for teams that manage advisor-facing material. The platform should help the team find useful source content, understand it, transform it into new assets, review the work, and package it for other systems.
+                Editorial is an internal content workspace for teams that manage advisor-facing material. Platform architecture is the product side of the same philosophy: source content, generation workflows, review surfaces, packaging, and delivery paths should be clear enough for both humans and agents to work with.
               </p>
             </div>
           </div>
@@ -190,9 +175,12 @@ export default function PhilosophyLab() {
             </span>
             <div>
               <p className="text-xs font-semibold uppercase text-primary">Agent docs</p>
-              <h2 className="text-lg font-semibold">Instruction files in plain language</h2>
+              <h2 className="text-lg font-semibold">Project-local instructions in plain language</h2>
             </div>
           </div>
+          <p className="mb-4 text-sm leading-6 text-muted-foreground">
+            The agent file is a practical project asset. It teaches future contributors how the coding partner should read the repo, respect the design documents, use the change history, and make decisions that fit Editorial.
+          </p>
           <div className="space-y-3">
             {agentDocuments.map((doc) => (
               <div key={doc.name} className="rounded-md border border-border bg-background p-3">
@@ -213,8 +201,8 @@ export default function PhilosophyLab() {
             <Braces className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-xs font-semibold uppercase text-primary">Editable philosophy levers</p>
-            <h2 className="text-lg font-semibold">What changing the agent philosophy would affect</h2>
+            <p className="text-xs font-semibold uppercase text-primary">Agent philosophy scope</p>
+            <h2 className="text-lg font-semibold">What the project agent specification shapes</h2>
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -228,21 +216,6 @@ export default function PhilosophyLab() {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-dashed border-border bg-muted/20 p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-primary">Sketch next</p>
-            <h2 className="text-lg font-semibold">Future idea: editable agent philosophy</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              A later version could let trusted users edit project philosophy directly, preview the instruction diff, and save a controlled update to the agent docs after review.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-background p-3 text-xs leading-5 text-muted-foreground lg:max-w-sm">
-            Suggested controls: product principles, communication style, design taste, risk tolerance, validation defaults, and current roadmap focus.
-          </div>
         </div>
       </section>
     </div>
