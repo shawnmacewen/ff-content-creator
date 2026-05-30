@@ -260,23 +260,43 @@ export default function EchoWritePage() {
             detail: `References up to ${maxSources} source articles.`,
             icon: PenSquare,
           },
+          {
+            label: contentType === 'video-script' ? 'Video script' : 'Editorial article',
+            detail: `${writingStyle[0].toUpperCase()}${writingStyle.slice(1)} style, ${length} length.`,
+            icon: FileText,
+            iconClassName: 'bg-blue-100 text-blue-700',
+          },
+          {
+            label: content.trim() ? `${content.trim().split(/\s+/).length} words drafted` : loading ? 'Drafting output' : 'Ready to draft',
+            detail: content.trim()
+              ? `${citedSourceCount} cited sources from ${sources.length} retrieved.`
+              : 'Generate a draft to populate output and citation metrics.',
+            icon: loading ? Loader2 : Sparkles,
+            iconClassName: 'bg-cyan-100 text-cyan-700',
+          },
+          {
+            label: isSetupCollapsed ? 'Show generation options' : 'Hide generation options',
+            detail: canCollapseSetup ? 'Open or collapse the prompt and settings panel.' : 'Available after generation starts.',
+            icon: Settings2,
+            active: canCollapseSetup,
+            iconClassName: 'bg-slate-900 text-white',
+            trailing: (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-md border-blue-200 bg-white px-3 text-xs font-semibold text-blue-950 shadow-sm hover:border-blue-300 hover:bg-blue-50"
+                disabled={!canCollapseSetup}
+                onClick={() => setSetupCollapsed((value) => !value)}
+              >
+                {isSetupCollapsed ? 'Show' : 'Hide'}
+              </Button>
+            ),
+          },
         ]}
       />
 
       <div className="space-y-3">
-        {canCollapseSetup ? (
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-md border-blue-200 bg-white px-4 font-semibold text-blue-950 shadow-sm hover:border-blue-300 hover:bg-blue-50"
-              onClick={() => setSetupCollapsed((value) => !value)}
-            >
-              {isSetupCollapsed ? 'Show generation options' : 'Hide generation options'}
-            </Button>
-          </div>
-        ) : null}
-
         <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 border-0 p-0 opacity-0 shadow-none' : 'max-h-[760px] translate-y-0 opacity-100'}`}>
           <Textarea
             placeholder="Describe the content you want generated..."
