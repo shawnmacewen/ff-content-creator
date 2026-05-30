@@ -13,6 +13,7 @@ import { BouncingDots, GeneratingOutputState } from '@/components/generator/gene
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
+import { ContentDetail } from '@/components/source-content/content-detail';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { PageHeader } from '@/components/layout/page-header';
@@ -49,6 +50,7 @@ export default function GeneratePage() {
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [setupCollapsed, setSetupCollapsed] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource } = useSWR<any>(
@@ -85,11 +87,20 @@ export default function GeneratePage() {
   const handleClearSource = useCallback(() => {
     setSelectedSourceIds([]);
     setSetupCollapsed(false);
+    setDetailOpen(false);
   }, []);
 
   const handleUseDetailArticle = useCallback(() => {
     toast.success('Article selected for generation');
   }, []);
+
+  const handleOpenSelectedDetails = useCallback(() => {
+    if (!detailContent) {
+      toast.error('Select an article first');
+      return;
+    }
+    setDetailOpen(true);
+  }, [detailContent]);
 
   const [mode, setMode] = useState<GenerationMode>('kit');
 
@@ -628,6 +639,7 @@ export default function GeneratePage() {
                 bodyPreview={normalizedBodyPreview}
                 onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
+                onViewDetails={handleOpenSelectedDetails}
               />
             </div>
           </div>
@@ -834,6 +846,7 @@ export default function GeneratePage() {
                 bodyPreview={normalizedBodyPreview}
                 onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
+                onViewDetails={handleOpenSelectedDetails}
               />
             </div>
           </div>
@@ -890,6 +903,12 @@ export default function GeneratePage() {
           </div>
         </div>
       )}
+      <ContentDetail
+        content={detailContent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUseForGeneration={handleUseDetailArticle}
+      />
     </div>
   );
 }

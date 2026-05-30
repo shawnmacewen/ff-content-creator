@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import {
   Bookmark,
   Calendar,
+  ExternalLink,
   FileText,
   Sparkles,
   Target,
@@ -135,6 +136,7 @@ export function SelectedArticlePreview({
   bodyPreview,
   onClear,
   onUseArticle,
+  onViewDetails,
   className,
 }: {
   selectedSource: any;
@@ -142,6 +144,7 @@ export function SelectedArticlePreview({
   bodyPreview: string;
   onClear: () => void;
   onUseArticle: () => void;
+  onViewDetails?: () => void;
   className?: string;
 }) {
   const article = selectedSource?.data ?? selectedSource ?? null;
@@ -302,6 +305,16 @@ export function SelectedArticlePreview({
 
       <div className="z-20 mt-auto bg-slate-950/95 px-7 py-5 shadow-[0_-18px_50px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:px-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+          {onViewDetails ? (
+            <Button
+              variant="outline"
+              className="h-12 rounded-2xl border-white/15 bg-white/10 px-6 font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20 hover:text-white"
+              onClick={onViewDetails}
+            >
+              View Details
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          ) : null}
           <Button
             className="h-12 rounded-2xl bg-[linear-gradient(135deg,#5b8cff,#9b4dff)] px-8 font-semibold text-white shadow-[0_0_28px_rgba(99,102,241,0.42)] transition hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(139,92,246,0.56)]"
             onClick={onUseArticle}

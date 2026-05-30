@@ -496,27 +496,9 @@ export function ContentDetail({
   const publisherLabel = getPublisherLabel(content);
   const publishedDate = content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable';
   const designation = meta?.contentDesignation || content.type || 'Editorial Source';
-  const bodyParagraphs = richBlocks.filter((block): block is Extract<RichBlock, { type: 'paragraph' }> => block.type === 'paragraph');
-  const takeawaySource = [
-    content.excerpt,
-    ...bodyParagraphs.map((block) => block.text),
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const takeaways = takeawaySource
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 42)
-    .slice(0, 3);
-  const resolvedTakeaways = takeaways.length
-    ? takeaways
-    : [
-        `${content.title} is available as an approved source for content generation.`,
-        'Review the article body and metadata before using it as campaign source material.',
-        'Use the source actions to copy text, open the original, or send the article into generation.',
-      ];
+  const storedTakeaways = Array.isArray(content.keyTakeaways)
+    ? content.keyTakeaways.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 3)
+    : [];
   const visibleBlocks = richBlocks.length ? richBlocks : plainTextBlocks(displayBodyText);
 
   const renderMetadataValue = (value: unknown) => {
@@ -647,7 +629,7 @@ export function ContentDetail({
             <div className="pointer-events-none absolute -left-20 bottom-10 h-56 w-56 rounded-full bg-sky-300/20 blur-3xl" />
             <div className="pointer-events-none absolute right-10 top-20 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl" />
 
-            <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between gap-4">
+            <div className="absolute left-7 right-7 top-5 z-20 flex items-center justify-between gap-4 sm:left-10 sm:right-10 lg:left-12 lg:right-12">
               <div className="inline-flex min-w-0 max-w-[48%] items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
                 <span className="truncate">{designation}</span>
               </div>
@@ -677,20 +659,20 @@ export function ContentDetail({
               </div>
             </div>
 
-            <div className="relative z-10 flex min-h-[32vh] flex-col justify-between px-7 pb-9 pt-24 text-white sm:px-10 lg:px-12">
-              <h2 className="max-w-4xl text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
+            <div className="relative z-10 min-h-[32vh] px-7 pb-20 pt-24 text-white sm:px-10 lg:px-12">
+              <h2 className="line-clamp-3 max-w-4xl text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
                 {content.title}
               </h2>
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-blue-950">
+              <div className="absolute bottom-8 left-7 right-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-slate-950 sm:left-10 sm:right-10 lg:left-12 lg:right-12">
                 <span className="inline-flex items-center gap-2">
-                  <User className="h-4 w-4 text-blue-700" />
+                  <User className="h-4 w-4 text-slate-800" />
                   {publisherLabel}
                 </span>
                 <span className="inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-700" />
+                  <Calendar className="h-4 w-4 text-slate-800" />
                   {publishedDate}
                 </span>
-                {isFinraApproved ? <span className="text-slate-700">FINRA reviewed</span> : null}
+                {isFinraApproved ? <span className="text-slate-800">FINRA reviewed</span> : null}
               </div>
             </div>
           </section>
@@ -712,27 +694,29 @@ export function ContentDetail({
 
           <div className="mx-auto grid max-w-6xl gap-7 px-7 pb-44 pt-8 sm:px-10 md:grid-cols-[0.62fr_1.38fr] lg:px-12">
             <aside className="space-y-8">
-              <div className="space-y-5">
-                <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
-                  <Sparkles className="h-5 w-5 text-blue-600" />
-                  Key Takeaways
-                </div>
-                <div className="space-y-6">
-                  {resolvedTakeaways.map((item, index) => {
-                    const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
-                    return (
-                      <div key={index} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
-                          <Icon className="h-4 w-4" />
+              {storedTakeaways.length ? (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                    Key Takeaways
+                  </div>
+                  <div className="space-y-6">
+                    {storedTakeaways.map((item, index) => {
+                      const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
+                      return (
+                        <div key={index} className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.16),0_10px_30px_rgba(6,182,212,0.12)]">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <p className="line-clamp-4 pt-1 text-[13px] font-medium leading-5 text-slate-700">{renderHighlightedText(item)}</p>
                         </div>
-                        <p className="line-clamp-4 pt-1 text-[13px] font-medium leading-5 text-slate-700">{renderHighlightedText(item)}</p>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
-              <div className="space-y-4 border-t border-slate-200/80 pt-6">
+              <div className={cn('space-y-4', storedTakeaways.length ? 'border-t border-slate-200/80 pt-6' : '')}>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Source Signals</div>
                 <div className="space-y-3 text-sm text-slate-600">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
