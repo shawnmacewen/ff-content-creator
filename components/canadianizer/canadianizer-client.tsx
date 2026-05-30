@@ -90,6 +90,9 @@ type CanadianizedResult = {
     contentDesignation?: string | null;
     tags?: string[];
   };
+  config?: {
+    model?: string;
+  };
 };
 
 const fetcher = async (url: string) => {
@@ -237,6 +240,7 @@ export default function CanadianizerClient() {
   const [length, setLength] = React.useState('similar');
   const [includeDisclosure, setIncludeDisclosure] = React.useState(true);
   const [extremeMode, setExtremeMode] = React.useState(false);
+  const [model, setModel] = React.useState('gpt-4o-mini');
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<CanadianizedResult | null>(null);
@@ -289,6 +293,7 @@ export default function CanadianizerClient() {
           length,
           includeDisclosure,
           mode: extremeMode ? 'extreme' : 'normal',
+          model,
         }),
       });
       const payload = await response.json().catch(() => null);
@@ -321,7 +326,7 @@ export default function CanadianizerClient() {
           },
           {
             label: 'Match score',
-            detail: result ? `${result.matchScore}% ${result.matchScoreLabel}` : 'Explains where the adaptation is strong or weak',
+            detail: result ? `${result.matchScore}% ${result.matchScoreLabel} with ${result.config?.model || model}` : 'Explains where the adaptation is strong or weak',
             icon: BadgeCheck,
             iconClassName: 'bg-emerald-600 text-white',
           },
@@ -456,6 +461,20 @@ export default function CanadianizerClient() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase text-muted-foreground">OpenAI model</label>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4o-mini">GPT-4o mini - fast/current default</SelectItem>
+                    <SelectItem value="gpt-4.1">GPT-4.1 - stronger non-reasoning</SelectItem>
+                    <SelectItem value="gpt-5.2">GPT-5.2 - newest/strongest</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Use mini for faster experiments. Use GPT-5.2 for stricter Canadian equivalency judgment on high-risk articles.
+                </p>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase text-muted-foreground" htmlFor="canadianizer-tone">Tone</label>

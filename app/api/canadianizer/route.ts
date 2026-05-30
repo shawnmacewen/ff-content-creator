@@ -36,6 +36,12 @@ const EvaluationSchema = z.object({
   evaluatorNotes: z.array(z.string().min(1)).min(1).max(10),
 });
 
+const canadianizerModels = new Set([
+  'gpt-4o-mini',
+  'gpt-4.1',
+  'gpt-5.2',
+]);
+
 function decodeHtmlEntities(input: string) {
   return String(input || '')
     .replace(/&lt;/g, '<')
@@ -101,6 +107,7 @@ export async function POST(req: Request) {
     const length = String(body?.length || 'similar').trim();
     const includeDisclosure = Boolean(body?.includeDisclosure ?? true);
     const mode = body?.mode === 'extreme' ? 'extreme' : 'normal';
+    const requestedModel = String(body?.model || '').trim();
 
     if (!sourceContentId) {
       return Response.json({ error: 'Select one source content item to Canadianize.' }, { status: 400 });
@@ -126,6 +133,7 @@ export async function POST(req: Request) {
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
     const isExtreme = mode === 'extreme';
+    const selectedModel = canadianizerModels.has(requestedModel) ? requestedModel : env.OPENAI_MODEL;
     const generationPrompt = [
       'You are an expert Canadian financial editorial strategist adapting U.S. financial education content for a Canadian audience.',
       'Your job is not to mechanically translate words. Your job is to preserve the useful client education intent, then rebuild the article around Canadian equivalents when a reasonable equivalent exists.',
@@ -170,6 +178,7 @@ export async function POST(req: Request) {
       `Tone: ${tone}`,
       `Length: ${length}`,
       `Mode: ${mode}`,
+      `Model: ${selectedModel}`,
       '',
       'SOURCE METADATA:',
       `id: ${source.id}`,
@@ -184,7 +193,7 @@ export async function POST(req: Request) {
     ].join('\n');
 
     const result = await generateObject({
-      model: openai(env.OPENAI_MODEL),
+      model: openai(selectedModel),
       schema: CanadianizerSchema,
       temperature: isExtreme ? 0.72 : 0.22,
       prompt: generationPrompt,
@@ -227,7 +236,7 @@ export async function POST(req: Request) {
     ].join('\n');
 
     const evaluation = await generateObject({
-      model: openai(env.OPENAI_MODEL),
+      model: openai(selectedModel),
       schema: EvaluationSchema,
       temperature: 0,
       prompt: evaluationPrompt,
@@ -252,13 +261,13 @@ export async function POST(req: Request) {
       promptLog: [
         {
           step: 'generation',
-          model: env.OPENAI_MODEL,
+          model: selectedModel,
           temperature: isExtreme ? 0.72 : 0.22,
           prompt: generationPrompt,
         },
         {
           step: 'evaluation',
-          model: env.OPENAI_MODEL,
+          model: selectedModel,
           temperature: 0,
           prompt: evaluationPrompt,
         },
@@ -278,6 +287,7 @@ export async function POST(req: Request) {
         length,
         includeDisclosure,
         mode,
+        model: selectedModel,
       },
     };
 
@@ -286,7 +296,7 @@ export async function POST(req: Request) {
       contentType: 'article',
       category: 'content',
       assetCount: 1,
-      model: env.OPENAI_MODEL,
+      model: selectedModel,
       meta: {
         sourceContentId: source.id,
         matchScore,
