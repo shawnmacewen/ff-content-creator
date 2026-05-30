@@ -3,8 +3,10 @@
 import * as React from 'react';
 import useSWR from 'swr';
 import {
+  AlertTriangle,
   BadgeCheck,
   Check,
+  ClipboardList,
   FileText,
   Flag,
   Info,
@@ -17,6 +19,13 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,7 +57,22 @@ type CanadianizedResult = {
   executiveSummary: string;
   matchScore: number;
   matchScoreLabel: 'Strong match' | 'Good match' | 'Partial match' | 'Low match';
+  warningLevel: 'none' | 'review' | 'severe';
+  warningMessage: string;
   scoreRationale: string;
+  evaluator?: {
+    originalConcepts: string[];
+    convertedConcepts: string[];
+    unsupportedClaims: string[];
+    missingOrWeakEquivalents: string[];
+    evaluatorNotes: string[];
+  };
+  promptLog?: Array<{
+    step: string;
+    model: string;
+    temperature: number;
+    prompt: string;
+  }>;
   equivalentMap: Array<{
     americanConcept: string;
     canadianEquivalent: string;
@@ -126,6 +150,12 @@ function scoreClass(score: number) {
   return 'text-destructive';
 }
 
+function warningClass(level?: CanadianizedResult['warningLevel']) {
+  if (level === 'severe') return 'border-red-300 bg-red-50 text-red-950';
+  if (level === 'review') return 'border-amber-300 bg-amber-50 text-amber-950';
+  return 'border-emerald-200 bg-emerald-50 text-emerald-950';
+}
+
 function MarkdownPreview({ content }: { content: string }) {
   return (
     <div className="space-y-3 text-sm leading-7">
@@ -148,6 +178,51 @@ function MarkdownPreview({ content }: { content: string }) {
         return <p key={index} className="text-muted-foreground">{trimmed}</p>;
       })}
     </div>
+  );
+}
+
+function PromptLogDialog({ result }: { result: CanadianizedResult }) {
+  const logs = result.promptLog || [];
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="gap-2">
+          <ClipboardList className="h-3.5 w-3.5" />
+          Prompt Log
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 py-5 text-left">
+          <DialogTitle>Canadianizer Prompt History</DialogTitle>
+          <div className="text-sm leading-6 text-muted-foreground">
+            Shows the generation prompt and the second-pass evaluator prompt used for this run.
+          </div>
+        </DialogHeader>
+        <ScrollArea className="max-h-[calc(92vh-8rem)]">
+          <div className="space-y-4 p-5">
+            {logs.length ? logs.map((log) => (
+              <div key={log.step} className="rounded-md border border-border bg-background">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+                  <div className="text-sm font-semibold capitalize">{log.step}</div>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">{log.model}</Badge>
+                    <Badge variant="outline">temp {log.temperature}</Badge>
+                  </div>
+                </div>
+                <pre className="max-h-[460px] overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-5 text-muted-foreground">
+                  {log.prompt}
+                </pre>
+              </div>
+            )) : (
+              <div className="rounded-md border border-dashed border-border p-5 text-sm text-muted-foreground">
+                No prompt log was returned for this run.
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -423,22 +498,25 @@ export default function CanadianizerClient() {
                   <p className="mt-1 text-sm text-muted-foreground">Side-by-side review with a match score and conversion notes.</p>
                 </div>
                 {result ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold uppercase text-muted-foreground">Match</span>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="flex flex-wrap items-start gap-2">
+                    <PromptLogDialog result={result} />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">Match</span>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                          <div className={cn('mt-1 text-2xl font-semibold', scoreClass(result.matchScore))}>{result.matchScore}%</div>
+                          <Progress value={result.matchScore} className="mt-2" />
+                          <div className="mt-2 text-xs font-medium">{result.matchScoreLabel}</div>
                         </div>
-                        <div className={cn('mt-1 text-2xl font-semibold', scoreClass(result.matchScore))}>{result.matchScore}%</div>
-                        <Progress value={result.matchScore} className="mt-2" />
-                        <div className="mt-2 text-xs font-medium">{result.matchScoreLabel}</div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-sm leading-5">
-                      {result.scoreRationale}
-                    </TooltipContent>
-                  </Tooltip>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm leading-5">
+                        {result.scoreRationale}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 ) : null}
               </div>
             </CardHeader>
@@ -452,30 +530,43 @@ export default function CanadianizerClient() {
                   </p>
                 </div>
               ) : (
-                <div className="grid min-h-[620px] lg:grid-cols-2">
-                  <div className="border-b border-border lg:border-b-0 lg:border-r">
-                    <div className="border-b border-border bg-muted/30 px-4 py-3">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Original source</div>
-                      <div className="mt-1 line-clamp-2 text-sm font-semibold">{decodeLite(selectedSource?.title || result.source.title || 'Original source')}</div>
-                    </div>
-                    <ScrollArea className="h-[560px]">
-                      <div className="space-y-3 p-4 text-sm leading-7 text-muted-foreground">
-                        {(getSourceBody(selectedSource || ({} as SourceContent)) || 'Original body unavailable.').split(/\n{2,}/).slice(0, 80).map((block, index) => (
-                          <p key={index}>{decodeLite(block.trim())}</p>
-                        ))}
+                <div>
+                  {result.warningLevel !== 'none' ? (
+                    <div className={cn('m-4 rounded-md border p-3 text-sm leading-6', warningClass(result.warningLevel))}>
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div>
+                          <div className="font-semibold">{result.warningLevel === 'severe' ? 'Severe conversion warning' : 'Conversion review warning'}</div>
+                          <div>{result.warningMessage}</div>
+                        </div>
                       </div>
-                    </ScrollArea>
-                  </div>
-                  <div>
-                    <div className="border-b border-border bg-red-50/70 px-4 py-3">
-                      <div className="text-xs font-semibold uppercase text-red-700">Canadian draft</div>
-                      <div className="mt-1 line-clamp-2 text-sm font-semibold">{result.canadianTitle}</div>
                     </div>
-                    <ScrollArea className="h-[560px]">
-                      <div className="p-4">
-                        <MarkdownPreview content={result.canadianArticleMarkdown} />
+                  ) : null}
+                  <div className="grid min-h-[620px] lg:grid-cols-2">
+                    <div className="border-b border-border lg:border-b-0 lg:border-r">
+                      <div className="border-b border-border bg-muted/30 px-4 py-3">
+                        <div className="text-xs font-semibold uppercase text-muted-foreground">Original source</div>
+                        <div className="mt-1 line-clamp-2 text-sm font-semibold">{decodeLite(selectedSource?.title || result.source.title || 'Original source')}</div>
                       </div>
-                    </ScrollArea>
+                      <ScrollArea className="h-[560px]">
+                        <div className="space-y-3 p-4 text-sm leading-7 text-muted-foreground">
+                          {(getSourceBody(selectedSource || ({} as SourceContent)) || 'Original body unavailable.').split(/\n{2,}/).slice(0, 80).map((block, index) => (
+                            <p key={index}>{decodeLite(block.trim())}</p>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                    <div>
+                      <div className="border-b border-border bg-red-50/70 px-4 py-3">
+                        <div className="text-xs font-semibold uppercase text-red-700">Canadian draft</div>
+                        <div className="mt-1 line-clamp-2 text-sm font-semibold">{result.canadianTitle}</div>
+                      </div>
+                      <ScrollArea className="h-[560px]">
+                        <div className="p-4">
+                          <MarkdownPreview content={result.canadianArticleMarkdown} />
+                        </div>
+                      </ScrollArea>
+                    </div>
                   </div>
                 </div>
               )}
@@ -507,6 +598,22 @@ export default function CanadianizerClient() {
                   <CardTitle className="text-base">Review Notes</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4">
+                  {result.evaluator?.unsupportedClaims?.length ? (
+                    <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                      <div className="mb-2 text-xs font-semibold uppercase text-red-800">Unsupported or risky Canadian claims</div>
+                      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-red-950">
+                        {result.evaluator.unsupportedClaims.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {result.evaluator?.missingOrWeakEquivalents?.length ? (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                      <div className="mb-2 text-xs font-semibold uppercase text-amber-800">Missing or weak equivalents</div>
+                      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-amber-950">
+                        {result.evaluator.missingOrWeakEquivalents.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
                   <div>
                     <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Gaps and non-matches</div>
                     <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
@@ -517,6 +624,12 @@ export default function CanadianizerClient() {
                     <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Compliance review</div>
                     <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
                       {result.complianceNotes.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Evaluator notes</div>
+                    <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                      {(result.evaluator?.evaluatorNotes || []).map((item) => <li key={item}>{item}</li>)}
                     </ul>
                   </div>
                   <div>

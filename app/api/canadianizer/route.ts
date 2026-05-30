@@ -17,13 +17,23 @@ const CanadianizerSchema = z.object({
   canadianTitle: z.string().min(1),
   canadianArticleMarkdown: z.string().min(1),
   executiveSummary: z.string().min(1),
-  matchScore: z.number().min(0).max(100),
-  matchScoreLabel: z.enum(['Strong match', 'Good match', 'Partial match', 'Low match']),
-  scoreRationale: z.string().min(1),
   equivalentMap: z.array(EquivalentSchema).min(1).max(12),
   gapsAndNonMatches: z.array(z.string()).max(10),
   editorialNotes: z.array(z.string()).min(1).max(10),
   complianceNotes: z.array(z.string()).min(1).max(8),
+});
+
+const EvaluationSchema = z.object({
+  matchScore: z.number().min(0).max(100),
+  matchScoreLabel: z.enum(['Strong match', 'Good match', 'Partial match', 'Low match']),
+  warningLevel: z.enum(['none', 'review', 'severe']),
+  warningMessage: z.string().min(1),
+  scoreRationale: z.string().min(1),
+  originalConcepts: z.array(z.string().min(1)).min(1).max(12),
+  convertedConcepts: z.array(z.string().min(1)).min(1).max(12),
+  unsupportedClaims: z.array(z.string()).max(12),
+  missingOrWeakEquivalents: z.array(z.string()).max(12),
+  evaluatorNotes: z.array(z.string().min(1)).min(1).max(10),
 });
 
 function decodeHtmlEntities(input: string) {
@@ -62,11 +72,23 @@ function mapSource(row: any) {
   };
 }
 
-function normalizeScoreLabel(score: number): z.infer<typeof CanadianizerSchema>['matchScoreLabel'] {
+function normalizeScoreLabel(score: number): z.infer<typeof EvaluationSchema>['matchScoreLabel'] {
   if (score >= 85) return 'Strong match';
   if (score >= 70) return 'Good match';
   if (score >= 45) return 'Partial match';
   return 'Low match';
+}
+
+function normalizeWarningLevel(score: number): z.infer<typeof EvaluationSchema>['warningLevel'] {
+  if (score < 30) return 'severe';
+  if (score < 60) return 'review';
+  return 'none';
+}
+
+function warningMessageFor(score: number, fallback: string) {
+  if (score < 30) return 'Severe warning: this article appears too U.S.-specific to duplicate as Canadian content without substantial new Canadian source research.';
+  if (score < 60) return 'Review warning: this article has weak Canadian equivalency and needs careful editorial/SME review before use.';
+  return fallback || 'No major conversion warning.';
 }
 
 export async function POST(req: Request) {
@@ -104,78 +126,143 @@ export async function POST(req: Request) {
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
     const isExtreme = mode === 'extreme';
+    const generationPrompt = [
+      'You are an expert Canadian financial editorial strategist adapting U.S. financial education content for a Canadian audience.',
+      'Your job is not to mechanically translate words. Your job is to preserve the useful client education intent, then rebuild the article around Canadian equivalents when a reasonable equivalent exists.',
+      '',
+      'Critical rules:',
+      '- Use Canadian terminology, institutions, tax concepts, plan types, savings vehicles, regulatory framing, and market context where appropriate.',
+      '- Convert U.S.-specific concepts into Canadian equivalents only when there is a defensible Canadian match.',
+      '- If a concept is tied to a U.S.-only agency, rule, program, plan, regulator, court, filing, or statute, do not invent a Canadian equivalent. Identify it as a gap or rewrite around a broader theme.',
+      '- Examples: 401(k) and IRA may map to RRSP/TFSA depending on context; 529 plans may map imperfectly to RESPs; U.S. Department of Labor, ERISA, SEC, FINRA, IRS, Medicare, Social Security, U.S. estate/gift/tax rules, and U.S. state rules often do not have a direct Canadian equivalent.',
+      '- If no clean Canadian equivalent exists, say so in gapsAndNonMatches and write around the concept honestly.',
+      '- Do not invent specific rates, contribution limits, legal deadlines, regulator claims, government departments, compliance requirements, or tax rules.',
+      '- Avoid saying content is legal, tax, or investment advice.',
+      '- Keep the content useful and engaging for Canadian advisors and clients, not academic.',
+      '- Preserve the original article intent, structure, and major themes where possible, but rewrite deeply enough that the Canadian article stands on its own.',
+      '- If province-specific treatment matters and the selected province is Canada-wide, use Canada-wide framing and note when provincial rules may vary.',
+      '',
+      'Output requirements:',
+      '- canadianArticleMarkdown should be a polished article in Markdown with a clear headline, short intro, section headings, and practical closing.',
+      '- equivalentMap should list the important U.S. concepts and their Canadian substitutions or caveats.',
+      '- For U.S.-specific concepts with no direct equivalent, canadianEquivalent should say "No direct Canadian equivalent" and notes should explain the gap.',
+      '- complianceNotes should flag review concerns and places where a Canadian SME should verify details.',
+      includeDisclosure ? '- Include a brief non-advice/disclosure note near the end of the article.' : '- Do not add a formal disclosure note in the article.',
+      '',
+      isExtreme
+        ? [
+            'EXTREME MAPLE MODE:',
+            '- This is an internal comedy mode. Keep the financial concept adaptation directionally useful, but make the voice overtly, playfully Canadian.',
+            '- Use light Canadian humour, maple-forward metaphors, rink/weather/cottage-season references, and friendly "eh" energy where it fits.',
+            '- Do not use offensive stereotypes, slurs, or jokes about protected groups.',
+            '- Do not make the financial facts more confident than the source supports. The comedy should be in the voice, not in fabricated tax or legal claims.',
+            '- editorialNotes must explicitly say this is not publish-ready without toning down the comedic style.',
+          ].join('\n')
+        : [
+            'NORMAL MODE:',
+            '- Keep the voice professional, polished, and credible for an enterprise editorial workflow.',
+            '- Avoid forced Canadian slang. Use Canadian context and terminology without making the article feel like parody.',
+          ].join('\n'),
+      '',
+      'Configuration:',
+      `Audience: ${audience}`,
+      `Province/region: ${province}`,
+      `Tone: ${tone}`,
+      `Length: ${length}`,
+      `Mode: ${mode}`,
+      '',
+      'SOURCE METADATA:',
+      `id: ${source.id}`,
+      `title: ${source.title}`,
+      `publisher: ${source.publisher}`,
+      `publishedAt: ${source.publishedAt || 'unknown'}`,
+      `contentDesignation: ${source.contentDesignation}`,
+      `tags: ${source.tags.join(', ') || 'none'}`,
+      '',
+      'SOURCE ARTICLE:',
+      source.body,
+    ].join('\n');
 
     const result = await generateObject({
       model: openai(env.OPENAI_MODEL),
       schema: CanadianizerSchema,
       temperature: isExtreme ? 0.72 : 0.22,
-      prompt: [
-        'You are an expert Canadian financial editorial strategist adapting U.S. financial education content for a Canadian audience.',
-        'Your job is not to mechanically translate words. Your job is to preserve the useful client education intent, then rebuild the article around Canadian equivalents when a reasonable equivalent exists.',
-        '',
-        'Critical rules:',
-        '- Use Canadian terminology, institutions, tax concepts, plan types, savings vehicles, regulatory framing, and market context where appropriate.',
-        '- Convert U.S.-specific concepts into Canadian equivalents when there is a defensible match. Examples: 401(k) and IRA may map to RRSP/TFSA depending on context; 529 plans may map imperfectly to RESPs; U.S. estate/gift/tax rules may need Canadian caveats rather than direct replacement.',
-        '- If no clean Canadian equivalent exists, say so in gapsAndNonMatches and write around the concept honestly.',
-        '- Do not invent specific rates, contribution limits, legal deadlines, regulator claims, or tax rules unless they are broad, stable, and necessary. Prefer general language and editorial caveats.',
-        '- Avoid saying content is legal, tax, or investment advice.',
-        '- Keep the content useful and engaging for Canadian advisors and clients, not academic.',
-        '- Preserve the original article intent, structure, and major themes where possible, but rewrite deeply enough that the Canadian article stands on its own.',
-        '- If province-specific treatment matters and the selected province is Canada-wide, use Canada-wide framing and note when provincial rules may vary.',
-        '',
-        'Match score guidance:',
-        '- 90-100: Most major concepts have strong Canadian equivalents and the article remains coherent.',
-        '- 70-89: Main theme converts well, with a few caveats or weaker equivalents.',
-        '- 45-69: Some useful conversion, but major source concepts do not map cleanly.',
-        '- 0-44: The article is highly U.S.-specific or would require new Canadian source research.',
-        '',
-        'Output requirements:',
-        '- canadianArticleMarkdown should be a polished article in Markdown with a clear headline, short intro, section headings, and practical closing.',
-        '- equivalentMap should list the important U.S. concepts and their Canadian substitutions or caveats.',
-        '- scoreRationale should explain why the match score is high or low in plain language.',
-        '- complianceNotes should flag review concerns and places where a Canadian SME should verify details.',
-        includeDisclosure ? '- Include a brief non-advice/disclosure note near the end of the article.' : '- Do not add a formal disclosure note in the article.',
-        '',
-        isExtreme
-          ? [
-              'EXTREME MAPLE MODE:',
-              '- This is an internal comedy mode. Keep the financial concept adaptation directionally useful, but make the voice overtly, playfully Canadian.',
-              '- Use light Canadian humour, maple-forward metaphors, rink/weather/cottage-season references, and friendly "eh" energy where it fits.',
-              '- Do not use offensive stereotypes, slurs, or jokes about protected groups.',
-              '- Do not make the financial facts more confident than the source supports. The comedy should be in the voice, not in fabricated tax or legal claims.',
-              '- editorialNotes must explicitly say this is not publish-ready without toning down the comedic style.',
-            ].join('\n')
-          : [
-              'NORMAL MODE:',
-              '- Keep the voice professional, polished, and credible for an enterprise editorial workflow.',
-              '- Avoid forced Canadian slang. Use Canadian context and terminology without making the article feel like parody.',
-            ].join('\n'),
-        '',
-        'Configuration:',
-        `Audience: ${audience}`,
-        `Province/region: ${province}`,
-        `Tone: ${tone}`,
-        `Length: ${length}`,
-        `Mode: ${mode}`,
-        '',
-        'SOURCE METADATA:',
-        `id: ${source.id}`,
-        `title: ${source.title}`,
-        `publisher: ${source.publisher}`,
-        `publishedAt: ${source.publishedAt || 'unknown'}`,
-        `contentDesignation: ${source.contentDesignation}`,
-        `tags: ${source.tags.join(', ') || 'none'}`,
-        '',
-        'SOURCE ARTICLE:',
-        source.body,
-      ].join('\n'),
+      prompt: generationPrompt,
     });
 
-    const matchScore = Math.round(result.object.matchScore);
+    const evaluationPrompt = [
+      'You are a strict Canadian financial-services editorial evaluator.',
+      'Score whether a U.S. source article was responsibly converted into a Canadian article.',
+      '',
+      'Important: the score is not writing quality. The score measures conceptual convertibility and factual responsibility.',
+      'Penalize heavily for invented Canadian equivalents, invented regulators, invented laws, invented departments, fabricated tax details, or unsupported Canadian claims.',
+      'If the original is mostly about a U.S.-specific agency, rule, statute, program, regulator, or government process with no real Canadian equivalent, the score should usually be below 30 even if the draft is well written.',
+      '',
+      'Score guide:',
+      '- 90-100: Most source concepts have strong real Canadian equivalents and the Canadian article preserves the original educational intent without unsupported claims.',
+      '- 70-89: Main theme converts well, with a few caveats or weaker equivalents.',
+      '- 60-69: Usable only with careful review; several concepts are weak or generic.',
+      '- 30-59: Weak conversion; major concepts lack real Canadian equivalents or need new Canadian source research.',
+      '- 0-29: Severe mismatch; article should not be duplicated as Canadian content because it is too U.S.-specific or the draft invented equivalents.',
+      '',
+      'Warning thresholds:',
+      '- warningLevel="none" only if score is 60 or higher.',
+      '- warningLevel="review" if score is 30-59.',
+      '- warningLevel="severe" if score is 0-29.',
+      '',
+      'Return unsupportedClaims for Canadian claims in the output that are not supported by the original or by safe broad Canadian context.',
+      'Return missingOrWeakEquivalents for U.S. concepts that did not convert cleanly.',
+      '',
+      'ORIGINAL SOURCE:',
+      source.body.slice(0, 18000),
+      '',
+      'CANADIANIZED OUTPUT:',
+      result.object.canadianArticleMarkdown.slice(0, 18000),
+      '',
+      'GENERATION EQUIVALENT MAP:',
+      JSON.stringify(result.object.equivalentMap, null, 2),
+      '',
+      'GENERATION GAPS AND NON-MATCHES:',
+      JSON.stringify(result.object.gapsAndNonMatches, null, 2),
+    ].join('\n');
+
+    const evaluation = await generateObject({
+      model: openai(env.OPENAI_MODEL),
+      schema: EvaluationSchema,
+      temperature: 0,
+      prompt: evaluationPrompt,
+    });
+
+    const matchScore = Math.round(evaluation.object.matchScore);
+    const warningLevel = normalizeWarningLevel(matchScore);
     const canadianized = {
       ...result.object,
       matchScore,
       matchScoreLabel: normalizeScoreLabel(matchScore),
+      warningLevel,
+      warningMessage: warningMessageFor(matchScore, evaluation.object.warningMessage),
+      scoreRationale: evaluation.object.scoreRationale,
+      evaluator: {
+        originalConcepts: evaluation.object.originalConcepts,
+        convertedConcepts: evaluation.object.convertedConcepts,
+        unsupportedClaims: evaluation.object.unsupportedClaims,
+        missingOrWeakEquivalents: evaluation.object.missingOrWeakEquivalents,
+        evaluatorNotes: evaluation.object.evaluatorNotes,
+      },
+      promptLog: [
+        {
+          step: 'generation',
+          model: env.OPENAI_MODEL,
+          temperature: isExtreme ? 0.72 : 0.22,
+          prompt: generationPrompt,
+        },
+        {
+          step: 'evaluation',
+          model: env.OPENAI_MODEL,
+          temperature: 0,
+          prompt: evaluationPrompt,
+        },
+      ],
       source: {
         id: source.id,
         title: source.title,
@@ -204,6 +291,7 @@ export async function POST(req: Request) {
         sourceContentId: source.id,
         matchScore,
         matchScoreLabel: canadianized.matchScoreLabel,
+        warningLevel,
         mode,
       },
     });
