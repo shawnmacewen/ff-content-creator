@@ -30,6 +30,13 @@ const FrenchTranslationSchema = z.object({
   translationNotes: z.array(z.string()).min(1).max(8),
 });
 
+const FrenchQualitySchema = z.object({
+  frenchQualityScore: z.number().min(0).max(100),
+  frenchQualityLabel: z.enum(['Native editorial', 'Strong Quebec French', 'Needs review', 'Weak translation']),
+  frenchQualityRationale: z.string().min(1),
+  frenchQualityNotes: z.array(z.string().min(1)).min(1).max(8),
+});
+
 const EvaluationSchema = z.object({
   matchScore: z.number().min(0).max(100),
   matchScoreLabel: z.enum(['Strong match', 'Good match', 'Partial match', 'Low match']),
@@ -256,6 +263,43 @@ export async function POST(req: Request) {
         })
       : null;
 
+    const frenchQualityPrompt = translation
+      ? [
+          'You are a senior Montreal financial-services editor reviewing Canadian French article quality.',
+          'Score how naturally this French article reads as if it were written by a skilled Montreal/Quebec financial article writer.',
+          '',
+          'Important: this is not a score for whether the Canadian conversion was conceptually possible. It is a language, tone, and localization score for the finished Quebec French article.',
+          '',
+          'Score guide:',
+          '- 90-100: Reads naturally like polished Montreal/Quebec editorial French, with strong terminology, flow, idiom, and audience fit.',
+          '- 75-89: Strong Quebec French with minor wording, tone, or terminology issues.',
+          '- 50-74: Understandable but feels translated, too European, uneven, awkward, or insufficiently localized.',
+          '- 0-49: Weak translation, unnatural French, poor Quebec fit, or serious terminology/style problems.',
+          '',
+          'Review for:',
+          '- Quebec/Canadian French phrasing and idiom.',
+          '- Natural financial-services editorial voice for Montreal/Quebec readers.',
+          '- Correct use of accents, grammar, and terminology.',
+          '- Avoidance of France-only phrasing when a Quebec/Canadian usage is expected.',
+          '- Whether the tone matches the English Canadian article, including Maple Mode comedy if present.',
+          '',
+          'ENGLISH CANADIAN ARTICLE:',
+          result.object.canadianArticleMarkdown,
+          '',
+          'QUEBEC FRENCH ARTICLE:',
+          translation.object.frenchArticleMarkdown,
+        ].join('\n')
+      : '';
+
+    const frenchQuality = translation
+      ? await generateObject({
+          model: openai(selectedModel),
+          schema: FrenchQualitySchema,
+          temperature: 0,
+          prompt: frenchQualityPrompt,
+        })
+      : null;
+
     const evaluationPrompt = [
       'You are a strict Canadian financial-services editorial evaluator.',
       'Score whether a U.S. source article was responsibly converted into a Canadian article.',
@@ -307,6 +351,10 @@ export async function POST(req: Request) {
       frenchArticleMarkdown: translation?.object.frenchArticleMarkdown || null,
       frenchExecutiveSummary: translation?.object.frenchExecutiveSummary || null,
       translationNotes: translation?.object.translationNotes || [],
+      frenchQualityScore: frenchQuality ? Math.round(frenchQuality.object.frenchQualityScore) : null,
+      frenchQualityLabel: frenchQuality?.object.frenchQualityLabel || null,
+      frenchQualityRationale: frenchQuality?.object.frenchQualityRationale || null,
+      frenchQualityNotes: frenchQuality?.object.frenchQualityNotes || [],
       matchScore,
       matchScoreLabel: normalizeScoreLabel(matchScore),
       warningLevel,
@@ -331,6 +379,12 @@ export async function POST(req: Request) {
           model: selectedModel,
           temperature: isExtreme ? 0.42 : 0.12,
           prompt: translationPrompt,
+        }] : []),
+        ...(frenchQuality ? [{
+          step: 'quebec french quality review',
+          model: selectedModel,
+          temperature: 0,
+          prompt: frenchQualityPrompt,
         }] : []),
         {
           step: 'evaluation',
@@ -368,6 +422,7 @@ export async function POST(req: Request) {
       meta: {
         sourceContentId: source.id,
         matchScore,
+        frenchQualityScore: frenchQuality ? Math.round(frenchQuality.object.frenchQualityScore) : null,
         matchScoreLabel: canadianized.matchScoreLabel,
         warningLevel,
         mode,

@@ -60,6 +60,10 @@ type CanadianizedResult = {
   frenchArticleMarkdown?: string | null;
   frenchExecutiveSummary?: string | null;
   translationNotes?: string[];
+  frenchQualityScore?: number | null;
+  frenchQualityLabel?: 'Native editorial' | 'Strong Quebec French' | 'Needs review' | 'Weak translation' | null;
+  frenchQualityRationale?: string | null;
+  frenchQualityNotes?: string[];
   matchScore: number;
   matchScoreLabel: 'Strong match' | 'Good match' | 'Partial match' | 'Low match';
   warningLevel: 'none' | 'review' | 'severe';
@@ -614,6 +618,24 @@ export default function CanadianizerClient() {
                         {result.scoreRationale}
                       </TooltipContent>
                     </Tooltip>
+                    {typeof result.frenchQualityScore === 'number' ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-semibold uppercase text-muted-foreground">French</span>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                            <div className={cn('mt-1 text-2xl font-semibold', scoreClass(result.frenchQualityScore))}>{result.frenchQualityScore}%</div>
+                            <Progress value={result.frenchQualityScore} className="mt-2" />
+                            <div className="mt-2 text-xs font-medium">{result.frenchQualityLabel || 'French quality'}</div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm leading-5">
+                          {result.frenchQualityRationale || 'Quebec French editorial quality score.'}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -728,6 +750,14 @@ export default function CanadianizerClient() {
                         <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Quebec French translation</div>
                         <ul className="mb-4 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
                           {result.translationNotes.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                      </>
+                    ) : null}
+                    {result.frenchQualityNotes?.length ? (
+                      <>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Montreal French quality</div>
+                        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {result.frenchQualityNotes.map((item) => <li key={item}>{item}</li>)}
                         </ul>
                       </>
                     ) : null}
