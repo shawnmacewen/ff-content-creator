@@ -25,6 +25,8 @@ const routeLabels: Record<string, string> = {
   '/audit': 'Content Scan',
   '/settings': 'Workspace',
   '/product-lab': 'Product Lab',
+  '/ce-course-creator': 'CE Course Creator',
+  '/canadianizer': 'Canadianizer Eh?',
 };
 
 export function Header() {

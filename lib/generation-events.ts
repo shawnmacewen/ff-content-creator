@@ -6,6 +6,7 @@ type GenerationTool =
   | 'carousel-plan'
   | 'carousel-image'
   | 'ce-course-creator'
+  | 'canadianizer'
   | 'image-generation'
   | 'image-test';
 

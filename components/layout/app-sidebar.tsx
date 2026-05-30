@@ -16,6 +16,7 @@ import {
   SearchCheck,
   PenSquare,
   FlaskConical,
+  Leaf,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -67,6 +68,11 @@ const mainNavItems = [
     title: 'CE Course Creator',
     href: '/ce-course-creator',
     icon: GraduationCap,
+  },
+  {
+    title: 'Canadianizer Eh?',
+    href: '/canadianizer',
+    icon: Leaf,
   },
 ];
 
