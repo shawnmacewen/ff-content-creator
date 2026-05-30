@@ -647,7 +647,11 @@ export function ContentDetail({
             <div className="pointer-events-none absolute -left-20 bottom-10 h-56 w-56 rounded-full bg-sky-300/20 blur-3xl" />
             <div className="pointer-events-none absolute right-10 top-20 h-48 w-48 rounded-full bg-violet-300/20 blur-3xl" />
 
-            <div className="absolute right-5 top-5 z-20 flex items-center gap-2">
+            <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between gap-4">
+              <div className="inline-flex min-w-0 max-w-[48%] items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
+                <span className="truncate">{designation}</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={handleCopy}
@@ -657,29 +661,36 @@ export function ContentDetail({
                 {copied ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
                 {copied ? 'Copied' : 'Save'}
               </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20"
+                title="Copy article text"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy Text'}
+              </button>
               <DialogClose className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-white">
                 <X className="h-5 w-5" />
                 <span className="sr-only">Close article preview</span>
               </DialogClose>
+              </div>
             </div>
 
-            <div className="relative z-10 flex min-h-[32vh] flex-col justify-end px-7 pb-9 pt-20 text-white sm:px-10 lg:px-12">
-              <div className="mb-5 inline-flex w-fit items-center rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-1.5 text-xs font-semibold text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
-                {designation}
-              </div>
+            <div className="relative z-10 flex min-h-[32vh] flex-col justify-between px-7 pb-9 pt-24 text-white sm:px-10 lg:px-12">
               <h2 className="max-w-4xl text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
                 {content.title}
               </h2>
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/82">
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-blue-950">
                 <span className="inline-flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4 text-blue-700" />
                   {publisherLabel}
                 </span>
                 <span className="inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4 text-blue-700" />
                   {publishedDate}
                 </span>
-                {isFinraApproved ? <span>FINRA reviewed</span> : null}
+                {isFinraApproved ? <span className="text-slate-700">FINRA reviewed</span> : null}
               </div>
             </div>
           </section>
@@ -776,17 +787,11 @@ export function ContentDetail({
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-5 pb-5">
-          <div className="pointer-events-auto flex w-full max-w-4xl flex-col gap-3 rounded-3xl border border-white/20 bg-slate-950/88 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="h-11 rounded-2xl border-white/15 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white" onClick={handleCopy}>
-                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                {copied ? 'Copied' : 'Copy Text'}
-              </Button>
-            </div>
-            {onUseForGeneration ? (
+        {onUseForGeneration ? (
+          <div className="pointer-events-none absolute bottom-5 right-5 z-20 flex justify-end px-5">
+            <div className="pointer-events-auto">
               <Button
-                className="h-11 rounded-2xl bg-[linear-gradient(135deg,#5b8cff,#9b4dff)] px-7 font-semibold text-white shadow-[0_0_28px_rgba(99,102,241,0.42)] transition hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(139,92,246,0.56)]"
+                className="h-12 rounded-2xl bg-[linear-gradient(135deg,#0f2f68_0%,#d946ef_56%,#f97316_115%)] px-8 font-semibold text-white shadow-[0_0_32px_rgba(217,70,239,0.34)] transition hover:-translate-y-0.5 hover:shadow-[0_0_42px_rgba(249,115,22,0.42)]"
                 onClick={() => {
                   onUseForGeneration(content);
                   onOpenChange(false);
@@ -795,9 +800,9 @@ export function ContentDetail({
                 <WandSparkles className="mr-2 h-4 w-4" />
                 Use This Article
               </Button>
-            ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
