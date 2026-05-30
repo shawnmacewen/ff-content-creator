@@ -107,58 +107,6 @@ function cleanText(input: string) {
     .trim();
 }
 
-function sentenceList(text: string) {
-  return cleanText(text)
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 24);
-}
-
-function compactTakeaway(input: string) {
-  const text = decodeEntities(input)
-    .replace(/\s+/g, ' ')
-    .replace(/^[•\-–—]\s*/, '')
-    .replace(/^(did you know that|learn how|discover how)\s+/i, '')
-    .trim();
-
-  if (text.length <= 58) return text.replace(/[.!?;:]$/, '');
-
-  const clipped = text.slice(0, 58);
-  const lastSpace = clipped.lastIndexOf(' ');
-  return `${clipped.slice(0, lastSpace > 36 ? lastSpace : clipped.length).replace(/[,.!?;:]$/, '')}...`;
-}
-
-function buildTakeaways(article: any, bodyPreview: string) {
-  const source = String(article?.excerpt || bodyPreview || article?.bodyText || article?.body || article?.title || '');
-  const sentences = sentenceList(source);
-  const fallbackTitle = decodeEntities(String(article?.title || 'Selected article'));
-  const candidates = sentences.flatMap((sentence) =>
-    sentence
-      .split(/(?:;|:|\s+-\s+|\s+because\s+|\s+while\s+|\s+and\s+)/i)
-      .map(compactTakeaway)
-      .filter((item) => item.length >= 14)
-  );
-
-  const items = Array.from(new Set(candidates)).slice(0, 3);
-
-  if (items.length >= 2) return items;
-
-  if (items.length === 1) {
-    return [
-      items[0],
-      compactTakeaway(fallbackTitle),
-      'Use this source for grounded generation context',
-    ].filter((item, index, list) => item && list.indexOf(item) === index).slice(0, 3);
-  }
-
-  return [
-    compactTakeaway(fallbackTitle),
-    'Use this source for grounded generation context',
-    'Review the article text before generating assets',
-  ];
-}
-
 function getBodyParagraphs(article: any, bodyPreview: string) {
   const preferred = String(article?.excerpt || '').trim()
     ? `${article.excerpt}\n\n${bodyPreview}`
@@ -218,7 +166,10 @@ export function SelectedArticlePreview({
   const designation = String(getDesignation(article));
   const filename = getFilename(article);
   const publishedAt = article.publishedAt || article.published_at;
-  const takeaways = buildTakeaways(article, bodyPreview);
+  const takeawaySource = detailContent?.keyTakeaways || article.keyTakeaways;
+  const takeaways: string[] = Array.isArray(takeawaySource)
+    ? takeawaySource.map((item: string) => decodeEntities(String(item))).filter(Boolean).slice(0, 3)
+    : [];
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
 
@@ -274,33 +225,35 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className="relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 md:grid-cols-[0.68fr_1fr] sm:px-8">
-        <aside className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              Key Takeaways
+      <div className={cn('relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 sm:px-8', takeaways.length ? 'md:grid-cols-[0.68fr_1fr]' : 'md:grid-cols-1')}>
+        {takeaways.length ? (
+          <aside className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
+                <Sparkles className="h-5 w-5 text-blue-600" />
+                Key Takeaways
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3.5">
-            {takeaways.slice(0, 3).map((item, index) => {
-              const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
-              return (
-                <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
-                    <Icon className="h-4 w-4" />
+            <div className="space-y-3.5">
+              {takeaways.map((item, index) => {
+                const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
+                return (
+                  <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700" title={decodeEntities(item)}>
+                      {item}
+                    </p>
                   </div>
-                  <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700" title={decodeEntities(item)}>
-                    {item}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
+                );
+              })}
+            </div>
+          </aside>
+        ) : null}
 
-        <article className="border-slate-200/80 md:border-l md:pl-6">
+        <article className={cn('border-slate-200/80', takeaways.length && 'md:border-l md:pl-6')}>
           <div className="space-y-3.5 break-words text-[13px] leading-6 text-slate-700">
             {paragraphs.length ? (
               paragraphs.slice(0, 3).map((paragraph, index) => (

@@ -50,6 +50,7 @@ export async function GET(
     excerpt: data.metadata?.excerpt || canonicalBody.slice(0, 220) || '',
     type: contentDesignation,
     tags: data.tags || [],
+    keyTakeaways: Array.isArray(data.key_takeaways) ? data.key_takeaways : [],
     publishedAt: data.published_at || null,
     author: data.source_system === 'sample-seed' ? 'Sample' : (data.author || 'Unknown'),
     url: data.metadata?.url || null,

@@ -31,6 +31,7 @@ export interface SourceContent {
   excerpt: string;
   type: string;
   tags: string[];
+  keyTakeaways?: string[];
   publishedAt: string;
   author: string;
   url?: string;
