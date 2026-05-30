@@ -215,6 +215,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
   const [running, setRunning] = useState(false);
   const [runningBatched, setRunningBatched] = useState(false);
   const [runningSyncUpdate, setRunningSyncUpdate] = useState(false);
+  const [runningTakeaways, setRunningTakeaways] = useState(false);
   const [refreshingStats, setRefreshingStats] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
@@ -409,6 +410,30 @@ export default function SettingsClient({ section }: { section: SettingsSection }
     }
   };
 
+  const generateTakeawaysAndAudience = async () => {
+    setRunningTakeaways(true);
+    setRunResult(null);
+    try {
+      const response = await fetch('/api/source-content/key-takeaways', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 25, overwrite: false }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json?.ok) {
+        throw new Error(json?.error || 'Key takeaway generation failed');
+      }
+      setRunResult(json);
+      toast.success(
+        `Takeaways complete: ${Number(json.updated || 0).toLocaleString()} updated, ${Number(json.skipped || 0).toLocaleString()} skipped.`
+      );
+    } catch (error: any) {
+      toast.error(error?.message || 'Key takeaway generation failed');
+    } finally {
+      setRunningTakeaways(false);
+    }
+  };
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -436,7 +461,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSync}
-                disabled={running || runningBatched || runningSyncUpdate}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
                 title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the Content API Explorer."
               >
                 <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
@@ -446,7 +471,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSyncBatched}
-                disabled={running || runningBatched || runningSyncUpdate}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
                 title="Runs multiple 250-item sync batches in sequence using startPage offsets (target up to ~5000 items). Stops on repeat-page or zero-processed response."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
@@ -455,13 +480,13 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSyncAndUpdate}
-                disabled={running || runningBatched || runningSyncUpdate}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
                 title="Runs a batched update over existing Broadridge source records, fetching article detail data again and saving richer HTML/XML body fields for View Detail rendering."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningSyncUpdate ? 'animate-pulse' : ''}`} />
                 {runningSyncUpdate ? 'Running Sync and Update...' : 'Sync and Update'}
               </Button>
-              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched || runningSyncUpdate}>
+              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}>
                 <RefreshCw className="h-4 w-4" />
                 Refresh Logs
               </Button>
@@ -469,6 +494,25 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             {runResult ? (
               <pre className="text-xs bg-muted rounded p-2 overflow-auto">{JSON.stringify(runResult, null, 2)}</pre>
             ) : null}
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase text-primary">Content Metadata</p>
+              <h2 className="text-lg font-semibold">Generate Key Takeaways and Audience</h2>
+              <p className="text-sm text-muted-foreground">
+                Scan synced articles and fill missing key takeaways plus recommended audience. Existing values are skipped.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={generateTakeawaysAndAudience}
+              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
+              title="Generates three article-specific key takeaways and one recommended audience phrase for source content that has readable body text. Existing metadata is skipped."
+            >
+              <BookOpenCheck className={`h-4 w-4 mr-2 ${runningTakeaways ? 'animate-pulse' : ''}`} />
+              {runningTakeaways ? 'Generating Takeaways...' : 'Generate Takeaways + Audience'}
+            </Button>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
@@ -482,7 +526,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             <Button
               variant="outline"
               onClick={refreshSourceStats}
-              disabled={running || runningBatched || runningSyncUpdate || refreshingStats}
+              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || refreshingStats}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshingStats ? 'animate-spin' : ''}`} />
               {refreshingStats ? 'Refreshing Source Stats...' : 'Refresh Source Stats'}
