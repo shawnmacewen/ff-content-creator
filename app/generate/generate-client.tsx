@@ -48,6 +48,7 @@ export default function GeneratePage() {
   const router = useRouter();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const [setupCollapsed, setSetupCollapsed] = useState(false);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource } = useSWR<any>(
@@ -78,6 +79,12 @@ export default function GeneratePage() {
 
   const handleSourceSelect = useCallback((id: string | null) => {
     setSelectedSourceIds(id ? [id] : []);
+    setSetupCollapsed(false);
+  }, []);
+
+  const handleClearSource = useCallback(() => {
+    setSelectedSourceIds([]);
+    setSetupCollapsed(false);
   }, []);
 
   const handleUseDetailArticle = useCallback(() => {
@@ -241,6 +248,7 @@ export default function GeneratePage() {
       const payload = await response.json().catch(() => ({}));
       const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
       setKitOutputs(outputs);
+      setSetupCollapsed(true);
       setIsGeneratingKit(false);
 
       // Carousel images run asynchronously so text outputs stay usable while image generation continues.
@@ -301,6 +309,7 @@ export default function GeneratePage() {
         setGeneratedContent(payload?.content || '');
         setCompliance(payload?.compliance || null);
         setGeneratedImages(payload?.images || {});
+        setSetupCollapsed(true);
         if (includeInstagramImage) {
           const txt = String(payload?.content || '');
           if (/Image URL:/i.test(txt)) setImageStatus('Instagram image generated');
@@ -309,6 +318,7 @@ export default function GeneratePage() {
         }
       } else {
         setGeneratedContent(await response.text());
+        setSetupCollapsed(true);
       }
 
       toast.success('Content generated');
@@ -374,6 +384,21 @@ export default function GeneratePage() {
     }
   };
 
+  const hasGeneratedOutput = mode === 'kit'
+    ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages)
+    : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
+  const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
+  const setupTrayClassName = cn(
+    'space-y-6 overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out',
+    isSetupCollapsed
+      ? 'pointer-events-none max-h-0 -translate-y-6 opacity-0'
+      : 'max-h-[3200px] translate-y-0 opacity-100'
+  );
+  const handleModeChange = (nextMode: GenerationMode) => {
+    setMode(nextMode);
+    setSetupCollapsed(false);
+  };
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <PageHeader
@@ -387,10 +412,24 @@ export default function GeneratePage() {
         ]}
       />
 
-      <GenerationModeToggle mode={mode} onChange={setMode} />
+      {hasGeneratedOutput ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-md"
+            onClick={() => setSetupCollapsed((value) => !value)}
+          >
+            {isSetupCollapsed ? 'Show setup controls' : 'Hide setup controls'}
+          </Button>
+        </div>
+      ) : null}
 
       {mode === 'kit' ? (
         <div className="space-y-6">
+          <div className={setupTrayClassName}>
+            <GenerationModeToggle mode={mode} onChange={handleModeChange} />
+
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
@@ -587,7 +626,7 @@ export default function GeneratePage() {
                 selectedSource={selectedSource}
                 detailContent={detailContent}
                 bodyPreview={normalizedBodyPreview}
-                onClear={() => setSelectedSourceIds([])}
+                onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
               />
             </div>
@@ -610,6 +649,7 @@ export default function GeneratePage() {
                 <BouncingDots className="gap-1" dotClassName="h-1.5 w-1.5" />
               ) : null}
             </div>
+          </div>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
@@ -724,6 +764,9 @@ export default function GeneratePage() {
         </div>
       ) : (
         <div className="space-y-6">
+          <div className={setupTrayClassName}>
+            <GenerationModeToggle mode={mode} onChange={handleModeChange} />
+
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -789,7 +832,7 @@ export default function GeneratePage() {
                 selectedSource={selectedSource}
                 detailContent={detailContent}
                 bodyPreview={normalizedBodyPreview}
-                onClear={() => setSelectedSourceIds([])}
+                onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
               />
             </div>
@@ -820,6 +863,7 @@ export default function GeneratePage() {
               )}
             </div>
           ) : null}
+          </div>
 
 
           <div>
