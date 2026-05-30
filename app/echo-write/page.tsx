@@ -520,14 +520,14 @@ Separately (client-side), we:
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">{outputSubtitle}</p>
                 ) : null}
               </div>
-              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-white/82">
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-blue-950">
                 <span className="inline-flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4 text-blue-700" />
                   {contentType === 'video-script' ? 'Video script' : 'Editorial article'}
                 </span>
-                {outputHeroSource ? <span className="max-w-[320px] truncate">Grounded by {outputHeroSource.title}</span> : null}
+                {outputHeroSource ? <span className="max-w-[320px] truncate text-slate-700">Grounded by {outputHeroSource.title}</span> : null}
                 {loading ? (
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-blue-950">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Drafting...
                   </span>
