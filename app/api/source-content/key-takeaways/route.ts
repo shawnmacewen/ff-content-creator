@@ -7,6 +7,7 @@ import { getCanonicalBody } from '@/lib/source-content/body';
 
 const TakeawaySchema = z.object({
   keyTakeaways: z.array(z.string().min(12).max(140)).length(3),
+  recommendedAudience: z.string().min(8).max(120),
 });
 
 function safeArray(value: any) {
@@ -18,6 +19,10 @@ function cleanTakeaways(items: string[]) {
     .map((item) => String(item || '').replace(/\s+/g, ' ').replace(/^[•\-–—]\s*/, '').trim())
     .filter(Boolean)
     .slice(0, 3);
+}
+
+function cleanAudience(value: string) {
+  return String(value || '').replace(/\s+/g, ' ').replace(/^[•\-–—]\s*/, '').trim().slice(0, 120);
 }
 
 function metadataSummary(row: any) {
@@ -42,18 +47,18 @@ export async function POST(req: Request) {
 
     let query = supabase
       .from('source_content')
-      .select('id,title,body_text,body,metadata,tags,key_takeaways,content_designation,type,publisher,published_at')
+      .select('id,title,body_text,body,metadata,tags,key_takeaways,recommended_audience,content_designation,type,publisher,published_at')
       .order('updated_at', { ascending: false, nullsFirst: false })
       .limit(limit);
 
     if (ids.length) query = query.in('id', ids);
-    if (!overwrite) query = query.or('key_takeaways.is.null,key_takeaways.eq.{}');
+    if (!overwrite) query = query.or('key_takeaways.is.null,key_takeaways.eq.{},recommended_audience.is.null,recommended_audience.eq.');
 
     const { data, error } = await query;
     if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
 
     const rows = data || [];
-    const results: Array<{ id: string; title: string; status: string; keyTakeaways?: string[]; reason?: string }> = [];
+    const results: Array<{ id: string; title: string; status: string; keyTakeaways?: string[]; recommendedAudience?: string; reason?: string }> = [];
 
     for (const row of rows) {
       const title = String(row.title || 'Untitled source');
@@ -61,22 +66,31 @@ export async function POST(req: Request) {
 
       if (!hasReadableBody(row)) {
         results.push({ id: row.id, title, status: 'skipped', reason: 'No readable body text' });
-        if (overwrite && Array.isArray(row.key_takeaways) && row.key_takeaways.length) {
-          await supabase.from('source_content').update({ key_takeaways: [] }).eq('id', row.id);
+        if (overwrite && ((Array.isArray(row.key_takeaways) && row.key_takeaways.length) || row.recommended_audience)) {
+          await supabase.from('source_content').update({ key_takeaways: [], recommended_audience: null }).eq('id', row.id);
         }
         continue;
       }
 
       const prompt = [
-        'You write concise editorial key takeaways for financial education source content.',
-        'Create exactly three key takeaways for a reader who is interested in this article and may want to use or share it.',
+        'You write concise editorial metadata for financial education source content.',
+        'Create exactly three key takeaways from the article and one recommended audience phrase.',
         '',
-        'Rules:',
-        '- Each takeaway should be specific to the article, not generic.',
-        '- Write for a human reader, advisor, or editorial user scanning whether the article is useful.',
-        '- Focus on the article value, practical angle, reader relevance, and shareability.',
-        '- Do not invent facts, data, advice, products, or regulatory claims.',
+        'Key takeaway rules:',
+        '- Each takeaway must come from the article itself, not generic marketing value.',
+        '- Summarize what the article teaches, explains, compares, warns about, or helps the reader understand.',
+        '- Point takeaways at a reader interested in the article and at someone deciding whether to use/share it.',
+        '- Do not write generic lines such as "use this source" or "review the article".',
         '- Keep each takeaway under 18 words.',
+        '',
+        'Recommended audience rules:',
+        '- Write one short phrase describing who this article is suitable for.',
+        '- Use the lens of financial advisory teams, enterprise marketing support users, investors, clients, or prospects.',
+        '- Include demographic/life-stage fit when the article implies one, such as parents/grandparents for 529/college content.',
+        '- Keep the phrase under 12 words.',
+        '',
+        'General rules:',
+        '- Do not invent facts, data, advice, products, or regulatory claims.',
         '- Do not number the takeaways.',
         '',
         'SOURCE METADATA:',
@@ -99,6 +113,7 @@ export async function POST(req: Request) {
       });
 
       const keyTakeaways = cleanTakeaways(generated.object.keyTakeaways);
+      const recommendedAudience = cleanAudience(generated.object.recommendedAudience);
       if (keyTakeaways.length !== 3) {
         results.push({ id: row.id, title, status: 'failed', reason: 'AI returned fewer than three takeaways' });
         continue;
@@ -106,7 +121,7 @@ export async function POST(req: Request) {
 
       const update = await supabase
         .from('source_content')
-        .update({ key_takeaways: keyTakeaways })
+        .update({ key_takeaways: keyTakeaways, recommended_audience: recommendedAudience || null })
         .eq('id', row.id);
 
       if (update.error) {
@@ -114,7 +129,7 @@ export async function POST(req: Request) {
         continue;
       }
 
-      results.push({ id: row.id, title, status: 'updated', keyTakeaways });
+      results.push({ id: row.id, title, status: 'updated', keyTakeaways, recommendedAudience });
     }
 
     return Response.json({

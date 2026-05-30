@@ -51,6 +51,7 @@ export async function GET(
     type: contentDesignation,
     tags: data.tags || [],
     keyTakeaways: Array.isArray(data.key_takeaways) ? data.key_takeaways : [],
+    recommendedAudience: data.recommended_audience || null,
     publishedAt: data.published_at || null,
     author: data.source_system === 'sample-seed' ? 'Sample' : (data.author || 'Unknown'),
     url: data.metadata?.url || null,

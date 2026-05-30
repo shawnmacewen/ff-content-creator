@@ -32,6 +32,7 @@ export interface SourceContent {
   type: string;
   tags: string[];
   keyTakeaways?: string[];
+  recommendedAudience?: string | null;
   publishedAt: string;
   author: string;
   url?: string;

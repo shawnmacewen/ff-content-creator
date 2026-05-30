@@ -7,6 +7,7 @@ import {
   Calendar,
   FileText,
   Sparkles,
+  Target,
   TrendingUp,
   Users,
   WandSparkles,
@@ -170,6 +171,7 @@ export function SelectedArticlePreview({
   const takeaways: string[] = Array.isArray(takeawaySource)
     ? takeawaySource.map((item: string) => decodeEntities(String(item))).filter(Boolean).slice(0, 3)
     : [];
+  const recommendedAudience = decodeEntities(String(detailContent?.recommendedAudience || article.recommendedAudience || '')).trim();
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
 
@@ -225,35 +227,54 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className={cn('relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 sm:px-8', takeaways.length ? 'md:grid-cols-[0.68fr_1fr]' : 'md:grid-cols-1')}>
-        {takeaways.length ? (
+      <div className={cn('relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 sm:px-8', takeaways.length || recommendedAudience ? 'md:grid-cols-[0.68fr_1fr]' : 'md:grid-cols-1')}>
+        {takeaways.length || recommendedAudience ? (
           <aside className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
-                <Sparkles className="h-5 w-5 text-blue-600" />
-                Key Takeaways
-              </div>
-            </div>
-
-            <div className="space-y-3.5">
-              {takeaways.map((item, index) => {
-                const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
-                return (
-                  <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700" title={decodeEntities(item)}>
-                      {item}
-                    </p>
+            {takeaways.length ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                    Key Takeaways
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                <div className="space-y-3.5">
+                  {takeaways.map((item, index) => {
+                    const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
+                    return (
+                      <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700" title={decodeEntities(item)}>
+                          {item}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {recommendedAudience ? (
+              <div className="space-y-3 border-t border-slate-200/80 pt-4">
+                <div className="flex items-center gap-3 text-base font-semibold text-slate-950">
+                  <Target className="h-5 w-5 text-blue-600" />
+                  Recommended Audience
+                </div>
+                <div className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(37,99,235,0.16),0_12px_28px_rgba(37,99,235,0.1)]">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <p className="pt-0.5 text-[13px] font-semibold leading-5 text-slate-700">{recommendedAudience}</p>
+                </div>
+              </div>
+            ) : null}
           </aside>
         ) : null}
 
-        <article className={cn('border-slate-200/80', takeaways.length && 'md:border-l md:pl-6')}>
+        <article className={cn('border-slate-200/80', (takeaways.length || recommendedAudience) && 'md:border-l md:pl-6')}>
           <div className="space-y-3.5 break-words text-[13px] leading-6 text-slate-700">
             {paragraphs.length ? (
               paragraphs.slice(0, 3).map((paragraph, index) => (

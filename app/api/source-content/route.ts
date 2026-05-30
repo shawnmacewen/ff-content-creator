@@ -69,6 +69,7 @@ function mapSourceContentRow(row: any) {
     type: row.content_designation ?? row.type ?? null,
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     keyTakeaways: Array.isArray(row.key_takeaways) ? row.key_takeaways.map((item: string) => decodeHtmlEntities(String(item))).filter(Boolean) : [],
+    recommendedAudience: row.recommended_audience ? decodeHtmlEntities(String(row.recommended_audience)) : null,
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
     url: metadata.url || null,
@@ -210,6 +211,8 @@ export async function GET(request: NextRequest) {
       'evergreen',
       'categories',
       'sub_categories',
+      'key_takeaways',
+      'recommended_audience',
     ].join(',');
 
     let dbQuery = applyDefaultSourceContentOrder(supabase
