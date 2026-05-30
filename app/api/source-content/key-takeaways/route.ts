@@ -41,9 +41,10 @@ function countWords(value: string) {
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const limit = Math.min(100, Math.max(1, Number(body?.limit) || 25));
+    const batchSize = Math.min(100, Math.max(1, Number(body?.batchSize ?? body?.limit) || 25));
     const ids = safeArray(body?.ids).map((id) => String(id)).filter(Boolean).slice(0, 100);
     const overwrite = Boolean(body?.overwrite);
+    const cursor = typeof body?.cursor === 'string' && body.cursor.trim() ? body.cursor.trim() : null;
 
     const env = getServerEnv();
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
@@ -52,10 +53,11 @@ export async function POST(req: Request) {
     let query = supabase
       .from('source_content')
       .select('id,title,body_text,body,metadata,tags,key_takeaways,recommended_audience,content_designation,type,publisher,published_at')
-      .order('updated_at', { ascending: false, nullsFirst: false })
-      .limit(limit);
+      .order('id', { ascending: true })
+      .limit(batchSize);
 
     if (ids.length) query = query.in('id', ids);
+    else if (cursor) query = query.gt('id', cursor);
     if (!overwrite) query = query.or('key_takeaways.is.null,key_takeaways.eq.{},recommended_audience.is.null,recommended_audience.eq.');
 
     const { data, error } = await query;
@@ -142,6 +144,10 @@ export async function POST(req: Request) {
     return Response.json({
       ok: true,
       scanned: rows.length,
+      batchSize,
+      cursor,
+      nextCursor: rows.length ? String(rows[rows.length - 1].id) : cursor,
+      hasMore: rows.length === batchSize && !ids.length,
       updated: results.filter((item) => item.status === 'updated').length,
       skipped: results.filter((item) => item.status === 'skipped').length,
       failed: results.filter((item) => item.status === 'failed').length,

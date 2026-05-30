@@ -414,18 +414,60 @@ export default function SettingsClient({ section }: { section: SettingsSection }
     setRunningTakeaways(true);
     setRunResult(null);
     try {
-      const response = await fetch('/api/source-content/key-takeaways', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 25, overwrite: false }),
-      });
-      const json = await response.json();
-      if (!response.ok || !json?.ok) {
-        throw new Error(json?.error || 'Key takeaway generation failed');
+      const batchSize = 25;
+      const maxItems = 5000;
+      const maxBatches = Math.ceil(maxItems / batchSize);
+      const batches: any[] = [];
+      let cursor: string | null = null;
+
+      for (let i = 0; i < maxBatches; i += 1) {
+        const response: Response = await fetch('/api/source-content/key-takeaways', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batchSize, cursor, overwrite: false }),
+        });
+        const json: {
+          ok?: boolean;
+          error?: string;
+          scanned?: number;
+          updated?: number;
+          skipped?: number;
+          failed?: number;
+          hasMore?: boolean;
+          nextCursor?: string | null;
+        } = await response.json();
+        if (!response.ok || !json?.ok) {
+          throw new Error(json?.error || 'Key takeaway generation failed');
+        }
+
+        batches.push({ batch: i + 1, ...json });
+        cursor = json.nextCursor || cursor;
+
+        if (!json.hasMore || Number(json.scanned || 0) === 0) {
+          break;
+        }
       }
-      setRunResult(json);
+
+      const result = {
+        ok: true,
+        mode: 'key-takeaways-batched',
+        batchSize,
+        maxItems,
+        batchesRun: batches.length,
+        totals: {
+          scanned: batches.reduce((sum, batch) => sum + Number(batch.scanned || 0), 0),
+          updated: batches.reduce((sum, batch) => sum + Number(batch.updated || 0), 0),
+          skipped: batches.reduce((sum, batch) => sum + Number(batch.skipped || 0), 0),
+          failed: batches.reduce((sum, batch) => sum + Number(batch.failed || 0), 0),
+        },
+        finalCursor: cursor,
+        completed: !batches.length || !batches[batches.length - 1]?.hasMore,
+        batches,
+      };
+
+      setRunResult(result);
       toast.success(
-        `Takeaways complete: ${Number(json.updated || 0).toLocaleString()} updated, ${Number(json.skipped || 0).toLocaleString()} skipped.`
+        `Takeaways complete: ${Number(result.totals.updated || 0).toLocaleString()} updated, ${Number(result.totals.skipped || 0).toLocaleString()} skipped across ${result.batchesRun} batch(es).`
       );
     } catch (error: any) {
       toast.error(error?.message || 'Key takeaway generation failed');
@@ -501,14 +543,14 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <p className="text-xs font-semibold uppercase text-primary">Content Metadata</p>
               <h2 className="text-lg font-semibold">Generate Key Takeaways and Audience</h2>
               <p className="text-sm text-muted-foreground">
-                Scan synced articles with at least 100 body words and fill missing key takeaways plus recommended audience. Short articles get two takeaways; existing values are skipped.
+                Scan synced articles in 25-item batches with at least 100 body words and fill missing key takeaways plus recommended audience. Short articles get two takeaways; existing values are skipped.
               </p>
             </div>
             <Button
               variant="outline"
               onClick={generateTakeawaysAndAudience}
               disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
-              title="Generates two or three article-specific key takeaways and one recommended audience phrase for source content with at least 100 body words. Existing metadata is skipped."
+              title="Generates two or three article-specific key takeaways and one recommended audience phrase for source content with at least 100 body words. Runs in 25-item batches until the source library is complete or the safety cap is reached. Existing metadata is skipped."
             >
               <BookOpenCheck className={`h-4 w-4 mr-2 ${runningTakeaways ? 'animate-pulse' : ''}`} />
               {runningTakeaways ? 'Generating Takeaways...' : 'Generate Takeaways + Audience'}
