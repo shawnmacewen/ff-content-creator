@@ -14,15 +14,12 @@ import { toast } from '@/hooks/use-toast';
 import { overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import {
   Bookmark,
-  Calendar,
   Check,
   Copy,
   Sparkles,
   TrendingUp,
-  User,
   Users,
   WandSparkles,
   X,
@@ -494,7 +491,6 @@ export function ContentDetail({
     { label: 'Sub-categories', value: meta?.subCategories },
   ];
   const publisherLabel = getPublisherLabel(content);
-  const publishedDate = content.publishedAt ? format(new Date(content.publishedAt), 'MMM d, yyyy') : 'Published date unavailable';
   const designation = meta?.contentDesignation || content.type || 'Editorial Source';
   const storedTakeaways = Array.isArray(content.keyTakeaways)
     ? content.keyTakeaways.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 3)
@@ -659,21 +655,10 @@ export function ContentDetail({
               </div>
             </div>
 
-            <div className="relative z-10 min-h-[32vh] px-7 pb-20 pt-24 text-white sm:px-10 lg:px-12">
+            <div className="relative z-10 min-h-[32vh] px-7 pb-12 pt-24 text-white sm:px-10 lg:px-12">
               <h2 className="line-clamp-3 max-w-4xl text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-4xl lg:text-5xl">
                 {content.title}
               </h2>
-              <div className="absolute bottom-8 left-7 right-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-slate-950 sm:left-10 sm:right-10 lg:left-12 lg:right-12">
-                <span className="inline-flex items-center gap-2">
-                  <User className="h-4 w-4 text-slate-800" />
-                  {publisherLabel}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-800" />
-                  {publishedDate}
-                </span>
-                {isFinraApproved ? <span className="text-slate-800">FINRA reviewed</span> : null}
-              </div>
             </div>
           </section>
 
