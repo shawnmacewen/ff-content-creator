@@ -23,6 +23,13 @@ const CanadianizerSchema = z.object({
   complianceNotes: z.array(z.string()).min(1).max(8),
 });
 
+const FrenchTranslationSchema = z.object({
+  frenchTitle: z.string().min(1),
+  frenchArticleMarkdown: z.string().min(1),
+  frenchExecutiveSummary: z.string().min(1),
+  translationNotes: z.array(z.string()).min(1).max(8),
+});
+
 const EvaluationSchema = z.object({
   matchScore: z.number().min(0).max(100),
   matchScoreLabel: z.enum(['Strong match', 'Good match', 'Partial match', 'Low match']),
@@ -98,6 +105,11 @@ function warningMessageFor(score: number, fallback: string) {
   return fallback || 'No major conversion warning.';
 }
 
+function normalizeLanguagePackage(value: unknown) {
+  if (value === 'english' || value === 'french') return value;
+  return 'both';
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -108,6 +120,7 @@ export async function POST(req: Request) {
     const length = String(body?.length || 'similar').trim();
     const includeDisclosure = Boolean(body?.includeDisclosure ?? true);
     const mode = body?.mode === 'extreme' ? 'extreme' : 'normal';
+    const languagePackage = normalizeLanguagePackage(body?.languagePackage);
     const requestedModel = String(body?.model || '').trim();
 
     if (!sourceContentId) {
@@ -203,6 +216,46 @@ export async function POST(req: Request) {
       prompt: generationPrompt,
     });
 
+    const shouldTranslateFrench = languagePackage !== 'english';
+    const translationPrompt = shouldTranslateFrench
+      ? [
+          'You are a senior Quebec French financial-services editor and translator.',
+          'Translate the finished Canadian English article into Canadian French for Quebec readers.',
+          '',
+          'Critical rules:',
+          '- Translate the finished Canadian English article below. Do not go back to the original U.S. source article to create a different French article.',
+          '- Preserve the same meaning, structure, article sections, caveats, compliance posture, and editorial intent.',
+          '- Use natural Quebec/Canadian French. Prefer Quebec financial terminology where appropriate, while keeping the article clear for advisors and clients.',
+          '- Do not invent new financial, legal, tax, regulatory, government, or plan details that are not present in the English Canadian article.',
+          '- Keep Markdown structure intact.',
+          '- If the English article is in Extreme Maple Mode, translate the comedy into playful Quebec/Canadian French while preserving that it is internal-only and not publish-ready.',
+          '',
+          'Context:',
+          `Audience: ${audience}`,
+          `Province/region: ${province}`,
+          `Tone: ${tone}`,
+          `Mode: ${mode}`,
+          '',
+          'ENGLISH CANADIAN ARTICLE TITLE:',
+          result.object.canadianTitle,
+          '',
+          'ENGLISH CANADIAN ARTICLE:',
+          result.object.canadianArticleMarkdown,
+          '',
+          'ENGLISH EXECUTIVE SUMMARY:',
+          result.object.executiveSummary,
+        ].join('\n')
+      : '';
+
+    const translation = shouldTranslateFrench
+      ? await generateObject({
+          model: openai(selectedModel),
+          schema: FrenchTranslationSchema,
+          temperature: isExtreme ? 0.42 : 0.12,
+          prompt: translationPrompt,
+        })
+      : null;
+
     const evaluationPrompt = [
       'You are a strict Canadian financial-services editorial evaluator.',
       'Score whether a U.S. source article was responsibly converted into a Canadian article.',
@@ -250,6 +303,10 @@ export async function POST(req: Request) {
     const warningLevel = normalizeWarningLevel(matchScore);
     const canadianized = {
       ...result.object,
+      frenchTitle: translation?.object.frenchTitle || null,
+      frenchArticleMarkdown: translation?.object.frenchArticleMarkdown || null,
+      frenchExecutiveSummary: translation?.object.frenchExecutiveSummary || null,
+      translationNotes: translation?.object.translationNotes || [],
       matchScore,
       matchScoreLabel: normalizeScoreLabel(matchScore),
       warningLevel,
@@ -269,6 +326,12 @@ export async function POST(req: Request) {
           temperature: isExtreme ? 0.72 : 0.22,
           prompt: generationPrompt,
         },
+        ...(shouldTranslateFrench ? [{
+          step: 'quebec french translation',
+          model: selectedModel,
+          temperature: isExtreme ? 0.42 : 0.12,
+          prompt: translationPrompt,
+        }] : []),
         {
           step: 'evaluation',
           model: selectedModel,
@@ -291,6 +354,7 @@ export async function POST(req: Request) {
         length,
         includeDisclosure,
         mode,
+        languagePackage,
         model: selectedModel,
       },
     };
@@ -307,6 +371,7 @@ export async function POST(req: Request) {
         matchScoreLabel: canadianized.matchScoreLabel,
         warningLevel,
         mode,
+        languagePackage,
       },
     });
 

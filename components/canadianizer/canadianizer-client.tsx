@@ -10,6 +10,7 @@ import {
   FileText,
   Flag,
   Info,
+  Languages,
   Leaf,
   Loader2,
   Search,
@@ -55,6 +56,10 @@ type CanadianizedResult = {
   canadianTitle: string;
   canadianArticleMarkdown: string;
   executiveSummary: string;
+  frenchTitle?: string | null;
+  frenchArticleMarkdown?: string | null;
+  frenchExecutiveSummary?: string | null;
+  translationNotes?: string[];
   matchScore: number;
   matchScoreLabel: 'Strong match' | 'Good match' | 'Partial match' | 'Low match';
   warningLevel: 'none' | 'review' | 'severe';
@@ -92,6 +97,7 @@ type CanadianizedResult = {
   };
   config?: {
     model?: string;
+    languagePackage?: 'both' | 'english' | 'french';
   };
 };
 
@@ -241,6 +247,8 @@ export default function CanadianizerClient() {
   const [includeDisclosure, setIncludeDisclosure] = React.useState(true);
   const [extremeMode, setExtremeMode] = React.useState(false);
   const [model, setModel] = React.useState('gpt-4o-mini');
+  const [languagePackage, setLanguagePackage] = React.useState<'both' | 'english' | 'french'>('both');
+  const [outputLanguage, setOutputLanguage] = React.useState<'english' | 'french'>('english');
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<CanadianizedResult | null>(null);
@@ -260,6 +268,16 @@ export default function CanadianizerClient() {
   );
 
   const sources = React.useMemo(() => data?.data || [], [data?.data]);
+
+  React.useEffect(() => {
+    if (languagePackage === 'french') setOutputLanguage('french');
+    if (languagePackage === 'english') setOutputLanguage('english');
+  }, [languagePackage]);
+
+  React.useEffect(() => {
+    if (result?.config?.languagePackage === 'french') setOutputLanguage('french');
+    if (result?.config?.languagePackage === 'english') setOutputLanguage('english');
+  }, [result]);
 
   const selectSource = async (source: SourceContent) => {
     setError(null);
@@ -293,6 +311,7 @@ export default function CanadianizerClient() {
           length,
           includeDisclosure,
           mode: extremeMode ? 'extreme' : 'normal',
+          languagePackage,
           model,
         }),
       });
@@ -329,6 +348,12 @@ export default function CanadianizerClient() {
             detail: result ? `${result.matchScore}% ${result.matchScoreLabel} with ${result.config?.model || model}` : 'Explains where the adaptation is strong or weak',
             icon: BadgeCheck,
             iconClassName: 'bg-emerald-600 text-white',
+          },
+          {
+            label: 'Language package',
+            detail: languagePackage === 'both' ? 'English and Quebec French' : languagePackage === 'french' ? 'Quebec French only' : 'English only',
+            icon: Languages,
+            iconClassName: 'bg-blue-600 text-white',
           },
         ]}
         actions={
@@ -481,6 +506,20 @@ export default function CanadianizerClient() {
                 <label className="text-xs font-semibold uppercase text-muted-foreground" htmlFor="canadianizer-tone">Tone</label>
                 <Input id="canadianizer-tone" value={tone} onChange={(event) => setTone(event.target.value)} />
               </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase text-muted-foreground">Language package</label>
+                <Select value={languagePackage} onValueChange={(value: 'both' | 'english' | 'french') => setLanguagePackage(value)}>
+                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">English + Quebec French</SelectItem>
+                    <SelectItem value="english">English only</SelectItem>
+                    <SelectItem value="french">Quebec French only</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  French is translated from the generated Canadian English article so both versions stay matched.
+                </p>
+              </div>
               <div className="flex items-center justify-between rounded-md border border-border bg-muted/20 p-3">
                 <div>
                   <div className="text-sm font-semibold">Include non-advice note</div>
@@ -520,6 +559,26 @@ export default function CanadianizerClient() {
                 {result ? (
                   <div className="flex flex-wrap items-start gap-2">
                     <PromptLogDialog result={result} />
+                    {result.frenchArticleMarkdown && result.config?.languagePackage !== 'french' ? (
+                      <div className="rounded-md border border-border bg-background p-1">
+                        <Button
+                          type="button"
+                          variant={outputLanguage === 'english' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => setOutputLanguage('english')}
+                        >
+                          English
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={outputLanguage === 'french' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => setOutputLanguage('french')}
+                        >
+                          French
+                        </Button>
+                      </div>
+                    ) : null}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
@@ -578,12 +637,16 @@ export default function CanadianizerClient() {
                     </div>
                     <div>
                       <div className="border-b border-border bg-red-50/70 px-4 py-3">
-                        <div className="text-xs font-semibold uppercase text-red-700">Canadian draft</div>
-                        <div className="mt-1 line-clamp-2 text-sm font-semibold">{result.canadianTitle}</div>
+                        <div className="text-xs font-semibold uppercase text-red-700">
+                          {outputLanguage === 'french' && result.frenchArticleMarkdown ? 'Quebec French draft' : 'Canadian English draft'}
+                        </div>
+                        <div className="mt-1 line-clamp-2 text-sm font-semibold">
+                          {outputLanguage === 'french' && result.frenchTitle ? result.frenchTitle : result.canadianTitle}
+                        </div>
                       </div>
                       <ScrollArea className="h-[560px]">
                         <div className="p-4">
-                          <MarkdownPreview content={result.canadianArticleMarkdown} />
+                          <MarkdownPreview content={outputLanguage === 'french' && result.frenchArticleMarkdown ? result.frenchArticleMarkdown : result.canadianArticleMarkdown} />
                         </div>
                       </ScrollArea>
                     </div>
@@ -641,6 +704,14 @@ export default function CanadianizerClient() {
                     </ul>
                   </div>
                   <div>
+                    {result.translationNotes?.length ? (
+                      <>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Quebec French translation</div>
+                        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {result.translationNotes.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                      </>
+                    ) : null}
                     <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Compliance review</div>
                     <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
                       {result.complianceNotes.map((item) => <li key={item}>{item}</li>)}
