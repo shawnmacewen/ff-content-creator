@@ -6,7 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
 const TakeawaySchema = z.object({
-  keyTakeaways: z.array(z.string().min(12).max(140)).length(3),
+  keyTakeaways: z.array(z.string().min(12).max(140)).min(2).max(3),
   recommendedAudience: z.string().min(8).max(120),
 });
 
@@ -14,11 +14,11 @@ function safeArray(value: any) {
   return Array.isArray(value) ? value : [];
 }
 
-function cleanTakeaways(items: string[]) {
+function cleanTakeaways(items: string[], maxItems: number) {
   return items
     .map((item) => String(item || '').replace(/\s+/g, ' ').replace(/^[•\-–—]\s*/, '').trim())
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, maxItems);
 }
 
 function cleanAudience(value: string) {
@@ -30,8 +30,12 @@ function metadataSummary(row: any) {
   return String(metadata.summary || metadata.description || metadata.excerpt || '').trim();
 }
 
-function hasReadableBody(row: any) {
-  return getCanonicalBody(row).replace(/\s+/g, ' ').trim().length >= 180;
+function countWords(value: string) {
+  return value
+    .replace(/<[^>]+>/g, ' ')
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => /\w/.test(word)).length;
 }
 
 export async function POST(req: Request) {
@@ -63,18 +67,20 @@ export async function POST(req: Request) {
     for (const row of rows) {
       const title = String(row.title || 'Untitled source');
       const bodyText = getCanonicalBody(row);
+      const bodyWordCount = countWords(bodyText);
 
-      if (!hasReadableBody(row)) {
-        results.push({ id: row.id, title, status: 'skipped', reason: 'No readable body text' });
+      if (bodyWordCount < 100) {
+        results.push({ id: row.id, title, status: 'skipped', reason: `Body has fewer than 100 words (${bodyWordCount})` });
         if (overwrite && ((Array.isArray(row.key_takeaways) && row.key_takeaways.length) || row.recommended_audience)) {
           await supabase.from('source_content').update({ key_takeaways: [], recommended_audience: null }).eq('id', row.id);
         }
         continue;
       }
 
+      const takeawayCount = bodyWordCount < 350 ? 2 : 3;
       const prompt = [
         'You write concise editorial metadata for financial education source content.',
-        'Create exactly three key takeaways from the article and one recommended audience phrase.',
+        `Create exactly ${takeawayCount} key takeaways from the article and one recommended audience phrase.`,
         '',
         'Key takeaway rules:',
         '- Each takeaway must come from the article itself, not generic marketing value.',
@@ -100,6 +106,7 @@ export async function POST(req: Request) {
         `Published: ${row.published_at || 'n/a'}`,
         `Tags: ${safeArray(row.tags).join(', ') || 'none'}`,
         `Summary: ${metadataSummary(row) || 'none'}`,
+        `Body word count: ${bodyWordCount}`,
         '',
         'SOURCE BODY:',
         bodyText.slice(0, 12000),
@@ -112,10 +119,10 @@ export async function POST(req: Request) {
         prompt,
       });
 
-      const keyTakeaways = cleanTakeaways(generated.object.keyTakeaways);
+      const keyTakeaways = cleanTakeaways(generated.object.keyTakeaways, takeawayCount);
       const recommendedAudience = cleanAudience(generated.object.recommendedAudience);
-      if (keyTakeaways.length !== 3) {
-        results.push({ id: row.id, title, status: 'failed', reason: 'AI returned fewer than three takeaways' });
+      if (keyTakeaways.length !== takeawayCount) {
+        results.push({ id: row.id, title, status: 'failed', reason: `AI returned ${keyTakeaways.length} takeaways; expected ${takeawayCount}` });
         continue;
       }
 

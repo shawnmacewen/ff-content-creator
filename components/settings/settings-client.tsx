@@ -501,14 +501,14 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <p className="text-xs font-semibold uppercase text-primary">Content Metadata</p>
               <h2 className="text-lg font-semibold">Generate Key Takeaways and Audience</h2>
               <p className="text-sm text-muted-foreground">
-                Scan synced articles and fill missing key takeaways plus recommended audience. Existing values are skipped.
+                Scan synced articles with at least 100 body words and fill missing key takeaways plus recommended audience. Short articles get two takeaways; existing values are skipped.
               </p>
             </div>
             <Button
               variant="outline"
               onClick={generateTakeawaysAndAudience}
               disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
-              title="Generates three article-specific key takeaways and one recommended audience phrase for source content that has readable body text. Existing metadata is skipped."
+              title="Generates two or three article-specific key takeaways and one recommended audience phrase for source content with at least 100 body words. Existing metadata is skipped."
             >
               <BookOpenCheck className={`h-4 w-4 mr-2 ${runningTakeaways ? 'animate-pulse' : ''}`} />
               {runningTakeaways ? 'Generating Takeaways...' : 'Generate Takeaways + Audience'}
