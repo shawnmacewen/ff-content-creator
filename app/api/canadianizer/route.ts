@@ -40,6 +40,7 @@ const canadianizerModels = new Set([
   'gpt-4o-mini',
   'gpt-4.1',
   'gpt-5.2',
+  'gpt-5.5',
 ]);
 
 function decodeHtmlEntities(input: string) {
@@ -160,10 +161,13 @@ export async function POST(req: Request) {
       isExtreme
         ? [
             'EXTREME MAPLE MODE:',
-            '- This is an internal comedy mode. Keep the financial concept adaptation directionally useful, but make the voice overtly, playfully Canadian.',
-            '- Use light Canadian humour, maple-forward metaphors, rink/weather/cottage-season references, and friendly "eh" energy where it fits.',
+            '- This is an internal-only comedy mode. The output should be obviously too over-the-top for publication.',
+            '- Make the voice aggressively, absurdly Canadian: sarcasm, Canadianisms, maple-forward metaphors, rink/weather/cottage-season chaos, double-double energy, polite outrage, dramatic "sorry", and heavy "eh" usage are all welcome.',
+            '- Add playful side-quest asides where the narrator briefly wanders off-topic, for example "remember that time..." stories, then returns to the financial point.',
+            '- If a U.S.-specific concept cannot cross the border cleanly, make the joke about the mismatch instead of inventing a fake Canadian agency, rule, regulator, tax treatment, or program.',
+            '- The comedy can be ridiculous, but financial, tax, legal, regulator, and plan-type claims must not be fabricated.',
             '- Do not use offensive stereotypes, slurs, or jokes about protected groups.',
-            '- Do not make the financial facts more confident than the source supports. The comedy should be in the voice, not in fabricated tax or legal claims.',
+            '- canadianArticleMarkdown should read like a deliberately chaotic internal parody draft, not a serious client-facing article.',
             '- editorialNotes must explicitly say this is not publish-ready without toning down the comedic style.',
           ].join('\n')
         : [

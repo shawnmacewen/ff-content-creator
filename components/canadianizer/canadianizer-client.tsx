@@ -469,11 +469,12 @@ export default function CanadianizerClient() {
                   <SelectContent>
                     <SelectItem value="gpt-4o-mini">GPT-4o mini - fast/current default</SelectItem>
                     <SelectItem value="gpt-4.1">GPT-4.1 - stronger non-reasoning</SelectItem>
-                    <SelectItem value="gpt-5.2">GPT-5.2 - newest/strongest</SelectItem>
+                    <SelectItem value="gpt-5.2">GPT-5.2 - strong comparison model</SelectItem>
+                    <SelectItem value="gpt-5.5">GPT-5.5 - latest/strongest</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Use mini for faster experiments. Use GPT-5.2 for stricter Canadian equivalency judgment on high-risk articles.
+                  Use mini for faster experiments. Use GPT-5.5 for stricter Canadian equivalency judgment on high-risk articles.
                 </p>
               </div>
               <div className="space-y-2">
@@ -495,7 +496,7 @@ export default function CanadianizerClient() {
                   <div>
                     <div className="text-sm font-semibold">Extreme maple mode</div>
                     <div className="text-xs leading-5 text-muted-foreground">
-                      Turns the professional adaptation into an intentionally over-Canadian comedic draft for internal fun.
+                      For internal use only. 🍁
                     </div>
                   </div>
                 </div>
