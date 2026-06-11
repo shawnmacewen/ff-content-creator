@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
+import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle, type InstagramCarouselVisualStyle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
 
@@ -145,6 +145,7 @@ export default function GeneratePage() {
   const [kitCarouselCohesionMethod, setKitCarouselCohesionMethod] = useState<'prompt' | 'image-ref'>('image-ref');
   const [kitCarouselImageRefMode, setKitCarouselImageRefMode] = useState<'previous' | 'first'>('previous');
   const [kitCarouselMoreSeamlessBackground, setKitCarouselMoreSeamlessBackground] = useState<boolean>(true);
+  const [kitCarouselVisualStyle, setKitCarouselVisualStyle] = useState<InstagramCarouselVisualStyle>('classic');
   const [kitCarouselAdvanced, setKitCarouselAdvanced] = useState<boolean>(false);
   const [kitCarouselPrompt, setKitCarouselPrompt] = useState<string>('.');
 
@@ -492,7 +493,7 @@ export default function GeneratePage() {
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Slides</div>
                         <select
@@ -505,14 +506,24 @@ export default function GeneratePage() {
                           <option value={9}>9</option>
                         </select>
                       </label>
-                    </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <div className="flex items-center gap-2">
+                      <label className="text-sm">
+                        <div className="text-xs text-muted-foreground mb-1">Template Style</div>
+                        <select
+                          className="w-full rounded-md border bg-background px-3 py-2"
+                          value={kitCarouselVisualStyle}
+                          onChange={(e) => setKitCarouselVisualStyle(e.target.value as InstagramCarouselVisualStyle)}
+                        >
+                          <option value="classic">Classic Current Look</option>
+                          <option value="bright-editorial">Bright Editorial</option>
+                        </select>
+                      </label>
+
+                      <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                         <Button
                           type="button"
                           variant={kitCarouselAdvanced ? 'default' : 'outline'}
-                          className="rounded-md"
+                          className="h-10 rounded-md"
                           onClick={() => setKitCarouselAdvanced((v) => !v)}
                         >
                           Additional Options
@@ -522,7 +533,7 @@ export default function GeneratePage() {
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-9 w-9 rounded-md"
+                          className="h-10 w-10 rounded-md"
                           onClick={() => kitCarousel2Ref.current?.openPromptLog()}
                           title="View generation prompt log"
                         >
@@ -756,6 +767,8 @@ export default function GeneratePage() {
                   onImageRefModeChange={setKitCarouselImageRefMode}
                   moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
                   onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
+                  visualStyle={kitCarouselVisualStyle}
+                  onVisualStyleChange={setKitCarouselVisualStyle}
                   showAdvancedPromptInput={kitCarouselAdvanced}
                   onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
                   topic={kitCarouselPrompt}
@@ -899,6 +912,10 @@ export default function GeneratePage() {
               imageGenerationEnabled={selectedContentTypes[0] === 'social-instagram' ? includeInstagramImage : false}
               generatedImages={generatedImages}
               imageStatus={imageStatus}
+              onGeneratedImageChange={(key, imageUrl) => {
+                setGeneratedImages((prev) => ({ ...prev, [key]: imageUrl }));
+                setImageStatus('Instagram image edited');
+              }}
             />
           </div>
         </div>

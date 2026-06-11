@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
 import { cn } from '@/lib/utils';
 
 function decodeEntities(input: string): string {
@@ -316,7 +317,7 @@ export function SelectedArticlePreview({
             </Button>
           ) : null}
           <Button
-            className="h-12 rounded-2xl bg-[linear-gradient(135deg,#5b8cff,#9b4dff)] px-8 font-semibold text-white shadow-[0_0_28px_rgba(99,102,241,0.42)] transition hover:-translate-y-0.5 hover:shadow-[0_0_38px_rgba(139,92,246,0.56)]"
+            className={articleActionButtonClassName}
             onClick={onUseArticle}
           >
             <WandSparkles className="mr-2 h-4 w-4" />

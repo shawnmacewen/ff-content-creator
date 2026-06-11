@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
+import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import {
@@ -19,6 +20,7 @@ import {
   Check,
   Copy,
   Sparkles,
+  Target,
   TrendingUp,
   Users,
   WandSparkles,
@@ -495,6 +497,7 @@ export function ContentDetail({
   const storedTakeaways = Array.isArray(content.keyTakeaways)
     ? content.keyTakeaways.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 3)
     : [];
+  const recommendedAudience = decodeEntitiesBrowser(String(content.recommendedAudience || '')).trim();
   const visibleBlocks = richBlocks.length ? richBlocks : plainTextBlocks(displayBodyText);
 
   const renderMetadataValue = (value: unknown) => {
@@ -701,7 +704,22 @@ export function ContentDetail({
                 </div>
               ) : null}
 
-              <div className={cn('space-y-4', storedTakeaways.length ? 'border-t border-slate-200/80 pt-6' : '')}>
+              {recommendedAudience ? (
+                <div className={cn('space-y-3', storedTakeaways.length ? 'border-t border-slate-200/80 pt-6' : '')}>
+                  <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
+                    <Target className="h-5 w-5 text-blue-600" />
+                    Recommended Audience
+                  </div>
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(37,99,235,0.16),0_10px_30px_rgba(37,99,235,0.1)]">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <p className="pt-1 text-[13px] font-medium leading-5 text-slate-700">{renderHighlightedText(recommendedAudience)}</p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={cn('space-y-4', storedTakeaways.length || recommendedAudience ? 'border-t border-slate-200/80 pt-6' : '')}>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Source Signals</div>
                 <div className="space-y-3 text-sm text-slate-600">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
@@ -760,7 +778,7 @@ export function ContentDetail({
           <div className="pointer-events-none absolute bottom-5 right-5 z-20 flex justify-end px-5">
             <div className="pointer-events-auto">
               <Button
-                className="h-12 rounded-2xl bg-[linear-gradient(135deg,#0f2f68_0%,#d946ef_56%,#f97316_115%)] px-8 font-semibold text-white shadow-[0_0_32px_rgba(217,70,239,0.34)] transition hover:-translate-y-0.5 hover:shadow-[0_0_42px_rgba(249,115,22,0.42)]"
+                className={articleActionButtonClassName}
                 onClick={() => {
                   onUseForGeneration(content);
                   onOpenChange(false);

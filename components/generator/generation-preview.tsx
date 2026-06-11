@@ -9,8 +9,9 @@ import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { GeneratingOutputState } from '@/components/generator/generating-dots';
 import type { ContentTypeInfo } from '@/lib/types/content';
 import type { ContentType, ContentStatus } from '@/lib/types/content';
-import { Copy, Check, Save, RefreshCw, Sparkles } from 'lucide-react';
+import { Copy, Check, Download, Edit3, Save, RefreshCw, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface GenerationPreviewProps {
   contentType: ContentType | null;
@@ -24,6 +25,7 @@ interface GenerationPreviewProps {
   imageGenerationEnabled?: boolean;
   generatedImages?: Record<string, string>;
   imageStatus?: string | null;
+  onGeneratedImageChange?: (key: string, imageUrl: string) => void;
 }
 
 export function GenerationPreview({
@@ -38,11 +40,14 @@ export function GenerationPreview({
   imageGenerationEnabled = false,
   generatedImages = {},
   imageStatus = null,
+  onGeneratedImageChange,
 }: GenerationPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeView, setActiveView] = useState<'all' | string>('all');
+  const [imageEditPrompt, setImageEditPrompt] = useState('');
+  const [isEditingImage, setIsEditingImage] = useState(false);
 
   const typeInfo = contentType ? CONTENT_TYPE_MAP[contentType] : null;
 
@@ -83,6 +88,129 @@ export function GenerationPreview({
     const recomposed = updated.map((s) => `## ${s.title}\n\n${s.body.trim()}`).join('\n\n---\n\n');
     onContentChange(recomposed);
   };
+
+  const getFileExtension = (imageUrl: string) => {
+    const mime = imageUrl.match(/^data:image\/([^;,]+)/i)?.[1]?.toLowerCase();
+    if (mime === 'jpeg') return 'jpg';
+    if (mime) return mime.split('+')[0] || 'png';
+    try {
+      const pathname = new URL(imageUrl).pathname;
+      const ext = pathname.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+      return ext && ext.length <= 5 ? ext : 'png';
+    } catch {
+      return 'png';
+    }
+  };
+
+  const downloadImage = async (imageUrl: string, filenameBase: string) => {
+    const anchor = document.createElement('a');
+    anchor.download = `${filenameBase}.${getFileExtension(imageUrl)}`;
+
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error(`Image download failed (${response.status})`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      anchor.href = objectUrl;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      anchor.href = imageUrl;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+  };
+
+  const editInstagramImage = async (imageUrl: string) => {
+    const prompt = imageEditPrompt.trim();
+    if (!prompt) {
+      toast.error('Add an edit instruction first');
+      return;
+    }
+
+    setIsEditingImage(true);
+    try {
+      const response = await fetch('/api/generate/instagram-carousel-2/image-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: [
+            'Edit this Instagram square image according to the user request.',
+            'Preserve the current topic, high-resolution square format, and professional financial-services tone.',
+            'Avoid logos, watermarks, fake UI text, distorted hands/faces, and obvious AI artifacts.',
+            `User requested edit: ${prompt}`,
+          ].join(' '),
+          model: 'gpt-image-1',
+          size: '1024x1024',
+          referenceImageUrl: imageUrl,
+        }),
+      });
+
+      const outText = await response.text().catch(() => '');
+      const out = (() => {
+        try {
+          return outText ? JSON.parse(outText) : {};
+        } catch {
+          return { raw: outText };
+        }
+      })();
+
+      if (!response.ok) {
+        const detail = typeof out?.error === 'string' ? out.error : outText || '';
+        throw new Error(detail || `Image edit failed (${response.status})`);
+      }
+
+      const nextImageUrl = out?.imageUrl as string | undefined;
+      if (!nextImageUrl) throw new Error('Image edit returned no image');
+
+      onGeneratedImageChange?.('instagram', nextImageUrl);
+      setImageEditPrompt('');
+      toast.success('Instagram image edited');
+    } catch (err: any) {
+      console.error('Instagram image edit failed:', err);
+      toast.error(err?.message || 'Instagram image edit failed');
+    } finally {
+      setIsEditingImage(false);
+    }
+  };
+
+  const renderInstagramImageActions = (imageSrc: string) => (
+    <div className="mt-2 space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => downloadImage(imageSrc, 'instagram-image')}
+        >
+          <Download className="h-4 w-4 mr-1" />
+          Download
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editInstagramImage(imageSrc)}
+          disabled={isEditingImage || !imageEditPrompt.trim() || !onGeneratedImageChange}
+        >
+          <Edit3 className="h-4 w-4 mr-1" />
+          {isEditingImage ? 'Editing...' : 'Apply Edit'}
+        </Button>
+      </div>
+      <Textarea
+        value={imageEditPrompt}
+        onChange={(e) => setImageEditPrompt(e.target.value)}
+        className="min-h-[72px] text-xs"
+        placeholder="Describe the image edit, for example: make the headline text larger, change the wording, remove small background text, brighten the scene, or simplify the illustration."
+        disabled={isEditingImage}
+      />
+    </div>
+  );
 
   const characterCount = content.length;
   const maxLength = typeInfo?.maxLength;
@@ -260,10 +388,13 @@ export function GenerationPreview({
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="whitespace-pre-wrap text-sm leading-relaxed">{captionOnly}</div>
                               <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
-                                {imageSrc ? <img src={imageSrc} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
-                                {imageSrc?.startsWith('data:image/') ? (
-                                  <div className="text-[10px] text-muted-foreground mt-1">Image source: inline base64 (rendered)</div>
-                                ) : null}
+                                <div className="w-full">
+                                  {imageSrc ? <img src={imageSrc} alt="Generated Instagram" className="mx-auto rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                                  {imageSrc ? renderInstagramImageActions(imageSrc) : null}
+                                  {imageSrc?.startsWith('data:image/') ? (
+                                    <div className="text-[10px] text-muted-foreground mt-1">Image source: inline base64 (rendered)</div>
+                                  ) : null}
+                                </div>
                               </div>
                             </div>
                           );
@@ -283,7 +414,10 @@ export function GenerationPreview({
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">{content.replace(/\n*Image URL:\s*.*$/im, '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]').trim()}</div>
                   <div className="rounded border bg-muted/20 p-2 min-h-[180px] flex items-center justify-center">
-                    {generatedImages.instagram ? <img src={generatedImages.instagram} alt="Generated Instagram" className="rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                    <div className="w-full">
+                      {generatedImages.instagram ? <img src={generatedImages.instagram} alt="Generated Instagram" className="mx-auto rounded border max-h-64" /> : <span className="text-xs text-muted-foreground">No image returned yet</span>}
+                      {generatedImages.instagram ? renderInstagramImageActions(generatedImages.instagram) : null}
+                    </div>
                   </div>
                 </div>
               ) : (

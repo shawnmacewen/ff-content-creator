@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { recordGenerationEvent } from '@/lib/generation-events';
 
+const ReferenceImageUrlSchema = z.string().refine(
+  (value) => value.startsWith('data:image/') || /^https?:\/\//i.test(value),
+  'referenceImageUrl must be an image data URL or an http(s) URL'
+);
+
 const BodySchema = z.object({
   prompt: z.string().min(1),
   // NOTE: OpenAI Images sizes must be divisible by 16.
@@ -9,7 +14,7 @@ const BodySchema = z.object({
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
   // Optional reference image to drive cohesion across masterplates.
   // Accepts either a data: URL (data:image/png;base64,...) or an http(s) URL.
-  referenceImageUrl: z.string().url().optional(),
+  referenceImageUrl: ReferenceImageUrlSchema.optional(),
 });
 
 async function fetchImageBytes(url: string): Promise<Uint8Array> {

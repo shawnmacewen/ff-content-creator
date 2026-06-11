@@ -13,6 +13,8 @@ import {
   Bookmark,
   ChevronDown,
   Clapperboard,
+  Download,
+  Edit3,
   Grid2X2,
   Grid3X3,
   Heart,
@@ -53,6 +55,8 @@ type Slide = {
   cropIndex: number; // 0..2 within the plate
   imageUrl: string;
 };
+
+export type InstagramCarouselVisualStyle = 'classic' | 'bright-editorial';
 
 export type InstagramCarousel2ClientHandle = {
   generate: () => Promise<void>;
@@ -103,6 +107,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   onImageRefModeChange?: (m: 'previous' | 'first') => void;
   moreSeamlessBackground?: boolean;
   onMoreSeamlessBackgroundChange?: (v: boolean) => void;
+  visualStyle?: InstagramCarouselVisualStyle;
+  onVisualStyleChange?: (v: InstagramCarouselVisualStyle) => void;
   showAdvancedPromptInput?: boolean;
   onShowAdvancedPromptInputChange?: (v: boolean) => void;
   topic?: string;
@@ -257,6 +263,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setMoreSeamlessBackgroundLocal(v);
   }, [props, setMoreSeamlessBackgroundLocal]);
 
+  const [visualStyleLocal, setVisualStyleLocal] = useControlledState<InstagramCarouselVisualStyle>(props.visualStyle, 'classic');
+  const visualStyle = props.visualStyle ?? visualStyleLocal;
+  const setVisualStyle = React.useCallback((v: InstagramCarouselVisualStyle) => {
+    props.onVisualStyleChange?.(v);
+    setVisualStyleLocal(v);
+  }, [props, setVisualStyleLocal]);
+
   const [masterplates, setMasterplates] = React.useState<Masterplate[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
   const [previewBackgroundUrl, setPreviewBackgroundUrl] = React.useState<string | null>(null);
@@ -291,8 +304,130 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     props.onLoadingChange?.(isLoading);
   }, [isLoading, props]);
   const [error, setError] = React.useState<string | null>(null);
+  const [editingImage, setEditingImage] = React.useState<{
+    kind: 'slide' | 'masterplate';
+    id: string;
+    label: string;
+    imageUrl: string;
+    size: '512x512' | '1536x512';
+  } | null>(null);
+  const [editPrompt, setEditPrompt] = React.useState('');
+  const [isEditingImage, setIsEditingImage] = React.useState(false);
 
   const systemSuffix = 'from the lens of a financial advisor.';
+
+  const getFileExtension = (imageUrl: string) => {
+    const mime = imageUrl.match(/^data:image\/([^;,]+)/i)?.[1]?.toLowerCase();
+    if (mime === 'jpeg') return 'jpg';
+    if (mime) return mime.split('+')[0] || 'png';
+    try {
+      const pathname = new URL(imageUrl).pathname;
+      const ext = pathname.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+      return ext && ext.length <= 5 ? ext : 'png';
+    } catch {
+      return 'png';
+    }
+  };
+
+  const downloadImage = async (imageUrl: string, filenameBase: string) => {
+    const filename = `${filenameBase}.${getFileExtension(imageUrl)}`;
+    const anchor = document.createElement('a');
+    anchor.download = filename;
+
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error(`Image download failed (${response.status})`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      anchor.href = objectUrl;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      anchor.href = imageUrl;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+  };
+
+  const openImageEditor = (target: {
+    kind: 'slide' | 'masterplate';
+    id: string;
+    label: string;
+    imageUrl: string;
+    size: '512x512' | '1536x512';
+  }) => {
+    setEditingImage(target);
+    setEditPrompt('');
+  };
+
+  const runImageEdit = async () => {
+    if (!editingImage || !editPrompt.trim()) return;
+
+    setIsEditingImage(true);
+    try {
+      const promptToSend = [
+        'Edit the provided Instagram image according to the user request.',
+        'Preserve the existing composition, topic, high-resolution format, and readable social-media layout unless the request explicitly changes them.',
+        'Keep financial-services tone professional, polished, trustworthy, and compliant.',
+        visualStyle === 'bright-editorial'
+          ? 'Keep the Bright Editorial style: high-key lighting, clean lines, bright confident mood, generous whitespace, crisp shapes, and reduced synthetic texture.'
+          : '',
+        `User requested edit: ${editPrompt.trim()}`,
+      ].filter(Boolean).join(' ');
+
+      const response = await fetch('/api/generate/instagram-carousel-2/image-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: promptToSend,
+          model,
+          size: editingImage.size,
+          referenceImageUrl: editingImage.imageUrl,
+        }),
+      });
+
+      const outText = await response.text().catch(() => '');
+      const out = (() => {
+        try {
+          return outText ? JSON.parse(outText) : {};
+        } catch {
+          return { raw: outText };
+        }
+      })();
+
+      if (!response.ok) {
+        const detail = typeof out?.error === 'string' ? out.error : outText || '';
+        throw new Error(detail || `Image edit failed (${response.status})`);
+      }
+
+      const nextImageUrl = out?.imageUrl as string | undefined;
+      if (!nextImageUrl) throw new Error('Image edit returned no image');
+
+      if (editingImage.kind === 'slide') {
+        setSlides((items) => items.map((item) => item.id === editingImage.id ? { ...item, imageUrl: nextImageUrl } : item));
+      } else {
+        setMasterplates((items) => items.map((item) => item.id === editingImage.id ? { ...item, imageUrl: nextImageUrl } : item));
+      }
+
+      setPromptLog((prev) => {
+        const header = `--- Edit ${editingImage.label} prompt ---`;
+        return [prev, `${header}\n${promptToSend}`].filter(Boolean).join('\n\n');
+      });
+      toast.success(`${editingImage.label} edited`);
+      setEditingImage(null);
+      setEditPrompt('');
+    } catch (err: any) {
+      console.error('Image edit failed:', err);
+      toast.error(err?.message || 'Image edit failed');
+    } finally {
+      setIsEditingImage(false);
+    }
+  };
 
   const buildLayoutSpec = (opts: { size: '1536x512' | '1024x512' | '512x512'; panels: 3 | 2 | 1; moreSeamlessBackground?: boolean }) => {
     const W = opts.size === '1536x512' ? 1536 : opts.size === '1024x512' ? 1024 : 512;
@@ -531,8 +666,17 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       : `NON-FINAL PLATE RULE: These slides are NOT the end of the carousel. Do NOT include any outro, conclusion language, "wrap-up", or CTA on slides ${args.slideStart}–${args.slideEnd}. Save the CTA for the final slide ${args.totalSlides}.`;
 
     const layoutSpec = buildLayoutSpec({ size: args.size, panels: args.panels, moreSeamlessBackground });
+    const styleSpec = visualStyle === 'bright-editorial'
+      ? [
+          'OPTIONAL TEMPLATE STYLE: Bright Editorial.',
+          'Use high-key lighting, a brighter optimistic mood, cleaner linework, crisp geometric shapes, and generous whitespace.',
+          'Prefer professional editorial illustration with clear focal points, organized visual hierarchy, restrained texture, and clean financial-advice cues.',
+          'Avoid synthetic AI tells: no melted details, over-glossy 3D plastic, distorted hands/faces, random chart artifacts, fake UI text, muddy gradients, or cluttered surreal backgrounds.',
+          'Use brighter neutrals, fresh blues/greens, warm accent highlights, and sharp but approachable contrast.',
+        ].join(' ')
+      : '';
 
-    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, layoutSpec]
+    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, styleSpec, layoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();
@@ -542,7 +686,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
   const runCarouselGeneration = async () => {
 
-    console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, topic });
+    console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, visualStyle, topic });
 
     setIsLoading(true);
     setError(null);
@@ -786,6 +930,19 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         </label>
 
         <label className="text-sm">
+          <div className="mb-1 text-xs text-muted-foreground">Template Style</div>
+          <select
+            className="h-9 w-full rounded-2xl border bg-background px-3 text-sm"
+            value={visualStyle}
+            onChange={(e) => setVisualStyle(e.target.value as InstagramCarouselVisualStyle)}
+            disabled={isLoading}
+          >
+            <option value="classic">Classic Current Look</option>
+            <option value="bright-editorial">Bright Editorial</option>
+          </select>
+        </label>
+
+        <label className="text-sm">
           <div className="mb-1 text-xs text-muted-foreground">Image Ref</div>
           <select
             className="h-9 w-full rounded-2xl border bg-background px-3 text-sm"
@@ -1010,7 +1167,37 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
               <CardContent className="space-y-4">
                 {masterplates.map((p) => (
                   <div key={p.id} className="space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">Masterplate {p.plateIndex + 1} (slides {p.slideStart}–{p.slideEnd})</div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-medium text-muted-foreground">Masterplate {p.plateIndex + 1} (slides {p.slideStart}–{p.slideEnd})</div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => downloadImage(p.imageUrl, `instagram-masterplate-${p.plateIndex + 1}`)}
+                        >
+                          <Download className="mr-1.5 h-3.5 w-3.5" />
+                          Download
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => openImageEditor({
+                            kind: 'masterplate',
+                            id: p.id,
+                            label: `Masterplate ${p.plateIndex + 1}`,
+                            imageUrl: p.imageUrl,
+                            size: '1536x512',
+                          })}
+                        >
+                          <Edit3 className="mr-1.5 h-3.5 w-3.5" />
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.imageUrl} alt={`Masterplate ${p.plateIndex + 1}`} className="w-full max-w-[720px] rounded-2xl border" />
                   </div>
@@ -1220,6 +1407,26 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     <Instagram className="mr-1.5 h-3.5 w-3.5" />
                     Instagram Preview
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-2xl"
+                    onClick={() => {
+                      const orderedSlides = slides
+                        .filter((s) => s.slideNumber <= slideCount)
+                        .slice()
+                        .sort((a, b) => a.slideNumber - b.slideNumber)
+                        .slice(0, slideCount);
+                      orderedSlides.forEach((s) => {
+                        void downloadImage(s.imageUrl, `instagram-carousel-slide-${s.slideNumber}`);
+                      });
+                    }}
+                    disabled={isLoading || !slides.length}
+                  >
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                    Download all
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -1236,25 +1443,67 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                       ? selectedSourceExcerpt
                       : `${captionTitle} is ready for review. Swipe through the carousel to preview each slide in context.`;
                     const activeSlideNumber = Math.min(activeSwipeSlide + 1, ordered.length);
+                    const activeSlide = ordered[Math.max(0, Math.min(activeSwipeSlide, ordered.length - 1))];
 
                     return (
-                      <div
-                        className="relative flex w-full justify-center overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-950 via-black to-slate-950 bg-cover bg-center px-3 py-6 sm:px-8"
-                        style={previewBackgroundUrl ? { backgroundImage: `url("${previewBackgroundUrl.replace(/"/g, '\\"')}")` } : undefined}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/65" />
-                        {isPreviewBackgroundLoading ? (
-                          <div className="absolute right-5 top-5 z-10 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-                            Building preview background
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <div className="text-xs text-muted-foreground">
+                            Active slide: {activeSlide?.slideNumber ?? activeSlideNumber}
                           </div>
-                        ) : null}
-                        <div className="relative z-10 w-full max-w-[430px] rounded-[3rem] border border-white/15 bg-black p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)]">
-                          <div className="pointer-events-none absolute left-1/2 top-3 z-20 h-8 w-28 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
-                          <div className="pointer-events-none absolute left-1/2 top-5 z-30 h-3 w-3 translate-x-10 rounded-full bg-slate-900 ring-2 ring-black">
-                            <span className="block h-1.5 w-1.5 translate-x-0.5 translate-y-0.5 rounded-full bg-blue-500/70" />
-                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-2xl"
+                            disabled={!activeSlide}
+                            onClick={() => {
+                              if (!activeSlide) return;
+                              void downloadImage(activeSlide.imageUrl, `instagram-carousel-slide-${activeSlide.slideNumber}`);
+                            }}
+                          >
+                            <Download className="mr-1.5 h-3.5 w-3.5" />
+                            Download active
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-2xl"
+                            disabled={!activeSlide}
+                            onClick={() => {
+                              if (!activeSlide) return;
+                              openImageEditor({
+                                kind: 'slide',
+                                id: activeSlide.id,
+                                label: `Slide ${activeSlide.slideNumber}`,
+                                imageUrl: activeSlide.imageUrl,
+                                size: '512x512',
+                              });
+                            }}
+                          >
+                            <Edit3 className="mr-1.5 h-3.5 w-3.5" />
+                            Edit active
+                          </Button>
+                        </div>
 
-                          <div className="overflow-hidden rounded-[2.5rem] bg-[#050505] text-white">
+                        <div
+                          className="relative flex w-full justify-center overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-950 via-black to-slate-950 bg-cover bg-center px-3 py-6 sm:px-8"
+                          style={previewBackgroundUrl ? { backgroundImage: `url("${previewBackgroundUrl.replace(/"/g, '\\"')}")` } : undefined}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/65" />
+                          {isPreviewBackgroundLoading ? (
+                            <div className="absolute right-5 top-5 z-10 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
+                              Building preview background
+                            </div>
+                          ) : null}
+                          <div className="relative z-10 w-full max-w-[430px] rounded-[3rem] border border-white/15 bg-black p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)]">
+                            <div className="pointer-events-none absolute left-1/2 top-3 z-20 h-8 w-28 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
+                            <div className="pointer-events-none absolute left-1/2 top-5 z-30 h-3 w-3 translate-x-10 rounded-full bg-slate-900 ring-2 ring-black">
+                              <span className="block h-1.5 w-1.5 translate-x-0.5 translate-y-0.5 rounded-full bg-blue-500/70" />
+                            </div>
+
+                            <div className="overflow-hidden rounded-[2.5rem] bg-[#050505] text-white">
                             <div className="flex h-10 items-center justify-between px-8 pt-2 text-[15px] font-semibold">
                               <span>9:41</span>
                               <div className="flex items-center gap-1.5">
@@ -1396,6 +1645,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                               <Clapperboard className="h-7 w-7" />
                               <UserCircle className="h-7 w-7" />
                             </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1414,7 +1664,37 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     <div className={gridClass}>
                       {ordered.map((s) => (
                         <div key={s.id} className="space-y-2">
-                          <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-xs text-muted-foreground">Slide {s.slideNumber}</div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-2xl px-2 text-xs"
+                                onClick={() => downloadImage(s.imageUrl, `instagram-carousel-slide-${s.slideNumber}`)}
+                              >
+                                <Download className="mr-1 h-3 w-3" />
+                                Download
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-2xl px-2 text-xs"
+                                onClick={() => openImageEditor({
+                                  kind: 'slide',
+                                  id: s.id,
+                                  label: `Slide ${s.slideNumber}`,
+                                  imageUrl: s.imageUrl,
+                                  size: '512x512',
+                                })}
+                              >
+                                <Edit3 className="mr-1 h-3 w-3" />
+                                Edit
+                              </Button>
+                            </div>
+                          </div>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={s.imageUrl} alt={`Slide ${s.slideNumber}`} className={imgClass} />
                         </div>
@@ -1427,6 +1707,52 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
           ) : null}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={Boolean(editingImage)} onOpenChange={(open) => {
+        if (!open) setEditingImage(null);
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit {editingImage?.label || 'image'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)]">
+            <div className="rounded-2xl border bg-muted/20 p-2">
+              {editingImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={editingImage.imageUrl} alt={editingImage.label} className="w-full rounded-xl border object-cover" />
+              ) : null}
+            </div>
+            <div className="space-y-3">
+              <textarea
+                className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                value={editPrompt}
+                onChange={(e) => setEditPrompt(e.target.value)}
+                placeholder="Describe the image edit, for example: make the headline text larger, change the title wording, remove small background text, brighten the scene, or simplify the illustration."
+                disabled={isEditingImage}
+              />
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl"
+                  onClick={() => setEditingImage(null)}
+                  disabled={isEditingImage}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="rounded-2xl"
+                  onClick={runImageEdit}
+                  disabled={isEditingImage || !editPrompt.trim()}
+                >
+                  {isEditingImage ? 'Editing...' : 'Apply Edit'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
