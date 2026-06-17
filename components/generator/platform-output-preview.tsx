@@ -38,15 +38,15 @@ function firstMeaningfulLine(text: string) {
 function parseEmail(content: string) {
   const text = cleanGeneratedText(content);
   const lines = text.split('\n');
-  const subjectIndex = lines.findIndex((line) => /^subject\s*:/i.test(line.trim()));
-  const preheaderIndex = lines.findIndex((line) => /^preheader\s*:/i.test(line.trim()));
+  const subjectIndex = lines.findIndex((line) => /^subject(?:\s+line)?\s*:/i.test(line.trim()));
+  const preheaderIndex = lines.findIndex((line) => /^(?:preheader|preview\s+text)\s*:/i.test(line.trim()));
 
   const subject = subjectIndex >= 0
-    ? lines[subjectIndex].replace(/^subject\s*:\s*/i, '').trim()
+    ? lines[subjectIndex].replace(/^subject(?:\s+line)?\s*:\s*/i, '').trim()
     : firstMeaningfulLine(text).replace(/^#+\s*/, '').trim() || 'Generated campaign draft';
 
   const preheader = preheaderIndex >= 0
-    ? lines[preheaderIndex].replace(/^preheader\s*:\s*/i, '').trim()
+    ? lines[preheaderIndex].replace(/^(?:preheader|preview\s+text)\s*:\s*/i, '').trim()
     : 'Editorial preview';
 
   const body = lines
@@ -56,6 +56,30 @@ function parseEmail(content: string) {
     .trim();
 
   return { subject, preheader, body: body || text };
+}
+
+function parseEmailSequence(content: string) {
+  const text = cleanGeneratedText(content);
+  const matches = Array.from(text.matchAll(/(?:^|\n)#{0,3}\s*Touch\s+([123])\s*:?\s*([^\n]*)/gi));
+
+  if (!matches.length) {
+    return [
+      { number: 1, role: 'Campaign email', ...parseEmail(text) },
+    ];
+  }
+
+  return matches.map((match, index) => {
+    const start = (match.index || 0) + match[0].length;
+    const end = matches[index + 1]?.index ?? text.length;
+    const segment = text.slice(start, end).trim();
+    const number = Number(match[1]) || index + 1;
+    const role = match[2]?.trim() || `Touch ${number}`;
+    return {
+      number,
+      role,
+      ...parseEmail(segment),
+    };
+  }).slice(0, 3);
 }
 
 function PhoneShell({ children, variant = 'light' }: { children: React.ReactNode; variant?: 'light' | 'dark' }) {
@@ -241,6 +265,85 @@ function EmailPreview({ content, label }: { content: string; label?: string }) {
   );
 }
 
+function EmailSequencePreview({ content, label }: { content: string; label?: string }) {
+  const emails = React.useMemo(() => parseEmailSequence(content), [content]);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const activeEmail = emails[Math.min(activeIndex, emails.length - 1)] || emails[0];
+
+  React.useEffect(() => {
+    if (activeIndex >= emails.length) setActiveIndex(0);
+  }, [activeIndex, emails.length]);
+
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-background p-2 shadow-sm">
+        {emails.map((email, index) => (
+          <button
+            key={`${email.number}-${index}`}
+            type="button"
+            onClick={() => setActiveIndex(index)}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-left text-xs transition-colors',
+              activeIndex === index
+                ? 'border-primary/60 bg-primary/10 text-primary'
+                : 'bg-background hover:bg-muted'
+            )}
+          >
+            <span className="block font-semibold">Touch {email.number}</span>
+            <span className="block max-w-[180px] truncate text-muted-foreground">{email.role}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border bg-white text-slate-950 shadow-sm">
+        <div className="border-b bg-slate-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Mail className="h-4 w-4" />
+            {label || '3 Touch Email Sequence'} · Touch {activeEmail?.number || 1}
+          </div>
+        </div>
+        <div className="grid gap-0 md:grid-cols-[230px_minmax(0,1fr)]">
+          <aside className="border-b bg-slate-50 p-3 md:border-b-0 md:border-r">
+            <div className="space-y-2">
+              {emails.map((email, index) => (
+                <button
+                  key={`${email.number}-inbox-${index}`}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={cn(
+                    'w-full rounded-lg bg-white p-3 text-left shadow-sm transition-colors',
+                    activeIndex === index && 'ring-1 ring-primary/40'
+                  )}
+                >
+                  <div className="text-xs font-semibold text-slate-900">editorial</div>
+                  <div className="mt-1 line-clamp-2 text-xs text-slate-600">{email.subject}</div>
+                </button>
+              ))}
+            </div>
+          </aside>
+          <article className="min-h-[430px] p-5">
+            <div className="border-b pb-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{activeEmail?.role || 'Campaign email'}</div>
+              <h3 className="text-xl font-semibold leading-snug">{activeEmail?.subject}</h3>
+              <div className="mt-2 text-sm text-slate-500">{activeEmail?.preheader}</div>
+              <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                <Avatar className="h-8 w-8 text-sm" />
+                <div>
+                  <div className="font-medium text-slate-800">Editorial Team</div>
+                  <div>to advisor audience</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+              {activeEmail?.body || 'Generated email copy will appear here.'}
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DocumentPreview({ content, type, label }: { content: string; type: ContentType; label?: string }) {
   const text = cleanGeneratedText(content);
   const typeLabel = label || CONTENT_TYPE_MAP[type]?.label || type;
@@ -272,6 +375,7 @@ export function PlatformOutputPreview({
   if (type === 'social-linkedin') return <LinkedInPreview content={content} />;
   if (type === 'social-twitter') return <TwitterPreview content={content} />;
   if (type === 'social-instagram') return <InstagramCaptionPreview content={content} />;
+  if (type === 'email-sequence') return <EmailSequencePreview content={content} label={label} />;
   if (type === 'email-marketing' || type === 'newsletter') return <EmailPreview content={content} label={label} />;
   return <DocumentPreview content={content} type={type} label={label} />;
 }

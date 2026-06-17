@@ -114,7 +114,7 @@ export function SourceArticlePicker({
 
   // API currently supports q + pageSize; topic is UI-only for now.
   const apiUrl = query
-    ? `/api/source-content?q=${encodeURIComponent(query)}&pageSize=50`
+    ? `/api/source-content?q=${encodeURIComponent(query)}&pageSize=200`
     : '/api/source-content?pageSize=50';
 
   const { data, isLoading } = useSWR<ApiResponse>(apiUrl, fetcher);

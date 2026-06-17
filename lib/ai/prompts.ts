@@ -44,6 +44,41 @@ Structure:
 
 Keep paragraphs short and scannable.`,
 
+  'email-sequence': `Create a cohesive 3 Touch Point email sequence for a campaign.
+The three emails should build a clear cadence around the same source content:
+- Touch 1: introduce the topic, frame why it matters, and invite light engagement
+- Touch 2: deepen the value with a practical insight, objection, or planning angle
+- Touch 3: summarize the campaign message and end with the strongest call to action
+
+Use this exact structure so the app can preview each email separately:
+
+Touch 1: [short campaign role]
+Subject: [40-60 character subject line]
+Preview Text: [short inbox preview]
+Body:
+[email body]
+CTA: [button/action text]
+
+Touch 2: [short campaign role]
+Subject: [40-60 character subject line]
+Preview Text: [short inbox preview]
+Body:
+[email body]
+CTA: [button/action text]
+
+Touch 3: [short campaign role]
+Subject: [40-60 character subject line]
+Preview Text: [short inbox preview]
+Body:
+[email body]
+CTA: [strongest final action]
+
+Guidelines:
+- Make the three emails feel connected, not repetitive
+- Keep each email concise and scannable
+- Use campaign-style progression from awareness to consideration to action
+- Avoid exaggerated claims, guarantees, or performance promises`,
+
   newsletter: `Create newsletter content that informs and engages subscribers.
 Structure:
 - Headline: Clear, informative

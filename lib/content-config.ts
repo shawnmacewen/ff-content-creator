@@ -37,6 +37,14 @@ export const CONTENT_TYPES: ContentTypeInfo[] = [
     placeholder: 'Write a compelling email about...',
   },
   {
+    id: 'email-sequence',
+    label: '3 Touch Email Sequence',
+    description: 'Campaign-style three-email cadence with a stronger final CTA',
+    icon: 'mails',
+    category: 'email',
+    placeholder: 'Create a three-touch email sequence about...',
+  },
+  {
     id: 'newsletter',
     label: 'Newsletter',
     description: 'Regular newsletter content',

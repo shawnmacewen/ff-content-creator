@@ -140,6 +140,7 @@ export async function POST(req: Request) {
     const assets = (selectedTypes || []).map((assetType) => ({
       type: assetType,
       label: assetType === 'email-marketing' ? 'Email' :
+        assetType === 'email-sequence' ? '3 Touch Email Sequence' :
         assetType === 'social-instagram' ? 'Instagram Caption' :
         assetType === 'social-linkedin' ? 'LinkedIn Post' :
         assetType === 'social-twitter' ? 'Twitter/X Post' :

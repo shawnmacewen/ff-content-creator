@@ -541,7 +541,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     return { imageUrl: url, promptUsed: promptToSend };
   };
 
-  const generatePreviewBackground = async (referenceImageUrl: string, args: { totalSlides: number; platesNeeded: number }) => {
+  const generatePreviewBackground = async (args: { totalSlides: number; platesNeeded: number }) => {
     const sourceLine = selectedSourceTitle
       ? `Source topic: ${selectedSourceTitle}.`
       : topic.trim()
@@ -550,10 +550,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
     const promptToSend = [
       'Create a premium vertical background image for an Instagram phone preview mockup.',
-      'Use the provided carousel masterplate only as a visual reference for palette, texture, lighting, illustration style, and editorial mood.',
+      'This is a standalone ambient backdrop, not an image edit, not a carousel slide, and not a masterplate.',
       sourceLine,
       `The foreground phone UI will be placed centered on top of this image by the application, so keep the center calm with soft depth and no busy focal object behind the phone.`,
-      'Composition: 1536x1024 landscape canvas, atmospheric editorial backdrop, subtle gradients, abstract source-inspired shapes, gentle depth, polished social preview staging.',
+      'Composition: 1536x1024 landscape canvas, one uninterrupted atmospheric editorial backdrop, subtle gradients, abstract source-inspired shapes, gentle depth, polished social preview staging.',
+      'Cohesion rule: render this as a single cohesive background image, not a carousel plate, not a grid, not a triptych, not three cells, and not separate left/middle/right panels.',
+      'Center rule: no centered square, no rectangular inset, no poster/card area, no box behind the phone, and no different middle section.',
+      'Seam rule: no vertical divider lines, no crop marks, no panel boundaries, no borders, no gutters, no strips, and no visible seams anywhere in the image.',
       `Match the generated carousel campaign across ${args.totalSlides} slides and ${args.platesNeeded} masterplate group(s).`,
       'Absolute rule: no readable text, no letters, no numbers, no logos, no watermarks, no UI, no phone, no frame.',
     ].join(' ');
@@ -572,7 +575,6 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
           prompt: promptToSend,
           model,
           size: '1536x1024',
-          referenceImageUrl,
         }),
       });
 
@@ -790,9 +792,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         setSlides(newSlides.slice(0, count));
       }
 
-      if (newMasterplates[0]?.imageUrl) {
-        await generatePreviewBackground(newMasterplates[0].imageUrl, { totalSlides: count, platesNeeded });
-      }
+      await generatePreviewBackground({ totalSlides: count, platesNeeded });
 
       toast.success('Carousel generated');
     } catch (e: any) {
@@ -971,6 +971,38 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       </div>
     </div>
   );
+
+  const EmbeddedGenerateAction = props.hideSettingsControls ? (
+    <Card className="rounded-2xl">
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div>
+          <div className="text-sm font-semibold">Carousel images</div>
+          <div className="text-xs text-muted-foreground">Generate or refresh the image set using the selected setup controls.</div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            className="rounded-2xl bg-primary hover:bg-primary/90"
+            onClick={runCarouselGeneration}
+            disabled={isLoading || !topic.trim()}
+          >
+            {props.generateLabel ?? 'Generate Carousel'}
+          </Button>
+
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.2s]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce [animation-delay:-0.1s]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-500/70 animate-bounce" />
+              <span className="text-xs font-medium text-slate-600">Generating</span>
+            </div>
+          ) : null}
+
+          {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        </div>
+      </CardContent>
+    </Card>
+  ) : null;
 
   return (
     <div className="space-y-6">
@@ -1208,6 +1240,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         </TabsContent>
 
         <TabsContent value="carousel" className="mt-4 space-y-4">
+          {EmbeddedGenerateAction}
+
           {props.hideSettingsControls ? null : (
             <Card className="rounded-2xl">
             {props.hideSettingsControls ? null : (

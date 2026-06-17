@@ -4,6 +4,7 @@ export type ContentType =
   | 'social-linkedin'
   | 'social-instagram'
   | 'email-marketing'
+  | 'email-sequence'
   | 'newsletter'
   | 'article'
   | 'infographic-copy'

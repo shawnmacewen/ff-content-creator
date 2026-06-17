@@ -16,6 +16,8 @@ function parseIntentTokens(query: string) {
     impact: ['effect', 'effects', 'influence'],
     advisor: ['adviser', 'financial advisor'],
     advisors: ['adviser', 'financial advisor'],
+    trust: ['trusts', 'estate planning', 'estate'],
+    trusts: ['trust', 'estate planning', 'estate'],
     switching: ['switch', 'change', 'transition'],
     ai: ['artificial intelligence', 'machine learning'],
     economy: ['economic', 'markets', 'macro'],
@@ -183,7 +185,8 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || undefined;
     const publisher = searchParams.get('publisher') || undefined;
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
-    const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10) || 10));
+    const requestedPageSize = Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10) || 10);
+    const pageSize = Math.min(query ? 200 : 50, requestedPageSize);
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize;
@@ -230,8 +233,9 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const { tokens, expanded } = parseIntentTokens(query);
+      const candidateLimit = Math.max(1000, from + pageSize + 1);
       const { data: candidateRows, error: candidateErr } = await withDatabaseTimeout<any>((signal) => (
-        dbQuery.abortSignal(signal).range(0, 199)
+        dbQuery.abortSignal(signal).range(0, candidateLimit - 1)
       ));
       if (candidateErr) {
         return fallbackSourceContentResponse({
