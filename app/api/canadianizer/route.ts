@@ -57,6 +57,18 @@ const canadianizerModels = new Set([
   'gpt-5.5',
 ]);
 
+const CANADIAN_EQUIVALENCY_CONTEXT = [
+  'Curated Canadian equivalency context for financial editorial conversion:',
+  '- 401(k), traditional IRA, and Roth IRA often map to RRSP, TFSA, employer pension plans, group RRSPs, or registered savings planning depending on the original point; explain caveats instead of forcing a one-to-one match.',
+  '- 529 education savings can often map to RESP planning, including grant-aware education savings context, but do not invent contribution limits or grant rates.',
+  '- HSA/FSA healthcare savings generally do not have a clean Canadian retail equivalent; rewrite around health benefits, workplace benefits, or medical expense tax context only at a high level.',
+  '- Medicare, Medicaid, and Social Security usually need broad retirement income, government benefit, healthcare, CPP, OAS, or GIS framing depending on the source point; avoid pretending they are direct equivalents.',
+  '- SEC, FINRA, DOL, ERISA, IRS, U.S. Treasury, and state agencies should map only to broad Canadian regulatory/tax context unless a real Canadian counterpart is directly relevant, such as CRA, provincial securities regulators, CIRO, CSA, OSFI, CPP, or OAS.',
+  '- U.S. estate tax, gift tax, probate, trust, and state-law concepts often require Canadian estate planning caveats; use CRA/provincial/general estate framing only when defensible.',
+  '- Municipal bonds, 1031 exchanges, U.S. college aid, U.S. tax filing statuses, and U.S. deductions often need major rewriting or gap notes rather than direct substitution.',
+  '- When the source discusses universal investor behaviour, market volatility, diversification, budgeting, debt, retirement readiness, cash flow, behavioural finance, or advisor-client communication, treat the concept as usually convertible with Canadian examples and terminology.',
+].join('\n');
+
 function decodeHtmlEntities(input: string) {
   return String(input || '')
     .replace(/&lt;/g, '<')
@@ -162,6 +174,7 @@ export async function POST(req: Request) {
       'Critical rules:',
       '- Use Canadian terminology, institutions, tax concepts, plan types, savings vehicles, regulatory framing, and market context where appropriate.',
       '- Convert U.S.-specific concepts into Canadian equivalents only when there is a defensible Canadian match.',
+      '- Actively look for defensible Canadian parallels before declaring "No direct Canadian equivalent"; a partial or caveated Canadian analogue is often more useful than a missed match.',
       '- If a concept is tied to a U.S.-only agency, rule, program, plan, regulator, court, filing, or statute, do not invent a Canadian equivalent. Identify it as a gap or rewrite around a broader theme.',
       '- Examples: 401(k) and IRA may map to RRSP/TFSA depending on context; 529 plans may map imperfectly to RESPs; U.S. Department of Labor, ERISA, SEC, FINRA, IRS, Medicare, Social Security, U.S. estate/gift/tax rules, and U.S. state rules often do not have a direct Canadian equivalent.',
       '- If no clean Canadian equivalent exists, say so in gapsAndNonMatches and write around the concept honestly.',
@@ -170,6 +183,8 @@ export async function POST(req: Request) {
       '- Keep the content useful and engaging for Canadian advisors and clients, not academic.',
       '- Preserve the original article intent, structure, and major themes where possible, but rewrite deeply enough that the Canadian article stands on its own.',
       '- If province-specific treatment matters and the selected province is Canada-wide, use Canada-wide framing and note when provincial rules may vary.',
+      '',
+      CANADIAN_EQUIVALENCY_CONTEXT,
       '',
       'Output requirements:',
       '- canadianArticleMarkdown should be a polished article in Markdown with a clear headline, short intro, section headings, and practical closing.',
@@ -306,7 +321,10 @@ export async function POST(req: Request) {
       '',
       'Important: the score is not writing quality. The score measures conceptual convertibility and factual responsibility.',
       'Penalize heavily for invented Canadian equivalents, invented regulators, invented laws, invented departments, fabricated tax details, or unsupported Canadian claims.',
+      'Do not penalize merely because a concept is not a perfect one-to-one match when the generation used a defensible partial Canadian analogue and clearly stated caveats.',
       'If the original is mostly about a U.S.-specific agency, rule, statute, program, regulator, or government process with no real Canadian equivalent, the score should usually be below 30 even if the draft is well written.',
+      '',
+      CANADIAN_EQUIVALENCY_CONTEXT,
       '',
       'Score guide:',
       '- 90-100: Most source concepts have strong real Canadian equivalents and the Canadian article preserves the original educational intent without unsupported claims.',

@@ -96,6 +96,19 @@ function getThumb(c: SourceContent) {
   );
 }
 
+function getFilename(c: SourceContent) {
+  const meta = parseMetadata(c);
+  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+  const selected: any = meta?.extraPropertiesSelected || null;
+  return (
+    (c as any)?.metadata?.extraPropertiesSelected?.BasContentFilename ||
+    selected?.BasContentFilename ||
+    extraMap?.BasContentFilename ||
+    (c as any)?.externalId ||
+    null
+  );
+}
+
 export function SourceArticlePicker({
   selectedId,
   onSelect,
@@ -140,7 +153,8 @@ export function SourceArticlePicker({
 
     return items.filter((c) => {
       const tagText = (c.tags || []).map((t) => decodeLite(String(t))).join(' ');
-      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${decodeLite(String(c.excerpt || ''))} ${tagText}`.toLowerCase();
+      const filename = getFilename(c);
+      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${decodeLite(String(c.excerpt || ''))} ${decodeLite(String(filename || ''))} ${tagText}`.toLowerCase();
 
       const topicOk = !needles.length || needles.some((n) => hay.includes(n));
       const searchOk = !q || hay.includes(q);

@@ -65,6 +65,13 @@ export type InstagramCarousel2ClientHandle = {
   scrollToMasterplates: () => void;
 };
 
+export type InstagramCarouselProgress = {
+  total: number;
+  done: number;
+  activeSlide: number;
+  stage: 'idle' | 'planning' | 'generating' | 'background' | 'complete' | 'failed';
+};
+
 function useControlledState<T>(controlled: T | undefined, defaultValue: T) {
   const [uncontrolled, setUncontrolled] = React.useState<T>(defaultValue);
   const isControlled = typeof controlled !== 'undefined';
@@ -95,6 +102,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   generateLabel?: string;
   /** Notify parent when internal loading state changes (useful when triggering via ref). */
   onLoadingChange?: (loading: boolean) => void;
+  /** Notify parent of slide-level progress while a carousel run is active. */
+  onProgress?: (progress: InstagramCarouselProgress | null) => void;
 
   // Controlled settings (used when embedding in Generate page)
   slideCount?: number;
@@ -306,6 +315,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   const [error, setError] = React.useState<string | null>(null);
   const [editingImage, setEditingImage] = React.useState<{
     kind: 'slide' | 'masterplate';
+    intent: 'image' | 'text';
     id: string;
     label: string;
     imageUrl: string;
@@ -356,12 +366,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
   const openImageEditor = (target: {
     kind: 'slide' | 'masterplate';
+    intent?: 'image' | 'text';
     id: string;
     label: string;
     imageUrl: string;
     size: '512x512' | '1536x512';
   }) => {
-    setEditingImage(target);
+    setEditingImage({ ...target, intent: target.intent ?? 'image' });
     setEditPrompt('');
   };
 
@@ -371,8 +382,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setIsEditingImage(true);
     try {
       const promptToSend = [
-        'Edit the provided Instagram image according to the user request.',
-        'Preserve the existing composition, topic, high-resolution format, and readable social-media layout unless the request explicitly changes them.',
+        editingImage.intent === 'text'
+          ? 'Edit ONLY the readable text on this individual Instagram carousel slide according to the user request.'
+          : 'Edit the provided Instagram image according to the user request.',
+        editingImage.intent === 'text'
+          ? 'Preserve the slide composition, topic, illustration style, colors, layout, and visual hierarchy. Replace or correct the headline, body copy, labels, or CTA text requested by the user. Keep all text large, legible, correctly spelled, and fully inside the slide.'
+          : 'Preserve the existing composition, topic, high-resolution format, and readable social-media layout unless the request explicitly changes them.',
         'Keep financial-services tone professional, polished, trustworthy, and compliant.',
         visualStyle === 'bright-editorial'
           ? 'Keep the Bright Editorial style: high-key lighting, clean lines, bright confident mood, generous whitespace, crisp shapes, and reduced synthetic texture.'
@@ -697,6 +712,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setPreviewBackgroundUrl(null);
     setIsPreviewBackgroundLoading(false);
     setPromptLog('');
+    props.onProgress?.({
+      total: Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3))),
+      done: 0,
+      activeSlide: 0,
+      stage: 'planning',
+    });
 
     try {
       const count = Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3)));
@@ -726,6 +747,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         const slideEnd = plate.slideEnd;
         const size = plate.size;
         const panels = plate.panels;
+        props.onProgress?.({
+          total: count,
+          done: newSlides.length,
+          activeSlide: Math.max(0, slideStart - 1),
+          stage: 'generating',
+        });
 
         console.log('runCarouselGeneration:plateLoop', { plateIndex, slideStart, slideEnd, size, panels });
 
@@ -790,9 +817,27 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
         // Defensive: never keep more than the requested slide count.
         setSlides(newSlides.slice(0, count));
+        props.onProgress?.({
+          total: count,
+          done: Math.min(newSlides.length, count),
+          activeSlide: Math.min(count - 1, slideEnd),
+          stage: 'generating',
+        });
       }
 
+      props.onProgress?.({
+        total: count,
+        done: count,
+        activeSlide: Math.max(0, count - 1),
+        stage: 'background',
+      });
       await generatePreviewBackground({ totalSlides: count, platesNeeded });
+      props.onProgress?.({
+        total: count,
+        done: count,
+        activeSlide: Math.max(0, count - 1),
+        stage: 'complete',
+      });
 
       toast.success('Carousel generated');
     } catch (e: any) {
@@ -812,6 +857,12 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       const combined = stack ? `${msg}\n\n${stack}` : msg;
 
       setError(combined);
+      props.onProgress?.({
+        total: Math.max(2, Math.min(10, Math.floor(Number(slideCount) || 3))),
+        done: slides.length,
+        activeSlide: Math.max(0, slides.length - 1),
+        stage: 'failed',
+      });
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -1509,6 +1560,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                               if (!activeSlide) return;
                               openImageEditor({
                                 kind: 'slide',
+                                intent: 'image',
                                 id: activeSlide.id,
                                 label: `Slide ${activeSlide.slideNumber}`,
                                 imageUrl: activeSlide.imageUrl,
@@ -1517,7 +1569,28 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                             }}
                           >
                             <Edit3 className="mr-1.5 h-3.5 w-3.5" />
-                            Edit active
+                            Edit image
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-2xl"
+                            disabled={!activeSlide}
+                            onClick={() => {
+                              if (!activeSlide) return;
+                              openImageEditor({
+                                kind: 'slide',
+                                intent: 'text',
+                                id: activeSlide.id,
+                                label: `Slide ${activeSlide.slideNumber} text`,
+                                imageUrl: activeSlide.imageUrl,
+                                size: '512x512',
+                              });
+                            }}
+                          >
+                            <Edit3 className="mr-1.5 h-3.5 w-3.5" />
+                            Edit text
                           </Button>
                         </div>
 
@@ -1718,6 +1791,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                                 className="h-8 rounded-2xl px-2 text-xs"
                                 onClick={() => openImageEditor({
                                   kind: 'slide',
+                                  intent: 'image',
                                   id: s.id,
                                   label: `Slide ${s.slideNumber}`,
                                   imageUrl: s.imageUrl,
@@ -1725,7 +1799,24 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                                 })}
                               >
                                 <Edit3 className="mr-1 h-3 w-3" />
-                                Edit
+                                Image
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-2xl px-2 text-xs"
+                                onClick={() => openImageEditor({
+                                  kind: 'slide',
+                                  intent: 'text',
+                                  id: s.id,
+                                  label: `Slide ${s.slideNumber} text`,
+                                  imageUrl: s.imageUrl,
+                                  size: '512x512',
+                                })}
+                              >
+                                <Edit3 className="mr-1 h-3 w-3" />
+                                Text
                               </Button>
                             </div>
                           </div>
@@ -1747,7 +1838,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
       }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit {editingImage?.label || 'image'}</DialogTitle>
+            <DialogTitle>
+              {editingImage?.intent === 'text' ? 'Edit slide text' : 'Edit image'}{editingImage?.label ? ` - ${editingImage.label}` : ''}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)]">
             <div className="rounded-2xl border bg-muted/20 p-2">
@@ -1761,7 +1854,11 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                 className="min-h-[140px] w-full resize-y rounded-2xl border bg-background p-3 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 value={editPrompt}
                 onChange={(e) => setEditPrompt(e.target.value)}
-                placeholder="Describe the image edit, for example: make the headline text larger, change the title wording, remove small background text, brighten the scene, or simplify the illustration."
+                placeholder={
+                  editingImage?.intent === 'text'
+                    ? 'Describe the slide text change, for example: replace the headline with “Markets moved on rate expectations” and change the body to “Three signals advisors should watch.”'
+                    : 'Describe the image edit, for example: make the headline text larger, change the title wording, remove small background text, brighten the scene, or simplify the illustration.'
+                }
                 disabled={isEditingImage}
               />
               <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1780,7 +1877,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                   onClick={runImageEdit}
                   disabled={isEditingImage || !editPrompt.trim()}
                 >
-                  {isEditingImage ? 'Editing...' : 'Apply Edit'}
+                  {isEditingImage ? 'Editing...' : editingImage?.intent === 'text' ? 'Apply Text Edit' : 'Apply Edit'}
                 </Button>
               </div>
             </div>

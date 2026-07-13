@@ -61,7 +61,7 @@ export default function AuditPage() {
         body: JSON.stringify({
           prompt: searchPrompt,
           publisher,
-          limit: method === 'search' ? 1000 : analyzeDepth === 'deep' ? 1000 : 300,
+          limit: method === 'search' ? 5000 : analyzeDepth === 'deep' ? 5000 : 3000,
           mode: matchMode,
           depth: analyzeDepth,
           mustInclude: includeTerms,
@@ -138,6 +138,17 @@ export default function AuditPage() {
   const resultTotal = result?.total ?? matches.length;
   const scanned = result?.scanned ?? 0;
   const candidateCount = result?.candidateCount;
+  const chunkCount = result?.chunkCount;
+  const scanModeLabel = method === 'search'
+    ? 'Standard Search'
+    : analyzeDepth === 'deep'
+      ? 'AI Deep Scan'
+      : 'AI Quick Scan';
+  const scanRunningDetail = method === 'search'
+    ? 'Scanning filenames, titles, summaries, tags, and normalized body text across the source inventory.'
+    : analyzeDepth === 'deep'
+      ? 'Collecting broad candidates across the source inventory, then applying deeper AI classification in batches.'
+      : 'Collecting broad candidates across the source inventory, then applying focused AI classification to the strongest candidates.';
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
@@ -170,7 +181,7 @@ export default function AuditPage() {
             type="button"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            AI Analyze
+            AI Scan
           </button>
         </div>
 
@@ -179,18 +190,18 @@ export default function AuditPage() {
             <>
               <div className="font-medium text-foreground mb-1">How Standard Search works</div>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Best for exact term/phrase matching in title and body text.</li>
+                <li>Best for exact term/phrase matching across filenames, titles, summaries, tags, and body text.</li>
                 <li>Use quotes for exact phrases (example: "standard mileage rate").</li>
                 <li>Use exclusions like <code>but not "2026"</code> to filter out matches.</li>
               </ul>
             </>
           ) : (
             <>
-              <div className="font-medium text-foreground mb-1">How AI Analyze works</div>
+              <div className="font-medium text-foreground mb-1">How AI Scan works</div>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Best for natural-language requests and semantic review.</li>
-                <li>AI reads titles + body excerpts and returns scored matches with reasons.</li>
-                <li>Use this when your request is nuanced beyond simple keyword matching.</li>
+                <li>AI Quick Scan reviews the strongest candidates after a broad inventory pass.</li>
+                <li>AI Deep Scan uses a wider AI candidate set and smaller batches for more nuanced review.</li>
+                <li>Use AI Scan when the request is conceptual, not just keyword matching.</li>
               </ul>
             </>
           )}
@@ -252,9 +263,9 @@ export default function AuditPage() {
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {method === 'analyze' ? 'Analyzing...' : 'Running...'}
+                {method === 'analyze' ? `${scanModeLabel} running...` : 'Running search...'}
               </>
-            ) : method === 'analyze' ? 'Run AI Analyze' : 'Run Standard Search'}
+            ) : method === 'analyze' ? `Run ${scanModeLabel}` : 'Run Standard Search'}
           </Button>
           <Button variant="outline" onClick={() => {
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -269,7 +280,8 @@ export default function AuditPage() {
 
       {loading && (
         <div className="text-sm text-muted-foreground rounded border p-3">
-          {method === 'analyze' ? 'Scanning candidates and applying AI classification...' : 'Scanning normalized source content...'}
+          <div className="font-medium text-foreground">{scanModeLabel} in progress</div>
+          <div className="mt-1">{scanRunningDetail}</div>
         </div>
       )}
 
@@ -293,9 +305,13 @@ export default function AuditPage() {
               {method === 'analyze' ? <Sparkles className="h-4 w-4" /> : <FileSearch className="h-4 w-4" />}
             </span>
             <div>
-              <p className="text-sm font-semibold">{method === 'analyze' ? 'AI Analyze' : 'Standard Search'}</p>
+              <p className="text-sm font-semibold">{result?.mode === 'ai-analyze' ? (result?.structured?.depth === 'deep' ? 'AI Deep Scan' : scanModeLabel) : scanModeLabel}</p>
               <p className="text-xs text-muted-foreground">
-                {result?.parserUsed === 'fallback' ? 'Fallback parser' : method === 'search' ? 'Deterministic parser' : `${candidateCount ?? 0} AI candidates`}
+                {result?.parserUsed === 'fallback'
+                  ? 'Fallback parser'
+                  : method === 'search'
+                    ? 'Deterministic parser'
+                    : `${candidateCount ?? 0} AI candidates${chunkCount ? ` / ${chunkCount} batches` : ''}`}
               </p>
             </div>
           </div>

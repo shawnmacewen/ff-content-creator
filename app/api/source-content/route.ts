@@ -31,21 +31,29 @@ function parseIntentTokens(query: string) {
 function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: string[]) {
   const title = String(row.title || '').toLowerCase();
   const body = getCanonicalBody(row).toLowerCase();
+  const filename = getSearchableFilename(row).toLowerCase();
+  const summary = getSearchableSummary(row).toLowerCase();
   const q = query.toLowerCase();
 
   let score = 0;
-  if (title.includes(q)) score += 20;
+  if (title.includes(q)) score += 24;
+  if (filename.includes(q)) score += 22;
+  if (summary.includes(q)) score += 16;
   if (body.includes(q)) score += 10;
 
   let coreMatches = 0;
   for (const t of tokens) {
     if (title.includes(t)) { score += 6; coreMatches += 1; }
+    else if (filename.includes(t)) { score += 6; coreMatches += 1; }
+    else if (summary.includes(t)) { score += 4; coreMatches += 1; }
     else if (body.includes(t)) { score += 3; coreMatches += 1; }
   }
 
   for (const t of expanded) {
     if (tokens.includes(t)) continue;
     if (title.includes(t)) score += 2;
+    else if (filename.includes(t)) score += 2;
+    else if (summary.includes(t)) score += 1.5;
     else if (body.includes(t)) score += 1;
   }
 
@@ -54,6 +62,34 @@ function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: 
 
 function safeMetadata(value: any) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function getSearchableFilename(row: any) {
+  const metadata = safeMetadata(row.metadata);
+  const extraPropertiesSelected = safeMetadata(metadata.extraPropertiesSelected);
+  const extraProperties = safeMetadata(metadata.extraProperties);
+  return [
+    row.bas_content_filename,
+    row.bas_content_id,
+    row.external_id,
+    extraPropertiesSelected.BasContentFilename,
+    extraPropertiesSelected.BasContentId,
+    extraProperties.BasContentFilename,
+    extraProperties.BasContentId,
+  ].filter(Boolean).join(' ');
+}
+
+function getSearchableSummary(row: any) {
+  const metadata = safeMetadata(row.metadata);
+  return [
+    metadata.excerpt,
+    row.excerpt,
+    Array.isArray(row.key_takeaways) ? row.key_takeaways.join(' ') : '',
+    row.recommended_audience,
+    Array.isArray(row.tags) ? row.tags.join(' ') : '',
+    Array.isArray(row.categories) ? row.categories.join(' ') : '',
+    Array.isArray(row.sub_categories) ? row.sub_categories.join(' ') : '',
+  ].filter(Boolean).join(' ');
 }
 
 function mapSourceContentRow(row: any) {
@@ -233,7 +269,7 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       const { tokens, expanded } = parseIntentTokens(query);
-      const candidateLimit = Math.max(1000, from + pageSize + 1);
+      const candidateLimit = Math.max(5000, from + pageSize + 1);
       const { data: candidateRows, error: candidateErr } = await withDatabaseTimeout<any>((signal) => (
         dbQuery.abortSignal(signal).range(0, candidateLimit - 1)
       ));

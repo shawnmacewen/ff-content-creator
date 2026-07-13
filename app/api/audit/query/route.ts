@@ -4,6 +4,28 @@ import { parseSearchPrompt } from '@/lib/audit/search-parser';
 import { makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
+function safeArray(value: any) {
+  return Array.isArray(value) ? value : [];
+}
+
+function searchableMeta(row: any) {
+  const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const extra = metadata.extraPropertiesSelected || metadata.extraProperties || {};
+  return [
+    row.bas_content_filename,
+    row.bas_content_id,
+    row.external_id,
+    extra.BasContentFilename,
+    extra.BasContentId,
+    metadata.excerpt,
+    row.recommended_audience,
+    ...safeArray(row.key_takeaways),
+    ...safeArray(row.tags),
+    ...safeArray(row.categories),
+    ...safeArray(row.sub_categories),
+  ].filter(Boolean).join('\n');
+}
+
 export async function POST(req: Request) {
   try {
     const { prompt, publisher, limit, mode, mustInclude, mustExclude } = (await req.json()) as {
@@ -32,13 +54,13 @@ export async function POST(req: Request) {
       mustExclude: excludeList,
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
-      limit: Math.min(5000, Math.max(1, Number(limit) || 1000)),
+      limit: Math.min(5000, Math.max(1, Number(limit) || 5000)),
     };
 
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,title,body_text,body,publisher,source_system,published_at,external_id,type,metadata,tags')
+      .select('id,title,body_text,body,publisher,source_system,published_at,external_id,type,metadata,tags,bas_content_id,bas_content_filename,key_takeaways,recommended_audience,categories,sub_categories')
       .order('published_at', { ascending: false, nullsFirst: false });
 
     if (structured.publisher) q = q.eq('publisher', structured.publisher);
@@ -54,7 +76,8 @@ export async function POST(req: Request) {
     const matches = (data || [])
       .map((row: any) => {
         const cleanBody = normalizeSourceText(getCanonicalBody(row));
-        const hay = `${row.title || ''}\n${cleanBody}`;
+        const extraText = normalizeSourceText(searchableMeta(row));
+        const hay = `${row.title || ''}\n${extraText}\n${cleanBody}`;
         const scored = scoreTextMatch({
           text: hay,
           includeTerms,

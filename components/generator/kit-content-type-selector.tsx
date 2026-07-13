@@ -90,7 +90,7 @@ export function KitContentTypeSelector({
                         type="button"
                         onClick={() => {
                           setInstagramVariant('carousel');
-                          onToggle('social-instagram');
+                          if (carouselSelected || !isSelected) onToggle('social-instagram');
                         }}
                         className={cn(
                           'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
@@ -135,7 +135,7 @@ export function KitContentTypeSelector({
                         type="button"
                         onClick={() => {
                           setInstagramVariant('single');
-                          onToggle('social-instagram');
+                          if (singleSelected || !isSelected) onToggle('social-instagram');
                         }}
                         className={cn(
                           'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',

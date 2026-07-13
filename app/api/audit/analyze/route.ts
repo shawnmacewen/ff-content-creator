@@ -20,6 +20,28 @@ const OutSchema = z.object({
   ),
 });
 
+function safeArray(value: any) {
+  return Array.isArray(value) ? value : [];
+}
+
+function searchableMeta(row: any) {
+  const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const extra = metadata.extraPropertiesSelected || metadata.extraProperties || {};
+  return [
+    row.bas_content_filename,
+    row.bas_content_id,
+    row.external_id,
+    extra.BasContentFilename,
+    extra.BasContentId,
+    metadata.excerpt,
+    row.recommended_audience,
+    ...safeArray(row.key_takeaways),
+    ...safeArray(row.tags),
+    ...safeArray(row.categories),
+    ...safeArray(row.sub_categories),
+  ].filter(Boolean).join('\n');
+}
+
 function fallbackAnalyze(rows: any[], prompt: string) {
   const parsed = parseSearchPrompt(prompt);
   let includeTerms = parsed.mustInclude || [];
@@ -30,7 +52,7 @@ function fallbackAnalyze(rows: any[], prompt: string) {
   const matches = rows
     .map((r) => {
       const scored = scoreTextMatch({
-        text: `${r.title || ''}\n${r.body || ''}`,
+        text: `${r.title || ''}\n${r.searchText || ''}\n${r.body || ''}`,
         includeTerms,
         excludeTerms: parsed.mustExclude,
         mode,
@@ -79,14 +101,14 @@ export async function POST(req: Request) {
     const parsed = parseSearchPrompt(prompt);
     const includeTerms = parsed.mustInclude.length ? parsed.mustInclude : [prompt.trim()];
     const excludeTerms = parsed.mustExclude;
-    const scanLimit = depth === 'deep' ? 1000 : Math.min(500, Math.max(1, Number(limit) || 300));
+    const scanLimit = depth === 'deep' ? 5000 : Math.min(5000, Math.max(3000, Number(limit) || 3000));
     const candidateLimit = depth === 'deep' ? 120 : 60;
     const chunkSize = depth === 'deep' ? 15 : 20;
 
     const supabase = getSupabaseServerClient();
     let q = supabase
       .from('source_content')
-      .select('id,external_id,title,body_text,body,publisher,source_system,type,metadata,tags,published_at')
+      .select('id,external_id,title,body_text,body,publisher,source_system,type,metadata,tags,published_at,bas_content_id,bas_content_filename,key_takeaways,recommended_audience,categories,sub_categories')
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(scanLimit);
     if (publisher !== 'all') q = q.eq('publisher', publisher);
@@ -105,12 +127,13 @@ export async function POST(req: Request) {
       excerpt: '',
       publishedAt: r.published_at,
       body: normalizeSourceText(getCanonicalBody(r)).slice(0, 3000),
+      searchText: normalizeSourceText(searchableMeta(r)).slice(0, 1200),
     }));
 
     const scoredRows = rows
       .map((row) => {
         const scored = scoreTextMatch({
-          text: `${row.title || ''}\n${row.body || ''}`,
+          text: `${row.title || ''}\n${row.searchText || ''}\n${row.body || ''}`,
           includeTerms,
           excludeTerms,
           mode: parsed.mode,
@@ -130,7 +153,7 @@ export async function POST(req: Request) {
         type: row.type,
         publishedAt: row.publishedAt,
         matchedTerms: row.matchedTerms,
-        text: row.body.slice(0, 1800),
+        text: `${row.searchText || ''}\n${row.body || ''}`.slice(0, 2200),
       }));
 
     let parserUsed: 'ai' | 'fallback' = 'ai';
@@ -202,14 +225,14 @@ export async function POST(req: Request) {
       if (!matches.length) {
         parserUsed = 'fallback';
         const fb = fallbackAnalyze(scoredRows, prompt);
-        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: 'ai-returned-zero-matches', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+        return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: 'ai-returned-zero-matches', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, depth, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
       }
 
-      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: summaries.filter(Boolean).join(' | ').slice(0, 1000), total: matches.length, matches });
+      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, depth, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: chunks.length, summary: summaries.filter(Boolean).join(' | ').slice(0, 1000), total: matches.length, matches });
     } catch (err: any) {
       parserUsed = 'fallback';
       const fb = fallbackAnalyze(scoredRows, prompt);
-      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: err?.message ? `ai-error:${String(err.message).slice(0, 120)}` : 'ai-error', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
+      return NextResponse.json({ ok: true, mode: 'ai-analyze', parserUsed, fallbackReason: err?.message ? `ai-error:${String(err.message).slice(0, 120)}` : 'ai-error', structured: { mustInclude: includeTerms, mustExclude: excludeTerms, mode: parsed.mode, depth, publisher: publisher !== 'all' ? publisher : undefined }, scanned: rows.length, candidateCount: aiRows.length, chunkCount: 1, summary: fb.summary, total: fb.matches.length, matches: fb.matches });
     }
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'Analyze failed' }, { status: 500 });

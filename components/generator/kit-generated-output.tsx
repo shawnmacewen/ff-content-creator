@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Copy, Sparkles } from 'lucide-react';
+import { AlertCircle, Check, Circle, Copy, Loader2, Sparkles } from 'lucide-react';
 import type { ContentType } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,8 @@ export type KitOutput = {
   content: string;
 };
 
+export type KitOutputStatus = 'idle' | 'generating' | 'complete' | 'failed';
+
 export function KitGeneratedOutput({
   selectedTypes,
   outputs,
@@ -23,6 +25,7 @@ export function KitGeneratedOutput({
   onGenerate,
   activeType,
   showTabs = true,
+  outputStatuses,
 }: {
   selectedTypes: ContentType[];
   outputs?: KitOutput[] | null;
@@ -32,6 +35,7 @@ export function KitGeneratedOutput({
   activeType?: ContentType | 'all';
   /** Show/hide the internal per-type tab strip. */
   showTabs?: boolean;
+  outputStatuses?: Partial<Record<ContentType, KitOutputStatus>>;
 }) {
   const types = React.useMemo(
     () => (selectedTypes.length ? selectedTypes : (['social-instagram'] as ContentType[])),
@@ -53,17 +57,43 @@ export function KitGeneratedOutput({
     window.setTimeout(() => setCopiedType((prev) => (prev === type ? null : prev)), 2000);
   };
 
+  const getStatus = (type: ContentType): KitOutputStatus => {
+    if (outputStatuses?.[type]) return outputStatuses[type]!;
+    if (outputs?.some((o) => o.type === type && o.content?.trim())) return 'complete';
+    if (isGenerating) return 'generating';
+    return 'idle';
+  };
+
+  const renderStatusIcon = (status: KitOutputStatus) => {
+    if (status === 'complete') return <Check className="h-3.5 w-3.5 text-emerald-600" />;
+    if (status === 'generating') return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
+    if (status === 'failed') return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
+    return <Circle className="h-3.5 w-3.5 text-muted-foreground/50" />;
+  };
+
   const renderOutput = (type: ContentType) => {
     const out = outputs?.find((o) => o.type === type);
     const txt = out?.content || '';
     const label = out?.label || CONTENT_TYPE_MAP[type]?.label || type;
+    const status = getStatus(type);
 
     return (
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold">{label}</div>
-            <div className="text-xs text-muted-foreground">Previewed in the channel format a reader would see.</div>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              {renderStatusIcon(status)}
+              <span>{label}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {status === 'generating'
+                ? 'This output is still generating.'
+                : status === 'complete'
+                  ? 'Previewed in the channel format a reader would see.'
+                  : status === 'failed'
+                    ? 'This output did not complete. Try regenerating the kit.'
+                    : 'Generated output will appear after generation runs.'}
+            </div>
           </div>
           <Button
             variant="outline"
@@ -76,9 +106,15 @@ export function KitGeneratedOutput({
             {copiedType === type ? 'Copied' : 'Copy'}
           </Button>
         </div>
-        <div className="rounded-2xl border bg-muted/20 p-3 sm:p-5">
-          <PlatformOutputPreview type={type} label={label} content={txt} />
-        </div>
+        {txt ? (
+          <div className="rounded-2xl border bg-muted/20 p-3 sm:p-5">
+            <PlatformOutputPreview type={type} label={label} content={txt} />
+          </div>
+        ) : (
+          <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
+            {status === 'generating' ? 'Generating this output...' : 'No output has been generated for this type yet.'}
+          </div>
+        )}
       </div>
     );
   };
@@ -104,6 +140,7 @@ export function KitGeneratedOutput({
             <TabsList className={cn('w-full justify-start', types.length > 3 && 'flex-wrap h-auto')}>
               {types.map((t) => (
                 <TabsTrigger key={t} value={t} className="rounded-2xl">
+                  {renderStatusIcon(getStatus(t))}
                   {CONTENT_TYPE_MAP[t]?.label ?? t}
                 </TabsTrigger>
               ))}

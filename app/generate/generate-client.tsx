@@ -11,7 +11,7 @@ import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
-import { KitGeneratedOutput } from '@/components/generator/kit-generated-output';
+import { KitGeneratedOutput, type KitOutputStatus } from '@/components/generator/kit-generated-output';
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 import { ContentDetail } from '@/components/source-content/content-detail';
 
@@ -22,12 +22,18 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
   BadgeCheck,
+  CheckCircle2,
   DatabaseZap,
   Layers3,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import InstagramCarousel2Client, { type InstagramCarousel2ClientHandle, type InstagramCarouselVisualStyle } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
+import InstagramCarousel2Client, {
+  type InstagramCarousel2ClientHandle,
+  type InstagramCarouselProgress,
+  type InstagramCarouselVisualStyle,
+} from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
 
@@ -137,6 +143,7 @@ export default function GeneratePage() {
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
+  const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
   // Carousel 2.0 settings (KIT multipost)
@@ -169,8 +176,7 @@ export default function GeneratePage() {
 
     if (sourceIdsParam) {
       const ids = sourceIdsParam.split(',').filter(Boolean);
-      // Generate page image generation expects a single selected source.
-      setSelectedSourceIds(ids.length ? [ids[0] as string] : []);
+      setSelectedSourceIds(ids);
     }
   }, [searchParams]);
 
@@ -210,6 +216,44 @@ export default function GeneratePage() {
     setSelectedContentTypes([t]);
   };
 
+  const getKitTypeStatus = useCallback((type: ContentType): KitOutputStatus => {
+    if (kitOutputs?.some((output) => output.type === type && output.content?.trim())) return 'complete';
+    if (isGeneratingKit && kitTypes.includes(type)) return 'generating';
+    return 'idle';
+  }, [isGeneratingKit, kitOutputs, kitTypes]);
+
+  const kitOutputStatuses = kitTypes.reduce<Partial<Record<ContentType, KitOutputStatus>>>((acc, type) => {
+    acc[type] = getKitTypeStatus(type);
+    return acc;
+  }, {});
+
+  const hasInstagramCarousel = kitTypes.includes('social-instagram') &&
+    instagramKitVariant === 'carousel' &&
+    includeInstagramCarouselImages;
+
+  const carouselStatusLabel = (() => {
+    if (!hasInstagramCarousel) return null;
+    if (pendingKitCarouselGenerate) return 'Waiting to start image generation';
+    if (!kitCarouselProgress && !isGeneratingKitCarouselImages) return 'Ready to generate images';
+    if (!kitCarouselProgress) return 'Generating carousel images';
+    if (kitCarouselProgress.stage === 'complete') {
+      return `${kitCarouselProgress.done}/${kitCarouselProgress.total} images complete`;
+    }
+    if (kitCarouselProgress.stage === 'failed') {
+      return `${kitCarouselProgress.done}/${kitCarouselProgress.total} images completed before the run stopped`;
+    }
+    if (kitCarouselProgress.stage === 'background') {
+      return `${kitCarouselProgress.done}/${kitCarouselProgress.total} slide images complete; finishing preview background`;
+    }
+    return `${kitCarouselProgress.done}/${kitCarouselProgress.total} images complete`;
+  })();
+
+  const renderStatusIcon = (status: KitOutputStatus) => {
+    if (status === 'complete') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />;
+    if (status === 'generating') return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
+    return null;
+  };
+
 
   useEffect(() => {
     // Default output tab behavior:
@@ -230,10 +274,12 @@ export default function GeneratePage() {
 
     setIsGeneratingKit(true);
     setKitOutputs(null);
+    setKitCarouselProgress(null);
 
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
-      includeInstagramCarouselImages;
+      includeInstagramCarouselImages &&
+      selectedSourceIds.length === 1;
     const shouldGenerateInlineInstagramImage = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'single' &&
       includeInstagramSingleImages;
@@ -273,6 +319,10 @@ export default function GeneratePage() {
         } else {
           setPendingKitCarouselGenerate(true);
         }
+      }
+
+      if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages && selectedSourceIds.length !== 1) {
+        toast.info('KIT copy generated. Select exactly one source article to generate carousel images.');
       }
 
       toast.success(shouldGenerateCarousel ? 'KIT copy generated; carousel images are running' : 'KIT generated');
@@ -419,7 +469,7 @@ export default function GeneratePage() {
         description="Select a source, tune the generation controls, and review channel-ready assets in a single process."
         metrics={[
           { label: mode === 'kit' ? 'Campaign Kit mode' : 'Single Asset mode', icon: Layers3, active: true },
-          { label: 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
+          { label: selectedSourceIds.length > 1 ? `${selectedSourceIds.length} sources selected` : 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
           { label: 'Review Output', icon: BadgeCheck, active: Boolean(generatedContent || kitOutputs?.length) },
         ]}
       />
@@ -653,6 +703,11 @@ export default function GeneratePage() {
                 onViewDetails={handleOpenSelectedDetails}
               />
             </div>
+            {selectedSourceIds.length > 1 ? (
+              <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+                {selectedSourceIds.length} source articles are selected from Source Content. The first article is shown as the preview anchor, and all selected sources will be included in the generated copy. Carousel image generation still requires exactly one source.
+              </div>
+            ) : null}
           </div>
 
           <div className="flex justify-end gap-2">
@@ -700,29 +755,35 @@ export default function GeneratePage() {
                     type="button"
                     onClick={() => setKitOutputTab('carousel')}
                     className={cn(
-                      'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
+                      'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === 'carousel'
                         ? 'border-primary/60 bg-primary/10 text-primary'
                         : 'bg-background/60 hover:bg-background'
                     )}
                   >
+                    {(pendingKitCarouselGenerate || isGeneratingKitCarouselImages) ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : kitCarouselProgress?.stage === 'complete' ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : null}
                     Instagram Carousel
                   </button>
                 ) : null}
 
 
-                {kitTypes.filter((t) => t !== 'social-instagram').map((t) => (
+                {kitTypes.map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setKitOutputTab(t)}
                     className={cn(
-                      'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
+                      'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                       kitOutputTab === t
                         ? 'border-primary/60 bg-primary/10 text-primary'
                         : 'bg-background/60 hover:bg-background'
                     )}
                   >
+                    {renderStatusIcon(getKitTypeStatus(t))}
                     {CONTENT_TYPE_MAP[t]?.label ?? t}
                   </button>
                 ))}
@@ -731,12 +792,13 @@ export default function GeneratePage() {
                   type="button"
                   onClick={() => setKitOutputTab('all')}
                   className={cn(
-                    'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
+                    'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
                     kitOutputTab === 'all'
                       ? 'border-primary/60 bg-primary/10 text-primary'
                       : 'bg-background/60 hover:bg-background'
                   )}
                 >
+                  {isGeneratingKit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                   All
                 </button>
               </div>
@@ -744,6 +806,27 @@ export default function GeneratePage() {
 
             {/* Keep all mounted; switching tabs must not clear */}
             <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
+              {carouselStatusLabel ? (
+                <div className="mb-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(pendingKitCarouselGenerate || isGeneratingKitCarouselImages) ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
+                    <span>{carouselStatusLabel}</span>
+                  </div>
+                  {kitCarouselProgress ? (
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{
+                          width: `${Math.max(
+                            5,
+                            Math.min(100, Math.round((kitCarouselProgress.done / Math.max(1, kitCarouselProgress.total)) * 100))
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {selectedSourceIds.length !== 1 ? (
                 <div className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
                   Select exactly 1 source article to generate carousel images.
@@ -757,6 +840,7 @@ export default function GeneratePage() {
                   defaultTab="carousel"
                   generateLabel="Generate Images"
                   onLoadingChange={setIsGeneratingKitCarouselImages}
+                  onProgress={setKitCarouselProgress}
                   slideCount={kitCarouselSlideCount}
                   onSlideCountChange={setKitCarouselSlideCount}
                   model={kitCarouselModel}
@@ -779,10 +863,12 @@ export default function GeneratePage() {
 
             <div className={cn('mt-3', kitOutputTab === 'carousel' && 'hidden')}>
               <KitGeneratedOutput
-                selectedTypes={kitTypes.filter((t) => t !== 'social-instagram')}
+                selectedTypes={kitTypes}
                 outputs={kitOutputs}
                 activeType={kitOutputTab === 'all' ? 'all' : (kitOutputTab as any)}
                 showTabs={false}
+                isGenerating={isGeneratingKit}
+                outputStatuses={kitOutputStatuses}
               />
             </div>
           </div>
@@ -861,6 +947,30 @@ export default function GeneratePage() {
                 onUseArticle={handleUseDetailArticle}
                 onViewDetails={handleOpenSelectedDetails}
               />
+            </div>
+            {selectedSourceIds.length > 1 ? (
+              <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+                {selectedSourceIds.length} source articles are selected from Source Content. The first article is shown as the preview anchor, and all selected sources will be included in the generated asset. Instagram carousel image generation still requires exactly one source.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button className="rounded-md" onClick={() => router.push('/library')} variant="outline">
+              Saved Drafts
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                className="rounded-md"
+                onClick={handleGenerate}
+                disabled={isGenerating}
+              >
+                {isGenerating ? 'Generating...' : 'Generate'}
+              </Button>
+
+              {isGenerating ? (
+                <BouncingDots className="gap-1" dotClassName="h-1.5 w-1.5" />
+              ) : null}
             </div>
           </div>
 
