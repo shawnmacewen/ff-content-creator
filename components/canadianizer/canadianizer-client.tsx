@@ -43,6 +43,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type SourceContentResponse = {
   data: SourceContent[];
@@ -169,31 +170,6 @@ function warningClass(level?: CanadianizedResult['warningLevel']) {
   return 'border-emerald-200 bg-emerald-50 text-emerald-950';
 }
 
-function MarkdownPreview({ content }: { content: string }) {
-  return (
-    <div className="space-y-3 text-sm leading-7">
-      {content.split(/\n{2,}/).map((block, index) => {
-        const trimmed = block.trim();
-        if (!trimmed) return null;
-        if (trimmed.startsWith('# ')) {
-          return <h2 key={index} className="text-xl font-semibold leading-7">{trimmed.replace(/^#\s+/, '')}</h2>;
-        }
-        if (trimmed.startsWith('## ')) {
-          return <h3 key={index} className="pt-2 text-base font-semibold">{trimmed.replace(/^##\s+/, '')}</h3>;
-        }
-        if (trimmed.startsWith('- ')) {
-          return (
-            <ul key={index} className="list-disc space-y-1 pl-5 text-muted-foreground">
-              {trimmed.split('\n').map((item) => <li key={item}>{item.replace(/^-\s+/, '')}</li>)}
-            </ul>
-          );
-        }
-        return <p key={index} className="text-muted-foreground">{trimmed}</p>;
-      })}
-    </div>
-  );
-}
-
 function PromptLogDialog({ result }: { result: CanadianizedResult }) {
   const logs = result.promptLog || [];
 
@@ -255,8 +231,11 @@ export default function CanadianizerClient() {
   const [outputLanguage, setOutputLanguage] = React.useState<'english' | 'french'>('english');
   const [controlsCollapsed, setControlsCollapsed] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isSavingDraft, setIsSavingDraft] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<CanadianizedResult | null>(null);
+  const [editedEnglish, setEditedEnglish] = React.useState('');
+  const [editedFrench, setEditedFrench] = React.useState('');
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -286,6 +265,11 @@ export default function CanadianizerClient() {
 
   React.useEffect(() => {
     if (result) setControlsCollapsed(true);
+  }, [result]);
+
+  React.useEffect(() => {
+    setEditedEnglish(result?.canadianArticleMarkdown || '');
+    setEditedFrench(result?.frenchArticleMarkdown || '');
   }, [result]);
 
   const selectSource = async (source: SourceContent) => {
@@ -332,6 +316,42 @@ export default function CanadianizerClient() {
       setError(requestError?.message || 'Failed to Canadianize source content.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const saveCanadianizedDraft = async () => {
+    if (!result) return;
+    const content = outputLanguage === 'french' && result.frenchArticleMarkdown ? editedFrench : editedEnglish;
+    const title = outputLanguage === 'french' && result.frenchTitle ? result.frenchTitle : result.canadianTitle;
+
+    if (!content.trim()) {
+      toast.error('Nothing to save yet');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      const response = await fetch('/api/generated-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'article',
+          title: title || 'Canadianized draft',
+          content,
+          sourceContentIds: result.source?.id ? [result.source.id] : [],
+          prompt: `Canadianizer ${result.config?.languagePackage || languagePackage} adaptation`,
+          tone: 'professional',
+          status: 'draft',
+          versionNote: outputLanguage === 'french' ? 'Saved French Canadianizer output' : 'Saved English Canadianizer output',
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Failed to save Canadianizer draft');
+      toast.success('Saved to Saved Content');
+    } catch (saveError: any) {
+      toast.error(saveError?.message || 'Failed to save Canadianizer draft');
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
@@ -535,6 +555,9 @@ export default function CanadianizerClient() {
                   French is translated from the generated Canadian English article so both versions stay matched.
                 </p>
               </div>
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-950">
+                Canadianizer actively looks for defensible Canadian parallels before marking a gap. Useful examples include Statistics Canada for national statistics, CPP/OAS for retirement income framing, CRA for tax context, and RRSP/TFSA/RESP where the source concept supports that mapping.
+              </div>
               <div className="flex items-center justify-between rounded-md border border-border bg-muted/20 p-3">
                 <div>
                   <div className="text-sm font-semibold">Include non-advice note</div>
@@ -573,6 +596,15 @@ export default function CanadianizerClient() {
                 </div>
                 {result ? (
                   <div className="flex flex-wrap items-start gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isSavingDraft}
+                      onClick={saveCanadianizedDraft}
+                    >
+                      {isSavingDraft ? 'Saving...' : 'Save Draft'}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -687,7 +719,20 @@ export default function CanadianizerClient() {
                       </div>
                       <ScrollArea className="h-[560px]">
                         <div className="p-4">
-                          <MarkdownPreview content={outputLanguage === 'french' && result.frenchArticleMarkdown ? result.frenchArticleMarkdown : result.canadianArticleMarkdown} />
+                          <Textarea
+                            value={outputLanguage === 'french' && result.frenchArticleMarkdown ? editedFrench : editedEnglish}
+                            onChange={(event) => {
+                              if (outputLanguage === 'french' && result.frenchArticleMarkdown) {
+                                setEditedFrench(event.target.value);
+                              } else {
+                                setEditedEnglish(event.target.value);
+                              }
+                            }}
+                            className="min-h-[500px] resize-y bg-white font-mono text-sm leading-6"
+                          />
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            Edits here are saved only when you choose Save Draft.
+                          </div>
                         </div>
                       </ScrollArea>
                     </div>

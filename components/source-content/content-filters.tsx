@@ -14,6 +14,8 @@ import { Search, X } from 'lucide-react';
 interface ContentFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  searchScope: string;
+  onSearchScopeChange: (scope: string) => void;
   selectedType: string;
   onTypeChange: (type: string) => void;
   availableTypes: string[];
@@ -29,6 +31,8 @@ interface ContentFiltersProps {
 export function ContentFilters({
   searchQuery,
   onSearchChange,
+  searchScope,
+  onSearchScopeChange,
   selectedType,
   onTypeChange,
   availableTypes,
@@ -40,7 +44,7 @@ export function ContentFilters({
   availablePublishers,
   onClearFilters,
 }: ContentFiltersProps) {
-  const hasActiveFilters = searchQuery || selectedType || selectedTag || selectedPublisher;
+  const hasActiveFilters = searchQuery || searchScope !== 'all' || selectedType || selectedTag || selectedPublisher;
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -55,6 +59,17 @@ export function ContentFilters({
       </div>
       
       <div className="flex gap-2">
+        <Select value={searchScope} onValueChange={onSearchScopeChange}>
+          <SelectTrigger className="w-[135px] bg-white">
+            <SelectValue placeholder="Search all" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Search all</SelectItem>
+            <SelectItem value="title">Title only</SelectItem>
+            <SelectItem value="filename">Filename only</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={selectedType} onValueChange={onTypeChange}>
           <SelectTrigger className="w-[140px] bg-white">
             <SelectValue placeholder="All designations" />

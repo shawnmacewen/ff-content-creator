@@ -35,6 +35,8 @@ const CoursePackageSchema = z.object({
   questions: z.array(QuestionSchema).min(10).max(25),
 });
 
+const MAX_CE_SOURCES = 10;
+
 function normalizeQuestionCount(sourceCount: number) {
   return Math.min(25, Math.max(10, sourceCount * 5));
 }
@@ -146,8 +148,8 @@ export async function POST(req: Request) {
       ? body.sourceContentIds.map((id: unknown) => String(id)).filter(Boolean)
       : [];
 
-    if (sourceContentIds.length < 1 || sourceContentIds.length > 5) {
-      return Response.json({ error: 'Select between 1 and 5 source content items.' }, { status: 400 });
+    if (sourceContentIds.length < 1 || sourceContentIds.length > MAX_CE_SOURCES) {
+      return Response.json({ error: `Select between 1 and ${MAX_CE_SOURCES} source content items.` }, { status: 400 });
     }
 
     const env = getServerEnv();

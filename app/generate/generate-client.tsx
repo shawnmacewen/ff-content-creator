@@ -129,7 +129,7 @@ export default function GeneratePage() {
   // - 3 slides
   // - sequential generation (for now)
   const [includeInstagramImage, setIncludeInstagramImage] = useState(true);
-  const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('carousel');
+  const [instagramImageMode, setInstagramImageMode] = useState<'single' | 'carousel'>('single');
 
   // New: separate toggles for single vs carousel chips (KIT UX)
   const [instagramKitVariant, setInstagramKitVariant] = useState<'single' | 'carousel' | null>('carousel');
@@ -345,7 +345,10 @@ export default function GeneratePage() {
     setGeneratedContent('');
     setCompliance(null);
     setGeneratedImages({});
-    setImageStatus(includeInstagramImage ? 'Generating Instagram image...' : null);
+    const shouldGenerateInlineInstagramImage = primaryType === 'social-instagram' &&
+      includeInstagramImage &&
+      instagramImageMode === 'single';
+    setImageStatus(shouldGenerateInlineInstagramImage ? 'Generating Instagram single image...' : null);
 
     try {
       const response = await fetch('/api/generate', {
@@ -354,7 +357,7 @@ export default function GeneratePage() {
         body: JSON.stringify({
           type: primaryType,
           mode: 'single',
-          includeInstagramImage,
+          includeInstagramImage: shouldGenerateInlineInstagramImage,
           instagramImageMode,
           sourceContentIds: selectedSourceIds,
           customPrompt,
@@ -372,9 +375,9 @@ export default function GeneratePage() {
         setCompliance(payload?.compliance || null);
         setGeneratedImages(payload?.images || {});
         setSetupCollapsed(true);
-        if (includeInstagramImage) {
+        if (shouldGenerateInlineInstagramImage) {
           const txt = String(payload?.content || '');
-          if (/Image URL:/i.test(txt)) setImageStatus('Instagram image generated');
+          if (/Image URL:|Image generation status: success/i.test(txt)) setImageStatus('Instagram single image generated');
           else if (/Image generation status: failed/i.test(txt)) setImageStatus('Instagram image failed — see output section');
           else setImageStatus('Instagram image status unknown');
         }
@@ -892,6 +895,8 @@ export default function GeneratePage() {
                   selected={selectedContentTypes}
                   onToggle={handleToggleTypeSingle}
                   includeInstagramImage={includeInstagramImage}
+                  instagramImageMode={instagramImageMode}
+                  onInstagramImageModeChange={setInstagramImageMode}
                   onToggleInstagramImage={() => {
                     setIncludeInstagramImage((v) => !v);
                   }}

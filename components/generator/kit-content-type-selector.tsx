@@ -66,6 +66,11 @@ export function KitContentTypeSelector({
         return (
           <div key={category} className="space-y-2">
             <div className="text-sm font-medium text-muted-foreground">{categoryLabels[category]}</div>
+            {category === 'social' ? (
+              <p className="text-xs text-muted-foreground">
+                Image generation is available for Instagram single posts and multi-post carousels. LinkedIn and X generate copy-only posts for now.
+              </p>
+            ) : null}
             <div className={cn(
               category === 'social' ? 'grid gap-2' : 'flex flex-wrap gap-2'
             )}>

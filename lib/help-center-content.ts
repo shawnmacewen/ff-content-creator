@@ -114,6 +114,8 @@ export const helpGuides: HelpGuide[] = [
     ],
     tips: [
       'For Instagram carousel work, keep the selected source focused. Too much source text can make image planning less predictable.',
+      'Instagram single image creates one square image for one post; Instagram carousel creates a swipeable set of image slides.',
+      'Masterplates are wide generated image plates that the carousel tool crops into connected slide images.',
       'Use plain source body text for AI generation. Rich XML/HTML is mainly for View Detail reading.',
       'Save only drafts that are worth review or reuse.',
     ],
@@ -141,6 +143,7 @@ export const helpGuides: HelpGuide[] = [
     ],
     tips: [
       'Use EchoWrite when readability and source attribution matter more than fast one-off output.',
+      'Grounded means the model is asked to use retrieved source articles as evidence. It does not guarantee every claim is correct; review cited sources before use.',
       'For video scripts, keep the prompt specific about runtime, audience, and desired call to action.',
       'The Last generation prompt modal is useful when debugging model behavior.',
     ],
@@ -168,6 +171,7 @@ export const helpGuides: HelpGuide[] = [
     tips: [
       'Use View Details when layout, tables, bullets, or provider metadata matter.',
       'If a source body looks wrong, note whether the plain body, XML, or HTML version is affected.',
+      'Search includes titles, filenames, IDs, tags, summaries, key takeaways, audience notes, and body text when available.',
       'Content Sync in Settings controls how source records get refreshed.',
     ],
     keywords: ['source', 'articles', 'broadridge', 'forefield', 'advisorstream', 'metadata', 'finra', 'details'],
@@ -219,6 +223,7 @@ export const helpGuides: HelpGuide[] = [
     tips: [
       'Use quotes for exact phrases in Standard Search.',
       'Use AI Analyze when you care about meaning, not only exact wording.',
+      'AI Quick Scan reviews the strongest candidates from a broad pass. AI Deep Scan reviews more candidates in smaller AI batches, which is slower but better for nuanced requests.',
       'Content Scan helps decide what to update before creating new content.',
     ],
     keywords: ['scan', 'audit', 'search', 'coverage', 'include', 'exclude', 'AI analyze', 'mark'],
@@ -244,7 +249,9 @@ export const helpGuides: HelpGuide[] = [
       'Use Instagram Carousel 2.0 for advanced carousel generation tuning.',
     ],
     tips: [
-      'Sync and Update refreshes richer detail fields for source detail rendering.',
+      'Sync Broadridge Content API seeds or refreshes list records. Batched Sync walks more pages. Sync and Update refreshes richer detail fields for existing source detail rendering.',
+      'Content API Explorer is for inspecting raw provider responses and field names before changing parsing or search behavior.',
+      'Tag Explorer scans the local source library on demand so tag cleanup metrics do not slow normal page loads.',
       'Avoid running large syncs while validating unrelated UI behavior.',
       'Provider schema changes should be captured here or in handoff notes.',
     ],
@@ -315,6 +322,26 @@ export const quickAnswers = [
     question: 'How do I check whether we already have content on a topic?',
     answer:
       'Use Content Scan. Standard Search is best for exact phrases; AI Analyze is best for natural-language coverage questions.',
+  },
+  {
+    question: 'What does grounded mean?',
+    answer:
+      'Grounded means the draft is based on selected or retrieved source content. It is still a draft: verify citations, facts, numbers, and whether the retrieved sources are actually about the topic.',
+  },
+  {
+    question: 'What is the difference between carousel images and masterplates?',
+    answer:
+      'Carousel images are the final square slides for Instagram. Masterplates are wider generated plates used internally by the carousel workflow to make connected slide images.',
+  },
+  {
+    question: 'What are Content Sync, Content API Explorer, and Tag Explorer for?',
+    answer:
+      'Content Sync imports or refreshes source records. Content API Explorer helps diagnose raw provider fields. Tag Explorer scans local tags on demand for coverage and cleanup planning.',
+  },
+  {
+    question: 'What is Maple Mode?',
+    answer:
+      'Maple Mode is the Canadianizer comedy mode for internal experiments. Normal Canadianizer mode is the publishable-direction workflow; Maple Mode is intentionally exaggerated and not review-ready.',
   },
 ];
 
@@ -530,9 +557,29 @@ export const glossaryItems: GlossaryItem[] = [
     keywords: ['ai analyze', 'semantic', 'scan'],
   },
   {
+    term: 'AI Quick Scan',
+    definition: 'Content Scan mode that searches broadly, then sends the strongest candidate set to AI for focused classification.',
+    keywords: ['quick scan', 'ai scan', 'content scan'],
+  },
+  {
+    term: 'AI Deep Scan',
+    definition: 'Content Scan mode that reviews a wider AI candidate set in smaller batches for more nuanced coverage questions.',
+    keywords: ['deep scan', 'ai scan', 'content scan'],
+  },
+  {
     term: 'Grounded draft',
-    definition: 'Generated copy based on selected or retrieved source content instead of a freeform prompt alone.',
+    definition: 'Generated copy based on selected or retrieved source content instead of a freeform prompt alone. It still requires source and fact review.',
     keywords: ['grounded', 'draft', 'sources'],
+  },
+  {
+    term: 'Masterplate',
+    definition: 'A wide carousel image plate used to create connected Instagram slide images.',
+    keywords: ['masterplate', 'carousel', 'instagram'],
+  },
+  {
+    term: 'Maple Mode',
+    definition: 'Canadianizer internal comedy mode. Use normal mode for serious Canadian adaptation work.',
+    keywords: ['maple', 'canadianizer', 'canadian'],
   },
   {
     term: 'Provider metadata',

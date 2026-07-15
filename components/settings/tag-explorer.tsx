@@ -191,7 +191,7 @@ export default function TagExplorer() {
       <PageHeader
         eyebrow="Content metadata"
         title="Tag Explorer"
-        description="Review tag coverage, spot cleanup candidates, and open tagged source content for editorial planning."
+        description="Run an on-demand scan of local source tags to review coverage, spot cleanup candidates, and open tagged source content for editorial planning."
         actions={(
           <Button
             type="button"
@@ -328,7 +328,7 @@ export default function TagExplorer() {
               <div>
                 <h4 className="text-sm font-semibold">Tag metrics are not loaded</h4>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Run a scan only when you need tag cleanup or coverage numbers.
+                  Run a scan only when you need tag cleanup or coverage numbers. Normal Source Content browsing does not depend on this scan.
                 </p>
               </div>
               <Button type="button" onClick={handleScan} className="gap-2">

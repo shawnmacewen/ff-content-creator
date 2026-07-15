@@ -147,8 +147,8 @@ export default function AuditPage() {
   const scanRunningDetail = method === 'search'
     ? 'Scanning filenames, titles, summaries, tags, and normalized body text across the source inventory.'
     : analyzeDepth === 'deep'
-      ? 'Collecting broad candidates across the source inventory, then applying deeper AI classification in batches.'
-      : 'Collecting broad candidates across the source inventory, then applying focused AI classification to the strongest candidates.';
+      ? 'Scanning up to 5,000 source items, ranking candidates, then applying deeper AI classification in smaller batches.'
+      : 'Scanning up to 3,000 source items, ranking candidates, then applying focused AI classification to the strongest matches.';
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
@@ -201,6 +201,7 @@ export default function AuditPage() {
               <ul className="list-disc pl-4 space-y-1">
                 <li>AI Quick Scan reviews the strongest candidates after a broad inventory pass.</li>
                 <li>AI Deep Scan uses a wider AI candidate set and smaller batches for more nuanced review.</li>
+                <li>The scanned count is the broad inventory pass; the AI candidate count is the smaller set sent to the model.</li>
                 <li>Use AI Scan when the request is conceptual, not just keyword matching.</li>
               </ul>
             </>

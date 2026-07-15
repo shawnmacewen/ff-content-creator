@@ -61,12 +61,13 @@ const fetcher = async (url: string) => {
 
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
-    return { q: '', contentDesignation: '', tags: '', publisher: '' };
+    return { q: '', searchScope: 'all', contentDesignation: '', tags: '', publisher: '' };
   }
 
   const params = new URLSearchParams(window.location.search);
   return {
     q: params.get('q') || '',
+    searchScope: params.get('searchScope') || 'all',
     contentDesignation: params.get('contentDesignation') || params.get('type') || '',
     tags: params.get('tags') || '',
     publisher: params.get('publisher') || '',
@@ -77,6 +78,7 @@ export default function SourceContentPage() {
   const router = useRouter();
   const [initialFilters] = useState(getInitialSourceFilters);
   const [searchQuery, setSearchQuery] = useState(initialFilters.q);
+  const [searchScope, setSearchScope] = useState(initialFilters.searchScope);
   const [selectedType, setSelectedType] = useState(initialFilters.contentDesignation);
   const [selectedTag, setSelectedTag] = useState(initialFilters.tags);
   const [selectedPublisher, setSelectedPublisher] = useState(initialFilters.publisher);
@@ -98,13 +100,14 @@ export default function SourceContentPage() {
   const apiUrl = useCallback(() => {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('q', debouncedQuery);
+    if (searchScope && searchScope !== 'all') params.set('searchScope', searchScope);
     if (selectedType && selectedType !== 'all') params.set('contentDesignation', selectedType);
     if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
     if (selectedPublisher && selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
     params.set('page', String(page));
     params.set('pageSize', '20');
     return `/api/source-content?${params.toString()}`;
-  }, [debouncedQuery, selectedType, selectedTag, selectedPublisher, page]);
+  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher, page]);
 
   const { data, error, isLoading } = useSWR<ApiResponse>(apiUrl(), fetcher, {
     keepPreviousData: true,
@@ -156,6 +159,7 @@ export default function SourceContentPage() {
 
   const handleClearFilters = () => {
     setSearchQuery('');
+    setSearchScope('all');
     setSelectedType('');
     setSelectedTag('');
     setSelectedPublisher('');
@@ -224,6 +228,11 @@ export default function SourceContentPage() {
       <ContentFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        searchScope={searchScope}
+        onSearchScopeChange={(scope) => {
+          setSearchScope(scope);
+          setPage(1);
+        }}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
         availableTypes={filters.availableTypes}

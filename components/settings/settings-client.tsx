@@ -497,7 +497,9 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             <div>
               <p className="text-xs font-semibold uppercase text-primary">Provider Import</p>
               <h2 className="text-lg font-semibold">Run Content Sync</h2>
-              <p className="text-sm text-muted-foreground">Pull Broadridge Advisor Content into the local source library.</p>
+              <p className="text-sm text-muted-foreground">
+                Pull Broadridge Advisor Content into the local source library. Standard sync seeds list records, Batched Sync walks more provider pages, and Sync and Update refreshes richer detail fields for existing records.
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -579,7 +581,9 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             <div>
               <p className="text-xs font-semibold uppercase text-primary">Sync History</p>
               <h2 className="text-lg font-semibold">Content API Logs</h2>
-              <p className="text-sm text-muted-foreground">Per-block sync progress auto-refreshes while a sync is running.</p>
+              <p className="text-sm text-muted-foreground">
+                Per-block sync progress auto-refreshes while a sync is running. Use Content API Explorer when you need to inspect raw provider fields before changing parsing, search, or detail rendering.
+              </p>
             </div>
             <div className="overflow-auto">
               <table className="w-full text-sm">

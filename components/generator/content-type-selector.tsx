@@ -36,9 +36,18 @@ interface ContentTypeSelectorProps {
   onToggle: (type: ContentType) => void;
   includeInstagramImage?: boolean;
   onToggleInstagramImage?: () => void;
+  instagramImageMode?: 'single' | 'carousel';
+  onInstagramImageModeChange?: (mode: 'single' | 'carousel') => void;
 }
 
-export function ContentTypeSelector({ selected, onToggle, includeInstagramImage = false, onToggleInstagramImage }: ContentTypeSelectorProps) {
+export function ContentTypeSelector({
+  selected,
+  onToggle,
+  includeInstagramImage = false,
+  onToggleInstagramImage,
+  instagramImageMode = 'single',
+  onInstagramImageModeChange,
+}: ContentTypeSelectorProps) {
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
@@ -51,14 +60,19 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
             <h3 className="text-sm font-medium text-muted-foreground">
               {categoryLabels[category]}
             </h3>
+            {category === 'social' ? (
+              <p className="text-xs text-muted-foreground">
+                Image generation is available for Instagram. LinkedIn and X generate copy-only posts for now.
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {types.map((contentType) => {
                 const Icon = iconMap[contentType.icon] || FileText;
                 const isSelected = selected.includes(contentType.id);
                 
                 return (
+                  <div key={contentType.id} className="contents">
                   <button
-                    key={contentType.id}
                     type="button"
                     onClick={() => onToggle(contentType.id)}
                     className={cn(
@@ -103,6 +117,36 @@ export function ContentTypeSelector({ selected, onToggle, includeInstagramImage 
                       </span>
                     ) : null}
                   </button>
+                  {contentType.id === 'social-instagram' && isSelected && includeInstagramImage && onInstagramImageModeChange ? (
+                    <div className="flex w-full flex-wrap items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Instagram image format</span>
+                      <button
+                        type="button"
+                        onClick={() => onInstagramImageModeChange('single')}
+                        className={cn(
+                          'rounded-md border px-2.5 py-1 transition-colors',
+                          instagramImageMode === 'single'
+                            ? 'border-primary/50 bg-primary/10 text-primary'
+                            : 'border-border bg-background hover:bg-muted'
+                        )}
+                      >
+                        Single image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onInstagramImageModeChange('carousel')}
+                        className={cn(
+                          'rounded-md border px-2.5 py-1 transition-colors',
+                          instagramImageMode === 'carousel'
+                            ? 'border-primary/50 bg-primary/10 text-primary'
+                            : 'border-border bg-background hover:bg-muted'
+                        )}
+                      >
+                        Carousel images
+                      </button>
+                    </div>
+                  ) : null}
+                  </div>
                 );
               })}
             </div>

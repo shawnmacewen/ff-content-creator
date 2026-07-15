@@ -66,6 +66,8 @@ type FilterResponse = {
   availablePublishers: string[];
 };
 
+const MAX_CE_SOURCES = 10;
+
 type SavedPackageSummary = {
   id: string;
   title: string;
@@ -366,7 +368,7 @@ function packagePayloadFromRow(row: any) {
 function getCourseReadiness(draft: CourseDraft, selectedSources: SourceContent[]): ReadinessItem[] {
   const titleReady = Boolean(draft.title.trim());
   const objectiveReady = Boolean(draft.objective.trim());
-  const sourceCountReady = selectedSources.length >= 1 && selectedSources.length <= 5;
+  const sourceCountReady = selectedSources.length >= 1 && selectedSources.length <= MAX_CE_SOURCES;
   const questionCountReady = draft.questions.length >= 10 && draft.questions.length <= 25;
   const allQuestionsReady = draft.questions.every((question) => {
     const choices = question.choices || [];
@@ -390,7 +392,7 @@ function getCourseReadiness(draft: CourseDraft, selectedSources: SourceContent[]
     },
     {
       label: 'Source package',
-      detail: sourceCountReady ? `${selectedSources.length} source article${selectedSources.length === 1 ? '' : 's'} selected.` : 'Select 1 to 5 source articles.',
+      detail: sourceCountReady ? `${selectedSources.length} source article${selectedSources.length === 1 ? '' : 's'} selected.` : `Select 1 to ${MAX_CE_SOURCES} Topic Discussion sources.`,
       complete: sourceCountReady,
     },
     {
@@ -431,6 +433,7 @@ function buildApiUrl(query: string, tag: string, contentDesignation: string, pag
   if (query.trim()) params.set('q', query.trim());
   if (tag && tag !== 'all') params.set('tags', tag);
   if (contentDesignation && contentDesignation !== 'all') params.set('contentDesignation', contentDesignation);
+  params.set('ceEligible', '1');
   params.set('page', String(page));
   params.set('pageSize', '20');
   return `/api/source-content?${params.toString()}`;
@@ -483,7 +486,7 @@ export default function CeCourseCreatorClient() {
 
   const sources = React.useMemo(() => data?.data || [], [data?.data]);
   const selectedList = Array.from(selectedSources.values());
-  const canBuild = selectedList.length >= 1 && selectedList.length <= 5;
+  const canBuild = selectedList.length >= 1 && selectedList.length <= MAX_CE_SOURCES;
   const generatedQuestionCount = clampQuestionCount(selectedList.length);
   const availableTags = React.useMemo(() => {
     const fromFilters = filterData?.availableTags || [];
@@ -501,7 +504,7 @@ export default function CeCourseCreatorClient() {
       const next = new Map(current);
       if (next.has(source.id)) {
         next.delete(source.id);
-      } else if (next.size < 5) {
+      } else if (next.size < MAX_CE_SOURCES) {
         next.set(source.id, source);
       }
       return next;
@@ -685,7 +688,7 @@ export default function CeCourseCreatorClient() {
         description="Select related source articles, shape a course package, and prepare a quiz draft that can later be saved, edited, and retrieved by downstream systems."
         metrics={[
           {
-            label: '1-5 source articles',
+            label: `1-${MAX_CE_SOURCES} Topic Discussion sources`,
             detail: selectedList.length ? `${selectedList.length} selected for this course` : 'Select related reading material',
             icon: FileText,
           },
@@ -726,11 +729,11 @@ export default function CeCourseCreatorClient() {
                     Select Course Sources
                   </CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Choose up to five related Forefield pieces. Use search, themes, and tags to find matching material.
+                    Choose up to {MAX_CE_SOURCES} related Topic Discussion pieces. Use search, themes, and tags to find matching material.
                   </p>
                 </div>
                 <Badge variant="outline" className="w-fit">
-                  {selectedList.length}/5 selected
+                  {selectedList.length}/{MAX_CE_SOURCES} selected
                 </Badge>
               </div>
 
@@ -834,7 +837,7 @@ export default function CeCourseCreatorClient() {
                   ) : sources.length ? (
                     sources.map((source) => {
                       const selected = selectedSources.has(source.id);
-                      const disabled = !selected && selectedSources.size >= 5;
+                      const disabled = !selected && selectedSources.size >= MAX_CE_SOURCES;
                       const designation = getContentDesignation(source);
                       const body = getSourceBody(source);
 
@@ -976,7 +979,7 @@ function SelectedSourcesCard({
     <Card>
       <CardHeader className="border-b border-border">
         <CardTitle className="text-base">Course Reading List</CardTitle>
-        <p className="text-sm text-muted-foreground">Select 1 to 5 sources. Related source themes make stronger CE packages.</p>
+        <p className="text-sm text-muted-foreground">Select 1 to {MAX_CE_SOURCES} Topic Discussion sources. Related source themes make stronger CE packages.</p>
       </CardHeader>
       <CardContent className="space-y-3 p-4">
         {selectedSources.length ? (

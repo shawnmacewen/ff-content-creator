@@ -28,33 +28,36 @@ function parseIntentTokens(query: string) {
   return { tokens, expanded: Array.from(expanded) };
 }
 
-function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: string[]) {
+function scoreRowForIntent(row: any, query: string, tokens: string[], expanded: string[], searchScope = 'all') {
   const title = String(row.title || '').toLowerCase();
   const body = getCanonicalBody(row).toLowerCase();
   const filename = getSearchableFilename(row).toLowerCase();
   const summary = getSearchableSummary(row).toLowerCase();
   const q = query.toLowerCase();
+  const useTitle = searchScope === 'all' || searchScope === 'title';
+  const useFilename = searchScope === 'all' || searchScope === 'filename';
+  const useSummaryBody = searchScope === 'all';
 
   let score = 0;
-  if (title.includes(q)) score += 24;
-  if (filename.includes(q)) score += 22;
-  if (summary.includes(q)) score += 16;
-  if (body.includes(q)) score += 10;
+  if (useTitle && title.includes(q)) score += 24;
+  if (useFilename && filename.includes(q)) score += 22;
+  if (useSummaryBody && summary.includes(q)) score += 16;
+  if (useSummaryBody && body.includes(q)) score += 10;
 
   let coreMatches = 0;
   for (const t of tokens) {
-    if (title.includes(t)) { score += 6; coreMatches += 1; }
-    else if (filename.includes(t)) { score += 6; coreMatches += 1; }
-    else if (summary.includes(t)) { score += 4; coreMatches += 1; }
-    else if (body.includes(t)) { score += 3; coreMatches += 1; }
+    if (useTitle && title.includes(t)) { score += 6; coreMatches += 1; }
+    else if (useFilename && filename.includes(t)) { score += 6; coreMatches += 1; }
+    else if (useSummaryBody && summary.includes(t)) { score += 4; coreMatches += 1; }
+    else if (useSummaryBody && body.includes(t)) { score += 3; coreMatches += 1; }
   }
 
   for (const t of expanded) {
     if (tokens.includes(t)) continue;
-    if (title.includes(t)) score += 2;
-    else if (filename.includes(t)) score += 2;
-    else if (summary.includes(t)) score += 1.5;
-    else if (body.includes(t)) score += 1;
+    if (useTitle && title.includes(t)) score += 2;
+    else if (useFilename && filename.includes(t)) score += 2;
+    else if (useSummaryBody && summary.includes(t)) score += 1.5;
+    else if (useSummaryBody && body.includes(t)) score += 1;
   }
 
   return { score, coreMatches };
@@ -216,7 +219,10 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
 
     const query = searchParams.get('q') || '';
+    const searchScopeParam = searchParams.get('searchScope') || 'all';
+    const searchScope = ['all', 'title', 'filename'].includes(searchScopeParam) ? searchScopeParam : 'all';
     const contentDesignation = searchParams.get('contentDesignation') || searchParams.get('type') || undefined;
+    const ceEligible = searchParams.get('ceEligible') === '1' || searchParams.get('ceEligible') === 'true';
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
     const author = searchParams.get('author') || undefined;
     const publisher = searchParams.get('publisher') || undefined;
@@ -259,6 +265,7 @@ export async function GET(request: NextRequest) {
       .select(query ? `${listColumns},body_text,body` : listColumns));
 
     if (contentDesignation && contentDesignation !== 'all') dbQuery = dbQuery.eq('content_designation', contentDesignation);
+    if (ceEligible) dbQuery = dbQuery.ilike('content_designation', '%Topic Discussion%');
     if (author) dbQuery = dbQuery.eq('author', author);
     if (publisher && publisher !== 'all') dbQuery = dbQuery.eq('publisher', publisher);
     if (tags.length) dbQuery = dbQuery.overlaps('tags', tags);
@@ -281,7 +288,7 @@ export async function GET(request: NextRequest) {
       } else {
         const scored = ((candidateRows || []) as any[])
           .map((row) => {
-            const { score, coreMatches } = scoreRowForIntent(row, query, tokens, expanded);
+            const { score, coreMatches } = scoreRowForIntent(row, query, tokens, expanded, searchScope);
             return { row, score, coreMatches };
           })
           .filter((item) => item.score > 0 && (tokens.length <= 1 || item.coreMatches >= Math.min(2, tokens.length)))

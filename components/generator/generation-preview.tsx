@@ -280,9 +280,11 @@ export function GenerationPreview({
                   Compliance Confidence: {compliance.grade} ({Math.round((compliance.confidence || 0) * 100)}%)
                 </Badge>
               )}
-              <Badge variant="outline">
-                Instagram Image: {imageGenerationEnabled ? 'On' : 'Off'}
-              </Badge>
+              {contentType === 'social-instagram' ? (
+                <Badge variant="outline">
+                  Instagram Image: {imageGenerationEnabled ? 'On' : 'Off'}
+                </Badge>
+              ) : null}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

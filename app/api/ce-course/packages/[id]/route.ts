@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+const MAX_CE_SOURCES = 10;
+
 function asStringArray(value: unknown) {
   return Array.isArray(value) ? value.map((item) => String(item)).filter(Boolean) : [];
 }
@@ -93,8 +95,8 @@ export async function PATCH(
     if (!payload.title || !payload.objective) {
       return NextResponse.json({ error: 'Missing required fields: title and objective.' }, { status: 400 });
     }
-    if (payload.source_content_ids.length < 1 || payload.source_content_ids.length > 5) {
-      return NextResponse.json({ error: 'Select between 1 and 5 source content items.' }, { status: 400 });
+    if (payload.source_content_ids.length < 1 || payload.source_content_ids.length > MAX_CE_SOURCES) {
+      return NextResponse.json({ error: `Select between 1 and ${MAX_CE_SOURCES} source content items.` }, { status: 400 });
     }
     if (payload.questions.length < 10 || payload.questions.length > 25) {
       return NextResponse.json({ error: 'CE course quizzes must contain 10 to 25 questions.' }, { status: 400 });

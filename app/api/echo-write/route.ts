@@ -85,6 +85,7 @@ const ECHOWRITE_MODELS = new Set([
 ]);
 
 const STOP_WORDS = new Set([
+  '000',
   'about',
   'after',
   'also',
@@ -114,6 +115,8 @@ const STOP_WORDS = new Set([
   'which',
   'with',
   'would',
+  'word',
+  'words',
   'your',
 ]);
 
@@ -137,6 +140,8 @@ const ECHOWRITE_TASK_WORDS = new Set([
   'story',
   'video',
   'write',
+  'cover',
+  'covers',
 ]);
 
 const BROAD_CONTEXT_WORDS = new Set([
@@ -151,14 +156,42 @@ const BROAD_CONTEXT_WORDS = new Set([
   'finance',
   'impact',
   'impacts',
+  'benefit',
+  'benefits',
+  'long',
   'market',
   'markets',
   'money',
   'planning',
   'price',
   'prices',
+  'short',
   'strategy',
+  'term',
+  'terms',
 ]);
+
+function safeArray(value: any) {
+  return Array.isArray(value) ? value : [];
+}
+
+function searchableMeta(row: any) {
+  const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const extra = metadata.extraPropertiesSelected || metadata.extraProperties || {};
+  return [
+    row.bas_content_filename,
+    row.bas_content_id,
+    row.external_id,
+    extra.BasContentFilename,
+    extra.BasContentId,
+    metadata.excerpt,
+    row.recommended_audience,
+    ...safeArray(row.key_takeaways),
+    ...safeArray(row.tags),
+    ...safeArray(row.categories),
+    ...safeArray(row.sub_categories),
+  ].filter(Boolean).join(' ');
+}
 
 function styleInstruction(style: EchoWriteBody['writingStyle']) {
   if (style === 'fun') return 'Use engaging, lively pacing, conversational vocabulary, and a friendly CTA.';
@@ -235,7 +268,7 @@ function tokenize(input: string) {
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
       .map((token) => token.trim())
-      .filter((token) => token.length > 3 && !STOP_WORDS.has(token))
+      .filter((token) => token.length > 2 && !/^\d+$/.test(token) && !STOP_WORDS.has(token))
   ));
 }
 
@@ -245,6 +278,13 @@ function normalizeSearchText(input: string) {
 
 function tokenSet(input: string) {
   return new Set(tokenize(input));
+}
+
+function tokenVariants(token: string) {
+  const variants = new Set([token]);
+  if (token.length > 3 && token.endsWith('s')) variants.add(token.slice(0, -1));
+  if (token.length > 3 && !token.endsWith('s')) variants.add(`${token}s`);
+  return Array.from(variants);
 }
 
 function buildSearchTerms(prompt: string) {
@@ -274,14 +314,18 @@ function scoreRow(
   cleanBody: string,
 ) {
   const titleText = String(row.title || '');
+  const metaText = searchableMeta(row);
   const title = normalizeSearchText(titleText);
+  const meta = normalizeSearchText(metaText);
   const body = normalizeSearchText(cleanBody);
   const titleTokens = tokenSet(titleText);
+  const metaTokens = tokenSet(metaText);
   const bodyTokens = tokenSet(cleanBody);
   const q = query.toLowerCase().trim();
   let score = 0;
 
   if (q && title.includes(` ${q} `)) score += 28;
+  if (q && meta.includes(` ${q} `)) score += 18;
   if (q && body.includes(` ${q} `)) score += 14;
 
   const matchedTerms: string[] = [];
@@ -289,17 +333,22 @@ function scoreRow(
   const matchedAnchorTerms: string[] = [];
 
   for (const t of terms.allTokens) {
-    const matchedTitle = titleTokens.has(t);
-    const matchedBody = bodyTokens.has(t);
+    const variants = tokenVariants(t);
+    const matchedTitle = variants.some((variant) => titleTokens.has(variant));
+    const matchedMeta = variants.some((variant) => metaTokens.has(variant));
+    const matchedBody = variants.some((variant) => bodyTokens.has(variant));
     if (matchedTitle) {
       score += terms.anchorTokens.includes(t) ? 14 : 8;
+      matchedTerms.push(t);
+    } else if (matchedMeta) {
+      score += terms.anchorTokens.includes(t) ? 9 : 5;
       matchedTerms.push(t);
     } else if (matchedBody) {
       score += terms.anchorTokens.includes(t) ? 6 : 3;
       matchedTerms.push(t);
     }
 
-    if (matchedTitle || matchedBody) {
+    if (matchedTitle || matchedMeta || matchedBody) {
       if (terms.topicalTokens.includes(t)) matchedTopicalTerms.push(t);
       if (terms.anchorTokens.includes(t)) matchedAnchorTerms.push(t);
     }
@@ -308,6 +357,7 @@ function scoreRow(
   for (let i = 0; i < terms.topicalTokens.length - 1; i += 1) {
     const phrase = ` ${terms.topicalTokens[i]} ${terms.topicalTokens[i + 1]} `;
     if (title.includes(phrase)) score += 10;
+    else if (meta.includes(phrase)) score += 7;
     else if (body.includes(phrase)) score += 5;
   }
 
@@ -339,9 +389,9 @@ export async function POST(req: Request) {
     const supabase = getSupabaseServerClient();
     const { data: rows, error } = await supabase
       .from('source_content')
-      .select('id,title,body_text,body,publisher,content_designation,tags,published_at,bas_content_id,metadata')
+      .select('id,title,body_text,body,publisher,content_designation,tags,published_at,bas_content_id,bas_content_filename,external_id,metadata,key_takeaways,recommended_audience,categories,sub_categories')
       .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(1000);
+      .limit(5000);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -365,6 +415,17 @@ export async function POST(req: Request) {
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(0, Math.min(12, Number(body.maxSources ?? 6))));
+
+    if (!ranked.length) {
+      return NextResponse.json({
+        error: 'No relevant source content was found for that EchoWrite prompt. Try a more specific title, acronym, filename, or exact phrase in Source Content first.',
+        retrieval: {
+          scanned: rows?.length || 0,
+          topicalTerms: terms.topicalTokens,
+          anchorTerms: terms.anchorTokens,
+        },
+      }, { status: 422 });
+    }
 
     const context = ranked
       .map((x, idx) => {
