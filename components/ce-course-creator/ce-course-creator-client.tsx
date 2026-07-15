@@ -684,7 +684,7 @@ export default function CeCourseCreatorClient() {
     <main className="space-y-5 p-4 sm:p-6">
       <PageHeader
         eyebrow="CE Course Creator"
-        title="Build CE course packages from Forefield content"
+        title="CE Course Creator"
         description="Select related source articles, shape a course package, and prepare a quiz draft that can later be saved, edited, and retrieved by downstream systems."
         metrics={[
           {
@@ -705,18 +705,19 @@ export default function CeCourseCreatorClient() {
             iconClassName: 'bg-emerald-600 text-white',
           },
         ]}
-        actions={
-          <Button
-            type="button"
-            disabled={!canBuild || isGeneratingDraft}
-            onClick={handleBuildDraft}
-            className="gap-2"
-          >
-            {isGeneratingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {isGeneratingDraft ? 'Generating Package' : 'Generate Course Package'}
-          </Button>
-        }
       />
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          disabled={!canBuild || isGeneratingDraft}
+          onClick={handleBuildDraft}
+          className="gap-2"
+        >
+          {isGeneratingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {isGeneratingDraft ? 'Generating Package' : 'Generate Course Package'}
+        </Button>
+      </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
         <section className="space-y-4">

@@ -359,7 +359,7 @@ export default function CanadianizerClient() {
     <main className="space-y-5 p-4 sm:p-6">
       <PageHeader
         eyebrow="Canadianizer Eh?"
-        title="Convert U.S. source content into a Canadian editorial draft"
+        title="Canadianizer"
         description="Select one source article, configure the Canadian lens, and generate a side-by-side adaptation with an equivalency score."
         metrics={[
           {
@@ -386,13 +386,14 @@ export default function CanadianizerClient() {
             iconClassName: 'bg-blue-600 text-white',
           },
         ]}
-        actions={
-          <Button type="button" disabled={!selectedSource || isGenerating} onClick={runCanadianizer} className="gap-2">
-            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {isGenerating ? 'Canadianizing' : 'Canadianize'}
-          </Button>
-        }
       />
+
+      <div className="flex justify-end">
+        <Button type="button" disabled={!selectedSource || isGenerating} onClick={runCanadianizer} className="gap-2">
+          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {isGenerating ? 'Canadianizing' : 'Canadianize'}
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-5 xl:flex-row">
         <section

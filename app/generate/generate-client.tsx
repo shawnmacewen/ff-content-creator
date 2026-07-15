@@ -468,7 +468,7 @@ export default function GeneratePage() {
     <div className="flex w-full max-w-none flex-col gap-6">
       <PageHeader
         eyebrow="Campaign generation workflow"
-        title="Generate coordinated advisor content from one approved source."
+        title="Generate Content"
         description="Select a source, tune the generation controls, and review channel-ready assets in a single process."
         metrics={[
           { label: mode === 'kit' ? 'Campaign Kit mode' : 'Single Asset mode', icon: Layers3, active: true },

@@ -6,6 +6,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import OperatingJourney from '@/components/dashboard/operating-journey';
+import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardMetrics } from '@/lib/dashboard/metrics';
 
@@ -109,6 +110,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
+      <PageHeader
+        eyebrow="Dashboard"
+        title="Dashboard"
+        description="Dashboard"
+        metrics={[]}
+      />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardMetrics.map((metric, index) => (
           <Card key={metric.label} className="overflow-hidden rounded-lg border-border bg-card shadow-sm">

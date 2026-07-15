@@ -26,7 +26,7 @@ const routeLabels: Record<string, string> = {
   '/settings': 'Workspace',
   '/product-lab': 'Product Lab',
   '/ce-course-creator': 'CE Course Creator',
-  '/canadianizer': 'Canadianizer Eh?',
+  '/canadianizer': 'Canadianizer',
 };
 
 export function Header() {
