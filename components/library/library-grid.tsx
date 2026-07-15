@@ -81,8 +81,9 @@ export function LibraryGrid({ items, onView, onEdit, onDelete, onCopy }: Library
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                    <Button size="sm" className="h-8 shrink-0 gap-1.5 rounded-md px-3 text-xs font-semibold shadow-sm">
                       <MoreHorizontal className="h-4 w-4" />
+                      Actions
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

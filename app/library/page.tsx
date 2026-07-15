@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,12 +16,11 @@ import useSWR from 'swr';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
-import { Library, Search, Sparkles, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/page-header';
 
 export default function LibraryPage() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   
   // Filters
@@ -139,27 +137,14 @@ export default function LibraryPage() {
         eyebrow="Saved workspace"
         title="Saved Content"
         description="Manage saved drafts, reviewed assets, and reusable campaign content."
-        metrics={[
-          {
-            label: `${content.length} saved items`,
-            detail: 'Drafts, review items, and published assets.',
-            icon: Library,
-          },
-        ]}
+        metrics={[]}
       />
-
-      <div className="flex items-center justify-end rounded-lg border border-border bg-card p-4 shadow-sm">
-        <Button onClick={() => router.push('/generate')} className="gap-2">
-          <Sparkles className="h-4 w-4" />
-          Generate New
-        </Button>
-      </div>
 
       <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search content..."
+            placeholder="Search saved content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 bg-muted/50"
