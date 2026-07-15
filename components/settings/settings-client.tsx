@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Bot, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, Printer, RefreshCw, Tags } from 'lucide-react';
+import { BookOpenCheck, Bot, Building2, Compass, Database, Flag, Image, Info, Megaphone, Palette, Printer, RefreshCw, Tags, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 import InstagramCarousel2Client from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
@@ -11,6 +11,7 @@ import KnowledgeBase from '@/components/settings/knowledge-base';
 import ProductUpdates from '@/components/settings/product-updates';
 import PhilosophyLab from '@/components/settings/philosophy-lab';
 import PrintExperiment from '@/components/settings/print-experiment';
+import PriorityWorkflow from '@/components/settings/priority-workflow';
 import RoadmapIdeas from '@/components/settings/roadmap-ideas';
 import TagExplorer from '@/components/settings/tag-explorer';
 import TemplateDesignSystem from '@/components/settings/template-design-system';
@@ -24,6 +25,7 @@ type SettingsTab =
   | 'content-sync'
   | 'content-api-explorer'
   | 'tag-explorer'
+  | 'priority-workflow'
   | 'product-updates'
   | 'roadmap-ideas'
   | 'knowledge-base'
@@ -42,6 +44,7 @@ const workspaceTabs: SettingsTab[] = [
 ];
 
 const productLabTabs: SettingsTab[] = [
+  'priority-workflow',
   'product-updates',
   'roadmap-ideas',
   'knowledge-base',
@@ -71,6 +74,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Tag Explorer',
     detail: 'Audit tag usage, cleanup candidates, and source coverage.',
     icon: Tags,
+  },
+  'priority-workflow': {
+    label: 'Priority Workflow',
+    detail: 'Review operating journeys, priority workflows, platform pillars, and outcomes.',
+    icon: Workflow,
   },
   'product-updates': {
     label: 'Product Updates',
@@ -114,7 +122,7 @@ function getSectionTabs(section: SettingsSection) {
 }
 
 function getDefaultTab(section: SettingsSection): SettingsTab {
-  return section === 'workspace' ? 'content-sync' : 'roadmap-ideas';
+  return section === 'workspace' ? 'content-sync' : 'priority-workflow';
 }
 
 function getInitialTab(tab: string | null, section: SettingsSection): SettingsTab {
@@ -633,6 +641,8 @@ export default function SettingsClient({ section }: { section: SettingsSection }
         <ContentApiExplorer />
       ) : tab === 'tag-explorer' ? (
         <TagExplorer />
+      ) : tab === 'priority-workflow' ? (
+        <PriorityWorkflow />
       ) : tab === 'product-updates' ? (
         <ProductUpdates />
       ) : tab === 'roadmap-ideas' ? (
