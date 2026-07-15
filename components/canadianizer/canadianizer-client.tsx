@@ -356,7 +356,7 @@ export default function CanadianizerClient() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6">
+    <div className="flex w-full max-w-none flex-col gap-6">
       <PageHeader
         eyebrow="Canadianizer Eh?"
         title="Canadianizer"
@@ -830,6 +830,6 @@ export default function CanadianizerClient() {
           ) : null}
         </section>
       </div>
-    </main>
+    </div>
   );
 }

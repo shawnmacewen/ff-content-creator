@@ -678,7 +678,7 @@ export default function CeCourseCreatorClient() {
   };
 
   return (
-    <main className="space-y-5 p-4 sm:p-6">
+    <div className="flex w-full max-w-none flex-col gap-6">
       <PageHeader
         eyebrow="CE Course Creator"
         title="CE Course Creator"
@@ -926,7 +926,7 @@ export default function CeCourseCreatorClient() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
       />
-    </main>
+    </div>
   );
 }
 
