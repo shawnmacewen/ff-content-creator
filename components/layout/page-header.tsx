@@ -27,10 +27,12 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <>
-      <section className={cn('rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6', className)}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {actions ? <div className="flex shrink-0 justify-end">{actions}</div> : null}
+      <section className={cn('overflow-hidden rounded-lg border border-border bg-card shadow-sm', className)}>
+        <div className="bg-[linear-gradient(135deg,#11285a_0%,#143a7b_58%,#0f6f8f_100%)] p-6 text-white sm:p-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">{title}</h1>
+            {actions ? <div className="flex shrink-0 justify-end">{actions}</div> : null}
+          </div>
         </div>
       </section>
 
