@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: 'EDITOR[AI]L | Content Hub',
   description: 'AI-powered content creation tool for the editorial team. Generate social media posts, emails, newsletters, and articles.',
   generator: 'v0.app',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export const viewport: Viewport = {
