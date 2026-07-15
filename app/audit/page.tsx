@@ -156,13 +156,7 @@ export default function AuditPage() {
         eyebrow="Content intelligence"
         title="Content Scan"
         description="Search and analyze source coverage before building new advisor campaigns."
-        metrics={[
-          {
-            label: 'Audit source coverage',
-            detail: 'Search plus AI-assisted analysis.',
-            icon: FileSearch,
-          },
-        ]}
+        metrics={[]}
       />
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-5 shadow-sm">

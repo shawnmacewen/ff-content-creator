@@ -4,14 +4,12 @@ import * as React from 'react';
 import useSWR from 'swr';
 import {
   AlertCircle,
-  BadgeCheck,
   BookOpenCheck,
   Check,
   ClipboardList,
   Code2,
   Copy,
   FileQuestion,
-  FileText,
   Filter,
   GraduationCap,
   History,
@@ -487,7 +485,6 @@ export default function CeCourseCreatorClient() {
   const sources = React.useMemo(() => data?.data || [], [data?.data]);
   const selectedList = Array.from(selectedSources.values());
   const canBuild = selectedList.length >= 1 && selectedList.length <= MAX_CE_SOURCES;
-  const generatedQuestionCount = clampQuestionCount(selectedList.length);
   const availableTags = React.useMemo(() => {
     const fromFilters = filterData?.availableTags || [];
     const fromSources = sources.flatMap((source) => source.tags || []);
@@ -686,38 +683,8 @@ export default function CeCourseCreatorClient() {
         eyebrow="CE Course Creator"
         title="CE Course Creator"
         description="Select related source articles, shape a course package, and prepare a quiz draft that can later be saved, edited, and retrieved by downstream systems."
-        metrics={[
-          {
-            label: `1-${MAX_CE_SOURCES} Topic Discussion sources`,
-            detail: selectedList.length ? `${selectedList.length} selected for this course` : 'Select related reading material',
-            icon: FileText,
-          },
-          {
-            label: '10-25 quiz questions',
-            detail: selectedList.length ? `${generatedQuestionCount} planned questions at roughly five per article` : 'Question count adjusts to reading load',
-            icon: ClipboardList,
-            iconClassName: 'bg-cyan-600 text-white',
-          },
-          {
-            label: '60% passing score',
-            detail: 'Editable draft package with source citations',
-            icon: BadgeCheck,
-            iconClassName: 'bg-emerald-600 text-white',
-          },
-        ]}
+        metrics={[]}
       />
-
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          disabled={!canBuild || isGeneratingDraft}
-          onClick={handleBuildDraft}
-          className="gap-2"
-        >
-          {isGeneratingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {isGeneratingDraft ? 'Generating Package' : 'Generate Course Package'}
-        </Button>
-      </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
         <section className="space-y-4">

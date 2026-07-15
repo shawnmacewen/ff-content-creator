@@ -21,10 +21,7 @@ import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
-  BadgeCheck,
   CheckCircle2,
-  DatabaseZap,
-  Layers3,
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -470,11 +467,7 @@ export default function GeneratePage() {
         eyebrow="Campaign generation workflow"
         title="Generate Content"
         description="Select a source, tune the generation controls, and review channel-ready assets in a single process."
-        metrics={[
-          { label: mode === 'kit' ? 'Campaign Kit mode' : 'Single Asset mode', icon: Layers3, active: true },
-          { label: selectedSourceIds.length > 1 ? `${selectedSourceIds.length} sources selected` : 'Source selected', icon: DatabaseZap, active: selectedSourceIds.length > 0 },
-          { label: 'Review Output', icon: BadgeCheck, active: Boolean(generatedContent || kitOutputs?.length) },
-        ]}
+        metrics={[]}
       />
 
       {hasGeneratedOutput ? (
