@@ -5,6 +5,7 @@ import {
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
+import OperatingJourney from '@/components/dashboard/operating-journey';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardMetrics } from '@/lib/dashboard/metrics';
 
@@ -128,6 +129,7 @@ export default async function DashboardPage() {
         ))}
       </section>
 
+      <OperatingJourney />
     </div>
   );
 }
