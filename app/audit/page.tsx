@@ -453,7 +453,315 @@ export default function AuditPage() {
         </section>
       ) : null}
 
-      <section className={cn('rounded-lg border border-slate-200 bg-white p-5 shadow-sm', method === 'analyze' && 'hidden')}>
+      {method === 'search' ? (
+        <>
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-blue-700">
+                  <Search className="h-5 w-5" />
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-950">Standard Search criteria</h2>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Precise matching</Badge>
+                </div>
+              </div>
+              <button type="button" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                <HelpCircle className="h-4 w-4" />
+                Search tips
+              </button>
+            </div>
+
+            <div className="mb-5 flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm text-slate-600">
+              <HelpCircle className="h-4 w-4 shrink-0 text-blue-700" />
+              <span>Use quotation marks for exact phrases. Exclude terms to remove unwanted matches.</span>
+            </div>
+
+            <div className="grid gap-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">Include terms</label>
+                <p className="text-xs text-slate-500">Words or exact phrases the content must contain</p>
+                <div className="flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-2 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <Input
+                    value={includeTerms}
+                    onChange={(e) => setIncludeTerms(e.target.value)}
+                    className="h-9 min-w-[180px] flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                    placeholder='"2025 mileage rate"'
+                  />
+                  {includeTerms ? (
+                    <button type="button" onClick={() => setIncludeTerms('')} aria-label="Clear include terms" className="shrink-0 text-slate-500 hover:text-slate-800">
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                  <span className="inline-flex shrink-0 items-center gap-2 px-2 text-sm font-semibold text-blue-700">
+                    <span className="text-lg leading-none">+</span>
+                    Add term
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">Exclude terms <span className="font-normal text-slate-500">(optional)</span></label>
+                <p className="text-xs text-slate-500">Remove content containing these words or phrases</p>
+                <div className="flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-2 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <Input
+                    value={excludeTerms}
+                    onChange={(e) => setExcludeTerms(e.target.value)}
+                    className="h-9 min-w-[180px] flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                    placeholder='"2026 mileage rate"'
+                  />
+                  {excludeTerms ? (
+                    <button type="button" onClick={() => setExcludeTerms('')} aria-label="Clear exclude terms" className="shrink-0 text-slate-500 hover:text-slate-800">
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                  <span className="inline-flex shrink-0 items-center gap-2 px-2 text-sm font-semibold text-blue-700">
+                    <span className="text-lg leading-none">+</span>
+                    Add exclusion
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="text-sm font-semibold text-slate-950">Search scope</div>
+              <div className="mt-2 grid gap-4 md:grid-cols-[minmax(180px,1fr)_minmax(190px,1fr)_minmax(180px,1fr)_minmax(140px,0.7fr)_auto]">
+                <label className="space-y-1 text-xs font-semibold text-slate-600">
+                  Publisher
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
+                    <option value="all">All publishers</option>
+                    <option value="broadridge-forefield">Broadridge Forefield</option>
+                    <option value="publisher-content">Publisher Content</option>
+                    <option value="sample">Sample</option>
+                  </select>
+                </label>
+                <label className="space-y-1 text-xs font-semibold text-slate-600">
+                  Match logic
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
+                    <option value="all">Match all include terms</option>
+                    <option value="any">Match any include terms</option>
+                  </select>
+                </label>
+                <label className="space-y-1 text-xs font-semibold text-slate-600">
+                  Search in
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" defaultValue="all">
+                    <option value="all">All content fields</option>
+                  </select>
+                </label>
+                <label className="space-y-1 text-xs font-semibold text-slate-600">
+                  Date
+                  <Button type="button" variant="outline" className="h-10 w-full justify-start gap-2 text-sm font-normal">
+                    <Calendar className="h-4 w-4" />
+                    Any date
+                  </Button>
+                </label>
+                <div className="flex items-end">
+                  <Button type="button" variant="outline" className="h-10 gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    More filters
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-blue-200 bg-blue-50/40 px-4 py-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-4 text-sm text-slate-600">
+                <span className="inline-flex items-center gap-2 font-medium text-blue-700">
+                  <Search className="h-4 w-4" />
+                  {includeTerms ? `Exact phrase: ${includeTerms}` : 'Add include terms to search'}
+                </span>
+                {excludeTerms ? (
+                  <>
+                    <span className="text-slate-400">|</span>
+                    <span>Excluding: {excludeTerms}</span>
+                  </>
+                ) : null}
+              </div>
+              <div className="text-sm text-slate-500">
+                {includeCount} include term{includeCount === 1 ? '' : 's'} · {excludeCount} exclusion{excludeCount === 1 ? '' : 's'}
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-3">
+              <Button type="button" variant="ghost" onClick={clearCriteria} className="text-blue-700 hover:bg-blue-50 hover:text-blue-800">Clear</Button>
+              <Button onClick={run} disabled={loading || !includeTerms.trim()} className="h-11 gap-2 bg-blue-700 px-6 font-semibold hover:bg-blue-800">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {loading ? 'Running search...' : 'Run standard search'}
+              </Button>
+            </div>
+          </section>
+
+          {error ? (
+            <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
+          ) : null}
+
+          <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100 bg-cyan-50 text-cyan-700">
+                  <FileSearch className="h-5 w-5" />
+                </span>
+                <h2 className="text-lg font-semibold text-slate-950">Scan results</h2>
+                <Badge variant="secondary">{resultTotal || 0}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url; a.download = 'audit-results.csv'; a.click();
+                  URL.revokeObjectURL(url);
+                }} disabled={!result?.matches?.length}>Export CSV</Button>
+                <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark needs update</Button>
+              </div>
+            </div>
+            <div className="px-5">
+              <div className="inline-grid grid-cols-3 overflow-hidden rounded-md border border-slate-200 text-sm font-semibold">
+                <button type="button" className="bg-cyan-50 px-8 py-3 text-cyan-700">Matches</button>
+                <button type="button" className="border-l border-slate-200 px-8 py-3 text-slate-600">Coverage insights</button>
+                <button type="button" className="border-l border-slate-200 px-8 py-3 text-slate-600">Update opportunities</button>
+              </div>
+            </div>
+            <div className="space-y-3 p-5">
+              {loading ? (
+                <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-blue-200 text-center text-sm text-slate-500">
+                  <Loader2 className="h-9 w-9 animate-spin text-blue-700" />
+                  <div className="font-semibold text-slate-950">{scanModeLabel} in progress</div>
+                  <div>{scanRunningDetail}</div>
+                </div>
+              ) : !result ? (
+                <div className="grid min-h-[240px] items-center gap-8 rounded-lg border border-dashed border-blue-200 bg-white p-8 lg:grid-cols-[minmax(220px,0.35fr)_minmax(280px,0.45fr)_minmax(320px,0.75fr)]">
+                  <div className="flex justify-center lg:justify-end">
+                    <div className="relative flex h-28 w-28 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                      <FileSearch className="h-16 w-16" />
+                      <Sparkles className="absolute -right-2 top-8 h-4 w-4 text-blue-300" />
+                      <Sparkles className="absolute -left-3 bottom-6 h-4 w-4 text-blue-300" />
+                    </div>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <div className="text-lg font-semibold text-slate-950">Run a search to review coverage</div>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">Matching content, coverage signals, and update opportunities will appear here.</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
+                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm font-semibold text-blue-700">
+                      <Search className="h-5 w-5" />
+                      Exact matches
+                    </span>
+                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-center text-sm font-semibold text-cyan-700">
+                      <FileSearch className="h-5 w-5" />
+                      Coverage signals
+                    </span>
+                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-5 w-5" />
+                      Update opportunities
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              {result && !loading && !error && matches.length === 0 ? (
+                <div className="rounded-md border border-slate-200 p-4 text-sm text-slate-500">No matches found for this query. Try broader wording or remove exclusions.</div>
+              ) : null}
+
+              {result && !loading && !error ? (
+                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50/70 p-4 md:grid-cols-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-700 text-white">
+                      <Search className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">{resultTotal} matches</p>
+                      <p className="text-xs text-slate-500">{scanned} source items scanned</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+                      <FileSearch className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">{scanModeLabel}</p>
+                      <p className="text-xs text-slate-500">{result?.parserUsed === 'fallback' ? 'Fallback parser' : 'Deterministic parser'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-600 text-white">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">Criteria parsed</p>
+                      <p className="text-xs text-slate-500">
+                        {(result?.structured?.mustInclude || []).length} include / {(result?.structured?.mustExclude || []).length} exclude
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {result?.structured ? (
+                <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                  {(result.structured.mustInclude || []).map((term: string) => (
+                    <Badge key={`include-${term}`} variant="outline" className="bg-emerald-50 text-emerald-700">
+                      include: {term}
+                    </Badge>
+                  ))}
+                  {(result.structured.mustExclude || []).map((term: string) => (
+                    <Badge key={`exclude-${term}`} variant="outline" className="bg-red-50 text-red-700">
+                      exclude: {term}
+                    </Badge>
+                  ))}
+                  {result?.summary ? <span className="basis-full pt-1">{result.summary}</span> : null}
+                </div>
+              ) : null}
+
+              {matches.map((m: Match) => (
+                <div key={m.id} className="space-y-2 rounded-md border border-slate-200 p-3">
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 space-y-1">
+                      <div className="font-medium">{m.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {m.externalId ? `External Article ID: ${m.externalId}` : 'External Article ID unavailable'}
+                      </div>
+                    </div>
+                    <span className={`text-xs font-medium ${publisherClass(m.publisher, m.sourceSystem)}`}>
+                      {publisherDisplay(m.publisher)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <User className="h-3 w-3" />
+                    <span>Type: {m.type || 'article'}</span>
+                    <span>•</span>
+                    <span>{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(m.matchedTerms || []).map((term) => (
+                      <Badge key={`${m.id}-match-${term}`} variant="outline" className="bg-emerald-50 text-emerald-700">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {term}
+                      </Badge>
+                    ))}
+                    {(m.excludedTerms || []).map((term) => (
+                      <Badge key={`${m.id}-exclude-${term}`} variant="outline" className="bg-red-50 text-red-700">
+                        <XCircle className="h-3 w-3" />
+                        {term}
+                      </Badge>
+                    ))}
+                  </div>
+                  {m.evidence ? <p className="rounded-md bg-primary/5 px-3 py-2 text-sm text-foreground/90">{m.evidence}</p> : null}
+                  <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDetails(m)}>View Details</Button>
+                </div>
+              ))}
+
+              {!loading && !result ? (
+                <p className="text-center text-sm text-slate-500">Results update here without leaving the page.</p>
+              ) : null}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      <section className="hidden">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-950">{method === 'search' ? 'Standard Search criteria' : 'AI Scan criteria'}</h2>
           <button type="button" className="inline-flex items-center gap-2 text-sm font-medium text-blue-700">
@@ -643,11 +951,7 @@ export default function AuditPage() {
         </div>
       </section>
 
-      {method === 'search' && error && (
-        <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
-      )}
-
-      <section className={cn('rounded-lg border border-slate-200 bg-white shadow-sm', method === 'analyze' && 'hidden')}>
+      <section className="hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-slate-950">Scan results</h2>
