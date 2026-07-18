@@ -151,8 +151,8 @@ function WorkflowStepMarker({
 }) {
   if (complete && !active) {
     return (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-        <CheckCircle2 className="h-5 w-5" />
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+        <CheckCircle2 className="h-6 w-6" />
       </span>
     );
   }
@@ -160,7 +160,7 @@ function WorkflowStepMarker({
   return (
     <span
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+        'flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full text-base font-semibold',
         active ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-700'
       )}
     >
@@ -930,7 +930,6 @@ export default function GeneratePage() {
                 <WorkflowStepMarker step={item.step} active={active} complete={complete} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-semibold text-slate-950">{item.step}</span>
                     <span className="font-semibold text-slate-950">{item.title}</span>
                   </div>
                   <p className="mt-1 truncate text-sm text-slate-600">{active ? 'Editing' : item.detail}</p>
