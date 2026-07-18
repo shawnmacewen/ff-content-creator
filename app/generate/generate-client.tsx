@@ -855,9 +855,15 @@ export default function GeneratePage() {
     : kitTypes.includes('social-instagram') && instagramKitVariant === 'single'
       ? 'Instagram single image'
       : 'No format-specific settings';
-  const guidancePreferenceCount = [usePlainLanguage, includeCallToAction, Boolean(customPrompt.trim())].filter(Boolean).length;
-  const guidanceContextSummary = guidancePreferenceCount
-    ? `${guidancePreferenceCount} preference${guidancePreferenceCount === 1 ? '' : 's'} selected`
+  const guidanceOptions = [
+    usePlainLanguage ? 'Plain language' : null,
+    includeCallToAction ? 'Call to action' : null,
+    customPrompt.trim() ? 'Custom context' : null,
+  ].filter(Boolean) as string[];
+  const visibleGuidanceOptions = guidanceOptions.slice(0, 2);
+  const extraGuidanceOptionCount = Math.max(guidanceOptions.length - visibleGuidanceOptions.length, 0);
+  const guidanceContextSummary = visibleGuidanceOptions.length
+    ? `${visibleGuidanceOptions.join(', ')}${extraGuidanceOptionCount ? `, +${extraGuidanceOptionCount} more` : ''}`
     : 'No extra preferences';
   const generateDisabled = mode === 'kit'
     ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length
@@ -1155,15 +1161,11 @@ export default function GeneratePage() {
                 </div>
                 <div className="min-w-0 border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Audience</div>
-                  <div className="mt-2 flex min-h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
-                    <span className="truncate">{audience}</span>
-                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{audience}</p>
                 </div>
                 <div className="min-w-0 border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Additional options</div>
-                  <div className="mt-2 flex min-h-9 items-center rounded-md border border-cyan-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
-                    <span className="truncate">{guidanceContextSummary}</span>
-                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
                 <Button
                   type="button"
@@ -1177,9 +1179,12 @@ export default function GeneratePage() {
                 </Button>
               </div>
               <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[720px]">
-                <div className="space-y-4 p-5">
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold text-slate-950">Tone</div>
+                <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)_minmax(280px,1.15fr)]">
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-950">Tone</div>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Choose the voice for the campaign copy.</p>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {(['professional', 'casual', 'friendly', 'authoritative', 'conversational', 'urgent'] as ToneType[]).map((option) => (
                         <button
@@ -1196,37 +1201,48 @@ export default function GeneratePage() {
                       ))}
                     </div>
                   </div>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-semibold text-slate-950">Additional instructions (optional)</span>
-                    <textarea
-                      className="min-h-20 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                      placeholder="Add audience, key message, compliance notes, or calls to action..."
-                      value={customPrompt}
-                      onChange={(event) => setCustomPrompt(event.target.value)}
-                    />
-                  </label>
-                  <div className="flex flex-wrap items-center gap-5">
-                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                      <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
-                      Use plain language
+
+                  <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-950">Audience</div>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Who should this campaign speak to?</p>
+                    </div>
+                    <select
+                      value={audience}
+                      onChange={(event) => setAudience(event.target.value)}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700"
+                    >
+                      <option>Clients and prospects</option>
+                      <option>Existing clients</option>
+                      <option>Prospective clients</option>
+                      <option>Advisors</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-950">Additional options</div>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Add instructions and campaign preferences.</p>
+                    </div>
+                    <label className="block space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Additional instructions</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                        placeholder="Add audience, key message, compliance notes, or calls to action..."
+                        value={customPrompt}
+                        onChange={(event) => setCustomPrompt(event.target.value)}
+                      />
                     </label>
-                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                      <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
-                      Include a call to action
-                    </label>
-                    <label className="ml-auto flex min-w-[260px] items-center gap-2 text-sm text-slate-700">
-                      <span>Audience:</span>
-                      <select
-                        value={audience}
-                        onChange={(event) => setAudience(event.target.value)}
-                        className="h-10 flex-1 rounded-md border border-slate-200 bg-white px-3 text-sm"
-                      >
-                        <option>Clients and prospects</option>
-                        <option>Existing clients</option>
-                        <option>Prospective clients</option>
-                        <option>Advisors</option>
-                      </select>
-                    </label>
+                    <div className="grid gap-2">
+                      <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
+                        Use plain language
+                      </label>
+                      <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
+                        Include a call to action
+                      </label>
+                    </div>
                   </div>
                 </div>
               </WorkflowStepBody>
