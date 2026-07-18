@@ -296,11 +296,6 @@ export function SelectedArticlePreview({
             </div>
           </div>
 
-          <div className="border-b border-slate-200 bg-blue-50/45 px-5 py-3">
-            <h4 className="text-sm font-semibold text-primary">Why this source?</h4>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-700">{summary}</p>
-          </div>
-
           <div
             className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [scrollbar-color:#2563eb_#dbeafe] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-blue-100"
           >
@@ -501,7 +496,7 @@ export function SelectedArticlePreview({
               <Calendar className="h-4 w-4 text-primary" />
               {formatDate(publishedAt)}
             </span>
-            {filename ? <span className="max-w-[180px] truncate">{filename}</span> : null}
+            {filename ? <span className="basis-full break-all text-slate-500">File: {filename}</span> : null}
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
@@ -611,7 +606,7 @@ export function SelectedArticlePreview({
               <Calendar className="h-4 w-4 text-blue-700" />
               {formatDate(publishedAt)}
             </span>
-            {filename ? <span className="max-w-[280px] truncate text-slate-700">{String(filename)}</span> : null}
+            {filename ? <span className="basis-full break-all text-slate-700">File: {String(filename)}</span> : null}
             {contentSignals.length ? <span className="text-slate-700">{contentSignals.length} explainable signals</span> : null}
           </div>
         </div>
