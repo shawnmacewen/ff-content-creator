@@ -2,7 +2,8 @@ import type { ComponentType, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 type HeaderMetric = {
-  label: string;
+  id?: string;
+  label: ReactNode;
   detail?: ReactNode;
   icon: ComponentType<{ className?: string }>;
   active?: boolean;
@@ -181,7 +182,7 @@ export function PageHeader({
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric) => (
             <div
-              key={metric.label}
+              key={metric.id || String(metric.label)}
               className="flex min-h-24 items-start gap-3 rounded-lg border border-border bg-card p-4 shadow-sm"
             >
               <span
@@ -195,7 +196,7 @@ export function PageHeader({
                 <metric.icon className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-5">{metric.label}</p>
+                <div className="text-sm font-semibold leading-5">{metric.label}</div>
                 {metric.detail ? (
                   <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{metric.detail}</div>
                 ) : null}

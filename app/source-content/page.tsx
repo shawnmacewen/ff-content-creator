@@ -7,7 +7,7 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Database, FolderOpen, Loader2, Sparkles } from 'lucide-react';
+import { Database, FolderOpen, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import { PageHeader } from '@/components/layout/page-header';
@@ -354,17 +354,6 @@ export default function SourceContentPage() {
     setSelectedPublisher('');
   };
 
-  const handleSelectAll = () => {
-    if (visibleContentItems.length) {
-      const allIds = new Set(visibleContentItems.map((c) => c.id));
-      setSelectedIds(allIds);
-    }
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedIds(new Set());
-  };
-
   useEffect(() => {
     if (!autoLoadAll || !hasNextPage || isValidating) return;
     void setSize(size + 1);
@@ -383,34 +372,33 @@ export default function SourceContentPage() {
         metrics={[
           {
             label: `${totalAvailableItems.toLocaleString()} available`,
-            detail: `${selectedIds.size} selected for generation`,
             icon: FolderOpen,
           },
           {
             label: `${latestPage?.meta?.finraReviewedCount ?? 0} FINRA reviewed`,
-            detail: 'Approved source pieces',
             icon: FolderOpen,
             iconClassName: 'bg-info text-info-foreground',
           },
           {
-            label: 'Sync Broadridge Content',
+            id: 'sync-broadridge-content',
+            label: (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-md text-xs font-bold"
+                onClick={runBroadridgeContentSync}
+                disabled={runningSourceSync}
+                title="Runs the batched Broadridge provider sync from Source Content."
+              >
+                {runningSourceSync ? 'Syncing...' : 'Sync Broadridge Content'}
+              </Button>
+            ),
             detail: (
               <div className="mt-0.5 space-y-2">
                 <p className="text-xs leading-5 text-muted-foreground">
                   Last sync: {latestPage?.meta?.lastSyncedAt ? new Date(latestPage.meta.lastSyncedAt).toLocaleString() : 'n/a'}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-md text-xs"
-                  onClick={runBroadridgeContentSync}
-                  disabled={runningSourceSync}
-                  title="Runs the batched Broadridge provider sync from Source Content."
-                >
-                  {runningSourceSync ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5" />}
-                  {runningSourceSync ? 'Syncing...' : 'Sync Broadridge Content'}
-                </Button>
                 {syncProgress ? (
                   <div className="space-y-1.5">
                     <div className="text-[11px] font-medium text-muted-foreground">
@@ -530,12 +518,6 @@ export default function SourceContentPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
               <span>{selectedIds.size} item(s) selected</span>
-              <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                Select shown
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
-                Deselect all
-              </Button>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
