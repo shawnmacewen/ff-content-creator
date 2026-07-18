@@ -227,6 +227,7 @@ export default function CanadianizerClient() {
   const [model, setModel] = React.useState('gpt-4o-mini');
   const [languagePackage, setLanguagePackage] = React.useState<'both' | 'english' | 'french'>('both');
   const [outputLanguage, setOutputLanguage] = React.useState<'english' | 'french'>('english');
+  const [outputTab, setOutputTab] = React.useState<'side-by-side' | 'equivalents' | 'review' | 'recommendations'>('side-by-side');
   const [controlsCollapsed, setControlsCollapsed] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [isSavingDraft, setIsSavingDraft] = React.useState(false);
@@ -266,6 +267,10 @@ export default function CanadianizerClient() {
   }, [result]);
 
   React.useEffect(() => {
+    if (result) setOutputTab('side-by-side');
+  }, [result]);
+
+  React.useEffect(() => {
     setEditedEnglish(result?.canadianArticleMarkdown || '');
     setEditedFrench(result?.frenchArticleMarkdown || '');
   }, [result]);
@@ -291,6 +296,8 @@ export default function CanadianizerClient() {
     setIsGenerating(true);
     setError(null);
     setResult(null);
+    setOutputTab('side-by-side');
+    setControlsCollapsed(true);
     try {
       const response = await fetch('/api/canadianizer', {
         method: 'POST',
@@ -373,7 +380,7 @@ export default function CanadianizerClient() {
       />
 
       <div className="space-y-5">
-        {controlsCollapsed && result ? (
+        {controlsCollapsed && selectedSource ? (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
             <section className="space-y-2">
               <h2 className="text-base font-semibold text-slate-950">Source article</h2>
@@ -383,11 +390,11 @@ export default function CanadianizerClient() {
                     <FileText className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-slate-950">{decodeLite(selectedSource?.title || result.source.title || 'Selected source')}</div>
+                    <div className="truncate text-sm font-semibold text-slate-950">{decodeLite(selectedSource.title || result?.source.title || 'Selected source')}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                      <span>{result.source.publisher || selectedSource?.publisher || 'Source content'}</span>
+                      <span>{result?.source.publisher || selectedSource.publisher || 'Source content'}</span>
                       <span>·</span>
-                      <span>{formatDate(result.source.publishedAt || selectedSource?.publishedAt)}</span>
+                      <span>{formatDate(result?.source.publishedAt || selectedSource.publishedAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -426,8 +433,10 @@ export default function CanadianizerClient() {
 
         <section
           className={cn(
-            'grid gap-5 transition-all duration-500 ease-in-out xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]',
-            controlsCollapsed ? 'hidden' : ''
+            'grid overflow-hidden transition-all duration-500 ease-in-out xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]',
+            controlsCollapsed
+              ? 'max-h-0 -translate-y-3 gap-0 opacity-0 pointer-events-none'
+              : 'max-h-[1800px] translate-y-0 gap-5 opacity-100'
           )}
         >
           <Card>
@@ -696,10 +705,28 @@ export default function CanadianizerClient() {
                 <div>
                   <div className="border-b border-slate-200 bg-slate-50/70 px-5">
                     <div className="flex flex-wrap items-center gap-3 py-2 text-sm">
-                      <span className="border-b-2 border-blue-600 px-3 py-2 font-semibold text-blue-700">Side-by-side</span>
-                      <span className="px-3 py-2 text-slate-500">Equivalent matches <Badge variant="secondary">{result.equivalentMap.length}</Badge></span>
-                      <span className="px-3 py-2 text-slate-500">Review notes <Badge variant="secondary">{(result.editorialNotes.length + result.complianceNotes.length).toLocaleString()}</Badge></span>
-                      <span className="px-3 py-2 text-slate-500">Recommendations <Badge variant="secondary">{needsReviewCount.toLocaleString()}</Badge></span>
+                      {[
+                        ['side-by-side', 'Side-by-side', null],
+                        ['equivalents', 'Equivalent matches', result.equivalentMap.length],
+                        ['review', 'Review notes', result.editorialNotes.length + result.complianceNotes.length],
+                        ['recommendations', 'Recommendations', needsReviewCount],
+                      ].map(([tab, label, count]) => {
+                        const active = outputTab === tab;
+                        return (
+                          <button
+                            key={String(tab)}
+                            type="button"
+                            onClick={() => setOutputTab(tab as typeof outputTab)}
+                            className={cn(
+                              'inline-flex items-center gap-2 border-b-2 px-3 py-2 font-medium transition',
+                              active ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-900'
+                            )}
+                          >
+                            {label}
+                            {typeof count === 'number' ? <Badge variant="secondary">{count.toLocaleString()}</Badge> : null}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="grid gap-3 border-b border-slate-200 bg-white p-5 sm:grid-cols-2 xl:grid-cols-8">
@@ -748,150 +775,157 @@ export default function CanadianizerClient() {
                       <div className="mt-1 text-xs text-slate-600">needs review</div>
                     </div>
                   </div>
-                  {result.warningLevel !== 'none' ? (
-                    <div className={cn('m-4 rounded-md border p-3 text-sm leading-6', warningClass(result.warningLevel))}>
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                        <div>
-                          <div className="font-semibold">{result.warningLevel === 'severe' ? 'Severe conversion warning' : 'Conversion review warning'}</div>
-                          <div>{result.warningMessage}</div>
+                  {outputTab === 'side-by-side' ? (
+                    <>
+                      {result.warningLevel !== 'none' ? (
+                        <div className={cn('m-4 rounded-md border p-3 text-sm leading-6', warningClass(result.warningLevel))}>
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <div>
+                              <div className="font-semibold">{result.warningLevel === 'severe' ? 'Severe conversion warning' : 'Conversion review warning'}</div>
+                              <div>{result.warningMessage}</div>
+                            </div>
+                          </div>
                         </div>
+                      ) : null}
+                      <div className="grid min-h-[620px] lg:grid-cols-2">
+                        <div className="border-b border-border lg:border-b-0 lg:border-r">
+                          <div className="border-b border-border bg-muted/30 px-4 py-3">
+                            <div className="text-xs font-semibold uppercase text-muted-foreground">Original source</div>
+                            <div className="mt-1 line-clamp-2 text-sm font-semibold">{decodeLite(selectedSource?.title || result.source.title || 'Original source')}</div>
+                          </div>
+                          <ScrollArea className="h-[560px]">
+                            <div className="space-y-3 p-4 text-sm leading-7 text-muted-foreground">
+                              {(getSourceBody(selectedSource || ({} as SourceContent)) || 'Original body unavailable.').split(/\n{2,}/).slice(0, 80).map((block, index) => (
+                                <p key={index}>{decodeLite(block.trim())}</p>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                        <div>
+                          <div className="border-b border-border bg-red-50/70 px-4 py-3">
+                            <div className="text-xs font-semibold uppercase text-red-700">
+                              {outputLanguage === 'french' && result.frenchArticleMarkdown ? 'Quebec French draft' : 'Canadian English draft'}
+                            </div>
+                            <div className="mt-1 line-clamp-2 text-sm font-semibold">
+                              {outputLanguage === 'french' && result.frenchTitle ? result.frenchTitle : result.canadianTitle}
+                            </div>
+                          </div>
+                          <ScrollArea className="h-[560px]">
+                            <div className="p-4">
+                              <Textarea
+                                value={outputLanguage === 'french' && result.frenchArticleMarkdown ? editedFrench : editedEnglish}
+                                onChange={(event) => {
+                                  if (outputLanguage === 'french' && result.frenchArticleMarkdown) {
+                                    setEditedFrench(event.target.value);
+                                  } else {
+                                    setEditedEnglish(event.target.value);
+                                  }
+                                }}
+                                className="min-h-[500px] resize-y bg-white font-mono text-sm leading-6"
+                              />
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Edits here are saved only when you choose Save Draft.
+                              </div>
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {outputTab === 'equivalents' ? (
+                    <div className="space-y-3 p-5">
+                      {result.equivalentMap.map((item) => (
+                        <div key={`${item.americanConcept}-${item.canadianEquivalent}`} className="rounded-md border border-slate-200 bg-white p-4">
+                          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                            <span>{item.americanConcept}</span>
+                            <span className="text-slate-400">→</span>
+                            <span>{item.canadianEquivalent}</span>
+                            <Badge variant="outline" className="capitalize">{item.confidence}</Badge>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.notes}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {outputTab === 'review' ? (
+                    <div className="space-y-4 p-5">
+                      {result.evaluator?.unsupportedClaims?.length ? (
+                        <div className="rounded-md border border-red-200 bg-red-50 p-4">
+                          <div className="mb-2 text-xs font-semibold uppercase text-red-800">Unsupported or risky Canadian claims</div>
+                          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-red-950">
+                            {result.evaluator.unsupportedClaims.map((item) => <li key={item}>{item}</li>)}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {result.evaluator?.missingOrWeakEquivalents?.length ? (
+                        <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+                          <div className="mb-2 text-xs font-semibold uppercase text-amber-800">Missing or weak equivalents</div>
+                          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-amber-950">
+                            {result.evaluator.missingOrWeakEquivalents.map((item) => <li key={item}>{item}</li>)}
+                          </ul>
+                        </div>
+                      ) : null}
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Gaps and non-matches</div>
+                        <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {result.gapsAndNonMatches.length ? result.gapsAndNonMatches.map((item) => <li key={item}>{item}</li>) : <li>No major gaps reported.</li>}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Compliance review</div>
+                        <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {result.complianceNotes.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Evaluator notes</div>
+                        <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {(result.evaluator?.evaluatorNotes || []).map((item) => <li key={item}>{item}</li>)}
+                        </ul>
                       </div>
                     </div>
                   ) : null}
-                  <div className="grid min-h-[620px] lg:grid-cols-2">
-                    <div className="border-b border-border lg:border-b-0 lg:border-r">
-                      <div className="border-b border-border bg-muted/30 px-4 py-3">
-                        <div className="text-xs font-semibold uppercase text-muted-foreground">Original source</div>
-                        <div className="mt-1 line-clamp-2 text-sm font-semibold">{decodeLite(selectedSource?.title || result.source.title || 'Original source')}</div>
+
+                  {outputTab === 'recommendations' ? (
+                    <div className="space-y-4 p-5">
+                      {result.warningMessage ? (
+                        <div className={cn('rounded-md border p-4 text-sm leading-6', warningClass(result.warningLevel))}>
+                          <div className="font-semibold">Review recommendation</div>
+                          <div className="mt-1">{result.warningMessage}</div>
+                        </div>
+                      ) : null}
+                      <div>
+                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Editorial notes</div>
+                        <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                          {result.editorialNotes.length ? result.editorialNotes.map((item) => <li key={item}>{item}</li>) : <li>No editorial recommendations reported.</li>}
+                        </ul>
                       </div>
-                      <ScrollArea className="h-[560px]">
-                        <div className="space-y-3 p-4 text-sm leading-7 text-muted-foreground">
-                          {(getSourceBody(selectedSource || ({} as SourceContent)) || 'Original body unavailable.').split(/\n{2,}/).slice(0, 80).map((block, index) => (
-                            <p key={index}>{decodeLite(block.trim())}</p>
-                          ))}
+                      {result.translationNotes?.length ? (
+                        <div>
+                          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Quebec French translation</div>
+                          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                            {result.translationNotes.map((item) => <li key={item}>{item}</li>)}
+                          </ul>
                         </div>
-                      </ScrollArea>
+                      ) : null}
+                      {result.frenchQualityNotes?.length ? (
+                        <div>
+                          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Montreal French quality</div>
+                          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                            {result.frenchQualityNotes.map((item) => <li key={item}>{item}</li>)}
+                          </ul>
+                        </div>
+                      ) : null}
                     </div>
-                    <div>
-                      <div className="border-b border-border bg-red-50/70 px-4 py-3">
-                        <div className="text-xs font-semibold uppercase text-red-700">
-                          {outputLanguage === 'french' && result.frenchArticleMarkdown ? 'Quebec French draft' : 'Canadian English draft'}
-                        </div>
-                        <div className="mt-1 line-clamp-2 text-sm font-semibold">
-                          {outputLanguage === 'french' && result.frenchTitle ? result.frenchTitle : result.canadianTitle}
-                        </div>
-                      </div>
-                      <ScrollArea className="h-[560px]">
-                        <div className="p-4">
-                          <Textarea
-                            value={outputLanguage === 'french' && result.frenchArticleMarkdown ? editedFrench : editedEnglish}
-                            onChange={(event) => {
-                              if (outputLanguage === 'french' && result.frenchArticleMarkdown) {
-                                setEditedFrench(event.target.value);
-                              } else {
-                                setEditedEnglish(event.target.value);
-                              }
-                            }}
-                            className="min-h-[500px] resize-y bg-white font-mono text-sm leading-6"
-                          />
-                          <div className="mt-2 text-xs text-muted-foreground">
-                            Edits here are saved only when you choose Save Draft.
-                          </div>
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {result ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader className="border-b border-border">
-                  <CardTitle className="text-base">Equivalent Map</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 p-4">
-                  {result.equivalentMap.map((item) => (
-                    <div key={`${item.americanConcept}-${item.canadianEquivalent}`} className="rounded-md border border-border p-3">
-                      <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                        <span>{item.americanConcept}</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span>{item.canadianEquivalent}</span>
-                        <Badge variant="outline" className="capitalize">{item.confidence}</Badge>
-                      </div>
-                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.notes}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="border-b border-border">
-                  <CardTitle className="text-base">Review Notes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 p-4">
-                  {result.evaluator?.unsupportedClaims?.length ? (
-                    <div className="rounded-md border border-red-200 bg-red-50 p-3">
-                      <div className="mb-2 text-xs font-semibold uppercase text-red-800">Unsupported or risky Canadian claims</div>
-                      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-red-950">
-                        {result.evaluator.unsupportedClaims.map((item) => <li key={item}>{item}</li>)}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {result.evaluator?.missingOrWeakEquivalents?.length ? (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
-                      <div className="mb-2 text-xs font-semibold uppercase text-amber-800">Missing or weak equivalents</div>
-                      <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-amber-950">
-                        {result.evaluator.missingOrWeakEquivalents.map((item) => <li key={item}>{item}</li>)}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Gaps and non-matches</div>
-                    <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                      {result.gapsAndNonMatches.length ? result.gapsAndNonMatches.map((item) => <li key={item}>{item}</li>) : <li>No major gaps reported.</li>}
-                    </ul>
-                  </div>
-                  <div>
-                    {result.translationNotes?.length ? (
-                      <>
-                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Quebec French translation</div>
-                        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                          {result.translationNotes.map((item) => <li key={item}>{item}</li>)}
-                        </ul>
-                      </>
-                    ) : null}
-                    {result.frenchQualityNotes?.length ? (
-                      <>
-                        <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Montreal French quality</div>
-                        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                          {result.frenchQualityNotes.map((item) => <li key={item}>{item}</li>)}
-                        </ul>
-                      </>
-                    ) : null}
-                    <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Compliance review</div>
-                    <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                      {result.complianceNotes.map((item) => <li key={item}>{item}</li>)}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Evaluator notes</div>
-                    <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                      {(result.evaluator?.evaluatorNotes || []).map((item) => <li key={item}>{item}</li>)}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Editorial notes</div>
-                    <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
-                      {result.editorialNotes.map((item) => <li key={item}>{item}</li>)}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : null}
         </section>
       </div>
     </div>
