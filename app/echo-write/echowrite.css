@@ -9,12 +9,12 @@
   --ew-muted: #617084;
   --ew-action-blue: #1769c2;
 
-  min-height: calc(100vh - 4rem);
-  width: calc(100% + 3rem);
-  margin: -1.5rem;
-  padding: 28px var(--ew-page-gutter);
+  min-height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   color: var(--ew-text);
-  background: var(--ew-canvas);
+  background: transparent;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
