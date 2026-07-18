@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, FilePlus2, FileText, Info, Link2, Loader2, PlusCircle, Save, Settings2, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, FileText, Info, Link2, Loader2, PlusCircle, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -404,14 +404,8 @@ export default function EchoWritePage() {
                 <Settings2 className="h-4 w-4" />
                 Advanced settings
               </Button>
-              <Button variant="ghost" className="h-11 gap-2 px-3 text-blue-700 hover:bg-blue-50 hover:text-blue-800" onClick={() => window.location.assign('/source-content')}>
-                <PlusCircle className="h-4 w-4" />
-                Add source content
-              </Button>
-              <Button variant="ghost" className="h-11 gap-2 px-3 text-blue-700 hover:bg-blue-50 hover:text-blue-800" onClick={() => toast.info('Templates are managed in Generate Content for now.')}>
-                <FilePlus2 className="h-4 w-4" />
-                Use a template
-              </Button>
+              <span className="hidden h-11 w-[154px] lg:block" aria-hidden="true" />
+              <span className="hidden h-11 w-[132px] lg:block" aria-hidden="true" />
               <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-11 gap-2 px-5 font-semibold">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate draft' : 'Generate draft'}
