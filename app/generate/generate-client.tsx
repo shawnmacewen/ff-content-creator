@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, type ComponentType } from 'react';
+import { useState, useEffect, useCallback, useRef, type ComponentType, type ReactNode } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { SourceArticlePicker } from '@/components/generator/source-article-picke
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GeneratingOutputState } from '@/components/generator/generating-dots';
-import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
+import type { GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput, type KitOutputStatus } from '@/components/generator/kit-generated-output';
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 import { ContentDetail } from '@/components/source-content/content-detail';
@@ -139,32 +139,28 @@ function audienceGuidance(value: string) {
   return guidance[value] || (value ? `Audience guidance: write for ${value}.` : '');
 }
 
-function WorkflowStepMarker({
-  step,
-  active,
-  complete,
+function WorkflowStepBody({
+  open,
+  children,
+  className,
+  maxHeightClass = 'max-h-[1800px]',
 }: {
-  step: WorkflowStep;
-  active?: boolean;
-  complete?: boolean;
+  open: boolean;
+  children: ReactNode;
+  className?: string;
+  maxHeightClass?: string;
 }) {
-  if (complete && !active) {
-    return (
-      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-        <CheckCircle2 className="h-6 w-6" />
-      </span>
-    );
-  }
-
   return (
-    <span
+    <div
+      aria-hidden={!open}
       className={cn(
-        'flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full text-base font-semibold',
-        active ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-700'
+        'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out motion-reduce:transition-none',
+        open ? cn(maxHeightClass, 'translate-y-0 opacity-100') : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
+        className
       )}
     >
-      {step}
-    </span>
+      {children}
+    </div>
   );
 }
 
@@ -229,7 +225,7 @@ export default function GeneratePage() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [setupCollapsed, setSetupCollapsed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep>(3);
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep | null>(3);
   const [usePlainLanguage, setUsePlainLanguage] = useState(true);
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
@@ -317,7 +313,7 @@ export default function GeneratePage() {
     }
   }, [mutateSelectedSource, selectedSourceId]);
 
-  const [mode, setMode] = useState<GenerationMode>('kit');
+  const [mode] = useState<GenerationMode>('kit');
 
   const [kitOutputTab, setKitOutputTab] = useState<'carousel' | ContentType | 'all'>('all');
 
@@ -849,7 +845,6 @@ export default function GeneratePage() {
     ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages || isGeneratingKitInfographic)
     : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
   const activeTypes = mode === 'kit' ? kitTypes : selectedContentTypes;
-  const selectedOutputLabels = activeTypes.map((type) => compactOutputLabel(type, instagramKitVariant));
   const selectedSourceLabel = selectedSourceIds.length
     ? `${selectedSourceIds.length} article${selectedSourceIds.length === 1 ? '' : 's'} selected`
     : 'Choose your article';
@@ -863,10 +858,6 @@ export default function GeneratePage() {
       ? 'pointer-events-none max-h-0 -translate-y-6 opacity-0'
       : 'max-h-[3200px] translate-y-0 opacity-100'
   );
-  const handleModeChange = (nextMode: GenerationMode) => {
-    setMode(nextMode);
-    setSetupCollapsed(false);
-  };
   const openWorkflowStep = (step: WorkflowStep) => {
     setSetupCollapsed(false);
     setActiveWorkflowStep(step);
@@ -896,45 +887,6 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      <div className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:grid-cols-3">
-        {([
-          { step: 1 as WorkflowStep, title: mode === 'kit' ? 'Choose outputs' : 'Choose asset', detail: selectedOutputLabels.length ? selectedOutputLabels.slice(0, 1).join('') + (selectedOutputLabels.length > 1 ? ` + ${selectedOutputLabels.length - 1} more` : '') : 'Select output' },
-          { step: 2 as WorkflowStep, title: 'Set guidance', detail: toneLabel(tone) },
-          { step: 3 as WorkflowStep, title: 'Select source', detail: selectedSourceLabel },
-        ]).map((item) => {
-          const active = activeWorkflowStep === item.step;
-          const complete = item.step === 1 ? activeTypes.length > 0 : item.step === 2 ? Boolean(tone) : selectedSourceIds.length > 0;
-          return (
-            <div
-              key={item.step}
-              className={cn(
-                'flex min-h-[76px] flex-col items-stretch gap-3 border-slate-200 px-5 py-4 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center lg:border-r last:lg:border-r-0',
-                active && 'bg-blue-50/70'
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => setActiveWorkflowStep(item.step)}
-                className="flex min-w-0 flex-1 items-center gap-4 text-left"
-              >
-                <WorkflowStepMarker step={item.step} active={active} complete={complete} />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-slate-950">{item.title}</span>
-                  </div>
-                  <p className="mt-1 truncate text-sm text-slate-600">{active ? 'Editing' : item.detail}</p>
-                </div>
-              </button>
-              {item.step === 1 ? (
-                <div className="w-full shrink-0 sm:w-[260px] lg:w-[220px] xl:w-[320px]">
-                  <GenerationModeToggle mode={mode} onChange={handleModeChange} />
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-
       {hasGeneratedOutput ? (
         <div className="flex justify-end">
           <Button
@@ -951,12 +903,12 @@ export default function GeneratePage() {
       {mode === 'kit' ? (
         <div className="space-y-6">
           <div className={setupTrayClassName}>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
             <div id="generate-step-1" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>1</span>
                 <div>
-                  <h2 className="text-lg font-semibold">Campaign outputs</h2>
+                  <h2 className="text-lg font-semibold">Campaign Kit</h2>
                 </div>
                 {activeWorkflowStep !== 1 ? (
                   <Button type="button" variant="outline" size="sm" className="ml-auto gap-2 rounded-md" onClick={() => setActiveWorkflowStep(1)}>
@@ -965,7 +917,7 @@ export default function GeneratePage() {
                   </Button>
                 ) : null}
               </div>
-              {activeWorkflowStep === 1 ? (
+              <WorkflowStepBody open={activeWorkflowStep === 1} maxHeightClass="max-h-[1900px]">
                 <>
                   <KitContentTypeSelector
                     selected={kitTypes}
@@ -1120,12 +1072,14 @@ export default function GeneratePage() {
                 </Card>
                   ) : null}
                   <div className="mt-4 flex justify-end gap-2">
-                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Cancel</Button>
-                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Save outputs</Button>
+                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Cancel</Button>
+                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Save outputs</Button>
                   </div>
                 </>
-              ) : (
+              </WorkflowStepBody>
+              <WorkflowStepBody open={activeWorkflowStep !== 1} maxHeightClass="max-h-[420px]">
                 <div className="space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Included outputs</p>
                   <div className="flex flex-wrap gap-2">
                     {activeTypes.map((type) => {
                       const Icon = iconByContentType[type] || FileText;
@@ -1140,16 +1094,8 @@ export default function GeneratePage() {
                   {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' ? (
                     <p className="text-sm text-slate-600">Carousel - {kitCarouselSlideCount} slides - {kitCarouselVisualStyle === 'classic' ? 'Classic Current Look' : 'Bright Editorial'}</p>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() => setActiveWorkflowStep(1)}
-                    className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    More output options inside
-                  </button>
                 </div>
-              )}
+              </WorkflowStepBody>
             </div>
 
             <div id="generate-step-2" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -1165,7 +1111,7 @@ export default function GeneratePage() {
                   </Button>
                 ) : null}
               </div>
-              {activeWorkflowStep === 2 ? (
+              <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[720px]">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-950">Tone</div>
@@ -1218,16 +1164,17 @@ export default function GeneratePage() {
                     </label>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Cancel</Button>
-                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Save guidance</Button>
+                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Cancel</Button>
+                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Save guidance</Button>
                   </div>
                 </div>
-              ) : (
+              </WorkflowStepBody>
+              <WorkflowStepBody open={activeWorkflowStep !== 2} maxHeightClass="max-h-[220px]">
                 <div className="space-y-2">
                   <h3 className="font-semibold text-slate-950">{toneLabel(tone)}</h3>
                   <p className="text-sm text-slate-600">{toneDescription(tone)}</p>
                 </div>
-              )}
+              </WorkflowStepBody>
 
             </div>
           </div>
@@ -1239,59 +1186,81 @@ export default function GeneratePage() {
                 <h2 className="text-lg font-semibold">Choose a source article</h2>
                 <p className="text-sm text-muted-foreground">Select the trusted article EchoWrite should transform into your campaign.</p>
               </div>
+              {activeWorkflowStep !== 3 ? (
+                <Button type="button" variant="outline" size="sm" className="ml-auto gap-2 rounded-md" onClick={() => setActiveWorkflowStep(3)}>
+                  <Edit3 className="h-4 w-4" />
+                  Edit
+                </Button>
+              ) : null}
             </div>
-            <div className="grid items-stretch gap-5 xl:h-[720px] xl:max-h-[720px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
-              <div className="min-h-0 xl:h-full">
-                <SourceArticlePicker
-                  className="xl:h-full"
-                  selectedId={selectedSourceIds[0] ?? null}
-                  onSelect={handleSourceSelect}
-                  splitView
-                />
-              </div>
+            <WorkflowStepBody open={activeWorkflowStep === 3} maxHeightClass="max-h-[1050px]">
+              <>
+                <div className="grid items-stretch gap-5 xl:h-[720px] xl:max-h-[720px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
+                  <div className="min-h-0 xl:h-full">
+                    <SourceArticlePicker
+                      className="xl:h-full"
+                      selectedId={selectedSourceIds[0] ?? null}
+                      onSelect={handleSourceSelect}
+                      splitView
+                    />
+                  </div>
 
-              <div className="flex min-h-0 flex-col gap-2 xl:h-full">
-                <div className="flex justify-end">
-                  <div className="inline-grid grid-cols-3 rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
-                    {([
-                      ['spotlight', 'Spotlight'],
-                      ['summary', 'Summary'],
-                      ['reader', 'Reader'],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setArticlePreviewLayout(value)}
-                        className={cn(
-                          'h-8 rounded px-3 text-xs font-semibold transition-colors',
-                          articlePreviewLayout === value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                  <div className="flex min-h-0 flex-col gap-2 xl:h-full">
+                    <div className="flex justify-end">
+                      <div className="inline-grid grid-cols-3 rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
+                        {([
+                          ['spotlight', 'Spotlight'],
+                          ['summary', 'Summary'],
+                          ['reader', 'Reader'],
+                        ] as const).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setArticlePreviewLayout(value)}
+                            className={cn(
+                              'h-8 rounded px-3 text-xs font-semibold transition-colors',
+                              articlePreviewLayout === value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <SelectedArticlePreview
+                      className="min-h-0 flex-1"
+                      selectedSource={selectedSource}
+                      detailContent={detailContent}
+                      bodyPreview={normalizedBodyPreview}
+                      onClear={handleClearSource}
+                      onUseArticle={handleUseDetailArticle}
+                      onViewDetails={handleOpenSelectedDetails}
+                      onGenerateTakeaways={handleGenerateSourceTakeaways}
+                      isGeneratingTakeaways={isGeneratingSourceTakeaways}
+                      campaignCompact
+                      campaignLayout={articlePreviewLayout}
+                    />
                   </div>
                 </div>
-                <SelectedArticlePreview
-                  className="min-h-0 flex-1"
-                  selectedSource={selectedSource}
-                  detailContent={detailContent}
-                  bodyPreview={normalizedBodyPreview}
-                  onClear={handleClearSource}
-                  onUseArticle={handleUseDetailArticle}
-                  onViewDetails={handleOpenSelectedDetails}
-                  onGenerateTakeaways={handleGenerateSourceTakeaways}
-                  isGeneratingTakeaways={isGeneratingSourceTakeaways}
-                  campaignCompact
-                  campaignLayout={articlePreviewLayout}
-                />
+                {selectedSourceIds.length > 1 ? (
+                  <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+                    {selectedSourceIds.length} source articles are selected from Source Content. The first article is shown as the preview anchor, and all selected sources will be included in the generated copy. Carousel image generation still requires exactly one source.
+                  </div>
+                ) : null}
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Cancel</Button>
+                  <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(null)}>Save source</Button>
+                </div>
+              </>
+            </WorkflowStepBody>
+            <WorkflowStepBody open={activeWorkflowStep !== 3} maxHeightClass="max-h-[220px]">
+              <div className="rounded-md border border-slate-200 bg-slate-50/70 p-4">
+                <h3 className="font-semibold text-slate-950">{selectedSourceLabel}</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {selectedSource?.title ? decodeEntitiesLite(selectedSource.title) : 'Open this section to choose the article that will ground the campaign.'}
+                </p>
               </div>
-            </div>
-            {selectedSourceIds.length > 1 ? (
-              <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
-                {selectedSourceIds.length} source articles are selected from Source Content. The first article is shown as the preview anchor, and all selected sources will be included in the generated copy. Carousel image generation still requires exactly one source.
-              </div>
-            ) : null}
+            </WorkflowStepBody>
           </div>
 
           </div>
