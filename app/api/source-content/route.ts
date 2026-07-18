@@ -319,8 +319,8 @@ export async function GET(request: NextRequest) {
     const hasNextPage = rows.length > pageSize;
     const pageRows = rows.slice(0, pageSize);
     const mapped = pageRows.map(mapSourceContentRow);
-    const total = count ?? (from + mapped.length + (hasNextPage ? 1 : 0));
     const summary = await readCachedSummary(supabase);
+    const total = count ?? (summary.totalSourceContent || (from + mapped.length + (hasNextPage ? 1 : 0)));
 
     return NextResponse.json({
       data: mapped,

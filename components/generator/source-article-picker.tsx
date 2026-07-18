@@ -307,7 +307,7 @@ export function SourceArticlePicker({
             {splitView ? (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
                 <Sparkles className="h-3 w-3" />
-                Editorial Sources - {total ? total.toLocaleString() : '50'}
+                Editorial Sources
               </div>
             ) : null}
             <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
