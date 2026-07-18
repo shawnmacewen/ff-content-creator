@@ -61,7 +61,7 @@ export function KitContentTypeSelector({
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
-    <div className="rounded-lg border border-violet-100 bg-white/80 p-4 shadow-sm">
+    <div>
       <div className="grid gap-6 xl:grid-cols-3">
       {categories.map((category) => {
         const types = getContentTypesByCategory(category);
