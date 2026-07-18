@@ -934,8 +934,13 @@ export default function GeneratePage() {
                     <Sparkles className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Recommended</div>
-                    <h2 className="mt-1 text-lg font-semibold leading-tight text-slate-950">Campaign Kit</h2>
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Generation Type</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold leading-tight text-slate-950">Campaign Kit</h2>
+                      <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">
+                        {activeTypes.length} selected
+                      </span>
+                    </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
                   </div>
                 </div>
