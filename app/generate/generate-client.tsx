@@ -409,6 +409,8 @@ export default function GeneratePage() {
   const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
   const [carouselLoadingPhrase, setCarouselLoadingPhrase] = useState<string | null>(null);
   const [approvedKitOutputIds, setApprovedKitOutputIds] = useState<string[]>([]);
+  const [isOutputStoryboardOpen, setIsOutputStoryboardOpen] = useState(false);
+  const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(true);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
@@ -970,10 +972,11 @@ export default function GeneratePage() {
   const activeCampaignNodeIndex = activeCampaignNode
     ? Math.max(0, campaignOutputNodes.findIndex((node) => node.id === activeCampaignNode.id))
     : -1;
+  const generatedCampaignCount = campaignOutputNodes.filter((node) => node.status === 'complete').length;
   const approvedCampaignCount = campaignOutputNodes.filter((node) => approvedKitOutputIds.includes(String(node.id))).length;
-  const needsReviewCount = Math.max(0, campaignOutputNodes.length - approvedCampaignCount);
+  const needsReviewCount = Math.max(0, generatedCampaignCount - approvedCampaignCount);
   const campaignProgress = campaignOutputNodes.length
-    ? Math.round((approvedCampaignCount / campaignOutputNodes.length) * 100)
+    ? Math.round((generatedCampaignCount / campaignOutputNodes.length) * 100)
     : 0;
   const activeCampaignStatus = activeCampaignNode?.status || 'idle';
   const activeCampaignApproved = activeCampaignNode ? approvedKitOutputIds.includes(String(activeCampaignNode.id)) : false;
@@ -1534,13 +1537,22 @@ export default function GeneratePage() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                <span className="rounded-md bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">Review in progress</span>
+                <span className="rounded-md bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">Generation progress</span>
                 <div className="text-sm font-semibold text-slate-800">
-                  {approvedCampaignCount} of {campaignOutputNodes.length || 0} approved
+                  {generatedCampaignCount} of {campaignOutputNodes.length || 0} generated
                 </div>
                 <div className="h-2 w-36 overflow-hidden rounded-full bg-slate-100">
                   <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${campaignProgress}%` }} />
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-md"
+                  onClick={() => setIsOutputStoryboardOpen((value) => !value)}
+                >
+                  {isOutputStoryboardOpen ? 'Hide output' : 'Show output'}
+                  <ChevronRight className={cn('h-4 w-4 transition-transform', isOutputStoryboardOpen && 'rotate-90')} />
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -1563,6 +1575,11 @@ export default function GeneratePage() {
               </div>
             ) : null}
 
+            <div className={cn(
+              'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
+              isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            )}>
+              <div className="min-h-0 overflow-hidden">
             <div className="space-y-5 p-5">
               <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="flex items-center gap-3">
@@ -1624,17 +1641,14 @@ export default function GeneratePage() {
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
-                  <div className="hidden h-12 w-px bg-slate-200 lg:block" />
-                  <div className="hidden items-center gap-2 lg:flex">
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">All {campaignOutputNodes.length}</button>
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Needs review {needsReviewCount}</button>
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Approved {approvedCampaignCount}</button>
-                  </div>
                 </div>
                 <p className="mt-8 text-xs font-medium text-muted-foreground">Review in campaign order, or jump directly to any channel.</p>
               </div>
 
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
+              <div className={cn(
+                'grid gap-4 transition-[grid-template-columns] duration-300 ease-in-out xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]',
+                !isReviewPanelOpen && 'xl:grid-cols-[minmax(0,1fr)_52px] 2xl:grid-cols-[minmax(0,1fr)_52px]'
+              )}>
                 <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-3">
@@ -1769,10 +1783,48 @@ export default function GeneratePage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h3 className="text-base font-semibold text-slate-950">Review & refine</h3>
-                    <span className="text-xs font-bold text-muted-foreground">Asset {activeCampaignNodeIndex + 1 || 0} of {campaignOutputNodes.length}</span>
+                <div className={cn(
+                  'overflow-hidden rounded-lg border border-slate-200 bg-white transition-all duration-300 ease-in-out',
+                  isReviewPanelOpen ? 'p-4 opacity-100' : 'p-2 opacity-100'
+                )}>
+                  <div className={cn('flex items-center gap-3', isReviewPanelOpen ? 'mb-4 justify-between' : 'justify-center')}>
+                    {isReviewPanelOpen ? (
+                      <>
+                        <h3 className="text-base font-semibold text-slate-950">Review & refine</h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-muted-foreground">Asset {activeCampaignNodeIndex + 1 || 0} of {campaignOutputNodes.length}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 rounded-md"
+                            onClick={() => setIsReviewPanelOpen(false)}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-md"
+                        onClick={() => setIsReviewPanelOpen(true)}
+                        title="Show review panel"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className={cn(
+                    'transition-[opacity,transform] duration-300 ease-in-out',
+                    isReviewPanelOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-6 opacity-0'
+                  )}>
+                  <div className="mb-4 grid grid-cols-3 gap-2">
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">All {campaignOutputNodes.length}</button>
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Needs review {needsReviewCount}</button>
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Approved {approvedCampaignCount}</button>
                   </div>
                   <div className="mb-4 grid grid-cols-3 gap-1 border-b border-slate-200 text-sm font-semibold">
                     <button type="button" className="border-b-2 border-blue-600 px-2 py-2 text-blue-700">Checks</button>
@@ -1830,7 +1882,10 @@ export default function GeneratePage() {
                       Approve & next
                     </Button>
                   </div>
+                  </div>
                 </div>
+              </div>
+            </div>
               </div>
             </div>
           </div>
