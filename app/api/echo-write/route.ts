@@ -67,15 +67,40 @@ function getSourceImageUrl(row: any) {
   return typeof image === 'string' && image.trim() ? image.trim() : null;
 }
 
+type EchoWriteContentType =
+  | 'article'
+  | 'newsletter'
+  | 'client-education'
+  | 'market-commentary'
+  | 'advisor-talking-points'
+  | 'email'
+  | 'one-page-explainer'
+  | 'podcast-outline'
+  | 'executive-summary'
+  | 'video-script';
+
 type EchoWriteBody = {
   prompt: string;
   writingStyle: 'professional' | 'fun' | 'educational';
-  contentType: 'article' | 'video-script';
+  contentType: EchoWriteContentType;
   length: 'short' | 'medium' | 'long';
   targetWordCount?: number;
   maxSources?: number;
   model?: string;
 };
+
+const ECHOWRITE_CONTENT_TYPES = new Set<EchoWriteContentType>([
+  'article',
+  'newsletter',
+  'client-education',
+  'market-commentary',
+  'advisor-talking-points',
+  'email',
+  'one-page-explainer',
+  'podcast-outline',
+  'executive-summary',
+  'video-script',
+]);
 
 const ECHOWRITE_MODELS = new Set([
   'gpt-4o-mini',
@@ -213,6 +238,24 @@ function lengthInstruction(
     return 'Target ~300-450 words (about 1.5-2.5 minutes spoken).';
   }
 
+  if (contentType === 'email') {
+    if (length === 'short') return 'Target 150-250 words.';
+    if (length === 'long') return 'Target 450-650 words.';
+    return 'Target 275-425 words.';
+  }
+
+  if (contentType === 'advisor-talking-points' || contentType === 'podcast-outline') {
+    if (length === 'short') return 'Target 300-450 words.';
+    if (length === 'long') return 'Target 800-1100 words.';
+    return 'Target 500-750 words.';
+  }
+
+  if (contentType === 'executive-summary' || contentType === 'one-page-explainer') {
+    if (length === 'short') return 'Target 300-450 words.';
+    if (length === 'long') return 'Target 800-1000 words.';
+    return 'Target 500-700 words.';
+  }
+
   if (length === 'short') return 'Target 350-500 words.';
   if (length === 'long') return 'Target 1100-1500 words.';
   return 'Target 700-950 words.';
@@ -259,6 +302,55 @@ function videoScriptStructureInstruction(
     '- Do not over-cite source names inside the spoken script.',
     '- Keep sentences conversational, concrete, and speakable.',
   ].join('\n');
+}
+
+function contentTypeStructureInstruction(
+  contentType: EchoWriteBody['contentType'],
+  length: EchoWriteBody['length'],
+  targetWordCount?: number,
+) {
+  if (contentType === 'video-script') {
+    return videoScriptStructureInstruction(length, targetWordCount);
+  }
+
+  const instructions: Record<Exclude<EchoWriteContentType, 'video-script'>, string> = {
+    article:
+      'Write as an editorial article with a strong headline, clear intro, useful subheadings, skimmable structure, a grounded conclusion, and SEO-friendly metadata suggestions.',
+    newsletter:
+      'Write as a client-ready newsletter with a subject line, preview text, headline, short opening note, 2-4 useful sections, a concise closing CTA, and optional links/resources section.',
+    'client-education':
+      'Write as a client education piece that explains the topic in plain language, defines important terms, uses practical examples, answers likely client questions, and ends with calm next steps.',
+    'market-commentary':
+      'Write as market commentary with a headline, concise market backdrop, source-backed observations, balanced implications for clients, advisor perspective, and a measured closing takeaway.',
+    'advisor-talking-points':
+      'Write advisor talking points with a short setup, 6-10 crisp talking points, suggested client phrasing, likely client questions, and a simple closing recommendation.',
+    email:
+      'Write as a client-ready email with a subject line, preview text, greeting, concise body copy, clear CTA, and professional signoff placeholder.',
+    'one-page-explainer':
+      'Write as a one-page explainer with headline, key takeaway, why it matters, what to know, common misunderstanding, client implications, and next steps.',
+    'podcast-outline':
+      'Write as a podcast outline with episode title, short episode summary, host intro, segment-by-segment flow, interview prompts or discussion questions, key takeaway, and closing CTA.',
+    'executive-summary':
+      'Write as an executive summary with headline, situation overview, 4-6 key points, implications, risks or caveats, and recommended next steps.',
+  };
+
+  return instructions[contentType];
+}
+
+function formattingInstruction(contentType: EchoWriteBody['contentType']) {
+  if (contentType === 'video-script') {
+    return '- For video scripts: use the required script labels, but keep the SCRIPT section as natural spoken paragraphs.';
+  }
+
+  if (contentType === 'email') {
+    return '- For emails: keep paragraphs short, preserve Subject and Preview Text labels, and avoid markdown heading symbols.';
+  }
+
+  if (contentType === 'advisor-talking-points' || contentType === 'podcast-outline') {
+    return '- Use concise labeled sections and bullets where they improve scanability.';
+  }
+
+  return '- Write like a readable editorial piece a human would actually read: natural headline, subheadings only where helpful, and coherent paragraphs when needed.';
 }
 
 function tokenize(input: string) {
@@ -385,6 +477,9 @@ export async function POST(req: Request) {
     if (!body?.prompt?.trim()) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
+    const contentType = ECHOWRITE_CONTENT_TYPES.has(body.contentType)
+      ? body.contentType
+      : 'article';
 
     const supabase = getSupabaseServerClient();
     const { data: rows, error } = await supabase
@@ -435,29 +530,29 @@ export async function POST(req: Request) {
 
     const env = getServerEnv();
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
-    const fallbackModel = body.contentType === 'video-script'
+    const fallbackModel = contentType === 'video-script'
       ? env.ECHOWRITE_VIDEO_MODEL
       : env.ECHOWRITE_MODEL;
     const requestedModel = String(body.model || '').trim();
     const modelName = ECHOWRITE_MODELS.has(requestedModel) ? requestedModel : fallbackModel;
 
-    const contentTypeInstruction = body.contentType === 'video-script'
-      ? videoScriptStructureInstruction(body.length, body.targetWordCount)
-      : 'Write as an editorial article with: strong headline, subheadings, skimmable structure, intro and conclusion, and SEO-friendly formatting plus metadata suggestions.';
+    const contentTypeInstruction = contentTypeStructureInstruction(
+      contentType,
+      body.length,
+      body.targetWordCount,
+    );
 
     const prompt = [
       `User intent: ${body.prompt}`,
       contentTypeInstruction,
       styleInstruction(body.writingStyle),
-      lengthInstruction(body.length, body.targetWordCount, body.contentType),
+      lengthInstruction(body.length, body.targetWordCount, contentType),
       'Formatting requirements (strict):',
       '- Write in clearly separated paragraphs.',
       '- Use a blank line between paragraphs and between sections (double newlines).',
       '- Do not output one giant block of text.',
       '- Use short paragraphs (2–4 sentences).',
-      body.contentType === 'video-script'
-        ? '- For video scripts: use the required script labels, but keep the SCRIPT section as natural spoken paragraphs.'
-        : '- Write like a readable editorial article a human would actually read: natural headline, subheadings only where helpful (don’t over-fragment), and longer coherent paragraphs when needed.' ,
+      formattingInstruction(contentType),
       'Ground all claims in provided source context. Synthesize; do not copy verbatim. Avoid hallucinations.',
       'Do not invent statistics, regulatory claims, or source details that are not present in SOURCE CONTEXT.',
       'Return publication-ready output only.',
@@ -469,13 +564,13 @@ export async function POST(req: Request) {
     const result = await generateText({
       model: openai(modelName),
       prompt,
-      temperature: body.contentType === 'video-script' ? 0.35 : 0.5,
+      temperature: contentType === 'video-script' ? 0.35 : 0.5,
       maxOutputTokens: 2200,
     });
 
     await recordGenerationEvent({
       tool: 'echowrite',
-      contentType: body.contentType,
+      contentType,
       category: 'content',
       assetCount: 1,
       model: modelName,

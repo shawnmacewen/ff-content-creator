@@ -39,6 +39,17 @@ type EchoWriteSource = {
 };
 
 type EchoWriteTemplate = 'aurora-ribbon' | 'desert-modern';
+type EchoWriteContentType =
+  | 'article'
+  | 'newsletter'
+  | 'client-education'
+  | 'market-commentary'
+  | 'advisor-talking-points'
+  | 'email'
+  | 'one-page-explainer'
+  | 'podcast-outline'
+  | 'executive-summary'
+  | 'video-script';
 
 const ECHOWRITE_TEMPLATE: EchoWriteTemplate = 'aurora-ribbon';
 
@@ -48,6 +59,30 @@ const MODEL_OPTIONS = [
   { value: 'gpt-5.2', label: 'GPT-5.2 - strong comparison model' },
   { value: 'gpt-5.5', label: 'GPT-5.5 - latest/strongest' },
 ];
+
+const CONTENT_TYPE_OPTIONS: { value: EchoWriteContentType; label: string }[] = [
+  { value: 'article', label: 'Article' },
+  { value: 'newsletter', label: 'Newsletter' },
+  { value: 'client-education', label: 'Client Education' },
+  { value: 'market-commentary', label: 'Market Commentary' },
+  { value: 'advisor-talking-points', label: 'Advisor Talking Points' },
+  { value: 'email', label: 'Email' },
+  { value: 'one-page-explainer', label: 'One-page explainer' },
+  { value: 'podcast-outline', label: 'Podcast outline' },
+  { value: 'executive-summary', label: 'Executive Summary' },
+  { value: 'video-script', label: 'Video Script' },
+];
+
+function contentTypeLabel(contentType: EchoWriteContentType) {
+  return CONTENT_TYPE_OPTIONS.find((option) => option.value === contentType)?.label || 'EchoWrite draft';
+}
+
+function savedContentType(contentType: EchoWriteContentType) {
+  if (contentType === 'video-script') return 'video-script';
+  if (contentType === 'newsletter') return 'newsletter';
+  if (contentType === 'email') return 'email-marketing';
+  return 'article';
+}
 
 function titleFromContent(content: string) {
   const firstLine = content
@@ -153,7 +188,7 @@ function EchoWriteAccentHeader({
 export default function EchoWritePage() {
   const [prompt, setPrompt] = useState('');
   const [writingStyle, setWritingStyle] = useState<'professional' | 'fun' | 'educational'>('professional');
-  const [contentType, setContentType] = useState<'article' | 'video-script'>('article');
+  const [contentType, setContentType] = useState<EchoWriteContentType>('article');
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
   const [targetWordCount, setTargetWordCount] = useState('');
   const [maxSources, setMaxSources] = useState(6);
@@ -284,7 +319,7 @@ export default function EchoWritePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: contentType === 'video-script' ? 'video-script' : 'article',
+          type: savedContentType(contentType),
           title: titleFromContent(content),
           content,
           sourceContentIds: saveSourceIds,
@@ -359,8 +394,11 @@ export default function EchoWritePage() {
                 <Select value={contentType} onValueChange={(v: any) => setContentType(v)}>
                   <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="article">Article</SelectItem>
-                    <SelectItem value="video-script">Video Script</SelectItem>
+                    {CONTENT_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -547,7 +585,7 @@ Separately (client-side), we:
                   <FileText className="h-5 w-5 shrink-0 text-blue-700" />
                   <div className="min-w-0">
                     <h2 className="truncate text-base font-semibold text-slate-950">
-                      {content.trim() ? outputTitle : contentType === 'video-script' ? 'Video script' : 'Editorial article'}
+                      {content.trim() ? outputTitle : contentTypeLabel(contentType)}
                     </h2>
                     <p className="mt-1 text-sm text-slate-600">Highlights connect claims to supporting sources.</p>
                   </div>
