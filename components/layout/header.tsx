@@ -12,8 +12,9 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { usePathname } from 'next/navigation';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, PanelTop, Sun } from 'lucide-react';
 import { useTheme } from '@/components/layout/theme-provider';
+import { useTopNavVisibility } from '@/components/layout/top-nav-visibility';
 import Link from 'next/link';
 
 const routeLabels: Record<string, string> = {
@@ -33,6 +34,9 @@ export function Header() {
   const pathname = usePathname();
   const pageTitle = routeLabels[pathname] || 'Page';
   const { theme, toggleTheme } = useTheme();
+  const { isTopNavVisible, setTopNavVisible } = useTopNavVisibility();
+
+  if (!isTopNavVisible) return null;
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card/95 px-4 shadow-sm backdrop-blur-sm">
@@ -77,6 +81,16 @@ export function Header() {
           <Sun className="h-4 w-4" />
         )}
         <span className="hidden text-xs sm:inline">{theme === 'light' ? 'Dark' : 'Light'}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTopNavVisible(false)}
+        aria-label="Hide top navigation"
+        title="Hide top navigation"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+      >
+        <PanelTop className="h-4 w-4" />
       </Button>
     </header>
   );

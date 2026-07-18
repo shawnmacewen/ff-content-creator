@@ -17,6 +17,7 @@ import {
   PenSquare,
   FlaskConical,
   Leaf,
+  PanelTop,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -32,6 +33,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useTopNavVisibility } from '@/components/layout/top-nav-visibility';
 
 const mainNavItems = [
   {
@@ -137,21 +139,35 @@ function RotatingSidebarSlogan() {
 export function AppSidebar() {
   const pathname = usePathname();
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
+  const { isTopNavVisible, setTopNavVisible } = useTopNavVisibility();
 
   return (
     <Sidebar className="border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-5 py-5">
-        <Link href="/" prefetch={false} className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div className="flex min-w-0 flex-col">
-            <span className="text-sm font-semibold tracking-[0.08em] text-sidebar-foreground">
-              EDITOR[AI]L
-            </span>
-            <RotatingSidebarSlogan />
-          </div>
-        </Link>
+        <div className="flex items-start justify-between gap-2">
+          <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary shadow-sm">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="text-sm font-semibold tracking-[0.08em] text-sidebar-foreground">
+                EDITOR[AI]L
+              </span>
+              <RotatingSidebarSlogan />
+            </div>
+          </Link>
+          {!isTopNavVisible ? (
+            <button
+              type="button"
+              onClick={() => setTopNavVisible(true)}
+              aria-label="Show top navigation"
+              title="Show top navigation"
+              className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/65 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <PanelTop className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-3">
