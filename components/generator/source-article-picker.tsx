@@ -371,6 +371,7 @@ export function SourceArticlePicker({
                 const thumb = getThumb(c);
                 const words = c.body ? c.body.split(/\s+/).filter(Boolean).length : 0;
                 const primaryLabel = c.tags?.[0] || c.type || 'Editorial Source';
+                const filename = getFilename(c);
 
                 return (
                   <button
@@ -436,6 +437,7 @@ export function SourceArticlePicker({
                           <Calendar className={cn('h-3.5 w-3.5', splitView && 'h-3 w-3')} />
                           {formatDate(c.publishedAt) || 'Date unavailable'}
                         </span>
+                        {filename ? <span className={cn('max-w-[180px] truncate text-slate-400', splitView && 'max-w-[160px]')}>{decodeLite(filename)}</span> : null}
                         {!splitView && words ? <span>{words.toLocaleString()} words</span> : null}
                         {(c.tags || []).length > 1 ? <span>{(c.tags || []).length} signals</span> : null}
                       </div>

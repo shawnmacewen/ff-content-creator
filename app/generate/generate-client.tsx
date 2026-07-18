@@ -127,7 +127,7 @@ export default function GeneratePage() {
   const [usePlainLanguage, setUsePlainLanguage] = useState(true);
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
-  const [articlePreviewLayout, setArticlePreviewLayout] = useState<'summary' | 'spotlight'>('summary');
+  const [articlePreviewLayout, setArticlePreviewLayout] = useState<'spotlight' | 'summary' | 'reader'>('spotlight');
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
@@ -979,10 +979,11 @@ export default function GeneratePage() {
 
               <div className="flex min-h-0 flex-col gap-2 xl:h-full">
                 <div className="flex justify-end">
-                  <div className="inline-grid grid-cols-2 rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
+                  <div className="inline-grid grid-cols-3 rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
                     {([
-                      ['summary', 'Summary'],
                       ['spotlight', 'Spotlight'],
+                      ['summary', 'Summary'],
+                      ['reader', 'Reader'],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}

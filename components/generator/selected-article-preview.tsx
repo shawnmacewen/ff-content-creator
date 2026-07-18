@@ -151,7 +151,7 @@ export function SelectedArticlePreview({
   onViewDetails?: () => void;
   className?: string;
   campaignCompact?: boolean;
-  campaignLayout?: 'summary' | 'spotlight';
+  campaignLayout?: 'spotlight' | 'summary' | 'reader';
 }) {
   const article = selectedSource?.data ?? selectedSource ?? null;
 
@@ -198,6 +198,10 @@ export function SelectedArticlePreview({
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
   const summary = decodeEntities(String(article.excerpt || paragraphs[0] || 'This selected article will ground the generated campaign.'));
+  const readerParagraphs = cleanText(bodyPreview || String(article?.bodyText || article?.body || ''))
+    .split(/\n\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 20);
   const focusLabels = [
     tags[0],
     tags[1],
@@ -214,6 +218,72 @@ export function SelectedArticlePreview({
   }
 
   if (campaignCompact) {
+    if (campaignLayout === 'reader') {
+      const visibleParagraphs = readerParagraphs.slice(0, 120);
+
+      return (
+        <section className={cn('flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
+          <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  <span className="truncate">{decodeEntities(designation)}</span>
+                </div>
+                {filename ? <span className="truncate text-xs font-medium text-slate-400">{filename}</span> : null}
+              </div>
+              <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-tight tracking-normal text-slate-950">{title}</h3>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                  {formatDate(publishedAt)}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClear}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+              title="Clear selected article"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            {visibleParagraphs.length ? (
+              <article className="mx-auto max-w-3xl space-y-4 text-sm leading-7 text-slate-700">
+                {visibleParagraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+                {readerParagraphs.length > visibleParagraphs.length ? (
+                  <p className="rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
+                    Showing the first {visibleParagraphs.length} paragraphs for browser performance.
+                  </p>
+                ) : null}
+              </article>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                Full article body is unavailable for this source.
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-3">
+            {onViewDetails ? (
+              <Button variant="link" className="h-auto p-0 text-primary" onClick={onViewDetails}>
+                View full article
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            ) : <span />}
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+              <Check className="h-4 w-4" />
+              Selected source
+            </div>
+          </div>
+        </section>
+      );
+    }
+
     if (campaignLayout === 'spotlight') {
       return (
         <section className={cn('flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
@@ -249,7 +319,7 @@ export function SelectedArticlePreview({
                   <Calendar className="h-3.5 w-3.5 text-primary" />
                   {formatDate(publishedAt)}
                 </span>
-                {filename ? <span className="max-w-[140px] truncate">{filename}</span> : null}
+                {filename ? <span className="max-w-[180px] truncate text-slate-500">File: {filename}</span> : null}
               </div>
             </div>
           </div>
