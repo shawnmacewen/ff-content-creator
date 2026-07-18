@@ -203,6 +203,16 @@ export function KitContentTypeSelector({
                       <Icon className="h-4 w-4" />
                     </span>
                     <span>{ct.label}</span>
+                    {ct.id === 'infographic' ? (
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                        New
+                      </span>
+                    ) : null}
+                    {ct.id === 'infographic-copy' && selected.includes('infographic') ? (
+                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        Required
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}

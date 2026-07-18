@@ -8,6 +8,7 @@ export type ContentType =
   | 'newsletter'
   | 'article'
   | 'infographic-copy'
+  | 'infographic'
   | 'faq'
   | 'video-script';
 

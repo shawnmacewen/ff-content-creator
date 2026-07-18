@@ -84,6 +84,7 @@ function compactOutputLabel(type: ContentType, instagramVariant?: 'single' | 'ca
   if (type === 'social-instagram') return instagramVariant === 'carousel' ? 'Instagram carousel' : 'Instagram post';
   if (type === 'email-marketing') return 'Marketing email';
   if (type === 'social-linkedin') return 'LinkedIn post';
+  if (type === 'infographic') return 'Infographic';
   return CONTENT_TYPE_MAP[type]?.label ?? type;
 }
 
@@ -216,6 +217,8 @@ export default function GeneratePage() {
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
   const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
+  const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
+  const [kitInfographicStatus, setKitInfographicStatus] = useState<string | null>(null);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
   // Carousel 2.0 settings (KIT multipost)
@@ -280,7 +283,19 @@ export default function GeneratePage() {
   }, [pendingKitCarouselGenerate, kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
   const toggleKitType = (t: ContentType) => {
-    setKitTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+    setKitTypes((prev) => {
+      if (t === 'infographic') {
+        if (prev.includes('infographic')) return prev.filter((x) => x !== 'infographic');
+        return Array.from(new Set([...prev, 'infographic-copy', 'infographic']));
+      }
+
+      if (t === 'infographic-copy' && prev.includes('infographic')) {
+        toast.info('Infographic Copy is required when Infographic is selected.');
+        return prev;
+      }
+
+      return prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t];
+    });
   };
 
   const handleToggleTypeSingle = (t: ContentType) => {
@@ -289,10 +304,11 @@ export default function GeneratePage() {
   };
 
   const getKitTypeStatus = useCallback((type: ContentType): KitOutputStatus => {
+    if (type === 'infographic' && isGeneratingKitInfographic) return 'generating';
     if (kitOutputs?.some((output) => output.type === type && output.content?.trim())) return 'complete';
     if (isGeneratingKit && kitTypes.includes(type)) return 'generating';
     return 'idle';
-  }, [isGeneratingKit, kitOutputs, kitTypes]);
+  }, [isGeneratingKit, isGeneratingKitInfographic, kitOutputs, kitTypes]);
 
   const kitOutputStatuses = kitTypes.reduce<Partial<Record<ContentType, KitOutputStatus>>>((acc, type) => {
     acc[type] = getKitTypeStatus(type);
@@ -347,6 +363,7 @@ export default function GeneratePage() {
     setIsGeneratingKit(true);
     setKitOutputs(null);
     setKitCarouselProgress(null);
+    setKitInfographicStatus(null);
 
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
@@ -355,10 +372,15 @@ export default function GeneratePage() {
     const shouldGenerateInlineInstagramImage = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'single' &&
       includeInstagramSingleImages;
+    const shouldGenerateInfographic = kitTypes.includes('infographic');
+    const textKitTypes = shouldGenerateInfographic
+      ? Array.from(new Set([...kitTypes.filter((type) => type !== 'infographic'), 'infographic-copy']))
+      : kitTypes;
     const guidanceContext = [
       additionalContext,
       usePlainLanguage ? 'Use plain language.' : '',
       includeCallToAction ? 'Include a clear call to action.' : '',
+      shouldGenerateInfographic ? 'If Infographic is selected, make Infographic Copy concise, structured, and ready to become a single website infographic image.' : '',
       audience ? `Audience: ${audience}.` : '',
     ].filter(Boolean).join('\n');
 
@@ -369,9 +391,9 @@ export default function GeneratePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           // type is ignored for kit mode but we send a stable value
-          type: kitTypes[0],
+          type: textKitTypes[0],
           mode: 'kit',
-          selectedTypes: kitTypes,
+          selectedTypes: textKitTypes,
           includeInstagramImage: shouldGenerateInlineInstagramImage,
           sourceContentIds: selectedSourceIds,
           customPrompt,
@@ -386,6 +408,72 @@ export default function GeneratePage() {
       setKitOutputs(outputs);
       setSetupCollapsed(true);
       setIsGeneratingKit(false);
+
+      if (shouldGenerateInfographic) {
+        const infographicCopy = outputs?.find((output: { type: ContentType; content: string }) => output.type === 'infographic-copy')?.content || '';
+        if (!infographicCopy.trim()) {
+          setKitInfographicStatus('Infographic Copy is required before image generation.');
+          toast.error('Infographic Copy was not generated, so the infographic image could not run.');
+        } else {
+          setIsGeneratingKitInfographic(true);
+          setKitInfographicStatus('Generating website infographic image...');
+
+          void fetch('/api/generate/infographic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              infographicCopy,
+              sourceContentIds: selectedSourceIds,
+              guidance: guidanceContext,
+            }),
+          })
+            .then(async (imageResponse) => {
+              const imagePayload = await imageResponse.json().catch(() => ({}));
+              if (!imageResponse.ok || !imagePayload?.imageUrl) {
+                throw new Error(imagePayload?.error || 'Infographic image generation failed');
+              }
+
+              setKitOutputs((current) => {
+                const base = (current || outputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
+                return [
+                  ...base,
+                  {
+                    type: 'infographic' as ContentType,
+                    label: 'Infographic',
+                    content: [
+                      'Image generation status: success',
+                      `Image URL: ${imagePayload.imageUrl}`,
+                      '',
+                      'Based on Infographic Copy:',
+                      infographicCopy,
+                    ].join('\n'),
+                  },
+                ];
+              });
+              setKitInfographicStatus('Website infographic image generated');
+              toast.success('Infographic image generated');
+            })
+            .catch((err) => {
+              console.error('Infographic image generation error:', err);
+              setKitOutputs((current) => {
+                const base = (current || outputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
+                return [
+                  ...base,
+                  {
+                    type: 'infographic' as ContentType,
+                    label: 'Infographic',
+                    content: `Image generation status: failed (${err?.message || 'unknown error'})\n\nBased on Infographic Copy:\n${infographicCopy}`,
+                  },
+                ];
+              });
+              setKitInfographicStatus('Infographic image generation failed');
+              toast.error('Infographic image generation failed');
+            })
+            .finally(() => {
+              setIsGeneratingKitInfographic(false);
+            });
+        }
+      }
 
       // Carousel images run asynchronously so text outputs stay usable while image generation continues.
       if (shouldGenerateCarousel) {
@@ -403,7 +491,7 @@ export default function GeneratePage() {
         toast.info('KIT copy generated. Select exactly one source article to generate carousel images.');
       }
 
-      toast.success(shouldGenerateCarousel ? 'KIT copy generated; carousel images are running' : 'KIT generated');
+      toast.success(shouldGenerateCarousel || shouldGenerateInfographic ? 'KIT copy generated; image generation is running' : 'KIT generated');
     } catch (err) {
       console.error('KIT generation error:', err);
       toast.error('Failed to generate kit');
@@ -587,7 +675,7 @@ export default function GeneratePage() {
   };
 
   const hasGeneratedOutput = mode === 'kit'
-    ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages)
+    ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages || isGeneratingKitInfographic)
     : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
   const activeTypes = mode === 'kit' ? kitTypes : selectedContentTypes;
   const selectedOutputLabels = activeTypes.map((type) => compactOutputLabel(type, instagramKitVariant));
@@ -595,7 +683,7 @@ export default function GeneratePage() {
     ? `${selectedSourceIds.length} article${selectedSourceIds.length === 1 ? '' : 's'} selected`
     : 'Choose your article';
   const generateDisabled = mode === 'kit'
-    ? isGeneratingKit || isGeneratingKitCarouselImages || !kitTypes.length || !selectedSourceIds.length
+    ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length
     : isGenerating || !selectedContentTypes.length || !selectedSourceIds.length;
   const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
   const setupTrayClassName = cn(
@@ -1094,6 +1182,15 @@ export default function GeneratePage() {
                 </button>
               </div>
             </div>
+
+            {kitInfographicStatus ? (
+              <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2">
+                  {isGeneratingKitInfographic ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
+                  <span>{kitInfographicStatus}</span>
+                </div>
+              </div>
+            ) : null}
 
             {/* Keep all mounted; switching tabs must not clear */}
             <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>

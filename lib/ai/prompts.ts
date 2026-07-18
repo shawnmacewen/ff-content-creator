@@ -111,6 +111,16 @@ Structure:
 Use numbers, percentages, and short phrases.
 Optimize for visual scanning.`,
 
+  infographic: `Create a production-ready infographic image brief.
+This content type is usually generated as an image from Infographic Copy.
+If asked for text, return:
+- Website infographic title
+- 4-6 visual sections
+- Short labels and short supporting copy
+- Suggested visual hierarchy and CTA
+
+Keep wording concise and suitable for a website-sized infographic.`,
+
   faq: `Create a Frequently Asked Questions (FAQ) section.
 Structure:
 - Title

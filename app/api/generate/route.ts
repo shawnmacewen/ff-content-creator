@@ -156,6 +156,7 @@ export async function POST(req: Request) {
         assetType === 'social-twitter' ? 'Twitter/X Post' :
         assetType === 'newsletter' ? 'Newsletter' :
         assetType === 'article' ? 'Article/Blog Post' :
+        assetType === 'infographic' ? 'Infographic' :
         assetType === 'faq' ? 'FAQ' :
         assetType === 'video-script' ? 'Video Script' :
         'Infographic Copy',

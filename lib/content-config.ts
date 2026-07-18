@@ -69,6 +69,14 @@ export const CONTENT_TYPES: ContentTypeInfo[] = [
     placeholder: 'Create copy for an infographic about...',
   },
   {
+    id: 'infographic',
+    label: 'Infographic',
+    description: 'Single website-ready infographic image',
+    icon: 'bar-chart',
+    category: 'long-form',
+    placeholder: 'Generate an infographic image about...',
+  },
+  {
     id: 'faq',
     label: 'FAQ',
     description: 'Frequently asked questions with clear, compliant answers',

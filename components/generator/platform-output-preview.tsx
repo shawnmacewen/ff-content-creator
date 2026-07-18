@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   BatteryFull,
+  BarChart3,
   Bookmark,
   CheckCircle2,
   Heart,
@@ -26,6 +27,11 @@ function cleanGeneratedText(content: string) {
     .replace(/\n*Image generation status:\s*.*$/im, '')
     .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\n\r]+/g, '[image-data]')
     .trim();
+}
+
+function getInlineImageSrc(content: string) {
+  const imageLine = String(content || '').split('\n').find((line) => line.toLowerCase().startsWith('image url:'));
+  return imageLine ? imageLine.slice('Image URL:'.length).trim() : null;
 }
 
 function firstMeaningfulLine(text: string) {
@@ -363,6 +369,47 @@ function DocumentPreview({ content, type, label }: { content: string; type: Cont
   );
 }
 
+function InfographicPreview({ content }: { content: string }) {
+  const imageSrc = getInlineImageSrc(content);
+  const text = cleanGeneratedText(content).replace(/^Based on Infographic Copy:\s*/i, '').trim();
+  const failed = /Image generation status:\s*failed/i.test(content);
+
+  return (
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <div className="overflow-hidden rounded-2xl border bg-white text-slate-950 shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b bg-slate-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            Website infographic
+          </div>
+          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
+            1536 x 1024
+          </span>
+        </div>
+        <div className="bg-[linear-gradient(180deg,#f8fafc,#eef2ff)] p-4 sm:p-6">
+          <div className="mx-auto aspect-[3/2] w-full max-w-4xl overflow-hidden rounded-xl border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+            {imageSrc && !failed ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageSrc} alt="Generated website infographic" className="h-full w-full object-contain" />
+            ) : (
+              <div className="flex h-full items-center justify-center p-8 text-center text-sm text-slate-500">
+                {failed ? 'Infographic image generation failed. The copy is still available below.' : 'Generated infographic image will appear here.'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {text ? (
+        <div className="rounded-2xl border bg-background p-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Infographic Copy Source</div>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{text}</div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function PlatformOutputPreview({
   type,
   label,
@@ -377,5 +424,6 @@ export function PlatformOutputPreview({
   if (type === 'social-instagram') return <InstagramCaptionPreview content={content} />;
   if (type === 'email-sequence') return <EmailSequencePreview content={content} label={label} />;
   if (type === 'email-marketing' || type === 'newsletter') return <EmailPreview content={content} label={label} />;
+  if (type === 'infographic') return <InfographicPreview content={content} />;
   return <DocumentPreview content={content} type={type} label={label} />;
 }
