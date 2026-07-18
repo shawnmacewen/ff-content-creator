@@ -7,7 +7,7 @@ import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Database, FolderOpen, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import { PageHeader } from '@/components/layout/page-header';
@@ -331,54 +331,7 @@ export default function SourceContentPage() {
         eyebrow="Source inventory"
         title="Source Content"
         description="Browse synced advisor content and send selected articles into the generation workflow."
-        metrics={[
-          {
-            label: `${totalAvailableItems.toLocaleString()} available`,
-            icon: FolderOpen,
-          },
-          {
-            label: `${latestPage?.meta?.finraReviewedCount ?? 0} FINRA reviewed`,
-            icon: FolderOpen,
-            iconClassName: 'bg-info text-info-foreground',
-          },
-          {
-            id: 'sync-broadridge-content',
-            label: (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-md text-xs font-bold"
-                onClick={runBroadridgeContentSync}
-                disabled={runningSourceSync}
-                title="Runs the batched Broadridge provider sync from Source Content."
-              >
-                {runningSourceSync ? 'Syncing...' : 'Sync Broadridge Content'}
-              </Button>
-            ),
-            detail: (
-              <div className="mt-0.5 space-y-2">
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Last sync: {latestPage?.meta?.lastSyncedAt ? new Date(latestPage.meta.lastSyncedAt).toLocaleString() : 'n/a'}
-                </p>
-                {syncProgress ? (
-                  <div className="space-y-1.5">
-                    <div className="text-[11px] font-medium text-muted-foreground">
-                      Batch {syncProgress.currentBatch} of {syncProgress.maxBatches} · {syncProgress.processed.toLocaleString()} processed · {syncProgress.inserted.toLocaleString()} inserted · {syncProgress.updated.toLocaleString()} updated
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${syncProgressPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ),
-            icon: Database,
-          },
-        ]}
+        metrics={[]}
         variant="pink"
       />
 
@@ -398,64 +351,93 @@ export default function SourceContentPage() {
 
       {latestPage && (
         <>
-          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground shadow-sm xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <span className="font-medium text-foreground">
-                Loaded {loadedCount.toLocaleString()}{totalAvailableItems ? ` of ${totalAvailableItems.toLocaleString()}` : ''} results
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                {hasNextPage ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 rounded-md text-xs"
-                      disabled={isLoadingMore}
-                      onClick={() => void setSize(size + 1)}
-                    >
-                      {isLoadingMore ? 'Loading...' : `Load ${SOURCE_CONTENT_PAGE_SIZE} more`}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={autoLoadAll ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8 rounded-md text-xs"
-                      disabled={isLoadingMore && !autoLoadAll}
-                      onClick={() => setAutoLoadAll((value) => !value)}
-                    >
-                      {autoLoadAll ? 'Stop full load' : 'Load full library'}
-                    </Button>
-                  </>
-                ) : loadedCount ? (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">All loaded</span>
+          <div className="rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground shadow-sm">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <span className="font-medium text-foreground">
+                  Loaded {loadedCount.toLocaleString()}{totalAvailableItems ? ` of ${totalAvailableItems.toLocaleString()}` : ''} articles
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasNextPage ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-md text-xs"
+                        disabled={isLoadingMore}
+                        onClick={() => void setSize(size + 1)}
+                      >
+                        {isLoadingMore ? 'Loading...' : `Load ${SOURCE_CONTENT_PAGE_SIZE} more`}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={autoLoadAll ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-8 rounded-md text-xs"
+                        disabled={isLoadingMore && !autoLoadAll}
+                        onClick={() => setAutoLoadAll((value) => !value)}
+                      >
+                        {autoLoadAll ? 'Stop full load' : 'Load full library'}
+                      </Button>
+                    </>
+                  ) : loadedCount ? (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">All loaded</span>
+                  ) : null}
+                </div>
+                <div className="flex min-w-[220px] items-center gap-2">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${contentLoadProgressPercent}%` }}
+                    />
+                  </div>
+                  <span className="w-12 text-right text-xs font-medium text-muted-foreground">
+                    {totalAvailableItems ? `${contentLoadProgressPercent}%` : isLoadingMore ? '...' : '0%'}
+                  </span>
+                </div>
+                <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-foreground ring-1 ring-slate-200">
+                  {(latestPage?.meta?.finraReviewedCount ?? 0).toLocaleString()} FINRA reviewed
+                </span>
+                {hasActiveFilters ? (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Showing {visibleContentItems.length.toLocaleString()} Search Results
+                  </span>
                 ) : null}
               </div>
-              <div className="flex min-w-[220px] items-center gap-2">
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
+                {selectedIds.size > 0 ? (
+                  <Button onClick={handleGenerateWithSelected} className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Generate with {selectedIds.size} selected
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-md text-xs font-bold"
+                  onClick={runBroadridgeContentSync}
+                  disabled={runningSourceSync}
+                  title="Runs the batched Broadridge provider sync from Source Content."
+                >
+                  {runningSourceSync ? 'Syncing...' : 'Sync Broadridge Content'}
+                </Button>
+              </div>
+            </div>
+            {syncProgress ? (
+              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
+                <div className="text-[11px] font-medium text-muted-foreground">
+                  Batch {syncProgress.currentBatch} of {syncProgress.maxBatches} · {syncProgress.processed.toLocaleString()} processed · {syncProgress.inserted.toLocaleString()} inserted · {syncProgress.updated.toLocaleString()} updated
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${contentLoadProgressPercent}%` }}
+                    style={{ width: `${syncProgressPercent}%` }}
                   />
                 </div>
-                <span className="w-12 text-right text-xs font-medium text-muted-foreground">
-                  {totalAvailableItems ? `${contentLoadProgressPercent}%` : isLoadingMore ? '...' : '0%'}
-                </span>
               </div>
-              {hasActiveFilters ? (
-                <span className="text-xs font-medium text-muted-foreground">
-                  Showing {visibleContentItems.length.toLocaleString()} Search Results
-                </span>
-              ) : null}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
-              {selectedIds.size > 0 ? (
-                <Button onClick={handleGenerateWithSelected} className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Generate with {selectedIds.size} selected
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
           <ContentFilters
             searchQuery={searchQuery}
