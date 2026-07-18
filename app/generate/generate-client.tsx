@@ -937,7 +937,7 @@ export default function GeneratePage() {
                 activeWorkflowStep === 1 ? 'border-violet-300 bg-violet-50/20' : 'border-violet-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                     <Sparkles className="h-6 w-6" />
@@ -981,7 +981,7 @@ export default function GeneratePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
+                  className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
                 >
                   <PencilSparklesIcon />
@@ -1162,7 +1162,7 @@ export default function GeneratePage() {
                 activeWorkflowStep === 2 ? 'border-cyan-300 bg-cyan-50/20' : 'border-cyan-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
                     <CheckCircle2 className="h-6 w-6" />
@@ -1185,7 +1185,7 @@ export default function GeneratePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
+                  className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
                 >
                   <PencilSparklesIcon />
@@ -1279,7 +1279,7 @@ export default function GeneratePage() {
               activeWorkflowStep === 3 ? 'border-blue-300 bg-blue-50/20' : 'border-blue-100'
             )}
           >
-            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
+            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
                   <FileText className="h-6 w-6" />
@@ -1306,7 +1306,7 @@ export default function GeneratePage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
+                className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
                 onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
               >
                 <PencilSparklesIcon />
