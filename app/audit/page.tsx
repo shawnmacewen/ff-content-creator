@@ -41,6 +41,14 @@ export default function AuditPage() {
   const [method, setMethod] = useState<'search' | 'analyze'>('search');
   const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
   const [analyzeDepth, setAnalyzeDepth] = useState<'quick' | 'deep'>('quick');
+  const [aiFocus, setAiFocus] = useState({
+    relevant: true,
+    gaps: true,
+    outdated: false,
+    duplicates: false,
+  });
+  const [aiDateRange, setAiDateRange] = useState('12m');
+  const [aiContentType, setAiContentType] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
@@ -158,6 +166,9 @@ export default function AuditPage() {
     setPublisher('all');
     setMatchMode('all');
     setAnalyzeDepth('quick');
+    setAiFocus({ relevant: true, gaps: true, outdated: false, duplicates: false });
+    setAiDateRange('12m');
+    setAiContentType('all');
     setResult(null);
     setSelectedIds(new Set());
     setError('');
@@ -273,14 +284,57 @@ export default function AuditPage() {
             </div>
           </>
         ) : (
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-950">Describe the scan</label>
-            <Input
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="h-12 bg-white"
-              placeholder="e.g. list content that mentions 2025 mileage rate but not 2026 mileage rate"
-            />
+          <div className="space-y-5">
+            <p className="text-sm leading-6 text-slate-500">AI Scan finds related ideas, themes, and coverage gaps, not only exact keywords.</p>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-950">What do you want to analyze?</label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="min-h-[128px] w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-3 text-sm leading-6 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Find recent content about retirement income strategies and identify topics we may be under-covering."
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-slate-950">Try an example</div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'Compare topic coverage',
+                  'Find outdated content',
+                  'Identify content gaps',
+                ].map((example) => (
+                  <Button key={example} type="button" variant="outline" size="sm" onClick={() => setPrompt(example)}>
+                    {example}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-slate-950">Analysis focus</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ['relevant', 'Relevant content'],
+                  ['gaps', 'Coverage gaps'],
+                  ['outdated', 'Outdated content'],
+                  ['duplicates', 'Duplicate themes'],
+                ].map(([key, label]) => {
+                  const active = aiFocus[key as keyof typeof aiFocus];
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setAiFocus((value) => ({ ...value, [key]: !active }))}
+                      className={`flex items-center gap-3 rounded-md border p-3 text-left text-sm font-medium transition ${active ? 'border-blue-500 bg-blue-50 text-slate-950 ring-1 ring-blue-500' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200'}`}
+                    >
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-md border ${active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </span>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
@@ -319,25 +373,49 @@ export default function AuditPage() {
               </Button>
             </>
           ) : (
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-950">Depth</label>
-              <select className="h-10 min-w-[220px] rounded-md border border-slate-200 bg-white px-3 text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
-                <option value="quick">AI Quick Scan</option>
-                <option value="deep">AI Deep Scan</option>
-              </select>
-            </div>
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">Date range</label>
+                <select className="h-10 min-w-[170px] rounded-md border border-slate-200 bg-white px-3 text-sm" value={aiDateRange} onChange={(e) => setAiDateRange(e.target.value)}>
+                  <option value="12m">Past 12 months</option>
+                  <option value="6m">Past 6 months</option>
+                  <option value="all">Any date</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">Content type</label>
+                <select className="h-10 min-w-[170px] rounded-md border border-slate-200 bg-white px-3 text-sm" value={aiContentType} onChange={(e) => setAiContentType(e.target.value)}>
+                  <option value="all">All types</option>
+                  <option value="article">Articles</option>
+                  <option value="topic">Topic discussions</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">Depth</label>
+                <select className="h-10 min-w-[170px] rounded-md border border-slate-200 bg-white px-3 text-sm" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
+                  <option value="quick">AI Quick Scan</option>
+                  <option value="deep">AI Deep Scan</option>
+                </select>
+              </div>
+              <Button type="button" variant="outline" className="h-10 gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Advanced options
+              </Button>
+            </>
           )}
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-slate-500">
-            {method === 'search' ? `${includeCount} include term${includeCount === 1 ? '' : 's'} · ${excludeCount} exclusion${excludeCount === 1 ? '' : 's'}` : `${analyzeDepth === 'deep' ? 'Deep' : 'Quick'} semantic scan`}
+            {method === 'search'
+              ? `${includeCount} include term${includeCount === 1 ? '' : 's'} · ${excludeCount} exclusion${excludeCount === 1 ? '' : 's'}`
+              : 'AI may return conceptually related content.'}
           </div>
           <div className="flex items-center gap-3">
             <Button type="button" variant="outline" onClick={clearCriteria}>Clear</Button>
             <Button onClick={run} disabled={loading || (method === 'analyze' ? !prompt.trim() : !includeTerms.trim())} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {loading ? (method === 'analyze' ? `${scanModeLabel} running...` : 'Running search...') : method === 'analyze' ? `Run ${scanModeLabel}` : 'Run scan'}
+              {loading ? (method === 'analyze' ? `${scanModeLabel} running...` : 'Running search...') : method === 'analyze' ? 'Run AI scan' : 'Run scan'}
             </Button>
           </div>
         </div>
