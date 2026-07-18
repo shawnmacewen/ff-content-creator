@@ -907,11 +907,10 @@ export default function GeneratePage() {
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
-  const campaignContextSummary = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel'
+  const hasCampaignContextSettings = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel';
+  const campaignContextSummary = hasCampaignContextSettings
     ? `${kitCarouselSlideCount} slides - ${kitCarouselVisualStyle === 'classic' ? 'Classic look' : 'Bright editorial'}`
-    : kitTypes.includes('social-instagram') && instagramKitVariant === 'single'
-      ? 'Instagram single image'
-      : 'No format-specific settings';
+    : '';
   const guidanceOptions = [
     usePlainLanguage ? 'Plain language' : null,
     includeCallToAction ? 'Call to action' : null,
@@ -1022,11 +1021,15 @@ export default function GeneratePage() {
                   </div>
                 </div>
                 <div className="min-w-0 border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Contextual settings</div>
-                  <div className="mt-2 flex min-h-9 items-center gap-3 rounded-md border border-violet-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
-                    <Instagram className="h-4 w-4 shrink-0 text-violet-700" />
-                    <span className="truncate">{campaignContextSummary}</span>
-                  </div>
+                  {hasCampaignContextSettings ? (
+                    <>
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Contextual settings</div>
+                      <div className="mt-2 flex min-h-9 items-center gap-3 rounded-md border border-violet-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
+                        <Instagram className="h-4 w-4 shrink-0 text-violet-700" />
+                        <span className="truncate">{campaignContextSummary}</span>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 <Button
                   type="button"
