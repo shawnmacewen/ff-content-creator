@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentCard } from '@/components/source-content/content-card';
@@ -9,6 +9,7 @@ import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { Database, FolderOpen, Loader2, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { PageHeader } from '@/components/layout/page-header';
 import { toast } from 'sonner';
 
@@ -67,6 +68,8 @@ const fetcher = async (url: string) => {
   return body;
 };
 
+const SOURCE_CONTENT_PAGE_SIZE = 50;
+
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
     return { q: '', searchScope: 'all', contentDesignation: '', tags: '', publisher: '' };
@@ -94,7 +97,7 @@ export default function SourceContentPage() {
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialFilters.q);
-  const [page, setPage] = useState(1);
+  const [autoLoadAll, setAutoLoadAll] = useState(false);
   const [runningSourceSync, setRunningSourceSync] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
@@ -107,20 +110,31 @@ export default function SourceContentPage() {
   }, [searchQuery]);
 
   // Build API URL with filters
-  const apiUrl = useCallback(() => {
+  const apiUrl = useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
+    if (previousPageData && !previousPageData.hasNextPage) return null;
+
     const params = new URLSearchParams();
     if (debouncedQuery) params.set('q', debouncedQuery);
     if (searchScope && searchScope !== 'all') params.set('searchScope', searchScope);
     if (selectedType && selectedType !== 'all') params.set('contentDesignation', selectedType);
     if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
     if (selectedPublisher && selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
-    params.set('page', String(page));
-    params.set('pageSize', '20');
+    params.set('page', String(pageIndex + 1));
+    params.set('pageSize', String(SOURCE_CONTENT_PAGE_SIZE));
     return `/api/source-content?${params.toString()}`;
-  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher, page]);
+  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher]);
 
-  const { data, error, isLoading, mutate: mutateSourceContent } = useSWR<ApiResponse>(apiUrl(), fetcher, {
+  const {
+    data: pages,
+    error,
+    isLoading,
+    isValidating,
+    size,
+    setSize,
+    mutate: mutateSourceContent,
+  } = useSWRInfinite<ApiResponse>(apiUrl, fetcher, {
     keepPreviousData: true,
+    revalidateFirstPage: false,
     shouldRetryOnError: false,
   });
   const { data: filterData } = useSWR<FilterResponse>('/api/source-content/filters', fetcher, {
@@ -128,9 +142,41 @@ export default function SourceContentPage() {
     shouldRetryOnError: false,
   });
 
-  const contentItems = Array.isArray(data?.data) ? data.data : [];
-  const filters = filterData || data?.filters || emptyFilters;
-  const totalAvailableItems = data?.meta?.totalSourceContent || data?.total || 0;
+  useEffect(() => {
+    setAutoLoadAll(false);
+    void setSize(1);
+  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher, setSize]);
+
+  const contentItems = useMemo(() => {
+    const seen = new Set<string>();
+    const items: SourceContent[] = [];
+    for (const pageData of pages || []) {
+      for (const item of pageData.data || []) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        items.push(item);
+      }
+    }
+    return items;
+  }, [pages]);
+  const latestPage = pages?.[pages.length - 1] ?? null;
+  const filters = filterData || latestPage?.filters || emptyFilters;
+  const totalAvailableItems = latestPage?.meta?.totalSourceContent || latestPage?.total || pages?.[0]?.total || 0;
+  const hasNextPage = Boolean(latestPage?.hasNextPage);
+  const loadedCount = contentItems.length;
+  const isLoadingMore = isValidating && Boolean(pages?.length);
+  const contentLoadProgressPercent = totalAvailableItems
+    ? Math.max(4, Math.min(100, Math.round((loadedCount / totalAvailableItems) * 100)))
+    : isLoadingMore
+      ? 8
+      : 0;
+  const hasActiveFilters = Boolean(
+    debouncedQuery ||
+    (searchScope && searchScope !== 'all') ||
+    (selectedType && selectedType !== 'all') ||
+    (selectedTag && selectedTag !== 'all') ||
+    (selectedPublisher && selectedPublisher !== 'all')
+  );
   const syncProgressPercent = syncProgress
     ? Math.max(4, Math.min(100, Math.round((syncProgress.currentBatch / syncProgress.maxBatches) * 100)))
     : 0;
@@ -257,7 +303,6 @@ export default function SourceContentPage() {
     setSelectedType('');
     setSelectedTag('');
     setSelectedPublisher('');
-    setPage(1);
   };
 
   const handleSelectAll = () => {
@@ -271,15 +316,14 @@ export default function SourceContentPage() {
     setSelectedIds(new Set());
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
+  useEffect(() => {
+    if (!autoLoadAll || !hasNextPage || isValidating) return;
+    void setSize(size + 1);
+  }, [autoLoadAll, hasNextPage, isValidating, setSize, size]);
 
-  const handleNextPage = () => {
-    if (!data) return;
-    if (!data.hasNextPage && page >= (data.totalPages || 1)) return;
-    setPage((p) => p + 1);
-  };
+  useEffect(() => {
+    if (autoLoadAll && !hasNextPage && !isValidating) setAutoLoadAll(false);
+  }, [autoLoadAll, hasNextPage, isValidating]);
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
@@ -294,7 +338,7 @@ export default function SourceContentPage() {
             icon: FolderOpen,
           },
           {
-            label: `${data?.meta?.finraReviewedCount ?? 0} FINRA reviewed`,
+            label: `${latestPage?.meta?.finraReviewedCount ?? 0} FINRA reviewed`,
             detail: 'Approved source pieces',
             icon: FolderOpen,
             iconClassName: 'bg-info text-info-foreground',
@@ -304,7 +348,7 @@ export default function SourceContentPage() {
             detail: (
               <div className="mt-0.5 space-y-2">
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Last sync: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'}
+                  Last sync: {latestPage?.meta?.lastSyncedAt ? new Date(latestPage.meta.lastSyncedAt).toLocaleString() : 'n/a'}
                 </p>
                 <Button
                   type="button"
@@ -345,7 +389,8 @@ export default function SourceContentPage() {
         searchScope={searchScope}
         onSearchScopeChange={(scope) => {
           setSearchScope(scope);
-          setPage(1);
+          setAutoLoadAll(false);
+          void setSize(1);
         }}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
@@ -374,7 +419,7 @@ export default function SourceContentPage() {
         </div>
       )}
 
-      {!data && isLoading && (
+      {!pages && isLoading && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-64 rounded-lg bg-card animate-pulse" />
@@ -382,30 +427,61 @@ export default function SourceContentPage() {
         </div>
       )}
 
-      {data && (
+      {latestPage && (
         <>
-          <div className="text-sm text-muted-foreground flex items-center justify-between gap-4">
-            <span>
-              Showing {contentItems.length} results (page {data.page}{data.hasNextPage ? '+' : ''})
-            </span>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{selectedIds.size} item(s) selected</span>
-                <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                  Select all
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
-                  Deselect all
-                </Button>
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground shadow-sm xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <span className="font-medium text-foreground">
+                Loaded {loadedCount.toLocaleString()}{totalAvailableItems ? ` of ${totalAvailableItems.toLocaleString()}` : ''} results
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {hasNextPage ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-md text-xs"
+                      disabled={isLoadingMore}
+                      onClick={() => void setSize(size + 1)}
+                    >
+                      {isLoadingMore ? 'Loading...' : `Load ${SOURCE_CONTENT_PAGE_SIZE} more`}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={autoLoadAll ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 rounded-md text-xs"
+                      disabled={isLoadingMore && !autoLoadAll}
+                      onClick={() => setAutoLoadAll((value) => !value)}
+                    >
+                      {autoLoadAll ? 'Stop full load' : hasActiveFilters ? 'Load all matches' : 'Load full library'}
+                    </Button>
+                  </>
+                ) : loadedCount ? (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">All loaded</span>
+                ) : null}
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!data.hasNextPage && page >= (data.totalPages || 1)}>
-                  Next
-                </Button>
+              <div className="flex min-w-[220px] items-center gap-2">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${contentLoadProgressPercent}%` }}
+                  />
+                </div>
+                <span className="w-12 text-right text-xs font-medium text-muted-foreground">
+                  {totalAvailableItems ? `${contentLoadProgressPercent}%` : isLoadingMore ? '...' : '0%'}
+                </span>
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
+              <span>{selectedIds.size} item(s) selected</span>
+              <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+                Select loaded
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
+                Deselect all
+              </Button>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
