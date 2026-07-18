@@ -9,6 +9,7 @@ import { Calendar, CheckCircle2, FileSearch, HelpCircle, Loader2, Search, Slider
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type Match = {
   id: string;
@@ -231,7 +232,228 @@ export default function AuditPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      {method === 'analyze' ? (
+        <section className="grid gap-4 lg:grid-cols-[minmax(360px,0.8fr)_minmax(0,1.2fr)]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-700">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-slate-950">Set up your AI scan</h2>
+                    <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100">AI Scan</Badge>
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">AI Scan finds related ideas, themes, and coverage gaps, not only exact keywords.</p>
+                </div>
+              </div>
+              <button type="button" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                How AI Scan works
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-950">What do you want to analyze?</label>
+                <div className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value.slice(0, 500))}
+                    className="min-h-[104px] w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-3 pb-7 text-sm leading-6 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                    placeholder="Find recent content about retirement income strategies and identify topics we may be under-covering."
+                    maxLength={500}
+                  />
+                  <span className="absolute bottom-2 right-3 text-xs font-medium text-slate-500">{prompt.length} / 500</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-slate-950">Try an example</div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Compare topic coverage',
+                    'Find outdated content',
+                    'Identify content gaps',
+                  ].map((example) => (
+                    <Button key={example} type="button" variant="outline" size="sm" className="border-violet-200 text-violet-700 hover:bg-violet-50" onClick={() => setPrompt(example)}>
+                      {example}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-950">Analysis focus</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    ['relevant', 'Relevant content'],
+                    ['gaps', 'Coverage gaps'],
+                    ['outdated', 'Outdated content'],
+                    ['duplicates', 'Duplicate themes'],
+                  ].map(([key, label]) => {
+                    const active = aiFocus[key as keyof typeof aiFocus];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setAiFocus((value) => ({ ...value, [key]: !active }))}
+                        className={cn(
+                          'flex items-center gap-3 rounded-md border p-3 text-left text-sm font-semibold transition',
+                          active
+                            ? 'border-violet-400 bg-violet-50 text-slate-950 ring-1 ring-violet-300'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200'
+                        )}
+                      >
+                        <span className={cn(
+                          'flex h-5 w-5 items-center justify-center rounded-md border',
+                          active ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300 bg-white text-transparent'
+                        )}>
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </span>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-slate-950">Scope</div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="space-y-1 text-xs font-medium text-slate-500">
+                    Publisher
+                    <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
+                      <option value="all">All publishers</option>
+                      <option value="broadridge-forefield">Broadridge Forefield</option>
+                      <option value="publisher-content">Publisher Content</option>
+                      <option value="sample">Sample</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-xs font-medium text-slate-500">
+                    Date range
+                    <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={aiDateRange} onChange={(e) => setAiDateRange(e.target.value)}>
+                      <option value="12m">Past 12 months</option>
+                      <option value="6m">Past 6 months</option>
+                      <option value="all">Any date</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-xs font-medium text-slate-500">
+                    Content type
+                    <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={aiContentType} onChange={(e) => setAiContentType(e.target.value)}>
+                      <option value="all">All types</option>
+                      <option value="article">Articles</option>
+                      <option value="topic">Topic discussions</option>
+                    </select>
+                  </label>
+                </div>
+                <details className="rounded-md border border-slate-200 bg-white">
+                  <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-slate-700">Advanced options</summary>
+                  <div className="border-t border-slate-200 p-3">
+                    <label className="space-y-1 text-xs font-medium text-slate-500">
+                      Scan depth
+                      <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={analyzeDepth} onChange={(e) => setAnalyzeDepth(e.target.value as 'quick' | 'deep')}>
+                        <option value="quick">AI Quick Scan</option>
+                        <option value="deep">AI Deep Scan</option>
+                      </select>
+                    </label>
+                  </div>
+                </details>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <HelpCircle className="h-4 w-4" />
+                <span>AI may return conceptually related content.</span>
+              </div>
+
+              <Button onClick={run} disabled={loading || !prompt.trim()} className="h-12 w-full gap-2 rounded-md bg-violet-600 text-base font-semibold hover:bg-violet-700">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                {loading ? `${scanModeLabel} running...` : 'Run AI scan'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+                  <FileSearch className="h-5 w-5" />
+                </span>
+                <h2 className="text-lg font-semibold text-slate-950">Scan results</h2>
+                <Badge variant="secondary">{resultTotal || 0}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="outline" onClick={() => {
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url; a.download = 'audit-results.csv'; a.click();
+                  URL.revokeObjectURL(url);
+                }} disabled={!result?.matches?.length}>Export CSV</Button>
+                <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark needs update</Button>
+              </div>
+            </div>
+            <div className="px-5 pt-4">
+              <div className="inline-grid grid-cols-3 overflow-hidden rounded-md border border-slate-200 text-sm font-semibold">
+                <button type="button" className="bg-cyan-50 px-6 py-3 text-cyan-700">Matches</button>
+                <button type="button" className="border-l border-slate-200 px-6 py-3 text-slate-600">Coverage insights</button>
+                <button type="button" className="border-l border-slate-200 px-6 py-3 text-slate-600">Update opportunities</button>
+              </div>
+            </div>
+            <div className="space-y-3 p-5">
+              {error ? (
+                <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
+              ) : null}
+              {loading ? (
+                <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 text-center text-sm text-slate-500">
+                  <Loader2 className="h-9 w-9 animate-spin text-violet-700" />
+                  <div className="font-semibold text-slate-950">{scanModeLabel} in progress</div>
+                  <div>{scanRunningDetail}</div>
+                </div>
+              ) : !result ? (
+                <div className="flex min-h-[360px] flex-col items-center justify-center gap-5 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-md bg-violet-50 text-violet-400">
+                    <FileSearch className="h-14 w-14" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold text-slate-950">Discover what your library already covers</div>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Run an AI scan to find relevant content, topic gaps, and potential update opportunities.</p>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <span className="rounded-md border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700">Relevant matches</span>
+                    <span className="rounded-md border border-cyan-200 bg-cyan-50 px-5 py-3 text-sm font-semibold text-cyan-700">Coverage themes</span>
+                    <span className="rounded-md border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">Suggested updates</span>
+                  </div>
+                  <p className="text-sm text-slate-500">Results will appear here without leaving this page.</p>
+                </div>
+              ) : null}
+
+              {result && !loading && !error && matches.length === 0 ? (
+                <div className="rounded-md border border-slate-200 p-4 text-sm text-slate-500">No matches found for this query. Try broader wording or remove exclusions.</div>
+              ) : null}
+
+              {matches.map((m: Match) => (
+                <div key={m.id} className="space-y-2 rounded-md border border-slate-200 p-3">
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={(e)=>setSelectedIds((prev)=>{const n=new Set(prev); if(e.target.checked)n.add(m.id); else n.delete(m.id); return n;})} /> select</label>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="font-medium">{m.title}</div>
+                      <div className="text-xs text-muted-foreground">{m.externalId ? `External Article ID: ${m.externalId}` : 'External Article ID unavailable'}</div>
+                    </div>
+                    <span className={`text-xs font-medium ${publisherClass(m.publisher, m.sourceSystem)}`}>{publisherDisplay(m.publisher)}</span>
+                  </div>
+                  {m.reason ? <p className="text-sm text-foreground/90">Reason: {m.reason}</p> : null}
+                  {m.evidence ? <p className="rounded-md bg-primary/5 px-3 py-2 text-sm text-foreground/90">{m.evidence}</p> : null}
+                  <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDetails(m)}>View Details</Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className={cn('rounded-lg border border-slate-200 bg-white p-5 shadow-sm', method === 'analyze' && 'hidden')}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-950">{method === 'search' ? 'Standard Search criteria' : 'AI Scan criteria'}</h2>
           <button type="button" className="inline-flex items-center gap-2 text-sm font-medium text-blue-700">
@@ -421,11 +643,11 @@ export default function AuditPage() {
         </div>
       </section>
 
-      {error && (
+      {method === 'search' && error && (
         <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
       )}
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className={cn('rounded-lg border border-slate-200 bg-white shadow-sm', method === 'analyze' && 'hidden')}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-slate-950">Scan results</h2>
