@@ -320,6 +320,18 @@
   padding: 22px 24px 24px;
 }
 
+.echowrite-draft-empty {
+  display: flex;
+  min-height: 310px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px dashed #cfd9e5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 48px 24px;
+}
+
 @media (max-width: 1080px) {
   .echowrite-workspace {
     grid-template-columns: minmax(0, 1fr);

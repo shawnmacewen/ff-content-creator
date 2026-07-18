@@ -562,17 +562,27 @@ Separately (client-side), we:
                   </div>
                 ) : null}
               </div>
-            <EchoWriteEditor
-              value={content}
-              spans={spans}
-              onChange={setContent}
-              showMatches={showMatches}
-              hoveredSourceId={hoverSourceId}
-              onHoverSpan={(sourceId, snippet) => {
-                setHoverSourceId(sourceId);
-                setHoverSnippet(snippet);
-              }}
-            />
+            {content.trim() ? (
+              <EchoWriteEditor
+                value={content}
+                spans={spans}
+                onChange={setContent}
+                showMatches={showMatches}
+                hoveredSourceId={hoverSourceId}
+                onHoverSpan={(sourceId, snippet) => {
+                  setHoverSourceId(sourceId);
+                  setHoverSnippet(snippet);
+                }}
+              />
+            ) : (
+              <div className="echowrite-draft-empty">
+                <FileText className="h-14 w-14 text-slate-500" />
+                <h3 className="mt-5 text-lg font-semibold text-slate-950">Ready for your first draft</h3>
+                <p className="mt-3 max-w-sm text-center text-sm leading-6 text-slate-600">
+                  Describe what you need above, then generate a source-backed draft.
+                </p>
+              </div>
+            )}
           </div>
           </article>
 
