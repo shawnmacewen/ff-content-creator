@@ -15,6 +15,20 @@ import { Calendar, Check, ChevronDown, FileText, Filter, Search, Sparkles } from
 
 type Topic = 'All Topics' | 'Markets' | 'Economy' | 'Energy' | 'AI & Tech' | 'Banking' | 'Medicare' | 'Geopolitics' | 'ESG';
 
+const TOPICS: Topic[] = ['All Topics', 'Markets', 'Economy', 'AI & Tech', 'Banking', 'Medicare', 'Energy', 'Geopolitics', 'ESG'];
+
+const TOPIC_NEEDLES: Record<Topic, string[]> = {
+  'All Topics': [],
+  Markets: ['markets', 'market', 'stocks', 'equities', 'bonds', 'fixed income'],
+  Economy: ['economy', 'economic', 'inflation', 'gdp', 'jobs', 'labor'],
+  Energy: ['energy', 'oil', 'crude', 'petroleum', 'gas', 'opec'],
+  'AI & Tech': ['ai', 'tech', 'technology', 'crypto', 'digital assets', 'blockchain'],
+  Banking: ['bank', 'banking', 'credit', 'lending', 'rates'],
+  Medicare: ['medicare', 'social security', 'healthcare', 'health care'],
+  Geopolitics: ['geopolitics', 'war', 'conflict', 'sanctions', 'election'],
+  ESG: ['esg', 'sustainable', 'sustainability', 'responsible', 'impact', 'investing'],
+};
+
 interface ApiResponse {
   data: SourceContent[];
   total: number;
@@ -138,6 +152,7 @@ export function SourceArticlePicker({
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
   const [autoLoadAll, setAutoLoadAll] = React.useState(false);
+  const [showTopicFilters, setShowTopicFilters] = React.useState(true);
 
   const getPageKey = React.useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
     if (previousPageData && !previousPageData.hasNextPage) return null;
@@ -177,22 +192,23 @@ export function SourceArticlePicker({
     if (autoLoadAll && !hasNextPage && !isValidating) setAutoLoadAll(false);
   }, [autoLoadAll, hasNextPage, isValidating]);
 
-  const topics: Topic[] = ['All Topics', 'Markets', 'Economy', 'AI & Tech', 'Banking', 'Medicare', 'Energy', 'Geopolitics', 'ESG'];
+  const topicCounts = React.useMemo(() => {
+    return Object.fromEntries(
+      TOPICS.map((topicName) => {
+        const needles = topicName === 'All Topics' ? [] : (TOPIC_NEEDLES[topicName] || [topicName]).map((s) => s.toLowerCase());
+        const count = needles.length
+          ? items.filter((c) => {
+              const hay = buildSourceContentSearchText(c).toLowerCase();
+              return needles.some((needle) => hay.includes(needle));
+            }).length
+          : items.length;
+        return [topicName, count];
+      })
+    ) as Record<Topic, number>;
+  }, [items]);
 
   const filtered = React.useMemo(() => {
-    const topicNeedles: Record<Topic, string[]> = {
-      'All Topics': [],
-      Markets: ['markets', 'market', 'stocks', 'equities', 'bonds', 'fixed income'],
-      Economy: ['economy', 'economic', 'inflation', 'gdp', 'jobs', 'labor'],
-      Energy: ['energy', 'oil', 'crude', 'petroleum', 'gas', 'opec'],
-      'AI & Tech': ['ai', 'tech', 'technology', 'crypto', 'digital assets', 'blockchain'],
-      Banking: ['bank', 'banking', 'credit', 'lending', 'rates'],
-      Medicare: ['medicare', 'social security', 'healthcare', 'health care'],
-      Geopolitics: ['geopolitics', 'war', 'conflict', 'sanctions', 'election'],
-      ESG: ['esg', 'sustainable', 'sustainability', 'responsible', 'impact', 'investing'],
-    };
-
-    const needles = topic === 'All Topics' ? [] : (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
+    const needles = topic === 'All Topics' ? [] : (TOPIC_NEEDLES[topic] || [topic]).map((s) => s.toLowerCase());
     const q = query.trim();
 
     return items.filter((c) => {
@@ -293,19 +309,7 @@ export function SourceArticlePicker({
           </div>
         )}
 
-        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'gap-1.5')}>
-          <div className="relative flex-1">
-            <Search className={cn('absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400', splitView && 'left-3 h-3.5 w-3.5')} />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search title, topic, keyword, or tag..."
-              className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-9 rounded-lg pl-8 text-xs')}
-            />
-          </div>
-        </div>
-
-        <div className={cn('flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between', splitView && 'gap-1.5')}>
+        <div className={cn('flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between', splitView && 'gap-2')}>
           <div className="flex flex-wrap items-center gap-1.5">
             {splitView ? (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
@@ -317,25 +321,75 @@ export function SourceArticlePicker({
               <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
               {isLoading
                 ? 'Loading sources'
-                : query.trim()
+                  : query.trim()
                   ? `${filtered.length.toLocaleString()} search results`
                   : `${filtered.length.toLocaleString()} shown`}
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
+            {splitView && hasNextPage ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-lg border-slate-200 bg-white/80 px-2.5 text-xs shadow-sm"
+                  disabled={isLoadingMore}
+                  onClick={() => void setSize(size + 1)}
+                >
+                  {isLoadingMore ? 'Loading...' : `Load ${SOURCE_ARTICLE_PAGE_SIZE} more`}
+                </Button>
+                <Button
+                  type="button"
+                  variant={autoLoadAll ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 rounded-lg px-2.5 text-xs shadow-sm"
+                  disabled={isLoadingMore && !autoLoadAll}
+                  onClick={() => setAutoLoadAll((value) => !value)}
+                >
+                  {autoLoadAll ? 'Stop full load' : 'Load full library'}
+                </Button>
+              </>
+            ) : splitView && loadedCount ? (
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700">All loaded</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={cn('flex flex-col gap-3 xl:flex-row xl:items-center', splitView && 'gap-2')}>
+          <div className="relative flex-1">
+            <Search className={cn('absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400', splitView && 'left-3 h-3.5 w-3.5')} />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search title, topic, keyword, or tag..."
+              className={cn('h-12 rounded-2xl border-slate-200 bg-white/82 pl-11 text-sm shadow-sm placeholder:text-slate-400 focus-visible:ring-cyan-200', splitView && 'h-9 rounded-lg pl-8 text-xs')}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center lg:justify-end">
-            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-8 rounded-lg px-2.5 text-xs')}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowTopicFilters((value) => !value)}
+              className={cn(
+                'h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm',
+                splitView && 'h-9 rounded-lg px-3 text-xs',
+                showTopicFilters && 'border-blue-200 bg-blue-50 text-blue-700'
+              )}
+            >
               <Filter className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
               Filter
             </Button>
-            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-8 rounded-lg px-2.5 text-xs')}>
+            <Button type="button" variant="outline" className={cn('h-12 justify-center gap-2 rounded-2xl border-slate-200 bg-white/78 px-4 text-slate-700 shadow-sm', splitView && 'h-9 rounded-lg px-3 text-xs')}>
               Newest First
               <ChevronDown className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
             </Button>
           </div>
         </div>
 
+        {showTopicFilters ? (
         <div className={cn('flex gap-2 overflow-x-auto pb-1', splitView && 'flex-wrap gap-1 overflow-visible pb-0')}>
-          {topics.map((t) => {
+          {TOPICS.map((t) => {
             const active = t === topic;
             return (
               <button
@@ -350,11 +404,15 @@ export function SourceArticlePicker({
                     : 'border-slate-200 bg-white/78 text-slate-500 hover:border-cyan-200 hover:text-slate-900'
                 )}
               >
-                {t}
+                <span>{t}</span>
+                <span className={cn('ml-1 rounded-full px-1.5 py-0.5 text-[10px]', active ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-500')}>
+                  {topicCounts[t] || 0}
+                </span>
               </button>
             );
           })}
         </div>
+        ) : null}
       </CardHeader>
 
       <CardContent className={cn('px-5 pb-5 sm:px-6', splitView && 'flex min-h-0 flex-1 flex-col px-3 pb-2.5 sm:px-3')}>
@@ -470,7 +528,7 @@ export function SourceArticlePicker({
                   Clear selection
                 </button>
               ) : null}
-              {hasNextPage ? (
+              {hasNextPage && !splitView ? (
                 <>
                   <Button
                     type="button"
@@ -493,7 +551,7 @@ export function SourceArticlePicker({
                     {autoLoadAll ? 'Stop full load' : 'Load full library'}
                   </Button>
                 </>
-              ) : loadedCount ? (
+              ) : loadedCount && !splitView ? (
                 <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">All loaded</span>
               ) : null}
             </div>
