@@ -6,6 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
 import { getCanonicalBody } from '@/lib/source-content/body';
+import { normalizeContentSignals, summarizeSignalsForPrompt } from '@/lib/source-content/signals';
 
 function assessCompliance(text: string) {
   const checks = [
@@ -122,7 +123,7 @@ export async function POST(req: Request) {
   if (sourceContentIds?.length) {
     const { data, error } = await supabase
       .from('source_content')
-      .select('id,title,author,body_text,body')
+      .select('id,title,author,body_text,body,metadata')
       .in('id', sourceContentIds);
 
     if (error) {
@@ -130,7 +131,16 @@ export async function POST(req: Request) {
     }
 
     if (data?.length) {
-      sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${getCanonicalBody(c)}`).join('\n\n---\n\n');
+      sourceText = data.map((c) => {
+        const metadata = (c as any).metadata && typeof (c as any).metadata === 'object' ? (c as any).metadata : {};
+        const signalContext = summarizeSignalsForPrompt(normalizeContentSignals(metadata.contentSignals));
+        return [
+          `Title: ${c.title}`,
+          `Author: ${c.author || 'Unknown'}`,
+          signalContext,
+          getCanonicalBody(c),
+        ].filter(Boolean).join('\n');
+      }).join('\n\n---\n\n');
     }
   }
 

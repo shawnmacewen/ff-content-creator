@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
 import { cn } from '@/lib/utils';
+import type { SourceContentSignal } from '@/lib/types/content';
 
 function decodeEntities(input: string): string {
   const raw = String(input || '');
@@ -132,6 +133,38 @@ function formatDate(value: unknown) {
   }
 }
 
+function normalizeSignals(value: unknown): SourceContentSignal[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item: any) => ({
+      id: String(item?.id || `${item?.type || 'signal'}-${item?.label || ''}`),
+      type: item?.type,
+      label: decodeEntities(String(item?.label || '')).trim(),
+      reason: decodeEntities(String(item?.reason || '')).trim(),
+      evidence: decodeEntities(String(item?.evidence || '')).trim(),
+      confidence: Number(item?.confidence || 0),
+      source: item?.source,
+    }))
+    .filter((item) => item.label && item.reason && item.evidence)
+    .slice(0, 12) as SourceContentSignal[];
+}
+
+function signalTypeLabel(type: string) {
+  if (type === 'content_opportunity') return 'Opportunity';
+  if (type === 'generation_guidance') return 'Guidance';
+  if (type === 'source_quality') return 'Source quality';
+  if (type === 'timeliness') return 'Timing';
+  return 'Topic';
+}
+
+function signalTypeClass(type: string) {
+  if (type === 'content_opportunity') return 'border-blue-200 bg-blue-50 text-blue-800';
+  if (type === 'generation_guidance') return 'border-cyan-200 bg-cyan-50 text-cyan-800';
+  if (type === 'source_quality') return 'border-slate-200 bg-slate-50 text-slate-700';
+  if (type === 'timeliness') return 'border-amber-200 bg-amber-50 text-amber-800';
+  return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+}
+
 export function SelectedArticlePreview({
   selectedSource,
   detailContent,
@@ -197,25 +230,24 @@ export function SelectedArticlePreview({
   const recommendedAudience = decodeEntities(String(detailContent?.recommendedAudience || article.recommendedAudience || '')).trim();
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
+  const contentSignals = normalizeSignals(detailContent?.contentSignals || article.contentSignals);
+  const previewSignals = [
+    ...contentSignals.filter((signal) => signal.type === 'content_opportunity'),
+    ...contentSignals.filter((signal) => signal.type === 'generation_guidance'),
+    ...contentSignals.filter((signal) => signal.type === 'timeliness'),
+    ...contentSignals.filter((signal) => signal.type === 'topic'),
+    ...contentSignals.filter((signal) => signal.type === 'source_quality'),
+  ].slice(0, 4);
   const summary = decodeEntities(String(article.excerpt || paragraphs[0] || 'This selected article will ground the generated campaign.'));
   const readerParagraphs = cleanText(bodyPreview || String(article?.bodyText || article?.body || ''))
     .split(/\n\n+/)
     .map((paragraph) => paragraph.trim())
     .filter((paragraph) => paragraph.length > 20);
-  const focusLabels = [
-    tags[0],
-    tags[1],
-    recommendedAudience,
-    takeaways[0]?.split(/\s+/).slice(0, 4).join(' '),
-    designation,
-  ]
+  const fallbackFocusLabels = [tags[0], tags[1], recommendedAudience, designation]
     .map((item) => decodeEntities(String(item || '')).trim())
     .filter(Boolean)
     .filter((item, index, array) => array.findIndex((candidate) => candidate.toLowerCase() === item.toLowerCase()) === index)
     .slice(0, 3);
-  while (focusLabels.length < 3) {
-    focusLabels.push(['Campaign angle', 'Audience fit', 'Planning cue'][focusLabels.length]);
-  }
 
   if (campaignCompact) {
     if (campaignLayout === 'reader') {
@@ -346,9 +378,23 @@ export function SelectedArticlePreview({
                 <p className="line-clamp-3 text-sm leading-6 text-slate-700">{summary}</p>
               </div>
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-slate-950">Content focus</h4>
+                <h4 className="text-sm font-semibold text-slate-950">Explainable signals</h4>
                 <div className="space-y-2">
-                  {focusLabels.map((label, index) => {
+                  {previewSignals.length ? previewSignals.map((signal, index) => {
+                    const Icon = index === 0 ? TrendingUp : index === 1 ? Target : Sparkles;
+                    return (
+                      <div key={`${signal.id}-${index}`} className={cn('space-y-1 rounded-md border px-3 py-2 text-xs', signalTypeClass(signal.type))}>
+                        <div className="flex items-center gap-2 font-semibold">
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="min-w-0 flex-1 truncate">{signal.label}</span>
+                        </div>
+                        <p className="line-clamp-2 leading-4 text-current/85">{signal.reason}</p>
+                        <p className="line-clamp-1 text-[10px] font-medium uppercase tracking-wide text-current/60">
+                          {signalTypeLabel(signal.type)} - {signal.evidence}
+                        </p>
+                      </div>
+                    );
+                  }) : fallbackFocusLabels.map((label, index) => {
                     const Icon = index === 0 ? TrendingUp : index === 1 ? Target : Sparkles;
                     return (
                       <div key={`${label}-${index}`} className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
@@ -531,7 +577,7 @@ export function SelectedArticlePreview({
               {formatDate(publishedAt)}
             </span>
             {filename ? <span className="max-w-[280px] truncate text-slate-700">{String(filename)}</span> : null}
-            {tags.length ? <span className="text-slate-700">{tags.length} content signals</span> : null}
+            {contentSignals.length ? <span className="text-slate-700">{contentSignals.length} explainable signals</span> : null}
           </div>
         </div>
       </div>

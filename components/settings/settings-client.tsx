@@ -224,6 +224,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
   const [runningBatched, setRunningBatched] = useState(false);
   const [runningSyncUpdate, setRunningSyncUpdate] = useState(false);
   const [runningTakeaways, setRunningTakeaways] = useState(false);
+  const [runningSignals, setRunningSignals] = useState(false);
   const [refreshingStats, setRefreshingStats] = useState(false);
   const [runResult, setRunResult] = useState<any>(null);
 
@@ -484,6 +485,70 @@ export default function SettingsClient({ section }: { section: SettingsSection }
     }
   };
 
+  const generateExplainableSignals = async () => {
+    setRunningSignals(true);
+    setRunResult(null);
+    try {
+      const batchSize = 20;
+      const maxItems = 5000;
+      const maxBatches = Math.ceil(maxItems / batchSize);
+      const batches: any[] = [];
+      let cursor: string | null = null;
+
+      for (let i = 0; i < maxBatches; i += 1) {
+        const response: Response = await fetch('/api/source-content/signals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batchSize, cursor, overwrite: false }),
+        });
+        const json: {
+          ok?: boolean;
+          error?: string;
+          scanned?: number;
+          updated?: number;
+          failed?: number;
+          hasMore?: boolean;
+          nextCursor?: string | null;
+        } = await response.json();
+        if (!response.ok || !json?.ok) {
+          throw new Error(json?.error || 'Signal generation failed');
+        }
+
+        batches.push({ batch: i + 1, ...json });
+        cursor = json.nextCursor || cursor;
+
+        if (!json.hasMore || Number(json.scanned || 0) === 0) {
+          break;
+        }
+      }
+
+      const result = {
+        ok: true,
+        mode: 'explainable-signals-batched',
+        batchSize,
+        maxItems,
+        batchesRun: batches.length,
+        totals: {
+          scanned: batches.reduce((sum, batch) => sum + Number(batch.scanned || 0), 0),
+          updated: batches.reduce((sum, batch) => sum + Number(batch.updated || 0), 0),
+          failed: batches.reduce((sum, batch) => sum + Number(batch.failed || 0), 0),
+        },
+        finalCursor: cursor,
+        completed: !batches.length || !batches[batches.length - 1]?.hasMore,
+        batches,
+      };
+
+      setRunResult(result);
+      toast.success(
+        `Signals complete: ${Number(result.totals.updated || 0).toLocaleString()} updated across ${result.batchesRun} batch(es).`
+      );
+    } catch (error: any) {
+      toast.error(error?.message || 'Signal generation failed');
+    } finally {
+      setRunningSignals(false);
+    }
+  };
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -513,7 +578,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSync}
-                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}
                 title="This button will sync the first 500 pieces of Broadridge Advisor Content pieces from the Broadridge Content API to seed this database. These 500 pieces are not in a specific order. For more advanced API calls use the Content API Explorer."
               >
                 <Database className={`h-4 w-4 mr-2 ${running ? 'animate-pulse' : ''}`} />
@@ -523,7 +588,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSyncBatched}
-                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}
                 title="Runs multiple 250-item sync batches in sequence using startPage offsets (target up to ~5000 items). Stops on repeat-page or zero-processed response."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningBatched ? 'animate-pulse' : ''}`} />
@@ -532,13 +597,13 @@ export default function SettingsClient({ section }: { section: SettingsSection }
               <Button
                 variant="outline"
                 onClick={runSyncAndUpdate}
-                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
+                disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}
                 title="Runs a batched update over existing Broadridge source records, fetching article detail data again and saving richer HTML/XML body fields for View Detail rendering."
               >
                 <Database className={`h-4 w-4 mr-2 ${runningSyncUpdate ? 'animate-pulse' : ''}`} />
                 {runningSyncUpdate ? 'Running Sync and Update...' : 'Sync and Update'}
               </Button>
-              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}>
+              <Button variant="secondary" onClick={() => mutate()} disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}>
                 <RefreshCw className="h-4 w-4" />
                 Refresh Logs
               </Button>
@@ -559,11 +624,30 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             <Button
               variant="outline"
               onClick={generateTakeawaysAndAudience}
-              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways}
+              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}
               title="Generates two or three article-specific key takeaways and one recommended audience phrase for source content with at least 100 body words. Runs in 25-item batches until the source library is complete or the safety cap is reached. Existing metadata is skipped."
             >
               <BookOpenCheck className={`h-4 w-4 mr-2 ${runningTakeaways ? 'animate-pulse' : ''}`} />
               {runningTakeaways ? 'Generating Takeaways...' : 'Generate Takeaways + Audience'}
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase text-primary">Explainable Signals</p>
+              <h2 className="text-lg font-semibold">Generate Source Signals</h2>
+              <p className="text-sm text-muted-foreground">
+                Build source-backed topic, timeliness, content opportunity, source quality, and generation guidance signals. Each signal stores a reason and evidence so users can see why it appears.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={generateExplainableSignals}
+              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals}
+              title="Generates explainable source signals in 20-item batches. Existing signals are skipped. Planning-angle signals are intentionally excluded until we have better client preference data."
+            >
+              <Flag className={`h-4 w-4 mr-2 ${runningSignals ? 'animate-pulse' : ''}`} />
+              {runningSignals ? 'Generating Signals...' : 'Generate Explainable Signals'}
             </Button>
           </div>
 
@@ -578,7 +662,7 @@ export default function SettingsClient({ section }: { section: SettingsSection }
             <Button
               variant="outline"
               onClick={refreshSourceStats}
-              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || refreshingStats}
+              disabled={running || runningBatched || runningSyncUpdate || runningTakeaways || runningSignals || refreshingStats}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshingStats ? 'animate-spin' : ''}`} />
               {refreshingStats ? 'Refreshing Source Stats...' : 'Refresh Source Stats'}

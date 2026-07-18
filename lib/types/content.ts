@@ -21,6 +21,23 @@ export type ToneType =
   | 'authoritative'
   | 'conversational';
 
+export type SourceContentSignalType =
+  | 'topic'
+  | 'timeliness'
+  | 'content_opportunity'
+  | 'source_quality'
+  | 'generation_guidance';
+
+export interface SourceContentSignal {
+  id: string;
+  type: SourceContentSignalType;
+  label: string;
+  reason: string;
+  evidence: string;
+  confidence: number;
+  source: 'metadata_rule' | 'content_rule' | 'ai_classification';
+}
+
 // Source content from external API
 export interface SourceContent {
   id: string;
@@ -34,6 +51,7 @@ export interface SourceContent {
   tags: string[];
   keyTakeaways?: string[];
   recommendedAudience?: string | null;
+  contentSignals?: SourceContentSignal[];
   publishedAt: string;
   author: string;
   url?: string;

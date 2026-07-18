@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
 import { decodeHtmlEntities, getCanonicalBody } from '@/lib/source-content/body';
 import { emptySourceContentSummary, normalizeCachedSummary } from '@/lib/source-content/stats';
+import { normalizeContentSignals } from '@/lib/source-content/signals';
 
 function parseIntentTokens(query: string) {
   const cleaned = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
@@ -89,6 +90,7 @@ function getSearchableSummary(row: any) {
     row.excerpt,
     Array.isArray(row.key_takeaways) ? row.key_takeaways.join(' ') : '',
     row.recommended_audience,
+    Array.isArray(metadata.contentSignals) ? metadata.contentSignals.map((signal: any) => [signal?.label, signal?.reason, signal?.evidence].filter(Boolean).join(' ')).join(' ') : '',
     Array.isArray(row.tags) ? row.tags.join(' ') : '',
     Array.isArray(row.categories) ? row.categories.join(' ') : '',
     Array.isArray(row.sub_categories) ? row.sub_categories.join(' ') : '',
@@ -111,6 +113,7 @@ function mapSourceContentRow(row: any) {
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     keyTakeaways: Array.isArray(row.key_takeaways) ? row.key_takeaways.map((item: string) => decodeHtmlEntities(String(item))).filter(Boolean) : [],
     recommendedAudience: row.recommended_audience ? decodeHtmlEntities(String(row.recommended_audience)) : null,
+    contentSignals: normalizeContentSignals(metadata.contentSignals),
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),
     url: metadata.url || null,

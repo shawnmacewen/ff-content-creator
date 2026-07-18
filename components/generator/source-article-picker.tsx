@@ -372,6 +372,7 @@ export function SourceArticlePicker({
                 const words = c.body ? c.body.split(/\s+/).filter(Boolean).length : 0;
                 const primaryLabel = c.tags?.[0] || c.type || 'Editorial Source';
                 const filename = getFilename(c);
+                const signalCount = Array.isArray(c.contentSignals) ? c.contentSignals.length : 0;
 
                 return (
                   <button
@@ -439,7 +440,7 @@ export function SourceArticlePicker({
                         </span>
                         {filename ? <span className={cn('max-w-[180px] truncate text-slate-400', splitView && 'max-w-[160px]')}>{decodeLite(filename)}</span> : null}
                         {!splitView && words ? <span>{words.toLocaleString()} words</span> : null}
-                        {(c.tags || []).length > 1 ? <span>{(c.tags || []).length} signals</span> : null}
+                        {signalCount ? <span>{signalCount} signals</span> : (c.tags || []).length > 1 ? <span>{(c.tags || []).length} tags</span> : null}
                       </div>
                     </div>
                   </button>
