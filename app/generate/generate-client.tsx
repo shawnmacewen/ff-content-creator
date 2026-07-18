@@ -259,7 +259,6 @@ export default function GeneratePage() {
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
   const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
-  const [kitInfographicStatus, setKitInfographicStatus] = useState<string | null>(null);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
   // Carousel 2.0 settings (KIT multipost)
@@ -404,7 +403,6 @@ export default function GeneratePage() {
     setIsGeneratingKit(true);
     setKitOutputs(null);
     setKitCarouselProgress(null);
-    setKitInfographicStatus(null);
 
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
@@ -453,11 +451,9 @@ export default function GeneratePage() {
       if (shouldGenerateInfographic) {
         const infographicCopy = outputs?.find((output: { type: ContentType; content: string }) => output.type === 'infographic-copy')?.content || '';
         if (!infographicCopy.trim()) {
-          setKitInfographicStatus('Infographic Copy is required before image generation.');
           toast.error('Infographic Copy was not generated, so the infographic image could not run.');
         } else {
           setIsGeneratingKitInfographic(true);
-          setKitInfographicStatus('Generating website infographic image...');
 
           void fetch('/api/generate/infographic', {
             method: 'POST',
@@ -491,7 +487,6 @@ export default function GeneratePage() {
                   },
                 ];
               });
-              setKitInfographicStatus('Website infographic image generated');
               toast.success('Infographic image generated');
             })
             .catch((err) => {
@@ -507,7 +502,6 @@ export default function GeneratePage() {
                   },
                 ];
               });
-              setKitInfographicStatus('Infographic image generation failed');
               toast.error('Infographic image generation failed');
             })
             .finally(() => {
@@ -1234,15 +1228,6 @@ export default function GeneratePage() {
                 </button>
               </div>
             </div>
-
-            {kitInfographicStatus ? (
-              <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
-                <div className="flex flex-wrap items-center gap-2">
-                  {isGeneratingKitInfographic ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
-                  <span>{kitInfographicStatus}</span>
-                </div>
-              </div>
-            ) : null}
 
             {/* Keep all mounted; switching tabs must not clear */}
             <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>

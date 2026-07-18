@@ -371,11 +371,10 @@ function DocumentPreview({ content, type, label }: { content: string; type: Cont
 
 function InfographicPreview({ content }: { content: string }) {
   const imageSrc = getInlineImageSrc(content);
-  const text = cleanGeneratedText(content).replace(/^Based on Infographic Copy:\s*/i, '').trim();
   const failed = /Image generation status:\s*failed/i.test(content);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
+    <div className="mx-auto w-full max-w-5xl">
       <div className="overflow-hidden rounded-2xl border bg-white text-slate-950 shadow-sm">
         <div className="flex items-center justify-between gap-3 border-b bg-slate-50 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -393,19 +392,12 @@ function InfographicPreview({ content }: { content: string }) {
               <img src={imageSrc} alt="Generated website infographic" className="h-full w-full object-contain" />
             ) : (
               <div className="flex h-full items-center justify-center p-8 text-center text-sm text-slate-500">
-                {failed ? 'Infographic image generation failed. The copy is still available below.' : 'Generated infographic image will appear here.'}
+                {failed ? 'Infographic image generation failed. The Infographic Copy output is still available in its own tab.' : 'Generated infographic image will appear here.'}
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {text ? (
-        <div className="rounded-2xl border bg-background p-4">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Infographic Copy Source</div>
-          <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{text}</div>
-        </div>
-      ) : null}
     </div>
   );
 }
