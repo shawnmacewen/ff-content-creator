@@ -515,7 +515,7 @@ export default function AuditPage() {
               <span>Use quotation marks for exact phrases. Exclude terms to remove unwanted matches.</span>
             </div>
 
-            <div className="grid gap-5">
+            <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-950">Include terms</label>
                 <p className="text-xs text-slate-500">Words or exact phrases the content must contain</p>
@@ -531,10 +531,6 @@ export default function AuditPage() {
                       <X className="h-4 w-4" />
                     </button>
                   ) : null}
-                  <span className="inline-flex shrink-0 items-center gap-2 px-2 text-sm font-semibold text-blue-700">
-                    <span className="text-lg leading-none">+</span>
-                    Add term
-                  </span>
                 </div>
               </div>
 
@@ -553,10 +549,6 @@ export default function AuditPage() {
                       <X className="h-4 w-4" />
                     </button>
                   ) : null}
-                  <span className="inline-flex shrink-0 items-center gap-2 px-2 text-sm font-semibold text-blue-700">
-                    <span className="text-lg leading-none">+</span>
-                    Add exclusion
-                  </span>
                 </div>
               </div>
             </div>
