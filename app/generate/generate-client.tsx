@@ -975,8 +975,8 @@ export default function GeneratePage() {
                   className="justify-self-start gap-2 rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
                 >
-                  {activeWorkflowStep === 1 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
-                  {activeWorkflowStep === 1 ? 'Save outputs' : 'Edit'}
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {activeWorkflowStep === 1 ? 'Save' : 'Edit'}
                 </Button>
               </div>
               <WorkflowStepBody open={activeWorkflowStep === 1} maxHeightClass="max-h-[1900px]">
@@ -1179,8 +1179,8 @@ export default function GeneratePage() {
                   className="justify-self-start gap-2 rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
                 >
-                  {activeWorkflowStep === 2 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
-                  {activeWorkflowStep === 2 ? 'Save guidance' : 'Edit'}
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {activeWorkflowStep === 2 ? 'Save' : 'Edit'}
                 </Button>
               </div>
               <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[720px]">
@@ -1190,18 +1190,26 @@ export default function GeneratePage() {
                       <div className="text-sm font-semibold text-slate-950">Tone</div>
                       <p className="mt-1 text-xs leading-5 text-slate-500">Choose the voice for the campaign copy.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                       {(['professional', 'casual', 'friendly', 'authoritative', 'conversational', 'urgent'] as ToneType[]).map((option) => (
                         <button
                           key={option}
                           type="button"
                           onClick={() => setTone(option)}
                           className={cn(
-                            'h-10 rounded-md border px-4 text-sm font-medium transition-colors',
-                            tone === option ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                            'relative min-h-16 rounded-md border bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50/50',
+                            tone === option ? 'border-cyan-400 bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200' : 'border-slate-200'
                           )}
                         >
-                          {toneLabel(option)}
+                          {tone === option ? (
+                            <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-600 text-white">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </span>
+                          ) : null}
+                          <span className="block pr-6">{toneLabel(option)}</span>
+                          {tone === option ? (
+                            <span className="mt-1 block max-w-[170px] text-xs font-medium leading-5 text-cyan-700">{toneDescription(option)}</span>
+                          ) : null}
                         </button>
                       ))}
                     </div>
@@ -1292,8 +1300,8 @@ export default function GeneratePage() {
                 className="justify-self-start gap-2 rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
                 onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
               >
-                {activeWorkflowStep === 3 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
-                {activeWorkflowStep === 3 ? 'Save source' : 'Edit'}
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeWorkflowStep === 3 ? 'Save' : 'Edit'}
               </Button>
             </div>
             <WorkflowStepBody open={activeWorkflowStep === 3} maxHeightClass="max-h-[1050px]">
