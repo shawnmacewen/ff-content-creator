@@ -21,7 +21,6 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
   CheckCircle2,
-  Edit3,
   FileText,
   Grid2X2,
   Instagram,
@@ -29,6 +28,7 @@ import {
   Loader2,
   Mail,
   Save,
+  SlidersHorizontal,
   Sparkles,
   User,
 } from 'lucide-react';
@@ -39,7 +39,7 @@ import InstagramCarousel2Client, {
   type InstagramCarouselProgress,
   type InstagramCarouselVisualStyle,
 } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -959,12 +959,12 @@ export default function GeneratePage() {
                 </div>
                 <Button
                   type="button"
-                  variant={activeWorkflowStep === 1 ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="justify-self-start gap-2 rounded-md lg:justify-self-end"
+                  className="justify-self-start gap-2 rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
                 >
-                  {activeWorkflowStep === 1 ? <CheckCircle2 className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                  {activeWorkflowStep === 1 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
                   {activeWorkflowStep === 1 ? 'Save outputs' : 'Edit'}
                 </Button>
               </div>
@@ -1007,12 +1007,20 @@ export default function GeneratePage() {
                   />
             
                   {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                <Card className="mt-6 rounded-lg border-border shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-base">Instagram Carousel</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <Card className="mt-6 overflow-hidden rounded-lg border-violet-200 bg-violet-50/35 shadow-sm">
+                  <CardContent className="space-y-4 p-4">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)] lg:items-center">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                          <Instagram className="h-6 w-6" />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Contextual settings</div>
+                          <h3 className="mt-1 text-base font-semibold text-slate-950">Instagram carousel</h3>
+                          <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">These controls appear only while Instagram carousel is selected.</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                       <label className="text-sm">
                         <div className="text-xs text-muted-foreground mb-1">Slides</div>
                         <select
@@ -1058,6 +1066,7 @@ export default function GeneratePage() {
                         >
                           <ScrollText className="h-4 w-4" />
                         </Button>
+                      </div>
                       </div>
                     </div>
 
@@ -1158,12 +1167,12 @@ export default function GeneratePage() {
                 </div>
                 <Button
                   type="button"
-                  variant={activeWorkflowStep === 2 ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
-                  className="justify-self-start gap-2 rounded-md lg:justify-self-end"
+                  className="justify-self-start gap-2 rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
                 >
-                  {activeWorkflowStep === 2 ? <CheckCircle2 className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                  {activeWorkflowStep === 2 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
                   {activeWorkflowStep === 2 ? 'Save guidance' : 'Edit'}
                 </Button>
               </div>
@@ -1257,12 +1266,12 @@ export default function GeneratePage() {
               </div>
               <Button
                 type="button"
-                variant={activeWorkflowStep === 3 ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
-                className="justify-self-start gap-2 rounded-md lg:justify-self-end"
+                className="justify-self-start gap-2 rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
                 onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
               >
-                {activeWorkflowStep === 3 ? <CheckCircle2 className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                {activeWorkflowStep === 3 ? <CheckCircle2 className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
                 {activeWorkflowStep === 3 ? 'Save source' : 'Edit'}
               </Button>
             </div>

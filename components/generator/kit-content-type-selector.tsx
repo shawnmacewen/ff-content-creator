@@ -5,6 +5,7 @@ import type { ContentType } from '@/lib/types/content';
 import { getContentTypesByCategory } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
 import {
+  Check,
   Twitter,
   Linkedin,
   Instagram,
@@ -60,20 +61,14 @@ export function KitContentTypeSelector({
   const categories = ['social', 'email', 'long-form'] as const;
 
   return (
-    <div className="space-y-5">
+    <div className="rounded-lg border border-violet-100 bg-white/80 p-4 shadow-sm">
+      <div className="grid gap-6 xl:grid-cols-3">
       {categories.map((category) => {
         const types = getContentTypesByCategory(category);
         return (
           <div key={category} className="space-y-2">
-            <div className="text-sm font-medium text-muted-foreground">{categoryLabels[category]}</div>
-            {category === 'social' ? (
-              <p className="text-xs text-muted-foreground">
-                Image generation is available for Instagram single posts and multi-post carousels. LinkedIn and X generate copy-only posts for now.
-              </p>
-            ) : null}
-            <div className={cn(
-              category === 'social' ? 'grid gap-2' : 'flex flex-wrap gap-2'
-            )}>
+            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-600">{categoryLabels[category]}</div>
+            <div className="grid gap-2">
               {types.map((ct) => {
                 const Icon = iconMap[ct.icon] || FileText;
                 const isSelected = selected.includes(ct.id);
@@ -90,7 +85,7 @@ export function KitContentTypeSelector({
                   const carouselSelected = isSelected && instagramVariant === 'carousel';
 
                   return (
-                    <div key={ct.id} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div key={ct.id} className="grid grid-cols-1 gap-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -98,19 +93,22 @@ export function KitContentTypeSelector({
                           if (carouselSelected || !isSelected) onToggle('social-instagram');
                         }}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          carouselSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+                          'flex min-h-10 w-full items-center gap-3 rounded-md border bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50/60',
+                          carouselSelected && 'border-violet-400 bg-violet-50 ring-1 ring-violet-200'
                         )}
                       >
+                        <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border', carouselSelected ? 'border-violet-500 bg-violet-600 text-white' : 'border-slate-300 bg-white text-transparent')}>
+                          <Check className="h-3 w-3" />
+                        </span>
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-md',
-                            carouselSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-7 w-7 items-center justify-center rounded-md',
+                            carouselSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'
                           )}
                         >
                           <Instagram className="h-4 w-4" />
                         </span>
-                        <span>Instagram (Multi-Post)</span>
+                        <span className="min-w-0 flex-1 truncate">Instagram carousel</span>
                         <span
                           role="button"
                           tabIndex={0}
@@ -126,13 +124,13 @@ export function KitContentTypeSelector({
                             }
                           }}
                           className={cn(
-                            'ml-1 select-none rounded-full border px-2 py-0.5 text-[11px] transition-colors',
+                            'ml-auto select-none rounded-md border px-2 py-0.5 text-[11px] transition-colors',
                             includeInstagramCarouselImages
-                              ? 'border-primary/40 bg-primary/10 text-primary dark:text-primary'
+                              ? 'border-violet-300 bg-violet-100 text-violet-700'
                               : 'border-border text-muted-foreground hover:bg-muted'
                           )}
                         >
-                          {includeInstagramCarouselImages ? 'Images: On' : 'Images: Off'}
+                          {includeInstagramCarouselImages ? 'Images on' : 'Images off'}
                         </span>
                       </button>
 
@@ -143,19 +141,22 @@ export function KitContentTypeSelector({
                           if (singleSelected || !isSelected) onToggle('social-instagram');
                         }}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          singleSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+                          'flex min-h-10 w-full items-center gap-3 rounded-md border bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50/60',
+                          singleSelected && 'border-violet-400 bg-violet-50 ring-1 ring-violet-200'
                         )}
                       >
+                        <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border', singleSelected ? 'border-violet-500 bg-violet-600 text-white' : 'border-slate-300 bg-white text-transparent')}>
+                          <Check className="h-3 w-3" />
+                        </span>
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-md',
-                            singleSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-7 w-7 items-center justify-center rounded-md',
+                            singleSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'
                           )}
                         >
                           <Instagram className="h-4 w-4" />
                         </span>
-                        <span>Instagram (Single Post)</span>
+                        <span className="min-w-0 flex-1 truncate">Instagram single post</span>
                         <span
                           role="button"
                           tabIndex={0}
@@ -171,13 +172,13 @@ export function KitContentTypeSelector({
                             }
                           }}
                           className={cn(
-                            'ml-1 select-none rounded-full border px-2 py-0.5 text-[11px] transition-colors',
+                            'ml-auto select-none rounded-md border px-2 py-0.5 text-[11px] transition-colors',
                             includeInstagramSingleImages
-                              ? 'border-primary/40 bg-primary/10 text-primary dark:text-primary'
+                              ? 'border-violet-300 bg-violet-100 text-violet-700'
                               : 'border-border text-muted-foreground hover:bg-muted'
                           )}
                         >
-                          {includeInstagramSingleImages ? 'Images: On' : 'Images: Off'}
+                          {includeInstagramSingleImages ? 'Images on' : 'Images off'}
                         </span>
                       </button>
                     </div>
@@ -190,19 +191,22 @@ export function KitContentTypeSelector({
                     type="button"
                     onClick={() => onToggle(ct.id)}
                     className={cn(
-                      'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                      isSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+                      'flex min-h-10 w-full items-center gap-3 rounded-md border bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50/60',
+                      isSelected && 'border-violet-400 bg-violet-50 ring-1 ring-violet-200'
                     )}
                   >
+                    <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border', isSelected ? 'border-violet-500 bg-violet-600 text-white' : 'border-slate-300 bg-white text-transparent')}>
+                      <Check className="h-3 w-3" />
+                    </span>
                     <span
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-md',
-                        isSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                        'flex h-7 w-7 items-center justify-center rounded-md',
+                        isSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'
                       )}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span>{ct.label}</span>
+                    <span className="min-w-0 flex-1 truncate">{ct.label}</span>
                     {ct.id === 'infographic' ? (
                       <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
                         New
@@ -218,7 +222,7 @@ export function KitContentTypeSelector({
               })}
 
               {category === 'social' ? (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2">
                   {['social-linkedin', 'social-twitter'].map((id) => {
                     const ct = types.find((t) => t.id === id);
                     if (!ct) return null;
@@ -230,19 +234,22 @@ export function KitContentTypeSelector({
                         type="button"
                         onClick={() => onToggle(ct.id)}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-md border bg-background/70 px-3 py-2 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-                          isSelected && 'border-primary/60 bg-primary/10 ring-1 ring-primary/20'
+                          'flex min-h-10 w-full items-center gap-3 rounded-md border bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50/60',
+                          isSelected && 'border-violet-400 bg-violet-50 ring-1 ring-violet-200'
                         )}
                       >
+                        <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border', isSelected ? 'border-violet-500 bg-violet-600 text-white' : 'border-slate-300 bg-white text-transparent')}>
+                          <Check className="h-3 w-3" />
+                        </span>
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-md',
-                            isSelected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            'flex h-7 w-7 items-center justify-center rounded-md',
+                            isSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'
                           )}
                         >
                           <Icon className="h-4 w-4" />
                         </span>
-                        <span>{ct.label}</span>
+                        <span className="min-w-0 flex-1 truncate">{ct.label}</span>
                       </button>
                     );
                   })}
@@ -252,6 +259,7 @@ export function KitContentTypeSelector({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
