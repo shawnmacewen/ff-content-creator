@@ -4,12 +4,10 @@ import * as React from 'react';
 import useSWR from 'swr';
 import {
   AlertTriangle,
-  BadgeCheck,
   Check,
   ClipboardList,
   FileText,
   Flag,
-  Info,
   Languages,
   Leaf,
   Loader2,
@@ -355,52 +353,81 @@ export default function CanadianizerClient() {
     }
   };
 
+  const highConfidenceCount = result?.equivalentMap.filter((item) => item.confidence === 'high').length ?? 0;
+  const mediumConfidenceCount = result?.equivalentMap.filter((item) => item.confidence === 'medium').length ?? 0;
+  const lowConfidenceCount = result?.equivalentMap.filter((item) => item.confidence === 'low').length ?? 0;
+  const needsReviewCount = (
+    (result?.gapsAndNonMatches.length ?? 0) +
+    (result?.evaluator?.unsupportedClaims?.length ?? 0) +
+    (result?.evaluator?.missingOrWeakEquivalents?.length ?? 0)
+  );
+
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
       <PageHeader
         eyebrow="Canadianizer Eh?"
         title="Canadianizer"
         description="Select one source article, configure the Canadian lens, and generate a side-by-side adaptation with an equivalency score."
-        metrics={[
-          {
-            label: 'One source article',
-            detail: selectedSource ? decodeLite(selectedSource.title || 'Selected content') : 'Choose a U.S. baseline article',
-            icon: FileText,
-          },
-          {
-            label: 'Canadian equivalency',
-            detail: extremeMode ? 'Maple Mode adds intentionally over-Canadian comic styling' : 'Tax, plan, savings, and market concepts are converted when a reasonable Canadian match exists',
-            icon: extremeMode ? Leaf : Flag,
-            iconClassName: 'bg-red-600 text-white',
-          },
-          {
-            label: 'Match score',
-            detail: result ? `${result.matchScore}% ${result.matchScoreLabel} with ${result.config?.model || model}` : 'Explains where the adaptation is strong or weak',
-            icon: BadgeCheck,
-            iconClassName: 'bg-emerald-600 text-white',
-          },
-          {
-            label: 'Language package',
-            detail: languagePackage === 'both' ? 'English and Quebec French' : languagePackage === 'french' ? 'Quebec French only' : 'English only',
-            icon: Languages,
-            iconClassName: 'bg-blue-600 text-white',
-          },
-        ]}
+        metrics={[]}
         variant="red"
       />
 
-      <div className="flex justify-end">
-        <Button type="button" disabled={!selectedSource || isGenerating} onClick={runCanadianizer} className="gap-2">
-          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {isGenerating ? 'Canadianizing' : 'Canadianize'}
-        </Button>
-      </div>
+      <div className="space-y-5">
+        {controlsCollapsed && result ? (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+            <section className="space-y-2">
+              <h2 className="text-base font-semibold text-slate-950">Source article</h2>
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-slate-950">{decodeLite(selectedSource?.title || result.source.title || 'Selected source')}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span>{result.source.publisher || selectedSource?.publisher || 'Source content'}</span>
+                      <span>·</span>
+                      <span>{formatDate(result.source.publishedAt || selectedSource?.publishedAt)}</span>
+                    </div>
+                  </div>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setControlsCollapsed(false)}>Change</Button>
+              </div>
+            </section>
 
-      <div className="flex flex-col gap-5 xl:flex-row">
+            <section className="space-y-2">
+              <h2 className="text-base font-semibold text-slate-950">Configuration summary</h2>
+              <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-[1fr_1fr_auto]">
+                <div className="flex items-center gap-4 p-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-700">
+                    <Sparkles className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-950">Canadian equivalency</div>
+                    <div className="mt-1 text-xs leading-5 text-slate-500">{extremeMode ? 'Maple Mode adaptation' : 'Tax, plans, savings, and market concepts'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 border-t border-slate-200 p-4 sm:border-l sm:border-t-0">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                    <Languages className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-950">Language package</div>
+                    <div className="mt-1 text-xs leading-5 text-slate-500">{languagePackage === 'both' ? 'English + Quebec French' : languagePackage === 'french' ? 'Quebec French only' : 'English only'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end border-t border-slate-200 p-4 sm:border-l sm:border-t-0">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setControlsCollapsed(false)}>Edit settings</Button>
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         <section
           className={cn(
-            'space-y-4 transition-all duration-500 ease-in-out xl:shrink-0 xl:overflow-hidden',
-            controlsCollapsed ? 'xl:w-0 xl:-translate-x-6 xl:opacity-0' : 'xl:w-[42%] xl:translate-x-0 xl:opacity-100'
+            'grid gap-5 transition-all duration-500 ease-in-out xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]',
+            controlsCollapsed ? 'hidden' : ''
           )}
         >
           <Card>
@@ -581,23 +608,39 @@ export default function CanadianizerClient() {
                 </div>
                 <Switch checked={extremeMode} onCheckedChange={setExtremeMode} />
               </div>
+              <div className="flex justify-end border-t border-border pt-4">
+                <Button type="button" disabled={!selectedSource || isGenerating} onClick={runCanadianizer} className="gap-2">
+                  {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {isGenerating ? 'Canadianizing' : result ? 'Canadianize again' : 'Canadianize'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
 
-        <section className="min-w-0 flex-1 space-y-4 transition-all duration-500 ease-in-out">
+        <section className="min-w-0 space-y-4 transition-all duration-500 ease-in-out">
           {error ? (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           ) : null}
-          <Card>
-            <CardHeader className="border-b border-border">
+          <Card className="overflow-hidden rounded-lg border-slate-200 bg-white shadow-sm">
+            <CardHeader className="border-b border-slate-200 bg-white px-5 py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-base">Canadianized Output</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">Side-by-side review with a match score and conversion notes.</p>
+                  <CardTitle className="text-xl font-semibold text-slate-950">Canadianized output</CardTitle>
+                  <p className="mt-1 text-sm text-slate-500">Review the adaptation, equivalency matches, and recommendations.</p>
                 </div>
                 {result ? (
                   <div className="flex flex-wrap items-start gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={!selectedSource || isGenerating}
+                      onClick={runCanadianizer}
+                      className="gap-2"
+                    >
+                      {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      {isGenerating ? 'Canadianizing' : 'Canadianize again'}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -613,7 +656,7 @@ export default function CanadianizerClient() {
                       size="sm"
                       onClick={() => setControlsCollapsed((value) => !value)}
                     >
-                      {controlsCollapsed ? 'Show Setup' : 'Hide Setup'}
+                      {controlsCollapsed ? 'Show setup' : 'Hide setup'}
                     </Button>
                     <PromptLogDialog result={result} />
                     {result.frenchArticleMarkdown && result.config?.languagePackage !== 'french' ? (
@@ -636,40 +679,6 @@ export default function CanadianizerClient() {
                         </Button>
                       </div>
                     ) : null}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-semibold uppercase text-muted-foreground">Match</span>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div className={cn('mt-1 text-2xl font-semibold', scoreClass(result.matchScore))}>{result.matchScore}%</div>
-                          <Progress value={result.matchScore} className="mt-2" />
-                          <div className="mt-2 text-xs font-medium">{result.matchScoreLabel}</div>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm leading-5">
-                        {result.scoreRationale}
-                      </TooltipContent>
-                    </Tooltip>
-                    {typeof result.frenchQualityScore === 'number' ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="min-w-[150px] rounded-md border border-border bg-background p-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold uppercase text-muted-foreground">French</span>
-                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                            </div>
-                            <div className={cn('mt-1 text-2xl font-semibold', scoreClass(result.frenchQualityScore))}>{result.frenchQualityScore}%</div>
-                            <Progress value={result.frenchQualityScore} className="mt-2" />
-                            <div className="mt-2 text-xs font-medium">{result.frenchQualityLabel || 'French quality'}</div>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm leading-5">
-                          {result.frenchQualityRationale || 'Quebec French editorial quality score.'}
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -685,6 +694,60 @@ export default function CanadianizerClient() {
                 </div>
               ) : (
                 <div>
+                  <div className="border-b border-slate-200 bg-slate-50/70 px-5">
+                    <div className="flex flex-wrap items-center gap-3 py-2 text-sm">
+                      <span className="border-b-2 border-blue-600 px-3 py-2 font-semibold text-blue-700">Side-by-side</span>
+                      <span className="px-3 py-2 text-slate-500">Equivalent matches <Badge variant="secondary">{result.equivalentMap.length}</Badge></span>
+                      <span className="px-3 py-2 text-slate-500">Review notes <Badge variant="secondary">{(result.editorialNotes.length + result.complianceNotes.length).toLocaleString()}</Badge></span>
+                      <span className="px-3 py-2 text-slate-500">Recommendations <Badge variant="secondary">{needsReviewCount.toLocaleString()}</Badge></span>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 border-b border-slate-200 bg-white p-5 sm:grid-cols-2 xl:grid-cols-8">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="rounded-md border border-blue-300 bg-blue-50/40 p-4 xl:col-span-2">
+                          <div className="text-xs font-semibold text-slate-600">Match</div>
+                          <div className={cn('mt-1 text-3xl font-semibold', scoreClass(result.matchScore))}>{result.matchScore}%</div>
+                          <Progress value={result.matchScore} className="mt-2" />
+                          <div className="mt-2 text-xs font-medium text-slate-600">{result.matchScoreLabel}</div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm leading-5">
+                        {result.scoreRationale}
+                      </TooltipContent>
+                    </Tooltip>
+                    {typeof result.frenchQualityScore === 'number' ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="rounded-md border border-emerald-300 bg-emerald-50/30 p-4 xl:col-span-2">
+                            <div className="text-xs font-semibold text-slate-600">French quality</div>
+                            <div className={cn('mt-1 text-3xl font-semibold', scoreClass(result.frenchQualityScore))}>{result.frenchQualityScore}%</div>
+                            <Progress value={result.frenchQualityScore} className="mt-2" />
+                            <div className="mt-2 text-xs font-medium text-slate-600">{result.frenchQualityLabel || 'French quality'}</div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm leading-5">
+                          {result.frenchQualityRationale || 'Quebec French editorial quality score.'}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                    <div className="rounded-md border border-slate-200 p-4 text-center">
+                      <div className="text-2xl font-semibold text-emerald-700">{highConfidenceCount}</div>
+                      <div className="mt-1 text-xs text-slate-600">high-confidence</div>
+                    </div>
+                    <div className="rounded-md border border-slate-200 p-4 text-center">
+                      <div className="text-2xl font-semibold text-amber-600">{mediumConfidenceCount}</div>
+                      <div className="mt-1 text-xs text-slate-600">medium-confidence</div>
+                    </div>
+                    <div className="rounded-md border border-slate-200 p-4 text-center">
+                      <div className="text-2xl font-semibold text-red-600">{lowConfidenceCount}</div>
+                      <div className="mt-1 text-xs text-slate-600">low-confidence</div>
+                    </div>
+                    <div className="rounded-md border border-slate-200 p-4 text-center">
+                      <div className="text-2xl font-semibold text-orange-600">{needsReviewCount}</div>
+                      <div className="mt-1 text-xs text-slate-600">needs review</div>
+                    </div>
+                  </div>
                   {result.warningLevel !== 'none' ? (
                     <div className={cn('m-4 rounded-md border p-3 text-sm leading-6', warningClass(result.warningLevel))}>
                       <div className="flex items-start gap-2">
