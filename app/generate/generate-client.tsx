@@ -1338,8 +1338,8 @@ export default function GeneratePage() {
               activeWorkflowStep === 3 ? 'border-blue-300 bg-blue-50/20' : 'border-blue-100'
             )}
           >
-            <div className="grid min-h-[114px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
-              <div className="flex min-w-0 items-center gap-4">
+            <div className="grid min-h-[132px] items-start gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
+              <div className="flex min-h-[72px] min-w-0 items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
                   <FileText className="h-6 w-6" />
                 </span>
@@ -1356,22 +1356,22 @@ export default function GeneratePage() {
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Selected article</div>
-                <div className="mt-2 min-h-[50px] space-y-1">
+                <div className="mt-2 min-h-[64px] space-y-1">
                   {selectedArticleTitle ? (
                     <>
                     <div className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900">{selectedArticleTitle}</div>
-                    <p className="line-clamp-2 text-xs leading-5 text-slate-600">
+                    <p className="line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
                       {selectedArticleSummary || 'Summary unavailable for this selected article.'}
                     </p>
                     </>
                   ) : (
-                    <p className="text-sm font-semibold leading-5 text-amber-700">{selectedSourceLabel}</p>
+                    <p className="min-h-[60px] text-sm font-semibold leading-5 text-amber-700">{selectedSourceLabel}</p>
                   )}
                   </div>
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Article details</div>
-                <div className="mt-2 min-h-[50px] space-y-1 text-sm font-semibold leading-5 text-slate-800">
+                <div className="mt-2 min-h-[64px] space-y-1 text-sm font-semibold leading-5 text-slate-800">
                   {selectedArticleTitle ? (
                     <>
                       <div>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</div>
