@@ -88,6 +88,16 @@ function compactOutputLabel(type: ContentType, instagramVariant?: 'single' | 'ca
   return CONTENT_TYPE_MAP[type]?.label ?? type;
 }
 
+function audienceGuidance(value: string) {
+  const guidance: Record<string, string> = {
+    'Clients and prospects': 'Audience guidance: write for both existing clients and prospects; balance education, trust-building, and an approachable next step.',
+    'Existing clients': 'Audience guidance: write for existing clients; reinforce relationship value, ongoing review, and practical next steps without sounding introductory.',
+    'Prospective clients': 'Audience guidance: write for prospective clients; build trust, explain value plainly, and use a low-pressure call to action.',
+    Advisors: 'Audience guidance: write for advisors; frame as professional talking points or advisor-use copy, with practical client conversation cues.',
+  };
+  return guidance[value] || (value ? `Audience guidance: write for ${value}.` : '');
+}
+
 function WorkflowStepMarker({
   step,
   active,
@@ -381,7 +391,7 @@ export default function GeneratePage() {
       usePlainLanguage ? 'Use plain language.' : '',
       includeCallToAction ? 'Include a clear call to action.' : '',
       shouldGenerateInfographic ? 'If Infographic is selected, make Infographic Copy concise, structured, and ready to become a single website infographic image.' : '',
-      audience ? `Audience: ${audience}.` : '',
+      audienceGuidance(audience),
     ].filter(Boolean).join('\n');
 
     try {
@@ -518,7 +528,7 @@ export default function GeneratePage() {
       additionalContext,
       usePlainLanguage ? 'Use plain language.' : '',
       includeCallToAction ? 'Include a clear call to action.' : '',
-      audience ? `Audience: ${audience}.` : '',
+      audienceGuidance(audience),
     ].filter(Boolean).join('\n');
     setImageStatus(shouldGenerateInlineInstagramImage ? 'Generating Instagram single image...' : null);
 
