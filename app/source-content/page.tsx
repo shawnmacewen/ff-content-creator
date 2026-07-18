@@ -524,7 +524,7 @@ export default function SourceContentPage() {
               </div>
               {hasActiveFilters ? (
                 <span className="text-xs font-medium text-muted-foreground">
-                  Showing {visibleContentItems.length.toLocaleString()} filtered
+                  Showing {visibleContentItems.length.toLocaleString()} Search Results
                 </span>
               ) : null}
             </div>
