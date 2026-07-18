@@ -21,6 +21,7 @@ import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/l
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
   AlertCircle,
+  BadgeCheck,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -1522,11 +1523,11 @@ export default function GeneratePage() {
 
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-border p-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-emerald-200 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
-                  <Sparkles className="h-5 w-5" />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                  <BadgeCheck className="h-5 w-5" />
                 </span>
                 <div>
                   <h2 className="text-xl font-semibold leading-tight text-slate-950">Generated Output</h2>
@@ -1534,7 +1535,7 @@ export default function GeneratePage() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                <span className="rounded-md bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">Generation progress</span>
+                <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">Generation progress</span>
                 <div className="text-sm font-semibold text-slate-800">
                   {generatedCampaignCount} of {campaignOutputNodes.length || 0} generated
                 </div>
@@ -1604,8 +1605,8 @@ export default function GeneratePage() {
                           className={cn(
                             'relative flex min-w-[118px] flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center transition-all',
                             active
-                              ? 'border-blue-400 bg-blue-50 text-blue-800 shadow-[0_0_0_8px_rgba(59,130,246,0.08)]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/50'
+                              ? 'border-emerald-400 bg-emerald-50 text-emerald-800 shadow-[0_0_0_8px_rgba(16,185,129,0.08)]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'
                           )}
                         >
                           <span className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white">
@@ -1622,7 +1623,7 @@ export default function GeneratePage() {
                             )}
                           </span>
                           {active ? (
-                            <span className="absolute -bottom-7 rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700">Now reviewing</span>
+                            <span className="absolute -bottom-7 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">Now reviewing</span>
                           ) : null}
                         </button>
                       );
@@ -1650,7 +1651,7 @@ export default function GeneratePage() {
                   <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-3">
                       {activeCampaignNode ? (
-                        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600 text-white">
                           <activeCampaignNode.icon className="h-4 w-4" />
                         </span>
                       ) : null}
@@ -1671,7 +1672,7 @@ export default function GeneratePage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button type="button" variant="outline" size="sm" className="rounded-md border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100">Preview</Button>
+                      <Button type="button" variant="outline" size="sm" className="rounded-md border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Preview</Button>
                       <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={copyActiveCampaignOutput}>Copy</Button>
                       <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Monitor className="h-4 w-4" /></Button>
                       <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Smartphone className="h-4 w-4" /></Button>
@@ -2036,6 +2037,11 @@ export default function GeneratePage() {
             >
               <Grid2X2 className="h-4 w-4 text-slate-500" />
               {activeTypes.length} output{activeTypes.length === 1 ? '' : 's'}
+              {activeTypes.length ? (
+                <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" />
+              ) : (
+                <AlertCircle className="h-4 w-4 fill-amber-100 text-amber-600" />
+              )}
             </button>
             <span className="text-slate-300">-</span>
             <button
@@ -2045,6 +2051,7 @@ export default function GeneratePage() {
             >
               <User className="h-4 w-4 text-slate-500" />
               {toneLabel(tone)} tone
+              <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" />
             </button>
             <span className="text-slate-300">-</span>
             <button
@@ -2054,6 +2061,11 @@ export default function GeneratePage() {
             >
               <FileText className="h-4 w-4 text-slate-500" />
               {selectedSourceIds.length || 0} source selected
+              {selectedSourceIds.length ? (
+                <CheckCircle2 className="h-4 w-4 fill-emerald-600 text-white" />
+              ) : (
+                <AlertCircle className="h-4 w-4 fill-amber-100 text-amber-600" />
+              )}
             </button>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
