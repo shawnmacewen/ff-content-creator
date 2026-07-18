@@ -684,6 +684,7 @@ export default function CeCourseCreatorClient() {
         title="CE Course Creator"
         description="Select related source articles, shape a course package, and prepare a quiz draft that can later be saved, edited, and retrieved by downstream systems."
         metrics={[]}
+        variant="emerald"
       />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">

@@ -386,6 +386,7 @@ export default function CanadianizerClient() {
             iconClassName: 'bg-blue-600 text-white',
           },
         ]}
+        variant="red"
       />
 
       <div className="flex justify-end">

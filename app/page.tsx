@@ -113,8 +113,9 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow="Dashboard"
         title="Dashboard"
-        description="Dashboard"
+        description="Track source readiness, content production, and editorial workflow momentum."
         metrics={[]}
+        variant="teal"
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

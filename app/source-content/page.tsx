@@ -336,6 +336,7 @@ export default function SourceContentPage() {
             icon: Database,
           },
         ]}
+        variant="pink"
       />
 
       <ContentFilters

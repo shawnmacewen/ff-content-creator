@@ -138,6 +138,7 @@ export default function LibraryPage() {
         title="Saved Content"
         description="Manage saved drafts, reviewed assets, and reusable campaign content."
         metrics={[]}
+        variant="yellow"
       />
 
       <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">

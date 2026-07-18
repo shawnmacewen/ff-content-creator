@@ -157,6 +157,7 @@ export default function AuditPage() {
         title="Content Scan"
         description="Search and analyze source coverage before building new advisor campaigns."
         metrics={[]}
+        variant="violet"
       />
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-5 shadow-sm">
