@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Leaf,
   PanelTop,
+  Gauge,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -93,6 +94,11 @@ const contentTypeItems = [
     title: 'Articles',
     href: '/generate?type=article',
     icon: FileText,
+  },
+  {
+    title: 'Token Usage',
+    href: '/token-usage',
+    icon: Gauge,
   },
 ];
 
@@ -198,7 +204,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50">
-            Quick Create
+            Insights
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -206,6 +212,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
+                    isActive={pathname === item.href}
                     className="h-9 rounded-md text-sidebar-foreground/72 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
                     <Link href={item.href} prefetch={false}>
