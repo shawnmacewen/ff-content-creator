@@ -20,15 +20,22 @@ import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
+  AlertCircle,
+  Check,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Grid2X2,
   Instagram,
   Linkedin,
   Loader2,
   Mail,
+  Monitor,
+  MoreHorizontal,
   Save,
   Sparkles,
+  Smartphone,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -401,6 +408,7 @@ export default function GeneratePage() {
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
   const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
   const [carouselLoadingPhrase, setCarouselLoadingPhrase] = useState<string | null>(null);
+  const [approvedKitOutputIds, setApprovedKitOutputIds] = useState<string[]>([]);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
@@ -522,12 +530,6 @@ export default function GeneratePage() {
     return `${kitCarouselProgress.done}/${kitCarouselProgress.total} images complete`;
   })();
 
-  const renderStatusIcon = (status: KitOutputStatus) => {
-    if (status === 'complete') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />;
-    if (status === 'generating') return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
-    return null;
-  };
-
   useEffect(() => {
     if (carouselPhraseTimeoutRef.current) {
       clearTimeout(carouselPhraseTimeoutRef.current);
@@ -569,9 +571,11 @@ export default function GeneratePage() {
   useEffect(() => {
     // Default output tab behavior:
     // - If Instagram multipost images are enabled, start on Carousel.
-    // - Otherwise start on the last tab: All.
+    // - Otherwise start on the first selected asset so storyboard review has one focused node.
     if (kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages) {
       setKitOutputTab('carousel');
+    } else if (kitTypes[0]) {
+      setKitOutputTab(kitTypes[0]);
     } else {
       setKitOutputTab('all');
     }
@@ -940,6 +944,69 @@ export default function GeneratePage() {
         block: 'start',
       });
     });
+  };
+  const campaignOutputNodes = [
+    ...(hasInstagramCarousel ? [{
+      id: 'carousel' as const,
+      label: 'Instagram Carousel',
+      shortLabel: 'Carousel',
+      category: 'Visual',
+      icon: Instagram,
+      status: isKitCarouselGenerating ? 'generating' as KitOutputStatus : kitCarouselProgress?.stage === 'complete' ? 'complete' as KitOutputStatus : 'idle' as KitOutputStatus,
+    }] : []),
+    ...kitTypes.map((type) => {
+      const Icon = iconByContentType[type] || FileText;
+      return {
+        id: type,
+        label: CONTENT_TYPE_MAP[type]?.label ?? type,
+        shortLabel: compactOutputLabel(type, instagramKitVariant),
+        category: type.startsWith('email') || type === 'newsletter' ? 'Email' : type.includes('social') ? 'Social' : 'Visual',
+        icon: Icon,
+        status: getKitTypeStatus(type),
+      };
+    }),
+  ];
+  const activeCampaignNode = campaignOutputNodes.find((node) => node.id === kitOutputTab) || campaignOutputNodes[0] || null;
+  const activeCampaignNodeIndex = activeCampaignNode
+    ? Math.max(0, campaignOutputNodes.findIndex((node) => node.id === activeCampaignNode.id))
+    : -1;
+  const approvedCampaignCount = campaignOutputNodes.filter((node) => approvedKitOutputIds.includes(String(node.id))).length;
+  const needsReviewCount = Math.max(0, campaignOutputNodes.length - approvedCampaignCount);
+  const campaignProgress = campaignOutputNodes.length
+    ? Math.round((approvedCampaignCount / campaignOutputNodes.length) * 100)
+    : 0;
+  const activeCampaignStatus = activeCampaignNode?.status || 'idle';
+  const activeCampaignApproved = activeCampaignNode ? approvedKitOutputIds.includes(String(activeCampaignNode.id)) : false;
+  const goToCampaignNode = (nodeId: string) => {
+    setKitOutputTab(nodeId as ContentType | 'carousel');
+  };
+  const goToCampaignIndex = (index: number) => {
+    const nextNode = campaignOutputNodes[index];
+    if (nextNode) goToCampaignNode(String(nextNode.id));
+  };
+  const approveActiveCampaignNode = () => {
+    if (!activeCampaignNode) return;
+    setApprovedKitOutputIds((current) => (
+      current.includes(String(activeCampaignNode.id)) ? current : [...current, String(activeCampaignNode.id)]
+    ));
+    if (activeCampaignNodeIndex < campaignOutputNodes.length - 1) {
+      goToCampaignIndex(activeCampaignNodeIndex + 1);
+    }
+  };
+  const copyActiveCampaignOutput = async () => {
+    if (!activeCampaignNode || activeCampaignNode.id === 'carousel') {
+      toast.info('Use the carousel preview controls to copy carousel content.');
+      return;
+    }
+
+    const output = kitOutputs?.find((item) => item.type === activeCampaignNode.id);
+    if (!output?.content?.trim()) {
+      toast.info('Generate this asset before copying.');
+      return;
+    }
+
+    await navigator.clipboard.writeText(output.content);
+    toast.success('Asset copied');
   };
 
   return (
@@ -1455,19 +1522,40 @@ export default function GeneratePage() {
 
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-lg font-semibold">Generated Output</h2>
-                <p className="text-sm text-muted-foreground">Review carousel images and campaign copy before saving.</p>
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-border p-5 xl:flex-row xl:items-start xl:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold leading-tight text-slate-950">Generated Output</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Review the campaign as a connected set of channel-ready assets.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="rounded-md bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">Review in progress</span>
+                <div className="text-sm font-semibold text-slate-800">
+                  {approvedCampaignCount} of {campaignOutputNodes.length || 0} approved
+                </div>
+                <div className="h-2 w-36 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${campaignProgress}%` }} />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-md"
+                  disabled={isSavingDraft || !(kitOutputs || []).some((output) => output.content?.trim())}
+                  onClick={handleSaveDraft}
+                >
+                  {isSavingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save campaign
+                </Button>
               </div>
             </div>
 
             {(isGeneratingKit && !hasRenderedKitOutputs) ? (
-              <div className="mb-4">
+              <div className="p-5 pb-0">
                 <GeneratingOutputState
                   label="Generating editorial assets"
                   detail="The selected content formats are being drafted and will appear here as soon as the request completes."
@@ -1475,131 +1563,275 @@ export default function GeneratePage() {
               </div>
             ) : null}
 
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex flex-wrap gap-2">
-                {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                  <button
+            <div className="space-y-5 p-5">
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <div className="flex items-center gap-3">
+                  <Button
                     type="button"
-                    onClick={() => setKitOutputTab('carousel')}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
-                      kitOutputTab === 'carousel'
-                        ? 'border-primary/60 bg-primary/10 text-primary'
-                        : 'bg-background/60 hover:bg-background'
-                    )}
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 rounded-md"
+                    disabled={activeCampaignNodeIndex <= 0}
+                    onClick={() => goToCampaignIndex(activeCampaignNodeIndex - 1)}
                   >
-                    {(pendingKitCarouselGenerate || isGeneratingKitCarouselImages) ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : kitCarouselProgress?.stage === 'complete' ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : null}
-                    Instagram Carousel
-                  </button>
-                ) : null}
-
-
-                {kitTypes.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setKitOutputTab(t)}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
-                      kitOutputTab === t
-                        ? 'border-primary/60 bg-primary/10 text-primary'
-                        : 'bg-background/60 hover:bg-background'
-                    )}
-                  >
-                    {renderStatusIcon(getKitTypeStatus(t))}
-                    {CONTENT_TYPE_MAP[t]?.label ?? t}
-                  </button>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => setKitOutputTab('all')}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
-                    kitOutputTab === 'all'
-                      ? 'border-primary/60 bg-primary/10 text-primary'
-                      : 'bg-background/60 hover:bg-background'
-                  )}
-                >
-                  {isGeneratingKit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  All
-                </button>
-              </div>
-            </div>
-
-            {/* Keep all mounted; switching tabs must not clear */}
-            <div className={cn('mt-3', kitOutputTab !== 'carousel' && 'hidden')}>
-              {carouselStatusLabel ? (
-                <div className="mb-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isKitCarouselGenerating ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
-                    <span>{carouselStatusLabel}</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto px-1 pb-1">
+                    {campaignOutputNodes.map((node) => {
+                      const Icon = node.icon;
+                      const active = activeCampaignNode?.id === node.id;
+                      const approved = approvedKitOutputIds.includes(String(node.id));
+                      const isGeneratingNode = node.status === 'generating';
+                      return (
+                        <button
+                          key={node.id}
+                          type="button"
+                          onClick={() => goToCampaignNode(String(node.id))}
+                          className={cn(
+                            'relative flex min-w-[118px] flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center transition-all',
+                            active
+                              ? 'border-blue-400 bg-blue-50 text-blue-800 shadow-[0_0_0_8px_rgba(59,130,246,0.08)]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/50'
+                          )}
+                        >
+                          <span className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white">
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <span className="line-clamp-1 text-xs font-bold">{node.shortLabel}</span>
+                          <span className="absolute -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-cyan-100 text-cyan-700">
+                            {isGeneratingNode ? (
+                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            ) : approved ? (
+                              <Check className="h-2.5 w-2.5" />
+                            ) : (
+                              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                            )}
+                          </span>
+                          {active ? (
+                            <span className="absolute -bottom-7 rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700">Now reviewing</span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
                   </div>
-                  {isKitCarouselGenerating && carouselLoadingPhrase ? (
-                    <div className="mt-2 text-xs font-medium text-primary">{carouselLoadingPhrase}</div>
-                  ) : null}
-                  {kitCarouselProgress ? (
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{
-                          width: `${Math.max(
-                            5,
-                            Math.min(100, Math.round((kitCarouselProgress.done / Math.max(1, kitCarouselProgress.total)) * 100))
-                          )}%`,
-                        }}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 rounded-md"
+                    disabled={activeCampaignNodeIndex >= campaignOutputNodes.length - 1}
+                    onClick={() => goToCampaignIndex(activeCampaignNodeIndex + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <div className="hidden h-12 w-px bg-slate-200 lg:block" />
+                  <div className="hidden items-center gap-2 lg:flex">
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">All {campaignOutputNodes.length}</button>
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Needs review {needsReviewCount}</button>
+                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Approved {approvedCampaignCount}</button>
+                  </div>
+                </div>
+                <p className="mt-8 text-xs font-medium text-muted-foreground">Review in campaign order, or jump directly to any channel.</p>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex items-center gap-3">
+                      {activeCampaignNode ? (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white">
+                          <activeCampaignNode.icon className="h-4 w-4" />
+                        </span>
+                      ) : null}
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-slate-950">{activeCampaignNode?.label || 'Campaign asset'}</h3>
+                          <span className={cn(
+                            'rounded-md px-2 py-0.5 text-xs font-bold',
+                            activeCampaignStatus === 'complete' || activeCampaignApproved
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : activeCampaignStatus === 'generating'
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'bg-slate-100 text-slate-600'
+                          )}>
+                            {activeCampaignApproved ? 'Approved' : activeCampaignStatus === 'generating' ? 'Generating' : activeCampaignStatus === 'complete' ? 'Ready' : 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" className="rounded-md border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100">Preview</Button>
+                      <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={copyActiveCampaignOutput}>Copy</Button>
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Monitor className="h-4 w-4" /></Button>
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Smartphone className="h-4 w-4" /></Button>
+                      <Button type="button" variant="outline" size="sm" className="rounded-md">Edit</Button>
+                      <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={handleGenerateKit} disabled={isGeneratingKit}>Regenerate</Button>
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+
+                  <div className="min-h-[520px] bg-slate-50/70 p-4">
+                    <div className={cn(kitOutputTab !== 'carousel' && 'hidden')}>
+                      {carouselStatusLabel ? (
+                        <div className="mb-3 rounded-md border bg-white p-3 text-sm text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isKitCarouselGenerating ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
+                            <span>{carouselStatusLabel}</span>
+                          </div>
+                          {isKitCarouselGenerating && carouselLoadingPhrase ? (
+                            <div className="mt-2 text-xs font-medium text-primary">{carouselLoadingPhrase}</div>
+                          ) : null}
+                          {kitCarouselProgress ? (
+                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary transition-all"
+                                style={{
+                                  width: `${Math.max(
+                                    5,
+                                    Math.min(100, Math.round((kitCarouselProgress.done / Math.max(1, kitCarouselProgress.total)) * 100))
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {selectedSourceIds.length !== 1 ? (
+                        <div className="rounded-md border bg-white p-4 text-sm text-muted-foreground">
+                          Select exactly 1 source article to generate carousel images.
+                        </div>
+                      ) : (
+                        <InstagramCarousel2Client
+                          ref={kitCarousel2Ref}
+                          selectedSourceId={selectedSourceIds[0] || null}
+                          hideSourcePicker
+                          hideSettingsControls
+                          defaultTab="carousel"
+                          generateLabel="Generate Images"
+                          onLoadingChange={setIsGeneratingKitCarouselImages}
+                          onProgress={setKitCarouselProgress}
+                          slideCount={kitCarouselSlideCount}
+                          onSlideCountChange={setKitCarouselSlideCount}
+                          model={kitCarouselModel}
+                          onModelChange={setKitCarouselModel}
+                          cohesionMethod={kitCarouselCohesionMethod}
+                          onCohesionMethodChange={setKitCarouselCohesionMethod}
+                          imageRefMode={kitCarouselImageRefMode}
+                          onImageRefModeChange={setKitCarouselImageRefMode}
+                          moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
+                          onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
+                          visualStyle={kitCarouselVisualStyle}
+                          onVisualStyleChange={setKitCarouselVisualStyle}
+                          showAdvancedPromptInput={kitCarouselAdvanced}
+                          onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
+                          topic={kitCarouselPrompt}
+                          onTopicChange={setKitCarouselPrompt}
+                        />
+                      )}
+                    </div>
+
+                    <div className={cn(kitOutputTab === 'carousel' && 'hidden')}>
+                      <KitGeneratedOutput
+                        selectedTypes={kitTypes}
+                        outputs={kitOutputs}
+                        activeType={activeCampaignNode?.id === 'carousel' ? kitTypes[0] : (activeCampaignNode?.id as any)}
+                        showTabs={false}
+                        isGenerating={isGeneratingKit}
+                        outputStatuses={kitOutputStatuses}
                       />
                     </div>
-                  ) : null}
-                </div>
-              ) : null}
-              {selectedSourceIds.length !== 1 ? (
-                <div className="rounded-md border bg-muted/20 p-4 text-sm text-muted-foreground">
-                  Select exactly 1 source article to generate carousel images.
-                </div>
-              ) : (
-                <InstagramCarousel2Client
-                  ref={kitCarousel2Ref}
-                  selectedSourceId={selectedSourceIds[0] || null}
-                  hideSourcePicker
-                  hideSettingsControls
-                  defaultTab="carousel"
-                  generateLabel="Generate Images"
-                  onLoadingChange={setIsGeneratingKitCarouselImages}
-                  onProgress={setKitCarouselProgress}
-                  slideCount={kitCarouselSlideCount}
-                  onSlideCountChange={setKitCarouselSlideCount}
-                  model={kitCarouselModel}
-                  onModelChange={setKitCarouselModel}
-                  cohesionMethod={kitCarouselCohesionMethod}
-                  onCohesionMethodChange={setKitCarouselCohesionMethod}
-                  imageRefMode={kitCarouselImageRefMode}
-                  onImageRefModeChange={setKitCarouselImageRefMode}
-                  moreSeamlessBackground={kitCarouselMoreSeamlessBackground}
-                  onMoreSeamlessBackgroundChange={setKitCarouselMoreSeamlessBackground}
-                  visualStyle={kitCarouselVisualStyle}
-                  onVisualStyleChange={setKitCarouselVisualStyle}
-                  showAdvancedPromptInput={kitCarouselAdvanced}
-                  onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
-                  topic={kitCarouselPrompt}
-                  onTopicChange={setKitCarouselPrompt}
-                />
-              )}
-            </div>
+                  </div>
 
-            <div className={cn('mt-3', kitOutputTab === 'carousel' && 'hidden')}>
-              <KitGeneratedOutput
-                selectedTypes={kitTypes}
-                outputs={kitOutputs}
-                activeType={kitOutputTab === 'all' ? 'all' : (kitOutputTab as any)}
-                showTabs={false}
-                isGenerating={isGeneratingKit}
-                outputStatuses={kitOutputStatuses}
-              />
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-slate-200 p-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-fit rounded-md"
+                      disabled={activeCampaignNodeIndex <= 0}
+                      onClick={() => goToCampaignIndex(activeCampaignNodeIndex - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous asset
+                    </Button>
+                    <div className="text-sm font-bold text-slate-700">
+                      {activeCampaignNodeIndex >= 0 ? activeCampaignNodeIndex + 1 : 0} of {campaignOutputNodes.length}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-fit justify-self-end rounded-md"
+                      disabled={activeCampaignNodeIndex >= campaignOutputNodes.length - 1}
+                      onClick={() => goToCampaignIndex(activeCampaignNodeIndex + 1)}
+                    >
+                      Next asset
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-slate-950">Review & refine</h3>
+                    <span className="text-xs font-bold text-muted-foreground">Asset {activeCampaignNodeIndex + 1 || 0} of {campaignOutputNodes.length}</span>
+                  </div>
+                  <div className="mb-4 grid grid-cols-3 gap-1 border-b border-slate-200 text-sm font-semibold">
+                    <button type="button" className="border-b-2 border-blue-600 px-2 py-2 text-blue-700">Checks</button>
+                    <button type="button" className="px-2 py-2 text-muted-foreground">Comments</button>
+                    <button type="button" className="px-2 py-2 text-muted-foreground">Details</button>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Channel fit', detail: `Optimized for ${activeCampaignNode?.shortLabel || 'selected asset'}.`, score: activeCampaignStatus === 'complete' || activeCampaignApproved ? '92' : 'Pending' },
+                      { label: 'Copy length', detail: 'Within recommended range.', score: activeCampaignStatus === 'complete' ? 'Good' : 'Waiting' },
+                      { label: 'Required disclosures', detail: 'Review required language before publishing.', score: activeCampaignApproved ? 'Done' : 'Review' },
+                      { label: 'Campaign consistency', detail: 'Aligned with tone and selected source.', score: activeCampaignStatus === 'generating' ? 'Running' : 'Ready' },
+                    ].map((check) => (
+                      <div key={check.label} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">{check.label}</div>
+                          <div className="text-xs text-muted-foreground">{check.detail}</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
+                          {check.score}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1 text-sm font-semibold text-slate-900">
+                      Reviewer note
+                      <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <textarea
+                      className="min-h-[86px] w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
+                      placeholder="Add internal notes for your team..."
+                      maxLength={500}
+                    />
+                  </div>
+                  <Button type="button" variant="outline" className="mt-3 w-full justify-between rounded-md">
+                    Compare with source
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-md"
+                      onClick={() => {
+                        if (!activeCampaignNode) return;
+                        setApprovedKitOutputIds((current) => current.filter((id) => id !== String(activeCampaignNode.id)));
+                      }}
+                    >
+                      Request changes
+                    </Button>
+                    <Button type="button" className="rounded-md bg-emerald-600 hover:bg-emerald-700" onClick={approveActiveCampaignNode}>
+                      <Check className="h-4 w-4" />
+                      Approve & next
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
