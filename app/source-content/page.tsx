@@ -441,15 +441,6 @@ export default function SourceContentPage() {
         onClearFilters={handleClearFilters}
       />
 
-      {selectedIds.size > 0 && (
-        <div className="flex justify-end">
-          <Button onClick={handleGenerateWithSelected} className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Generate with {selectedIds.size} selected
-          </Button>
-        </div>
-      )}
-
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           Failed to load source content. Please try again.
@@ -517,7 +508,12 @@ export default function SourceContentPage() {
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
-              <span>{selectedIds.size} item(s) selected</span>
+              {selectedIds.size > 0 ? (
+                <Button onClick={handleGenerateWithSelected} className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Generate with {selectedIds.size} selected
+                </Button>
+              ) : null}
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
