@@ -128,6 +128,7 @@ export default function GeneratePage() {
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
   const [articlePreviewLayout, setArticlePreviewLayout] = useState<'summary' | 'spotlight'>('summary');
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource } = useSWR<any>(
@@ -532,6 +533,59 @@ export default function GeneratePage() {
     }
   };
 
+  const handleSaveDraft = async () => {
+    if (mode === 'single') {
+      if (!generatedContent.trim()) {
+        toast.info('Generate an asset before saving a draft.');
+        return;
+      }
+
+      await handleSave('draft');
+      return;
+    }
+
+    const outputsToSave = (kitOutputs || []).filter((output) => output.content?.trim());
+    if (!outputsToSave.length) {
+      toast.info('Generate a campaign before saving drafts.');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      for (const output of outputsToSave) {
+        const outputLabel = output.label || CONTENT_TYPE_MAP[output.type]?.label || 'Campaign output';
+        const firstLine = output.content.split('\n').find((line) => line.trim())?.trim() || outputLabel;
+        const response = await fetch('/api/generated-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: output.type,
+            title: `${outputLabel}: ${firstLine}`.slice(0, 100),
+            content: output.content,
+            sourceContentIds: selectedSourceIds,
+            prompt: customPrompt,
+            tone,
+            status: 'draft',
+            versionNote: 'Campaign kit draft',
+          }),
+        });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body?.error || `Failed to save ${outputLabel}`);
+        }
+      }
+
+      toast.success(`Saved ${outputsToSave.length} campaign draft${outputsToSave.length === 1 ? '' : 's'}`);
+      router.push('/library');
+    } catch (err) {
+      console.error('Save campaign draft error:', err);
+      toast.error('Failed to save campaign drafts');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const hasGeneratedOutput = mode === 'kit'
     ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages)
     : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
@@ -553,6 +607,16 @@ export default function GeneratePage() {
   const handleModeChange = (nextMode: GenerationMode) => {
     setMode(nextMode);
     setSetupCollapsed(false);
+  };
+  const openWorkflowStep = (step: WorkflowStep) => {
+    setSetupCollapsed(false);
+    setActiveWorkflowStep(step);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`generate-step-${step}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
   };
 
   return (
@@ -624,7 +688,7 @@ export default function GeneratePage() {
         <div className="space-y-6">
           <div className={setupTrayClassName}>
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div id="generate-step-1" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>1</span>
                 <div>
@@ -815,7 +879,7 @@ export default function GeneratePage() {
               )}
             </div>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <div id="generate-step-2" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>2</span>
                 <div>
@@ -895,7 +959,7 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+          <div id="generate-step-3" className="scroll-mt-24 rounded-lg border border-border bg-card p-3 shadow-sm">
             <div className="mb-2 flex items-center gap-3">
               <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 3 ? 'bg-primary text-primary-foreground' : selectedSourceIds.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700')}>3</span>
               <div>
@@ -1104,7 +1168,7 @@ export default function GeneratePage() {
           <div className={setupTrayClassName}>
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
-              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div id="generate-step-1" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">1</span>
                   <div>
@@ -1126,7 +1190,7 @@ export default function GeneratePage() {
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div id="generate-step-2" className="scroll-mt-24 rounded-lg border border-border bg-card p-5 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">2</span>
                   <div>
@@ -1146,7 +1210,7 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+          <div id="generate-step-3" className="scroll-mt-24 rounded-lg border border-border bg-card p-3 shadow-sm">
             <div className="mb-2 flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
               <div>
@@ -1239,36 +1303,43 @@ export default function GeneratePage() {
       <div className="fixed inset-x-4 bottom-3 z-40 rounded-lg border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_14px_44px_rgba(15,23,42,0.18)] backdrop-blur md:left-[calc(var(--sidebar-width,0px)+1rem)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-700">
-            <span className="inline-flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openWorkflowStep(1)}
+              className="inline-flex items-center gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100 hover:text-primary"
+            >
               <Grid2X2 className="h-4 w-4 text-slate-500" />
               {activeTypes.length} output{activeTypes.length === 1 ? '' : 's'}
-            </span>
+            </button>
             <span className="text-slate-300">-</span>
-            <span className="inline-flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openWorkflowStep(2)}
+              className="inline-flex items-center gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100 hover:text-primary"
+            >
               <User className="h-4 w-4 text-slate-500" />
               {toneLabel(tone)} tone
-            </span>
+            </button>
             <span className="text-slate-300">-</span>
-            <span className="inline-flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openWorkflowStep(3)}
+              className="inline-flex items-center gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100 hover:text-primary"
+            >
               <FileText className="h-4 w-4 text-slate-500" />
               {selectedSourceIds.length || 0} source selected
-            </span>
+            </button>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <Button
               type="button"
               variant="outline"
               className="h-11 rounded-md bg-white px-6"
-              onClick={() => {
-                if (mode === 'single' && generatedContent.trim()) {
-                  void handleSave('draft');
-                } else {
-                  toast.info('Draft saving is available after generation.');
-                }
-              }}
+              onClick={() => void handleSaveDraft()}
+              disabled={isSavingDraft || isGenerating || isGeneratingKit || isGeneratingKitCarouselImages}
             >
-              <Save className="mr-2 h-4 w-4" />
-              Save draft
+              {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSavingDraft ? 'Saving...' : 'Save draft'}
             </Button>
             <Button
               type="button"
