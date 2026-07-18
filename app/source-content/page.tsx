@@ -382,27 +382,6 @@ export default function SourceContentPage() {
         variant="pink"
       />
 
-      <ContentFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchScope={searchScope}
-        onSearchScopeChange={(scope) => {
-          setSearchScope(scope);
-          setAutoLoadAll(false);
-          void setSize(1);
-        }}
-        selectedType={selectedType}
-        onTypeChange={setSelectedType}
-        availableTypes={filters.availableTypes}
-        selectedTag={selectedTag}
-        onTagChange={setSelectedTag}
-        availableTags={filters.availableTags}
-        selectedPublisher={selectedPublisher}
-        onPublisherChange={setSelectedPublisher}
-        availablePublishers={filters.availablePublishers}
-        onClearFilters={handleClearFilters}
-      />
-
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           Failed to load source content. Please try again.
@@ -478,6 +457,22 @@ export default function SourceContentPage() {
               ) : null}
             </div>
           </div>
+          <ContentFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchScope={searchScope}
+            onSearchScopeChange={setSearchScope}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+            availableTypes={filters.availableTypes}
+            selectedTag={selectedTag}
+            onTagChange={setSelectedTag}
+            availableTags={filters.availableTags}
+            selectedPublisher={selectedPublisher}
+            onPublisherChange={setSelectedPublisher}
+            availablePublishers={filters.availablePublishers}
+            onClearFilters={handleClearFilters}
+          />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {visibleContentItems.map((content) => (
               <ContentCard
