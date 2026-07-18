@@ -783,7 +783,8 @@ export default function GeneratePage() {
                   <h2 className="text-lg font-semibold">Campaign outputs</h2>
                 </div>
                 {activeWorkflowStep !== 1 ? (
-                  <Button type="button" variant="ghost" size="sm" className="ml-auto text-primary" onClick={() => setActiveWorkflowStep(1)}>
+                  <Button type="button" variant="outline" size="sm" className="ml-auto gap-2 rounded-md" onClick={() => setActiveWorkflowStep(1)}>
+                    <Edit3 className="h-4 w-4" />
                     Edit
                   </Button>
                 ) : null}
@@ -963,6 +964,14 @@ export default function GeneratePage() {
                   {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' ? (
                     <p className="text-sm text-slate-600">Carousel - {kitCarouselSlideCount} slides - {kitCarouselVisualStyle === 'classic' ? 'Classic Current Look' : 'Bright Editorial'}</p>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setActiveWorkflowStep(1)}
+                    className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    More output options inside
+                  </button>
                 </div>
               )}
             </div>
