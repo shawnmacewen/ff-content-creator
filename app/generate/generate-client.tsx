@@ -20,7 +20,6 @@ import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
-  Bookmark,
   CheckCircle2,
   Edit3,
   FileText,
@@ -894,15 +893,6 @@ export default function GeneratePage() {
             <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Generate Content</h1>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/85">Turn one trusted article into a coordinated marketing campaign.</p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 w-fit gap-2 rounded-md border-white/45 bg-white/95 text-slate-950 shadow-sm hover:bg-white"
-            onClick={() => router.push('/library')}
-          >
-            <Bookmark className="h-4 w-4" />
-            Saved drafts
-          </Button>
         </div>
       </div>
 
