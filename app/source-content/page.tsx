@@ -70,6 +70,50 @@ const fetcher = async (url: string) => {
 
 const SOURCE_CONTENT_PAGE_SIZE = 50;
 
+function normalizeSearchValue(value: unknown) {
+  return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function getSourceFilenameText(content: SourceContent) {
+  const metadata = content.metadata || {};
+  const extraPropertiesSelected = metadata.extraPropertiesSelected || {};
+  const extraProperties = metadata.extraProperties || {};
+
+  return [
+    content.externalId,
+    extraPropertiesSelected.BasContentFilename,
+    extraPropertiesSelected.BasContentId,
+    extraProperties.BasContentFilename,
+    extraProperties.BasContentId,
+  ].filter(Boolean).join(' ');
+}
+
+function getClientSearchText(content: SourceContent, searchScope: string) {
+  if (searchScope === 'title') return content.title || '';
+  if (searchScope === 'filename') return getSourceFilenameText(content);
+
+  const metadata = content.metadata || {};
+  const signals = Array.isArray(content.contentSignals)
+    ? content.contentSignals.map((signal) => [signal.label, signal.reason, signal.evidence].filter(Boolean).join(' ')).join(' ')
+    : '';
+
+  return [
+    content.title,
+    content.excerpt,
+    content.type,
+    content.publisher,
+    content.externalId,
+    getSourceFilenameText(content),
+    Array.isArray(content.tags) ? content.tags.join(' ') : '',
+    Array.isArray(content.keyTakeaways) ? content.keyTakeaways.join(' ') : '',
+    content.recommendedAudience,
+    signals,
+    Array.isArray(metadata.categories) ? metadata.categories.join(' ') : '',
+    Array.isArray(metadata.subCategories) ? metadata.subCategories.join(' ') : '',
+    metadata.excerpt,
+  ].filter(Boolean).join(' ');
+}
+
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
     return { q: '', searchScope: 'all', contentDesignation: '', tags: '', publisher: '' };
@@ -114,15 +158,10 @@ export default function SourceContentPage() {
     if (previousPageData && !previousPageData.hasNextPage) return null;
 
     const params = new URLSearchParams();
-    if (debouncedQuery) params.set('q', debouncedQuery);
-    if (searchScope && searchScope !== 'all') params.set('searchScope', searchScope);
-    if (selectedType && selectedType !== 'all') params.set('contentDesignation', selectedType);
-    if (selectedTag && selectedTag !== 'all') params.set('tags', selectedTag);
-    if (selectedPublisher && selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
     params.set('page', String(pageIndex + 1));
     params.set('pageSize', String(SOURCE_CONTENT_PAGE_SIZE));
     return `/api/source-content?${params.toString()}`;
-  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher]);
+  }, []);
 
   const {
     data: pages,
@@ -142,11 +181,6 @@ export default function SourceContentPage() {
     shouldRetryOnError: false,
   });
 
-  useEffect(() => {
-    setAutoLoadAll(false);
-    void setSize(1);
-  }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher, setSize]);
-
   const contentItems = useMemo(() => {
     const seen = new Set<string>();
     const items: SourceContent[] = [];
@@ -159,6 +193,21 @@ export default function SourceContentPage() {
     }
     return items;
   }, [pages]);
+  const visibleContentItems = useMemo(() => {
+    const query = normalizeSearchValue(debouncedQuery);
+    const queryTerms = query.split(/\s+/).filter(Boolean);
+
+    return contentItems.filter((content) => {
+      const typeOk = !selectedType || selectedType === 'all' || content.type === selectedType;
+      const tagOk = !selectedTag || selectedTag === 'all' || (content.tags || []).some((tag) => tag === selectedTag);
+      const publisherOk = !selectedPublisher || selectedPublisher === 'all' || content.publisher === selectedPublisher;
+      if (!typeOk || !tagOk || !publisherOk) return false;
+      if (!query) return true;
+
+      const haystack = normalizeSearchValue(getClientSearchText(content, searchScope));
+      return haystack.includes(query) || queryTerms.every((term) => haystack.includes(term));
+    });
+  }, [contentItems, debouncedQuery, searchScope, selectedPublisher, selectedTag, selectedType]);
   const latestPage = pages?.[pages.length - 1] ?? null;
   const filters = filterData || latestPage?.filters || emptyFilters;
   const totalAvailableItems = latestPage?.meta?.totalSourceContent || latestPage?.total || pages?.[0]?.total || 0;
@@ -306,8 +355,8 @@ export default function SourceContentPage() {
   };
 
   const handleSelectAll = () => {
-    if (contentItems.length) {
-      const allIds = new Set(contentItems.map((c) => c.id));
+    if (visibleContentItems.length) {
+      const allIds = new Set(visibleContentItems.map((c) => c.id));
       setSelectedIds(allIds);
     }
   };
@@ -455,7 +504,7 @@ export default function SourceContentPage() {
                       disabled={isLoadingMore && !autoLoadAll}
                       onClick={() => setAutoLoadAll((value) => !value)}
                     >
-                      {autoLoadAll ? 'Stop full load' : hasActiveFilters ? 'Load all matches' : 'Load full library'}
+                      {autoLoadAll ? 'Stop full load' : 'Load full library'}
                     </Button>
                   </>
                 ) : loadedCount ? (
@@ -473,11 +522,16 @@ export default function SourceContentPage() {
                   {totalAvailableItems ? `${contentLoadProgressPercent}%` : isLoadingMore ? '...' : '0%'}
                 </span>
               </div>
+              {hasActiveFilters ? (
+                <span className="text-xs font-medium text-muted-foreground">
+                  Showing {visibleContentItems.length.toLocaleString()} filtered
+                </span>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground xl:justify-end">
               <span>{selectedIds.size} item(s) selected</span>
               <Button variant="ghost" size="sm" onClick={handleSelectAll}>
-                Select loaded
+                Select shown
               </Button>
               <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
                 Deselect all
@@ -485,7 +539,7 @@ export default function SourceContentPage() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {contentItems.map((content) => (
+            {visibleContentItems.map((content) => (
               <ContentCard
                 key={content.id}
                 content={content}
@@ -496,7 +550,7 @@ export default function SourceContentPage() {
               />
             ))}
           </div>
-          {contentItems.length === 0 && (
+          {visibleContentItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">No content found matching your filters</p>
               <Button variant="link" onClick={handleClearFilters}>
