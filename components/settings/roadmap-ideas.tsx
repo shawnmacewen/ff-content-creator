@@ -14,7 +14,6 @@ import {
   Layers3,
   Mic2,
   PauseCircle,
-  Printer,
   Sparkles,
   type LucideIcon,
 } from 'lucide-react';
@@ -358,23 +357,6 @@ const roadmapIdeas: RoadmapIdea[] = [
     effort: 4,
     matrix: { x: 33, y: 72 },
     accent: 'from-orange-300 via-amber-200 to-emerald-200',
-  },
-  {
-    title: 'Print',
-    status: 'Later',
-    theme: 'Experimental Print',
-    summary: 'Mock the first print workflow surface so Editorial can start exploring a future print product area.',
-    details: [
-      'Landing page and SSO entry for getting print users into the right workspace.',
-      'Storefront mock for browsing print-ready products and campaign pieces.',
-      'My Orders plus very basic billing so the happy path feels real enough to react to.',
-    ],
-    joke: 'Print request arrives. Roadmap quietly opens a new tab called “This Again?”',
-    icon: Printer,
-    impact: 7,
-    effort: 8,
-    matrix: { x: 77, y: 78 },
-    accent: 'from-pink-300 via-yellow-200 to-cyan-300',
   },
   {
     title: 'Uploaded Asset Remix',
