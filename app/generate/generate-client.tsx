@@ -127,6 +127,7 @@ export default function GeneratePage() {
   const [usePlainLanguage, setUsePlainLanguage] = useState(true);
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
+  const [articlePreviewLayout, setArticlePreviewLayout] = useState<'summary' | 'spotlight'>('summary');
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource } = useSWR<any>(
@@ -912,16 +913,39 @@ export default function GeneratePage() {
                 />
               </div>
 
-              <SelectedArticlePreview
-                className="xl:h-full"
-                selectedSource={selectedSource}
-                detailContent={detailContent}
-                bodyPreview={normalizedBodyPreview}
-                onClear={handleClearSource}
-                onUseArticle={handleUseDetailArticle}
-                onViewDetails={handleOpenSelectedDetails}
-                campaignCompact
-              />
+              <div className="flex min-h-0 flex-col gap-2 xl:h-full">
+                <div className="flex justify-end">
+                  <div className="inline-grid grid-cols-2 rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
+                    {([
+                      ['summary', 'Summary'],
+                      ['spotlight', 'Spotlight'],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setArticlePreviewLayout(value)}
+                        className={cn(
+                          'h-8 rounded px-3 text-xs font-semibold transition-colors',
+                          articlePreviewLayout === value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <SelectedArticlePreview
+                  className="min-h-0 flex-1"
+                  selectedSource={selectedSource}
+                  detailContent={detailContent}
+                  bodyPreview={normalizedBodyPreview}
+                  onClear={handleClearSource}
+                  onUseArticle={handleUseDetailArticle}
+                  onViewDetails={handleOpenSelectedDetails}
+                  campaignCompact
+                  campaignLayout={articlePreviewLayout}
+                />
+              </div>
             </div>
             {selectedSourceIds.length > 1 ? (
               <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
