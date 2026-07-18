@@ -217,7 +217,8 @@ export function SelectedArticlePreview({
     if (campaignLayout === 'spotlight') {
       return (
         <section className={cn('flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
-          <div className="relative h-44 overflow-hidden bg-slate-100">
+          <div className="relative h-44 overflow-visible bg-slate-100">
+            <div className="absolute inset-0 overflow-hidden">
             {imageUrl ? (
               <div
                 className="absolute inset-0 bg-cover bg-center"
@@ -227,15 +228,8 @@ export function SelectedArticlePreview({
               <div className="absolute inset-0 bg-[linear-gradient(135deg,#eff6ff,#dbeafe_52%,#f8fafc)]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 via-slate-950/20 to-transparent" />
+            </div>
             <div className="absolute right-4 top-4 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onUseArticle}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950/45 px-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-slate-950/60"
-              >
-                <Bookmark className="h-3.5 w-3.5" />
-                Save
-              </button>
               <button
                 type="button"
                 onClick={onClear}
@@ -245,7 +239,7 @@ export function SelectedArticlePreview({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="absolute bottom-0 left-4 w-[min(430px,calc(100%-2rem))] translate-y-1/2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="absolute bottom-0 left-4 z-20 w-[min(430px,calc(100%-2rem))] translate-y-1/2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
               <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                 <span className="truncate">{decodeEntities(designation)}</span>
               </div>
@@ -337,14 +331,6 @@ export function SelectedArticlePreview({
               <h3 className="mt-3 line-clamp-2 text-2xl font-semibold leading-tight tracking-normal text-white">{title}</h3>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={onUseArticle}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950/45 px-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-slate-950/60"
-              >
-                <Bookmark className="h-3.5 w-3.5" />
-                Save
-              </button>
               <button
                 type="button"
                 onClick={onClear}
