@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,10 @@ type Topic = 'All Topics' | 'Markets' | 'Economy' | 'Energy' | 'AI & Tech' | 'Ba
 interface ApiResponse {
   data: SourceContent[];
   total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -124,19 +128,58 @@ export function SourceArticlePicker({
 }) {
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
+  const [autoLoadAll, setAutoLoadAll] = React.useState(false);
 
-  // API currently supports q + pageSize; topic is UI-only for now.
-  const apiUrl = query
-    ? `/api/source-content?q=${encodeURIComponent(query)}&pageSize=200`
-    : '/api/source-content?pageSize=50';
+  const pageSize = query.trim() ? 200 : 50;
+  const getPageKey = React.useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
+    if (previousPageData && !previousPageData.hasNextPage) return null;
 
-  const { data, isLoading } = useSWR<ApiResponse>(apiUrl, fetcher);
+    const params = new URLSearchParams({
+      page: String(pageIndex + 1),
+      pageSize: String(pageSize),
+    });
+
+    const q = query.trim();
+    if (q) params.set('q', q);
+
+    return `/api/source-content?${params.toString()}`;
+  }, [pageSize, query]);
+
+  const {
+    data: pages,
+    isLoading,
+    isValidating,
+    size,
+    setSize,
+  } = useSWRInfinite<ApiResponse>(getPageKey, fetcher, {
+    keepPreviousData: true,
+    revalidateFirstPage: false,
+  });
+
+  React.useEffect(() => {
+    setAutoLoadAll(false);
+    void setSize(1);
+  }, [query, setSize]);
+
+  const items = React.useMemo(() => pages?.flatMap((page) => page.data || []) ?? [], [pages]);
+  const latestPage = pages?.[pages.length - 1] ?? null;
+  const total = latestPage?.total ?? pages?.[0]?.total ?? 0;
+  const hasNextPage = Boolean(latestPage?.hasNextPage);
+  const loadedCount = items.length;
+  const isLoadingMore = isValidating && Boolean(pages?.length);
+
+  React.useEffect(() => {
+    if (!autoLoadAll || !hasNextPage || isValidating) return;
+    void setSize(size + 1);
+  }, [autoLoadAll, hasNextPage, isValidating, setSize, size]);
+
+  React.useEffect(() => {
+    if (autoLoadAll && !hasNextPage && !isValidating) setAutoLoadAll(false);
+  }, [autoLoadAll, hasNextPage, isValidating]);
 
   const topics: Topic[] = ['All Topics', 'Markets', 'Economy', 'AI & Tech', 'Banking', 'Medicare', 'Energy', 'Geopolitics', 'ESG'];
 
   const filtered = React.useMemo(() => {
-    const items = data?.data ?? [];
-
     const topicNeedles: Record<Topic, string[]> = {
       'All Topics': [],
       Markets: ['markets', 'market', 'stocks', 'equities', 'bonds', 'fixed income'],
@@ -161,7 +204,7 @@ export function SourceArticlePicker({
       const searchOk = !q || hay.includes(q);
       return topicOk && searchOk;
     });
-  }, [data, topic, query]);
+  }, [items, topic, query]);
 
   if (compact) {
     return (
@@ -264,12 +307,12 @@ export function SourceArticlePicker({
             {splitView ? (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
                 <Sparkles className="h-3 w-3" />
-                Editorial Sources - {data?.total?.toLocaleString?.() || '50'}
+                Editorial Sources - {total ? total.toLocaleString() : '50'}
               </div>
             ) : null}
             <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
               <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
-              {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} sources`}
+              {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} shown`}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center lg:justify-end">
@@ -336,7 +379,7 @@ export function SourceArticlePicker({
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
                       'group relative overflow-hidden rounded-[1.25rem] border bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(15,23,42,0.16)]',
-                      splitView ? 'min-h-[88px] rounded-lg shadow-none' : 'min-h-44',
+                      splitView ? 'min-h-[76px] rounded-lg shadow-none' : 'min-h-44',
                       selected ? 'border-primary ring-2 ring-primary/25' : 'border-slate-200/80'
                     )}
                   >
@@ -355,7 +398,7 @@ export function SourceArticlePicker({
                       <div className={cn('absolute inset-y-0 -right-px bg-gradient-to-r from-transparent via-white/82 to-white', splitView ? 'w-8' : 'w-14')} />
                     </div>
 
-                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[28%] min-h-[94px] p-2.5 sm:p-2.5' : 'ml-[40%] min-h-44')}>
+                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[28%] min-h-[76px] p-2.5 sm:p-2.5' : 'ml-[40%] min-h-44')}>
                       <div className="flex items-start justify-between gap-2">
                         <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[180px] px-2 py-0 text-[10px]', tagLabelClass(primaryLabel))}>
                           {decodeLite(primaryLabel)}
@@ -386,7 +429,7 @@ export function SourceArticlePicker({
                           <Calendar className={cn('h-3.5 w-3.5', splitView && 'h-3 w-3')} />
                           {formatDate(c.publishedAt) || 'Date unavailable'}
                         </span>
-                        {words ? <span>{words.toLocaleString()} words</span> : null}
+                        {!splitView && words ? <span>{words.toLocaleString()} words</span> : null}
                         {(c.tags || []).length > 1 ? <span>{(c.tags || []).length} signals</span> : null}
                       </div>
                     </div>
@@ -397,12 +440,52 @@ export function SourceArticlePicker({
           )}
         </ScrollArea>
 
-        <div className={cn('mt-4 flex flex-col gap-2 border-t border-slate-200/80 pt-4 text-xs font-medium text-slate-500 sm:flex-row sm:items-center sm:justify-between', splitView && 'mt-3 pt-3 text-[11px]')}>
-          <span>{selectedId ? '1 article selected for generation context.' : 'Select an article to open the full preview.'}</span>
-          {selectedId ? (
-            <button type="button" onClick={() => onSelect(null)} className="w-fit rounded-full px-2 py-1 text-cyan-700 transition hover:bg-cyan-50">
-              Clear selection
-            </button>
+        <div className={cn('mt-3 flex flex-col gap-2 border-t border-slate-200/80 pt-3 text-xs font-medium text-slate-500', splitView && 'text-[11px]')}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              {selectedId ? '1 article selected for generation context.' : `Loaded ${loadedCount.toLocaleString()}${total ? ` of ${total.toLocaleString()}` : ''} sources.`}
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedId ? (
+                <button type="button" onClick={() => onSelect(null)} className="w-fit rounded-full px-2 py-1 text-cyan-700 transition hover:bg-cyan-50">
+                  Clear selection
+                </button>
+              ) : null}
+              {hasNextPage ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-md text-xs"
+                    disabled={isLoadingMore}
+                    onClick={() => void setSize(size + 1)}
+                  >
+                    {isLoadingMore ? 'Loading...' : `Load ${pageSize} more`}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={autoLoadAll ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 rounded-md text-xs"
+                    disabled={isLoadingMore && !autoLoadAll}
+                    onClick={() => setAutoLoadAll((value) => !value)}
+                  >
+                    {autoLoadAll ? 'Stop full load' : query.trim() ? 'Load all matches' : 'Load full library'}
+                  </Button>
+                </>
+              ) : loadedCount ? (
+                <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">All loaded</span>
+              ) : null}
+            </div>
+          </div>
+          {autoLoadAll ? (
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: total ? `${Math.max(4, Math.min(100, Math.round((loadedCount / total) * 100)))}%` : '8%' }}
+              />
+            </div>
           ) : null}
         </div>
       </CardContent>

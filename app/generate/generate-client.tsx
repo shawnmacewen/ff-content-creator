@@ -904,7 +904,7 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Select the trusted article EchoWrite should transform into your campaign.</p>
               </div>
             </div>
-            <div className="grid items-stretch gap-5 xl:h-[560px] xl:max-h-[560px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
+            <div className="grid items-stretch gap-5 xl:h-[720px] xl:max-h-[720px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
               <div className="min-h-0 xl:h-full">
                 <SourceArticlePicker
                   className="xl:h-full"
@@ -1132,7 +1132,7 @@ export default function GeneratePage() {
                 <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
               </div>
             </div>
-            <div className="grid items-stretch gap-3 xl:h-[735px] xl:max-h-[735px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
+            <div className="grid items-stretch gap-3 xl:h-[720px] xl:max-h-[720px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
               <div className="min-h-0 xl:h-full">
                 <SourceArticlePicker
                   className="xl:h-full"
