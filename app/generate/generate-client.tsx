@@ -27,8 +27,8 @@ import {
   Linkedin,
   Loader2,
   Mail,
+  PencilLine,
   Save,
-  SlidersHorizontal,
   Sparkles,
   User,
 } from 'lucide-react';
@@ -161,6 +161,15 @@ function WorkflowStepBody({
     >
       {children}
     </div>
+  );
+}
+
+function PencilSparklesIcon({ className }: { className?: string }) {
+  return (
+    <span className={cn('relative inline-flex h-4 w-4 shrink-0', className)}>
+      <PencilLine className="h-4 w-4" />
+      <Sparkles className="absolute -right-1 -top-1 h-2.5 w-2.5" />
+    </span>
   );
 }
 
@@ -928,7 +937,7 @@ export default function GeneratePage() {
                 activeWorkflowStep === 1 ? 'border-violet-300 bg-violet-50/20' : 'border-violet-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(230px,1.1fr)_minmax(260px,1fr)_minmax(260px,1fr)_auto]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                     <Sparkles className="h-6 w-6" />
@@ -972,10 +981,10 @@ export default function GeneratePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="justify-self-start gap-2 rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
+                  className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <PencilSparklesIcon />
                   {activeWorkflowStep === 1 ? 'Save' : 'Edit'}
                 </Button>
               </div>
@@ -1018,7 +1027,7 @@ export default function GeneratePage() {
                   />
             
                   {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                <Card className="mt-6 overflow-hidden rounded-lg border-violet-200 bg-violet-50/35 shadow-sm">
+                <Card className="mt-6 overflow-hidden rounded-lg border-violet-200 bg-white shadow-sm">
                   <CardContent className="space-y-4 p-4">
                     <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)] lg:items-center">
                       <div className="flex min-w-0 items-center gap-4">
@@ -1153,7 +1162,7 @@ export default function GeneratePage() {
                 activeWorkflowStep === 2 ? 'border-cyan-300 bg-cyan-50/20' : 'border-cyan-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(230px,1.1fr)_minmax(220px,0.85fr)_minmax(260px,1fr)_auto]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
                     <CheckCircle2 className="h-6 w-6" />
@@ -1176,10 +1185,10 @@ export default function GeneratePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="justify-self-start gap-2 rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
+                  className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
                   onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <PencilSparklesIcon />
                   {activeWorkflowStep === 2 ? 'Save' : 'Edit'}
                 </Button>
               </div>
@@ -1270,7 +1279,7 @@ export default function GeneratePage() {
               activeWorkflowStep === 3 ? 'border-blue-300 bg-blue-50/20' : 'border-blue-100'
             )}
           >
-            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_auto]">
+            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(260px,1.1fr)_minmax(280px,1fr)_minmax(280px,1fr)_104px]">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
                   <FileText className="h-6 w-6" />
@@ -1297,10 +1306,10 @@ export default function GeneratePage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="justify-self-start gap-2 rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
+                className="w-[104px] justify-center gap-2 justify-self-start rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
                 onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <PencilSparklesIcon />
                 {activeWorkflowStep === 3 ? 'Save' : 'Edit'}
               </Button>
             </div>
