@@ -194,10 +194,20 @@ export default function AuditPage() {
           <button
             type="button"
             onClick={() => setMethod('search')}
-            className={`flex min-h-[92px] items-center justify-between gap-4 rounded-lg border bg-white p-4 text-left shadow-sm transition ${method === 'search' ? 'border-blue-600 ring-1 ring-blue-600' : 'border-slate-200 hover:border-blue-200'}`}
+            className={cn(
+              'flex min-h-[92px] items-center justify-between gap-4 rounded-lg border p-4 text-left shadow-sm transition',
+              method === 'search'
+                ? 'border-blue-600 bg-blue-50/60 ring-1 ring-blue-600'
+                : 'border-slate-200 bg-white hover:border-blue-200'
+            )}
           >
             <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-slate-950">
+              <span className={cn(
+                'flex h-12 w-12 shrink-0 items-center justify-center rounded-md border',
+                method === 'search'
+                  ? 'border-blue-100 bg-blue-100 text-blue-700'
+                  : 'border-blue-100 bg-blue-50 text-blue-600'
+              )}>
                 <Search className="h-6 w-6" />
               </span>
               <div>
@@ -206,17 +216,36 @@ export default function AuditPage() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <span className="hidden rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 sm:inline-flex">Precise matching</span>
-              {method === 'search' ? <CheckCircle2 className="h-5 w-5 text-blue-600" /> : null}
+              <span className={cn(
+                'hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex',
+                method === 'search'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-slate-100 text-slate-400'
+              )}>Precise matching</span>
+              {method === 'search' ? (
+                <CheckCircle2 className="h-6 w-6 fill-blue-600 text-white" />
+              ) : (
+                <span className="h-5 w-5 rounded-full border-2 border-slate-300 bg-white" />
+              )}
             </div>
           </button>
           <button
             type="button"
             onClick={() => setMethod('analyze')}
-            className={`flex min-h-[92px] items-center justify-between gap-4 rounded-lg border bg-white p-4 text-left shadow-sm transition ${method === 'analyze' ? 'border-violet-600 ring-1 ring-violet-600' : 'border-slate-200 hover:border-violet-200'}`}
+            className={cn(
+              'flex min-h-[92px] items-center justify-between gap-4 rounded-lg border p-4 text-left shadow-sm transition',
+              method === 'analyze'
+                ? 'border-violet-600 bg-violet-50/60 ring-1 ring-violet-600'
+                : 'border-slate-200 bg-white hover:border-violet-200'
+            )}
           >
             <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-violet-100 bg-violet-50 text-violet-700">
+              <span className={cn(
+                'flex h-12 w-12 shrink-0 items-center justify-center rounded-md border',
+                method === 'analyze'
+                  ? 'border-violet-100 bg-violet-100 text-violet-700'
+                  : 'border-violet-100 bg-violet-50 text-violet-500'
+              )}>
                 <Sparkles className="h-6 w-6" />
               </span>
               <div>
@@ -225,8 +254,17 @@ export default function AuditPage() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <span className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500 sm:inline-flex">Broader discovery</span>
-              {method === 'analyze' ? <CheckCircle2 className="h-5 w-5 text-violet-600" /> : null}
+              <span className={cn(
+                'hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex',
+                method === 'analyze'
+                  ? 'bg-violet-100 text-violet-700'
+                  : 'bg-slate-100 text-slate-400'
+              )}>Broader discovery</span>
+              {method === 'analyze' ? (
+                <CheckCircle2 className="h-6 w-6 fill-violet-600 text-white" />
+              ) : (
+                <span className="h-5 w-5 rounded-full border-2 border-slate-300 bg-white" />
+              )}
             </div>
           </button>
         </div>
