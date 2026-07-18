@@ -45,6 +45,48 @@ import { ScrollText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+const CAROUSEL_LOADING_PHRASES = [
+  'Reticulating splines...',
+  'Aligning the swipe rhythm...',
+  'Polishing the pixels...',
+  'Convincing the captions to behave...',
+  'Tuning the carousel engine...',
+  'Stacking the story arc...',
+  'Balancing type and whitespace...',
+  'Teaching the slides to cooperate...',
+  'Combing through the visual hierarchy...',
+  'Warming up the image model...',
+  'Sharpening the creative brief...',
+  'Arranging the content blocks...',
+  'Checking the crop marks...',
+  'Dusting off the design grid...',
+  'Making the CTA feel clickable...',
+  'Finding the good blue...',
+  'Smoothing the transitions...',
+  'Negotiating with the layout...',
+  'Giving the background some depth...',
+  'Counting pixels twice...',
+  'Making room for the headline...',
+  'Assembling the swipe deck...',
+  'Rendering the advisor-friendly magic...',
+  'Keeping the claims conservative...',
+  'Preparing the final slide energy...',
+  'Coaxing contrast into place...',
+  'Sorting the visual ingredients...',
+  'Trimming the tiny text...',
+  'Checking for accidental chaos...',
+  'Making the carousel feel expensive...',
+];
+
+function shuffleLoadingPhrases() {
+  const phrases = [...CAROUSEL_LOADING_PHRASES];
+  for (let index = phrases.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [phrases[index], phrases[swapIndex]] = [phrases[swapIndex], phrases[index]];
+  }
+  return phrases;
+}
+
 function decodeEntitiesLite(input: string): string {
   const s = String(input || '');
   return s
@@ -258,6 +300,7 @@ export default function GeneratePage() {
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
   const [isGeneratingKitCarouselImages, setIsGeneratingKitCarouselImages] = useState(false);
   const [kitCarouselProgress, setKitCarouselProgress] = useState<InstagramCarouselProgress | null>(null);
+  const [carouselLoadingPhrase, setCarouselLoadingPhrase] = useState<string | null>(null);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
@@ -273,6 +316,8 @@ export default function GeneratePage() {
 
   const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
   const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
+  const carouselPhraseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carouselPhraseQueueRef = useRef<string[]>([]);
 
   // Parse URL params
   useEffect(() => {
@@ -358,6 +403,7 @@ export default function GeneratePage() {
   const hasInstagramCarousel = kitTypes.includes('social-instagram') &&
     instagramKitVariant === 'carousel' &&
     includeInstagramCarouselImages;
+  const isKitCarouselGenerating = pendingKitCarouselGenerate || isGeneratingKitCarouselImages;
 
   const carouselStatusLabel = (() => {
     if (!hasInstagramCarousel) return null;
@@ -381,6 +427,43 @@ export default function GeneratePage() {
     if (status === 'generating') return <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />;
     return null;
   };
+
+  useEffect(() => {
+    if (carouselPhraseTimeoutRef.current) {
+      clearTimeout(carouselPhraseTimeoutRef.current);
+      carouselPhraseTimeoutRef.current = null;
+    }
+
+    if (!isKitCarouselGenerating) {
+      carouselPhraseQueueRef.current = [];
+      setCarouselLoadingPhrase(null);
+      return undefined;
+    }
+
+    carouselPhraseQueueRef.current = shuffleLoadingPhrases();
+
+    const showNextPhrase = () => {
+      const [nextPhrase, ...remaining] = carouselPhraseQueueRef.current;
+      if (!nextPhrase) return;
+
+      carouselPhraseQueueRef.current = remaining;
+      setCarouselLoadingPhrase(nextPhrase);
+
+      if (remaining.length) {
+        const delay = 1000 + Math.floor(Math.random() * 1500);
+        carouselPhraseTimeoutRef.current = setTimeout(showNextPhrase, delay);
+      }
+    };
+
+    showNextPhrase();
+
+    return () => {
+      if (carouselPhraseTimeoutRef.current) {
+        clearTimeout(carouselPhraseTimeoutRef.current);
+        carouselPhraseTimeoutRef.current = null;
+      }
+    };
+  }, [isKitCarouselGenerating]);
 
 
   useEffect(() => {
@@ -1234,9 +1317,12 @@ export default function GeneratePage() {
               {carouselStatusLabel ? (
                 <div className="mb-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
                   <div className="flex flex-wrap items-center gap-2">
-                    {(pendingKitCarouselGenerate || isGeneratingKitCarouselImages) ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
+                    {isKitCarouselGenerating ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
                     <span>{carouselStatusLabel}</span>
                   </div>
+                  {isKitCarouselGenerating && carouselLoadingPhrase ? (
+                    <div className="mt-2 text-xs font-medium text-primary">{carouselLoadingPhrase}</div>
+                  ) : null}
                   {kitCarouselProgress ? (
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                       <div
