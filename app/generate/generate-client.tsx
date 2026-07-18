@@ -628,7 +628,6 @@ export default function GeneratePage() {
                 <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>1</span>
                 <div>
                   <h2 className="text-lg font-semibold">Campaign outputs</h2>
-                  <p className="text-sm text-muted-foreground">{activeWorkflowStep === 1 ? 'Choose the channel mix for this campaign package.' : selectedOutputLabels.join(' - ')}</p>
                 </div>
                 {activeWorkflowStep !== 1 ? (
                   <Button type="button" variant="ghost" size="sm" className="ml-auto text-primary" onClick={() => setActiveWorkflowStep(1)}>
@@ -820,7 +819,6 @@ export default function GeneratePage() {
                 <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>2</span>
                 <div>
                   <h2 className="text-lg font-semibold">Writing guidance</h2>
-                  <p className="text-sm text-muted-foreground">{activeWorkflowStep === 2 ? 'Set tone, instructions, and campaign context.' : toneDescription(tone)}</p>
                 </div>
                 {activeWorkflowStep !== 2 ? (
                   <Button type="button" variant="outline" size="sm" className="ml-auto gap-2 rounded-md" onClick={() => setActiveWorkflowStep(2)}>
