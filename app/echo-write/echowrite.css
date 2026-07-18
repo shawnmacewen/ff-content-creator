@@ -1,3 +1,36 @@
+.echowrite-brand-bar,
+.echowrite-pane-ribbon {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(110deg, #182a54 0%, #25315f 30%, #d65d4f 58%, #e0a85d 77%, #168a9b 100%);
+}
+
+.echowrite-brand-line,
+.echowrite-pane-ribbon::after {
+  position: absolute;
+  inset: auto -8% 0 -8%;
+  height: 64%;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 100%, rgba(255, 255, 255, 0.11), transparent 52%),
+    radial-gradient(ellipse at 72% 100%, rgba(255, 255, 255, 0.14), transparent 56%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateY(32%);
+}
+
+.echowrite-pane-ribbon::after {
+  height: 100%;
+  transform: translateY(38%);
+}
+
+.echowrite-brand-bar > :not(.echowrite-brand-line),
+.echowrite-pane-ribbon > * {
+  position: relative;
+  z-index: 1;
+}
+
 .echowrite-prosemirror p { margin: 0 0 0.9rem 0; }
 .echowrite-prosemirror p:last-child { margin-bottom: 0; }
 .echowrite-prosemirror h1 { margin: 0 0 0.9rem 0; font-size: 1.2rem; font-weight: 700; }

@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, ExternalLink, FileText, Loader2, PenSquare, Save, Settings2, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, FilePlus2, FileText, Info, Link2, Loader2, PlusCircle, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -55,16 +54,6 @@ function titleFromContent(content: string) {
   return (firstLine || 'EchoWrite draft').replace(/^#+\s*/, '').slice(0, 100);
 }
 
-function subtitleFromContent(content: string) {
-  return content
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .find((line) => !/^#+\s*/.test(line) && line !== titleFromContent(content))
-    ?.replace(/^#+\s*/, '')
-    .slice(0, 180);
-}
-
 function toneFromWritingStyle(style: 'professional' | 'fun' | 'educational') {
   if (style === 'fun') return 'friendly';
   if (style === 'educational') return 'authoritative';
@@ -92,7 +81,7 @@ export default function EchoWritePage() {
   const [lastModel, setLastModel] = useState<string>('');
   const [promptOpen, setPromptOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
-  const [setupCollapsed, setSetupCollapsed] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
@@ -129,15 +118,7 @@ export default function EchoWritePage() {
     return sourcesWithCitation.filter((s) => s.citationNumber).length;
   }, [sourcesWithCitation]);
 
-  const outputHeroSource = useMemo(() => {
-    return sourcesWithCitation.find((source) => source.citationNumber && source.imageUrl)
-      || sourcesWithCitation.find((source) => source.imageUrl)
-      || sourcesWithCitation[0]
-      || null;
-  }, [sourcesWithCitation]);
-
   const outputTitle = useMemo(() => titleFromContent(content), [content]);
-  const outputSubtitle = useMemo(() => subtitleFromContent(content), [content]);
 
   const saveSourceIds = useMemo(() => {
     const citedIds = sourcesWithCitation
@@ -161,12 +142,9 @@ export default function EchoWritePage() {
     };
   }, [content, sources.length, spans]);
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
-  const canCollapseSetup = hasGeneratedOutput || loading;
-  const isSetupCollapsed = setupCollapsed && canCollapseSetup;
 
   const generate = async () => {
     setLoading(true);
-    setSetupCollapsed(true);
     setError(null);
     try {
       const res = await fetch('/api/echo-write', {
@@ -192,12 +170,10 @@ export default function EchoWritePage() {
       setLastModel(String(json?.debug?.model || ''));
       setHoverSourceId(null);
       setHoverSnippet(null);
-      setSetupCollapsed(true);
       toast.success('EchoWrite draft generated');
     } catch (err: any) {
       const message = err?.message || 'EchoWrite generation failed';
       setError(message);
-      setSetupCollapsed(false);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -258,94 +234,123 @@ export default function EchoWritePage() {
   };
 
   return (
-    <div className="flex w-full max-w-none flex-col gap-6">
-      <PageHeader
-        eyebrow="Grounded editorial drafting"
-        title="EchoWrite"
-        description="Generate long-form editorial content with source retrieval, citations, and evidence highlights."
-        metrics={[]}
-      />
+    <div className="echowrite-shell -m-6 flex min-h-[calc(100vh-4rem)] w-[calc(100%+3rem)] max-w-none flex-col bg-[#f3f7fb] text-slate-950">
+      <section className="echowrite-brand-bar">
+        <div className="echowrite-brand-line" />
+        <div className="px-6 py-7 sm:px-8">
+          <h1 className="text-[2rem] font-semibold leading-tight tracking-normal text-white">EchoWrite</h1>
+          <p className="mt-1 text-base font-medium text-white/92">Create accurate, source-backed content.</p>
+        </div>
+      </section>
 
-      <div className="space-y-3">
-        <div className={`space-y-4 overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-[max-height,opacity,transform,padding] duration-500 ease-in-out ${isSetupCollapsed ? 'pointer-events-none max-h-0 -translate-y-6 border-0 p-0 opacity-0 shadow-none' : 'max-h-[860px] translate-y-0 opacity-100'}`}>
+      <main className="flex w-full flex-1 flex-col gap-5 p-4 sm:p-6">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:p-6">
+          <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
           <Textarea
-            placeholder="Describe the content you want generated..."
+            placeholder="Describe your topic, audience, key message, and anything the draft should include..."
             value={prompt}
-            onChange={(e) => {
-              setPrompt(e.target.value);
-              setSetupCollapsed(false);
-            }}
-            rows={4}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={5}
+            className="mt-3 min-h-28 resize-y border-slate-200 bg-white text-base shadow-inner placeholder:text-slate-500 focus-visible:ring-blue-500/30"
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Writing Style</div>
-              <Select value={writingStyle} onValueChange={(v: any) => {
-                setWritingStyle(v);
-                setSetupCollapsed(false);
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="fun">Fun</SelectItem>
-                  <SelectItem value="educational">Educational</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <div>
+                <div className="mb-1.5 text-xs font-medium text-slate-600">Writing style</div>
+                <Select value={writingStyle} onValueChange={(v: any) => setWritingStyle(v)}>
+                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="fun">Fun</SelectItem>
+                    <SelectItem value="educational">Educational</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="mb-1.5 text-xs font-medium text-slate-600">Content type</div>
+                <Select value={contentType} onValueChange={(v: any) => setContentType(v)}>
+                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="article">Article</SelectItem>
+                    <SelectItem value="video-script">Video Script</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="mb-1.5 text-xs font-medium text-slate-600">Length</div>
+                <Select value={length} onValueChange={(v: any) => setLength(v)}>
+                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="short">Short</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="long">Long</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="mb-1.5 text-xs font-medium text-slate-600">Target words</div>
+                <Input
+                  value={targetWordCount}
+                  onChange={(e) => setTargetWordCount(e.target.value)}
+                  placeholder="Optional"
+                  className="h-11 border-slate-200 bg-white shadow-sm placeholder:text-slate-500"
+                />
+              </div>
+              <div>
+                <div className="mb-1.5 text-xs font-medium text-slate-600">References</div>
+                <Select value={String(maxSources)} onValueChange={(value) => setMaxSources(Number(value))}>
+                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[0, 3, 6, 10, 12].map((count) => (
+                      <SelectItem key={count} value={String(count)}>
+                        {count === 0 ? 'None' : `Up to ${count}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Content Type</div>
-              <Select value={contentType} onValueChange={(v: any) => {
-                setContentType(v);
-                setSetupCollapsed(false);
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="article">Article</SelectItem>
-                  <SelectItem value="video-script">Video Script</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+              <div className="hidden h-12 w-px bg-slate-200 xl:block" />
+              <Button variant="outline" className="h-11 gap-2 border-slate-200 bg-white px-5 text-slate-800 shadow-sm" onClick={() => setAdvancedOpen(true)}>
+                <Settings2 className="h-4 w-4" />
+                Advanced settings
+              </Button>
+              <Button variant="ghost" className="h-11 gap-2 px-3 text-blue-700 hover:bg-blue-50 hover:text-blue-800" onClick={() => window.location.assign('/source-content')}>
+                <PlusCircle className="h-4 w-4" />
+                Add source content
+              </Button>
+              <Button variant="ghost" className="h-11 gap-2 px-3 text-blue-700 hover:bg-blue-50 hover:text-blue-800" onClick={() => toast.info('Templates are managed in Generate Content for now.')}>
+                <FilePlus2 className="h-4 w-4" />
+                Use a template
+              </Button>
+              <Button onClick={generate} disabled={loading || !prompt.trim()} className="h-11 gap-2 bg-blue-700 px-5 font-semibold shadow-sm hover:bg-blue-800">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate draft' : 'Generate draft'}
+              </Button>
             </div>
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Length</div>
-              <Select value={length} onValueChange={(v: any) => {
-                setLength(v);
-                setSetupCollapsed(false);
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="short">Short</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="long">Long</SelectItem>
-                </SelectContent>
-              </Select>
+          </div>
+          {error ? (
+            <div className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
             </div>
+          ) : null}
+        </section>
+
+      <Dialog open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <DialogContent className="max-w-xl w-[92vw]">
+          <DialogHeader>
+            <DialogTitle>Advanced settings</DialogTitle>
+            <DialogDescription>
+              Tune the model and inspect retrieval behavior for EchoWrite generation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
             <div>
-              <div className="text-xs text-muted-foreground mb-1">Target Word Count</div>
-              <Input value={targetWordCount} onChange={(e) => {
-                setTargetWordCount(e.target.value);
-                setSetupCollapsed(false);
-              }} placeholder="Optional" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Max Articles to Reference</div>
-              <Input
-                type="number"
-                min={0}
-                max={12}
-                value={maxSources}
-                onChange={(e) => {
-                  setMaxSources(Math.max(0, Math.min(12, Number(e.target.value) || 0)));
-                  setSetupCollapsed(false);
-                }}
-              />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">OpenAI Model</div>
-              <Select value={model} onValueChange={(value) => {
-                setModel(value);
-                setSetupCollapsed(false);
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">OpenAI model</div>
+              <Select value={model} onValueChange={setModel}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {MODEL_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
@@ -353,42 +358,19 @@ export default function EchoWritePage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={generate} disabled={loading || !prompt.trim()}>
-              {loading ? 'Generating...' : 'Generate'}
-            </Button>
-            <Button variant="outline" onClick={generate} disabled={loading || !prompt.trim() || !content.trim()}>
-              Regenerate
-            </Button>
-            <div className="flex-1" />
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setHowItWorksOpen(true)}
-              title="How EchoWrite works (retrieval + grounding + highlights)"
-            >
-              <span className="text-xs font-semibold">i</span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setPromptOpen(true)}
-              title="View last generation prompt"
-            >
-              <Settings2 className="h-4 w-4" />
-            </Button>
-          </div>
-          {error ? (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button variant="outline" className="justify-start gap-2" onClick={() => setHowItWorksOpen(true)}>
+                <Info className="h-4 w-4" />
+                How EchoWrite works
+              </Button>
+              <Button variant="outline" className="justify-start gap-2" onClick={() => setPromptOpen(true)}>
+                <Settings2 className="h-4 w-4" />
+                View last prompt
+              </Button>
             </div>
-          ) : null}
-        </div>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
         <DialogContent className="max-w-3xl w-[92vw]">
@@ -445,107 +427,57 @@ Separately (client-side), we:
         </DialogContent>
       </Dialog>
 
-      {groundingStatus.hasOutput ? (
-        <div className="grid gap-3 rounded-lg border border-border bg-card p-4 shadow-sm md:grid-cols-3">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <PenSquare className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{groundingStatus.totalSentences} output sentences</p>
-              <p className="text-xs text-muted-foreground">Generated draft structure</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-600 text-white">
-              <CheckCircle2 className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{groundingStatus.citedSentences} cited sentences</p>
-              <p className="text-xs text-muted-foreground">{groundingStatus.percent}% passed citation threshold</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
-              <Settings2 className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{sources.length} retrieved sources</p>
-              <p className="text-xs text-muted-foreground">
-                {groundingStatus.hasRetrievedSources ? `${citedSourceCount} cited in output` : 'No matching source context found'}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3 overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.16)] ring-1 ring-slate-200/70">
-          <div className="group relative min-h-[235px] overflow-hidden bg-slate-950">
-            {outputHeroSource?.imageUrl ? (
-              <div
-                className="absolute inset-0 scale-105 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
-                style={{ backgroundImage: `url("${outputHeroSource.imageUrl.replace(/"/g, '\\"')}")` }}
-              />
-            ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_22%,rgba(244,114,182,0.42),transparent_30%),radial-gradient(circle_at_62%_70%,rgba(168,85,247,0.22),transparent_28%),linear-gradient(135deg,#06172f_0%,#123b7a_52%,#db2777_118%)]" />
-            )}
-            <div className={outputHeroSource?.imageUrl ? 'absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.86),rgba(15,23,42,0.52)_48%,rgba(15,23,42,0.24)),linear-gradient(0deg,rgba(2,6,23,0.74),transparent_46%)]' : 'absolute inset-0 bg-[radial-gradient(circle_at_92%_16%,rgba(244,114,182,0.18),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.9),rgba(15,23,42,0.58)_46%,rgba(83,20,84,0.34)),linear-gradient(0deg,rgba(2,6,23,0.78),transparent_46%)]'} />
-            <div className="absolute inset-x-0 -bottom-4 h-36 bg-gradient-to-t from-white from-[10%] via-white/88 via-[42%] to-transparent" />
-
-            <div className="absolute left-5 right-5 top-5 z-20 flex items-center justify-between gap-3">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/14 px-3.5 py-1.5 text-xs font-semibold text-cyan-50 shadow-lg shadow-cyan-950/20 backdrop-blur">
-                <Sparkles className="h-3.5 w-3.5 text-pink-200" />
-                Generated Output
+        <div className="grid gap-5 lg:grid-cols-5">
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)] lg:col-span-3">
+            <div className="echowrite-pane-ribbon flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/70 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur">
+                <Sparkles className="h-4 w-4" />
+                Generated draft
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={copyOutput}
                   disabled={!content.trim()}
-                  className="h-10 rounded-full border-white/20 bg-white/10 px-4 text-white shadow-lg shadow-black/20 backdrop-blur-md hover:bg-white/20 hover:text-white"
+                  className="h-10 gap-2 border-white/35 bg-white/70 px-4 text-slate-800 hover:bg-white"
                 >
+                  <Copy className="h-4 w-4" />
                   Copy
                 </Button>
                 <Button
                   size="sm"
+                  variant="outline"
                   onClick={saveDraft}
                   disabled={!content.trim() || saving}
-                  className="h-10 rounded-full bg-white px-4 font-semibold text-slate-950 shadow-lg shadow-black/15 hover:bg-white/90"
+                  className="h-10 gap-2 border-white/35 bg-white/70 px-4 text-slate-800 hover:bg-white"
                 >
-                  <Save className="h-4 w-4" />
-                  {saving ? 'Saving...' : 'Save Draft'}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {saving ? 'Saving...' : 'Save draft'}
                 </Button>
               </div>
             </div>
-
-            <div className="relative z-10 flex min-h-[235px] flex-col justify-between p-6 pt-20 text-white sm:p-8 sm:pt-20">
-              <div>
-                <h2 className="max-w-[780px] text-balance font-serif text-3xl font-semibold leading-[1.08] tracking-normal text-white drop-shadow-2xl sm:text-[2.15rem]">
-                  {content.trim() ? outputTitle : 'Your EchoWrite draft will appear here'}
-                </h2>
-                {content.trim() && outputSubtitle ? (
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">{outputSubtitle}</p>
+            <div className="p-5 sm:p-6">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileText className="h-5 w-5 shrink-0 text-blue-700" />
+                  <div className="min-w-0">
+                    <h2 className="truncate text-base font-semibold text-slate-950">
+                      {content.trim() ? outputTitle : contentType === 'video-script' ? 'Video script' : 'Editorial article'}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600">Highlights connect claims to supporting sources.</p>
+                  </div>
+                </div>
+                {groundingStatus.hasOutput ? (
+                  <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      {groundingStatus.citedSentences}/{groundingStatus.totalSentences} cited
+                    </span>
+                    <span className="rounded-md border border-slate-200 px-2.5 py-1">{sources.length} retrieved</span>
+                  </div>
                 ) : null}
               </div>
-              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-blue-950">
-                <span className="inline-flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-700" />
-                  {contentType === 'video-script' ? 'Video script' : 'Editorial article'}
-                </span>
-                {outputHeroSource ? <span className="max-w-[320px] truncate text-slate-700">Grounded by {outputHeroSource.title}</span> : null}
-                {loading ? (
-                  <span className="inline-flex items-center gap-1.5 text-blue-950">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Drafting...
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
             <EchoWriteEditor
               value={content}
               spans={spans}
@@ -558,19 +490,19 @@ Separately (client-side), we:
               }}
             />
           </div>
-        </div>
+          </section>
 
-        <div className="lg:col-span-2 w-full rounded-lg border border-border bg-card p-0 overflow-hidden shadow-sm">
-          <div className="shrink-0 p-4 border-b border-border flex items-center justify-between">
-            <span className="font-semibold text-sm">Sources ({citedSourceCount} cited / {sources.length} retrieved)</span>
+          <section className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)] lg:col-span-2">
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-5">
+            <span className="text-lg font-semibold text-slate-950">Sources <span className="ml-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-100 px-2 text-sm text-slate-700">{sources.length}</span></span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Show matches</span>
+              <span className="text-xs text-slate-600">Show matches</span>
               <Switch checked={showMatches} onCheckedChange={(v) => setShowMatches(Boolean(v))} />
             </div>
           </div>
 
 
-          <div className="flex-1 overflow-auto p-3 space-y-2.5 max-h-[720px]">
+          <div className="max-h-[720px] flex-1 space-y-2.5 overflow-auto p-4">
             {sourcesWithCitation.length ? sourcesWithCitation.map((s) => {
               const isHovered = hoverSourceId && s.id === hoverSourceId;
               const n = s.citationNumber || 0;
@@ -585,7 +517,7 @@ Separately (client-side), we:
               return (
                 <div
                   key={s.id}
-                  className={`p-4 min-h-[140px] rounded-lg bg-card border-l-4 ${colors?.border || 'border-l-border'} transition-all cursor-pointer ${isHovered ? `ring-2 ${colors?.ring || 'ring-[#7c3aed]'} ring-offset-1 ring-offset-background` : ''}`}
+                  className={`min-h-[140px] cursor-pointer rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all ${colors?.border || 'border-l-slate-200'} border-l-4 ${isHovered ? `ring-2 ${colors?.ring || 'ring-blue-500'} ring-offset-1 ring-offset-white` : ''}`}
                   onMouseEnter={() => {
                     setHoverSourceId(s.id);
                     setHoverSnippet(sourceSnippetMap.get(s.id) || null);
@@ -603,7 +535,7 @@ Separately (client-side), we:
                     ) : null}
 
                     <div className="flex-1 min-w-0 flex flex-col">
-                      <h4 className="font-medium text-sm leading-tight text-foreground">{s.title}</h4>
+                      <h4 className="font-medium text-sm leading-tight text-slate-950">{s.title}</h4>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge variant={n ? 'default' : 'outline'} className="h-5 rounded text-[10px]">
                           {n ? 'Cited' : 'Retrieved'}
@@ -646,7 +578,7 @@ Separately (client-side), we:
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 text-xs text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                             onClick={(e) => {
                               e.stopPropagation();
                               openSourceDetail(String(s.id));
@@ -662,23 +594,37 @@ Separately (client-side), we:
                 </div>
               );
             }) : (
-              <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-                {loading ? 'Retrieving matching source content...' : 'No sources retrieved yet.'}
+              <div className="flex min-h-[400px] flex-col items-center justify-center px-6 text-center">
+                <FileText className="h-12 w-12 text-slate-500" />
+                <h3 className="mt-5 text-lg font-semibold text-slate-950">{loading ? 'Finding sources...' : 'No sources yet'}</h3>
+                <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
+                  {loading ? 'EchoWrite is retrieving matching source content.' : 'Add your own sources or let EchoWrite retrieve relevant references when you generate.'}
+                </p>
+                <Button variant="outline" className="mt-6 h-11 gap-2 border-slate-200 bg-white px-5 text-blue-700" onClick={() => window.location.assign('/source-content')}>
+                  <PlusCircle className="h-4 w-4" />
+                  Add a source
+                </Button>
+                <div className="mt-16 flex w-full items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-left text-sm text-slate-600">
+                  <Info className="h-4 w-4 shrink-0 text-slate-600" />
+                  <span>Citations and retrieved references will appear here.</span>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="p-3 text-xs text-muted-foreground border-t bg-muted/10">
-            Cited sources met a stronger passage-match threshold. Retrieved sources were provided to the model as context.
+          <div className="border-t border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-600">
+            <Link2 className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" />
+            {citedSourceCount} cited source{citedSourceCount === 1 ? '' : 's'} met a stronger passage-match threshold. Retrieved sources were provided to the model as context.
           </div>
+          </section>
         </div>
-      </div>
       <ContentDetail
         content={detailContent}
         open={detailOpen}
         onOpenChange={setDetailOpen}
         highlightSnippets={detailHighlightSnippets}
       />
+      </main>
     </div>
   );
 }
