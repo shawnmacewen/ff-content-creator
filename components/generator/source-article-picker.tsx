@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { tagLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import type { SourceContent } from '@/lib/types/content';
+import { buildSourceContentSearchText, sourceContentMatchesQuery } from '@/lib/source-content/search';
 import { Calendar, Check, ChevronDown, FileText, Filter, Search, Sparkles } from 'lucide-react';
 
 type Topic = 'All Topics' | 'Markets' | 'Economy' | 'Energy' | 'AI & Tech' | 'Banking' | 'Medicare' | 'Geopolitics' | 'ESG';
@@ -24,6 +25,7 @@ interface ApiResponse {
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const SOURCE_ARTICLE_PAGE_SIZE = 50;
 
 function formatDate(s?: string) {
   if (!s) return '';
@@ -137,20 +139,16 @@ export function SourceArticlePicker({
   const [topic, setTopic] = React.useState<Topic>('All Topics');
   const [autoLoadAll, setAutoLoadAll] = React.useState(false);
 
-  const pageSize = query.trim() ? 200 : 50;
   const getPageKey = React.useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
     if (previousPageData && !previousPageData.hasNextPage) return null;
 
     const params = new URLSearchParams({
       page: String(pageIndex + 1),
-      pageSize: String(pageSize),
+      pageSize: String(SOURCE_ARTICLE_PAGE_SIZE),
     });
 
-    const q = query.trim();
-    if (q) params.set('q', q);
-
     return `/api/source-content?${params.toString()}`;
-  }, [pageSize, query]);
+  }, []);
 
   const {
     data: pages,
@@ -162,11 +160,6 @@ export function SourceArticlePicker({
     keepPreviousData: true,
     revalidateFirstPage: false,
   });
-
-  React.useEffect(() => {
-    setAutoLoadAll(false);
-    void setSize(1);
-  }, [query, setSize]);
 
   const items = React.useMemo(() => pages?.flatMap((page) => page.data || []) ?? [], [pages]);
   const latestPage = pages?.[pages.length - 1] ?? null;
@@ -200,15 +193,13 @@ export function SourceArticlePicker({
     };
 
     const needles = topic === 'All Topics' ? [] : (topicNeedles[topic] || [topic]).map((s) => s.toLowerCase());
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
 
     return items.filter((c) => {
-      const tagText = (c.tags || []).map((t) => decodeLite(String(t))).join(' ');
-      const filename = getFilename(c);
-      const hay = `${decodeLite(String(c.type || ''))} ${decodeLite(String(c.title || ''))} ${decodeLite(String(c.excerpt || ''))} ${decodeLite(String(filename || ''))} ${tagText}`.toLowerCase();
+      const hay = buildSourceContentSearchText(c).toLowerCase();
 
       const topicOk = !needles.length || needles.some((n) => hay.includes(n));
-      const searchOk = !q || hay.includes(q);
+      const searchOk = sourceContentMatchesQuery(c, q);
       return topicOk && searchOk;
     });
   }, [items, topic, query]);
@@ -319,7 +310,11 @@ export function SourceArticlePicker({
             ) : null}
             <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
               <FileText className={cn('h-4 w-4 text-slate-400', splitView && 'h-3.5 w-3.5')} />
-              {isLoading ? 'Loading sources' : `${filtered.length.toLocaleString()} shown`}
+              {isLoading
+                ? 'Loading sources'
+                : query.trim()
+                  ? `${filtered.length.toLocaleString()} search results`
+                  : `${filtered.length.toLocaleString()} shown`}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center lg:justify-end">
@@ -480,7 +475,7 @@ export function SourceArticlePicker({
                     disabled={isLoadingMore}
                     onClick={() => void setSize(size + 1)}
                   >
-                    {isLoadingMore ? 'Loading...' : `Load ${pageSize} more`}
+                    {isLoadingMore ? 'Loading...' : `Load ${SOURCE_ARTICLE_PAGE_SIZE} more`}
                   </Button>
                   <Button
                     type="button"
@@ -490,7 +485,7 @@ export function SourceArticlePicker({
                     disabled={isLoadingMore && !autoLoadAll}
                     onClick={() => setAutoLoadAll((value) => !value)}
                   >
-                    {autoLoadAll ? 'Stop full load' : query.trim() ? 'Load all matches' : 'Load full library'}
+                    {autoLoadAll ? 'Stop full load' : 'Load full library'}
                   </Button>
                 </>
               ) : loadedCount ? (

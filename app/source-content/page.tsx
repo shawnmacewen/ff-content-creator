@@ -12,6 +12,11 @@ import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import { PageHeader } from '@/components/layout/page-header';
 import { toast } from 'sonner';
+import {
+  normalizeSourceSearchValue,
+  sourceContentMatchesQuery,
+  type SourceContentSearchScope,
+} from '@/lib/source-content/search';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -69,50 +74,6 @@ const fetcher = async (url: string) => {
 };
 
 const SOURCE_CONTENT_PAGE_SIZE = 50;
-
-function normalizeSearchValue(value: unknown) {
-  return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
-function getSourceFilenameText(content: SourceContent) {
-  const metadata = content.metadata || {};
-  const extraPropertiesSelected = metadata.extraPropertiesSelected || {};
-  const extraProperties = metadata.extraProperties || {};
-
-  return [
-    content.externalId,
-    extraPropertiesSelected.BasContentFilename,
-    extraPropertiesSelected.BasContentId,
-    extraProperties.BasContentFilename,
-    extraProperties.BasContentId,
-  ].filter(Boolean).join(' ');
-}
-
-function getClientSearchText(content: SourceContent, searchScope: string) {
-  if (searchScope === 'title') return content.title || '';
-  if (searchScope === 'filename') return getSourceFilenameText(content);
-
-  const metadata = content.metadata || {};
-  const signals = Array.isArray(content.contentSignals)
-    ? content.contentSignals.map((signal) => [signal.label, signal.reason, signal.evidence].filter(Boolean).join(' ')).join(' ')
-    : '';
-
-  return [
-    content.title,
-    content.excerpt,
-    content.type,
-    content.publisher,
-    content.externalId,
-    getSourceFilenameText(content),
-    Array.isArray(content.tags) ? content.tags.join(' ') : '',
-    Array.isArray(content.keyTakeaways) ? content.keyTakeaways.join(' ') : '',
-    content.recommendedAudience,
-    signals,
-    Array.isArray(metadata.categories) ? metadata.categories.join(' ') : '',
-    Array.isArray(metadata.subCategories) ? metadata.subCategories.join(' ') : '',
-    metadata.excerpt,
-  ].filter(Boolean).join(' ');
-}
 
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
@@ -194,8 +155,10 @@ export default function SourceContentPage() {
     return items;
   }, [pages]);
   const visibleContentItems = useMemo(() => {
-    const query = normalizeSearchValue(debouncedQuery);
-    const queryTerms = query.split(/\s+/).filter(Boolean);
+    const query = normalizeSourceSearchValue(debouncedQuery);
+    const scope = ['all', 'title', 'filename'].includes(searchScope)
+      ? (searchScope as SourceContentSearchScope)
+      : 'all';
 
     return contentItems.filter((content) => {
       const typeOk = !selectedType || selectedType === 'all' || content.type === selectedType;
@@ -204,8 +167,7 @@ export default function SourceContentPage() {
       if (!typeOk || !tagOk || !publisherOk) return false;
       if (!query) return true;
 
-      const haystack = normalizeSearchValue(getClientSearchText(content, searchScope));
-      return haystack.includes(query) || queryTerms.every((term) => haystack.includes(term));
+      return sourceContentMatchesQuery(content, query, scope);
     });
   }, [contentItems, debouncedQuery, searchScope, selectedPublisher, selectedTag, selectedType]);
   const latestPage = pages?.[pages.length - 1] ?? null;
