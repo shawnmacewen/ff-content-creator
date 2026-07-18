@@ -169,6 +169,60 @@ function WorkflowStepMarker({
   );
 }
 
+function GenerateHeaderDecoration() {
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      viewBox="0 0 1600 160"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="generate-header-ribbon" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#c96c63" stopOpacity="0" />
+          <stop offset="38%" stopColor="#c96c63" stopOpacity="0.28" />
+          <stop offset="70%" stopColor="#e3a766" stopOpacity="0.32" />
+          <stop offset="100%" stopColor="#e3a766" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="generate-header-line" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#c96c63" stopOpacity="0" />
+          <stop offset="42%" stopColor="#d77c6a" stopOpacity="0.48" />
+          <stop offset="86%" stopColor="#f0b26e" stopOpacity="0.72" />
+          <stop offset="100%" stopColor="#f0b26e" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M -90 132 C 210 76, 430 78, 675 105 C 915 132, 1085 134, 1330 86 C 1465 60, 1575 58, 1690 74 L 1690 124 C 1488 106, 1338 119, 1135 148 C 875 185, 660 145, 430 120 C 220 98, 45 104, -90 150 Z"
+        fill="url(#generate-header-ribbon)"
+        opacity="0.78"
+      />
+      <path
+        d="M -60 124 C 260 70, 505 75, 770 103 C 1030 130, 1245 110, 1690 64"
+        fill="none"
+        stroke="url(#generate-header-line)"
+        strokeWidth="1.15"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d="M 1030 166 A 138 124 0 0 1 1306 166"
+        fill="none"
+        stroke="url(#generate-header-line)"
+        strokeWidth="1.35"
+        opacity="0.72"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d="M 1082 166 A 86 78 0 0 1 1254 166"
+        fill="none"
+        stroke="url(#generate-header-line)"
+        strokeWidth="0.9"
+        opacity="0.5"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -827,23 +881,29 @@ export default function GeneratePage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-4 pb-20">
-      <div className="flex flex-col gap-4 border-b border-slate-200 bg-white px-1 pb-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold leading-tight tracking-normal text-slate-950">Generate Content</h1>
-            <p className="mt-1 text-sm text-slate-600">Turn one trusted article into a coordinated marketing campaign.</p>
+      <div
+        className="relative isolate overflow-hidden rounded-lg border border-slate-200 px-6 py-5 text-white shadow-sm"
+        style={{
+          background:
+            'linear-gradient(105deg, #10233e 0%, #164568 48%, #7d515d 78%, #c96c63 112%)',
+        }}
+      >
+        <GenerateHeaderDecoration />
+        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Generate Content</h1>
+            <p className="mt-1 text-sm text-white/85">Turn one trusted article into a coordinated marketing campaign.</p>
           </div>
           <Button
             type="button"
             variant="outline"
-            className="h-10 w-fit gap-2 rounded-md bg-white"
+            className="h-10 w-fit gap-2 rounded-md border-white/45 bg-white/95 text-slate-950 shadow-sm hover:bg-white"
             onClick={() => router.push('/library')}
           >
             <Bookmark className="h-4 w-4" />
             Saved drafts
           </Button>
         </div>
-        <GenerationModeToggle mode={mode} onChange={handleModeChange} />
       </div>
 
       <div className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:grid-cols-3">
@@ -855,24 +915,33 @@ export default function GeneratePage() {
           const active = activeWorkflowStep === item.step;
           const complete = item.step === 1 ? activeTypes.length > 0 : item.step === 2 ? Boolean(tone) : selectedSourceIds.length > 0;
           return (
-            <button
+            <div
               key={item.step}
-              type="button"
-              onClick={() => setActiveWorkflowStep(item.step)}
               className={cn(
-                'flex min-h-[76px] items-center gap-4 border-slate-200 px-5 text-left transition-colors hover:bg-slate-50 lg:border-r last:lg:border-r-0',
+                'flex min-h-[76px] flex-col items-stretch gap-3 border-slate-200 px-5 py-4 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center lg:border-r last:lg:border-r-0',
                 active && 'bg-blue-50/70'
               )}
             >
-              <WorkflowStepMarker step={item.step} active={active} complete={complete} />
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-semibold text-slate-950">{item.step}</span>
-                  <span className="font-semibold text-slate-950">{item.title}</span>
+              <button
+                type="button"
+                onClick={() => setActiveWorkflowStep(item.step)}
+                className="flex min-w-0 flex-1 items-center gap-4 text-left"
+              >
+                <WorkflowStepMarker step={item.step} active={active} complete={complete} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-semibold text-slate-950">{item.step}</span>
+                    <span className="font-semibold text-slate-950">{item.title}</span>
+                  </div>
+                  <p className="mt-1 truncate text-sm text-slate-600">{active ? 'Editing' : item.detail}</p>
                 </div>
-                <p className="mt-1 truncate text-sm text-slate-600">{active ? 'Editing' : item.detail}</p>
-              </div>
-            </button>
+              </button>
+              {item.step === 1 ? (
+                <div className="w-full shrink-0 sm:w-[260px] lg:w-[220px] xl:w-[320px]">
+                  <GenerationModeToggle mode={mode} onChange={handleModeChange} />
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>
