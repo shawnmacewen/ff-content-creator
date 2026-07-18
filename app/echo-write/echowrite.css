@@ -15,7 +15,6 @@
   padding: 0;
   color: var(--ew-text);
   background: transparent;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .echowrite-page[data-echowrite-template="aurora-ribbon"] {
@@ -96,16 +95,16 @@
   margin: 0;
   color: #ffffff;
   font-size: 30px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .ew-accent-header--page p {
-  margin: 7px 0 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
-  line-height: 1.4;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 14px;
+  line-height: 24px;
 }
 
 .ew-accent-decoration {
