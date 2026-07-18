@@ -223,33 +223,48 @@ export function SelectedArticlePreview({
 
       return (
         <section className={cn('flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
-          <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                  <span className="truncate">{decodeEntities(designation)}</span>
-                </div>
-                {filename ? <span className="truncate text-xs font-medium text-slate-400">{filename}</span> : null}
-              </div>
-              <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-tight tracking-normal text-slate-950">{title}</h3>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-600">
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary" />
-                  {formatDate(publishedAt)}
-                </span>
-              </div>
+          <div className="relative h-28 shrink-0 overflow-hidden bg-slate-100">
+            {imageUrl ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url("${imageUrl.replace(/"/g, '\\"')}")` }}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#eff6ff,#dbeafe_52%,#f8fafc)]" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/45 via-slate-950/10 to-transparent" />
+            <div className="absolute left-4 top-4 inline-flex max-w-[240px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              <span className="truncate">{decodeEntities(designation)}</span>
             </div>
             <button
               type="button"
               onClick={onClear}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
               title="Clear selected article"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="line-clamp-2 text-2xl font-semibold leading-tight tracking-normal text-slate-950">{title}</h3>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                  {formatDate(publishedAt)}
+                </span>
+              {filename ? <span className="max-w-full break-all text-slate-400">File: {filename}</span> : null}
+            </div>
+          </div>
+
+          <div className="border-b border-slate-200 bg-blue-50/45 px-5 py-3">
+            <h4 className="text-sm font-semibold text-primary">Why this source?</h4>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-700">{summary}</p>
+          </div>
+
+          <div
+            className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [scrollbar-color:#2563eb_#dbeafe] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-blue-100"
+          >
             {visibleParagraphs.length ? (
               <article className="mx-auto max-w-3xl space-y-4 text-sm leading-7 text-slate-700">
                 {visibleParagraphs.map((paragraph, index) => (
@@ -309,7 +324,7 @@ export function SelectedArticlePreview({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="absolute bottom-0 left-4 z-20 w-[min(430px,calc(100%-2rem))] translate-y-1/2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="absolute bottom-0 left-4 z-20 w-[min(560px,calc(100%-2rem))] translate-y-1/2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
               <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                 <span className="truncate">{decodeEntities(designation)}</span>
               </div>
@@ -319,12 +334,12 @@ export function SelectedArticlePreview({
                   <Calendar className="h-3.5 w-3.5 text-primary" />
                   {formatDate(publishedAt)}
                 </span>
-                {filename ? <span className="max-w-[180px] truncate text-slate-500">File: {filename}</span> : null}
+                {filename ? <span className="basis-full break-all text-slate-500">File: {filename}</span> : null}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col gap-5 px-5 pb-4 pt-16">
+          <div className="flex flex-1 flex-col gap-5 px-5 pb-4 pt-24">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-slate-950">Summary</h4>
