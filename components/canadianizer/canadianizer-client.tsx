@@ -381,7 +381,7 @@ export default function CanadianizerClient() {
 
       <div className="space-y-5">
         {controlsCollapsed && selectedSource ? (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <section className="space-y-2">
               <h2 className="text-base font-semibold text-slate-950">Source article</h2>
               <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -404,7 +404,7 @@ export default function CanadianizerClient() {
 
             <section className="space-y-2">
               <h2 className="text-base font-semibold text-slate-950">Configuration summary</h2>
-              <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-[1fr_1fr_auto]">
+              <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center gap-4 p-4">
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-700">
                     <Sparkles className="h-5 w-5" />
@@ -414,7 +414,7 @@ export default function CanadianizerClient() {
                     <div className="mt-1 text-xs leading-5 text-slate-500">{extremeMode ? 'Maple Mode adaptation' : 'Tax, plans, savings, and market concepts'}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 border-t border-slate-200 p-4 sm:border-l sm:border-t-0">
+                <div className="flex items-center gap-4 border-t border-slate-200 p-4">
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
                     <Languages className="h-5 w-5" />
                   </span>
@@ -423,7 +423,7 @@ export default function CanadianizerClient() {
                     <div className="mt-1 text-xs leading-5 text-slate-500">{languagePackage === 'both' ? 'English + Quebec French' : languagePackage === 'french' ? 'Quebec French only' : 'English only'}</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-end border-t border-slate-200 p-4 sm:border-l sm:border-t-0">
+                <div className="flex items-center justify-end border-t border-slate-200 p-4">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setControlsCollapsed(false)}>Edit settings</Button>
                 </div>
               </div>
@@ -433,7 +433,7 @@ export default function CanadianizerClient() {
 
         <section
           className={cn(
-            'grid overflow-hidden transition-all duration-500 ease-in-out xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]',
+            'grid overflow-hidden transition-all duration-500 ease-in-out xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]',
             controlsCollapsed
               ? 'max-h-0 -translate-y-3 gap-0 opacity-0 pointer-events-none'
               : 'max-h-[1800px] translate-y-0 gap-5 opacity-100'
@@ -526,8 +526,17 @@ export default function CanadianizerClient() {
 
           <Card>
             <CardHeader className="border-b border-border">
-              <CardTitle className="text-base">Configuration</CardTitle>
-              <p className="text-sm text-muted-foreground">Tune the audience and regional lens before generating.</p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">Configuration</CardTitle>
+                  <p className="text-sm text-muted-foreground">Tune the audience and regional lens before generating.</p>
+                </div>
+                {result ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setControlsCollapsed(true)}>
+                    Close settings
+                  </Button>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4 p-4">
               <div className="space-y-2">
@@ -636,7 +645,6 @@ export default function CanadianizerClient() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="text-xl font-semibold text-slate-950">Canadianized output</CardTitle>
-                  <p className="mt-1 text-sm text-slate-500">Review the adaptation, equivalency matches, and recommendations.</p>
                 </div>
                 {result ? (
                   <div className="flex flex-wrap items-start gap-2">
@@ -658,14 +666,6 @@ export default function CanadianizerClient() {
                       onClick={saveCanadianizedDraft}
                     >
                       {isSavingDraft ? 'Saving...' : 'Save Draft'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setControlsCollapsed((value) => !value)}
-                    >
-                      {controlsCollapsed ? 'Show setup' : 'Hide setup'}
                     </Button>
                     <PromptLogDialog result={result} />
                     {result.frenchArticleMarkdown && result.config?.languagePackage !== 'french' ? (
