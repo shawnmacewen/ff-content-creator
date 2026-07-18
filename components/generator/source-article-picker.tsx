@@ -379,39 +379,46 @@ export function SourceArticlePicker({
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
                       'group relative overflow-hidden rounded-[1.25rem] border bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(15,23,42,0.16)]',
-                      splitView ? 'min-h-[76px] rounded-lg shadow-none' : 'min-h-44',
-                      selected ? 'border-primary ring-2 ring-primary/25' : 'border-slate-200/80'
+                      splitView ? 'min-h-[76px] rounded-lg shadow-none hover:translate-y-0 hover:shadow-sm' : 'min-h-44',
+                      selected
+                        ? splitView
+                          ? 'border-primary bg-blue-50/80 ring-1 ring-primary/25'
+                          : 'border-primary ring-2 ring-primary/25'
+                        : 'border-slate-200/80'
                     )}
                   >
-                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]', splitView ? 'w-[24%]' : 'w-[36%]')}>
+                    {splitView && selected ? <div className="absolute inset-y-0 left-0 w-1 bg-primary" /> : null}
+                    <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]', splitView ? 'ml-1 w-[148px]' : 'w-[36%]')}>
                       {thumb ? (
-                        <img
-                          src={String(thumb).trim()}
-                          alt=""
-                          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                          referrerPolicy="no-referrer"
+                        <div
+                          className="h-full w-full bg-cover bg-center transition duration-700 group-hover:scale-105"
+                          style={{ backgroundImage: `url("${String(thumb).trim().replace(/"/g, '\\"')}")` }}
                         />
                       ) : (
                         <div className="h-full w-full bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-white/45" />
-                      <div className={cn('absolute inset-y-0 -right-px bg-gradient-to-r from-transparent via-white/82 to-white', splitView ? 'w-8' : 'w-14')} />
+                      {splitView ? null : (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-transparent to-white/45" />
+                          <div className="absolute inset-y-0 -right-px w-14 bg-gradient-to-r from-transparent via-white/82 to-white" />
+                        </>
+                      )}
                     </div>
 
-                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[28%] min-h-[76px] p-2.5 sm:p-2.5' : 'ml-[40%] min-h-44')}>
+                    <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[158px] min-h-[76px] py-2 pl-3 pr-11 sm:py-2 sm:pl-3 sm:pr-11' : 'ml-[40%] min-h-44')}>
                       <div className="flex items-start justify-between gap-2">
                         <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[180px] px-2 py-0 text-[10px]', tagLabelClass(primaryLabel))}>
                           {decodeLite(primaryLabel)}
                         </Badge>
                         <span
                           className={cn(
-                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm',
-                            splitView && 'h-6 w-6',
+                            'flex shrink-0 items-center justify-center rounded-full border shadow-sm',
+                            splitView ? 'absolute right-3 top-1/2 h-6 w-6 -translate-y-1/2' : 'h-8 w-8',
                             selected ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white/90 text-transparent'
                           )}
                           aria-hidden
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className={cn('h-4 w-4', splitView && 'h-3.5 w-3.5')} />
                         </span>
                       </div>
 
