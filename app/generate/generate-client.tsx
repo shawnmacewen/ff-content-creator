@@ -882,17 +882,17 @@ export default function GeneratePage() {
   return (
     <div className="flex w-full max-w-none flex-col gap-4 pb-20">
       <div
-        className="relative isolate overflow-hidden rounded-lg border border-slate-200 px-6 py-5 text-white shadow-sm"
+        className="relative isolate flex h-[132px] overflow-hidden rounded-lg border border-slate-200 px-6 py-5 text-white shadow-sm sm:px-7"
         style={{
           background:
             'linear-gradient(105deg, #10233e 0%, #164568 48%, #7d515d 78%, #c96c63 112%)',
         }}
       >
         <GenerateHeaderDecoration />
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="relative z-10 flex w-full flex-col justify-center gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Generate Content</h1>
-            <p className="mt-1 text-sm text-white/85">Turn one trusted article into a coordinated marketing campaign.</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/85">Turn one trusted article into a coordinated marketing campaign.</p>
           </div>
           <Button
             type="button"

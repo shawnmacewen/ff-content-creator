@@ -1,5 +1,5 @@
 .echowrite-page {
-  --ew-page-gutter: 28px;
+  --ew-page-gutter: 16px;
   --ew-section-gap: 22px;
   --ew-card-radius: 12px;
   --ew-border: #d7e0ea;
@@ -68,10 +68,13 @@
 }
 
 .ew-accent-header--page {
-  min-height: 94px;
-  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  height: 132px;
+  min-height: 132px;
+  padding: 20px 28px;
   border: 1px solid var(--ew-border);
-  border-radius: var(--ew-card-radius);
+  border-radius: 8px;
   box-shadow:
     0 1px 2px rgba(16, 35, 62, 0.04),
     0 8px 20px rgba(16, 35, 62, 0.035);
@@ -86,7 +89,7 @@
 .ew-accent-header__content {
   position: relative;
   z-index: 2;
-  height: 100%;
+  width: 100%;
 }
 
 .ew-accent-header--page h1 {
