@@ -10,9 +10,6 @@ import {
   GraduationCap,
   Library,
   Settings,
-  FileText,
-  Mail,
-  Share2,
   SearchCheck,
   PenSquare,
   FlaskConical,
@@ -80,21 +77,6 @@ const mainNavItems = [
 ];
 
 const contentTypeItems = [
-  {
-    title: 'Social Media',
-    href: '/generate?type=social',
-    icon: Share2,
-  },
-  {
-    title: 'Email & Newsletter',
-    href: '/generate?type=email',
-    icon: Mail,
-  },
-  {
-    title: 'Articles',
-    href: '/generate?type=article',
-    icon: FileText,
-  },
   {
     title: 'Token Usage',
     href: '/token-usage',
