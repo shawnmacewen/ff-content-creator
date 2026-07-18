@@ -129,6 +129,31 @@ function compactOutputLabel(type: ContentType, instagramVariant?: 'single' | 'ca
   return CONTENT_TYPE_MAP[type]?.label ?? type;
 }
 
+function parseSourceMetadata(article: any) {
+  const meta = article?.metadata;
+  if (typeof meta !== 'string') return meta || null;
+  try {
+    return JSON.parse(meta);
+  } catch {
+    return null;
+  }
+}
+
+function getSourceFilename(article: any) {
+  const meta = parseSourceMetadata(article);
+  const extra = meta?.extraProperties || meta?.raw?.extraProperties || {};
+  return extra?.BasContentFilename || extra?.basContentFilename || article?.externalId || null;
+}
+
+function formatSourceDate(value: unknown) {
+  if (!value) return 'Date unavailable';
+  try {
+    return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(String(value)));
+  } catch {
+    return String(value).split('T')[0] || 'Date unavailable';
+  }
+}
+
 function audienceGuidance(value: string) {
   const guidance: Record<string, string> = {
     'Clients and prospects': 'Audience guidance: write for both existing clients and prospects; balance education, trust-building, and an approachable next step.',
@@ -674,7 +699,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience]);
+  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -741,7 +766,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience]);
+  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setGeneratedContent, setGeneratedImages, setImageStatus]);
 
   const handleSave = async (status: ContentStatus) => {
     const primaryType = selectedContentTypes[0];
@@ -857,6 +882,12 @@ export default function GeneratePage() {
   const selectedSourceLabel = selectedSourceIds.length
     ? `${selectedSourceIds.length} article${selectedSourceIds.length === 1 ? '' : 's'} selected`
     : 'Choose your article';
+  const selectedArticleTitle = detailContent?.title ? decodeEntitiesLite(detailContent.title) : '';
+  const selectedArticleSummary = decodeEntitiesLite(
+    String(detailContent?.excerpt || normalizedBodyPreview.split(/\n{2,}/)[0] || '')
+  );
+  const selectedArticleFilename = getSourceFilename(detailContent);
+  const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
   const campaignContextSummary = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel'
@@ -949,6 +980,9 @@ export default function GeneratePage() {
                       <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">
                         {activeTypes.length} selected
                       </span>
+                      {activeWorkflowStep === 1 ? (
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-700">Editing</span>
+                      ) : null}
                     </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
                   </div>
@@ -1169,7 +1203,12 @@ export default function GeneratePage() {
                   </span>
                   <div className="min-w-0">
                     <div className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</div>
-                    <h2 className="mt-1 text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
+                      {activeWorkflowStep === 2 ? (
+                        <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-xs font-bold text-cyan-700">Editing</span>
+                      ) : null}
+                    </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
                   </div>
                 </div>
@@ -1286,20 +1325,35 @@ export default function GeneratePage() {
                 </span>
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</div>
-                  <h2 className="mt-1 text-lg font-semibold leading-tight text-slate-950">Choose a source article</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold leading-tight text-slate-950">Choose a source article</h2>
+                    {activeWorkflowStep === 3 ? (
+                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Editing</span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Select the trusted article to transform into your campaign.</p>
                 </div>
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Selected article</div>
-                <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
-                  <div className="truncate">{selectedSource?.title ? decodeEntitiesLite(selectedSource.title) : selectedSourceLabel}</div>
-                </div>
+                {selectedArticleTitle ? (
+                  <div className="mt-2 space-y-1">
+                    <div className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900">{selectedArticleTitle}</div>
+                    <p className="line-clamp-2 text-xs leading-5 text-slate-600">
+                      {selectedArticleSummary || 'Summary unavailable for this selected article.'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm font-semibold leading-5 text-amber-700">{selectedSourceLabel}</p>
+                )}
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Preview mode</div>
-                <div className="mt-2 rounded-md border border-blue-100 bg-white px-3 py-2 text-sm font-semibold capitalize text-slate-800">
-                  {articlePreviewLayout}
+                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Article details</div>
+                <div className="mt-2 space-y-1 text-sm font-semibold leading-5 text-slate-800">
+                  <div>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</div>
+                  <div className="line-clamp-1 text-xs font-medium text-slate-500">
+                    {selectedArticleFilename ? `File: ${decodeEntitiesLite(String(selectedArticleFilename))}` : 'Filename unavailable'}
+                  </div>
                 </div>
               </div>
               <Button
