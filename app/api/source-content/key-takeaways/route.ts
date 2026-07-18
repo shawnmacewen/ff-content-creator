@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
+import { countBodyWords, takeawayMetadata } from '@/lib/source-content/takeaways';
 
 const TakeawaySchema = z.object({
   keyTakeaways: z.array(z.string().min(12).max(140)).min(2).max(3),
@@ -28,14 +29,6 @@ function cleanAudience(value: string) {
 function metadataSummary(row: any) {
   const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
   return String(metadata.summary || metadata.description || metadata.excerpt || '').trim();
-}
-
-function countWords(value: string) {
-  return value
-    .replace(/<[^>]+>/g, ' ')
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter((word) => /\w/.test(word)).length;
 }
 
 export async function POST(req: Request) {
@@ -68,11 +61,17 @@ export async function POST(req: Request) {
 
     for (const row of rows) {
       const title = String(row.title || 'Untitled source');
+      const metadata = row?.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata) ? row.metadata : {};
       const bodyText = getCanonicalBody(row);
-      const bodyWordCount = countWords(bodyText);
+      const bodyWordCount = countBodyWords(bodyText);
 
       if (bodyWordCount < 100) {
-        results.push({ id: row.id, title, status: 'skipped', reason: `Body has fewer than 100 words (${bodyWordCount})` });
+        const reason = `Body has fewer than 100 words (${bodyWordCount})`;
+        await supabase
+          .from('source_content')
+          .update({ metadata: { ...metadata, takeawaysEnrichment: takeawayMetadata('skipped_short_body', reason, bodyWordCount) } })
+          .eq('id', row.id);
+        results.push({ id: row.id, title, status: 'skipped', reason });
         if (overwrite && ((Array.isArray(row.key_takeaways) && row.key_takeaways.length) || row.recommended_audience)) {
           await supabase.from('source_content').update({ key_takeaways: [], recommended_audience: null }).eq('id', row.id);
         }
@@ -124,16 +123,32 @@ export async function POST(req: Request) {
       const keyTakeaways = cleanTakeaways(generated.object.keyTakeaways, takeawayCount);
       const recommendedAudience = cleanAudience(generated.object.recommendedAudience);
       if (keyTakeaways.length !== takeawayCount) {
-        results.push({ id: row.id, title, status: 'failed', reason: `AI returned ${keyTakeaways.length} takeaways; expected ${takeawayCount}` });
+        const reason = `AI returned ${keyTakeaways.length} takeaways; expected ${takeawayCount}`;
+        await supabase
+          .from('source_content')
+          .update({ metadata: { ...metadata, takeawaysEnrichment: takeawayMetadata('failed', reason, bodyWordCount) } })
+          .eq('id', row.id);
+        results.push({ id: row.id, title, status: 'failed', reason });
         continue;
       }
 
       const update = await supabase
         .from('source_content')
-        .update({ key_takeaways: keyTakeaways, recommended_audience: recommendedAudience || null })
+        .update({
+          key_takeaways: keyTakeaways,
+          recommended_audience: recommendedAudience || null,
+          metadata: {
+            ...metadata,
+            takeawaysEnrichment: takeawayMetadata('ready', 'Stored key takeaways and recommended audience are available.', bodyWordCount),
+          },
+        })
         .eq('id', row.id);
 
       if (update.error) {
+        await supabase
+          .from('source_content')
+          .update({ metadata: { ...metadata, takeawaysEnrichment: takeawayMetadata('failed', update.error.message, bodyWordCount) } })
+          .eq('id', row.id);
         results.push({ id: row.id, title, status: 'failed', reason: update.error.message });
         continue;
       }

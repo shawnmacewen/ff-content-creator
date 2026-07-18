@@ -11,6 +11,39 @@ import {
 import { appendSyncLog } from '@/lib/source-sync-logs';
 import { decodeHtmlEntities, richMarkupToPlainText } from '@/lib/source-content/body';
 
+async function runPostSyncTakeawayBatch(req: Request, shouldRun: boolean) {
+  if (!shouldRun) return null;
+
+  try {
+    const { POST: runKeyTakeaways } = await import('../key-takeaways/route');
+    const response = await runKeyTakeaways(new Request(new URL('/api/source-content/key-takeaways', req.url), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ batchSize: 25, overwrite: false }),
+    }));
+    const json = await response.json().catch(() => ({}));
+    return {
+      ok: response.ok && Boolean(json?.ok),
+      scanned: Number(json?.scanned || 0),
+      updated: Number(json?.updated || 0),
+      skipped: Number(json?.skipped || 0),
+      failed: Number(json?.failed || 0),
+      hasMore: Boolean(json?.hasMore),
+      error: response.ok ? null : (json?.error || `Takeaway enrichment failed (${response.status})`),
+    };
+  } catch (error: any) {
+    return {
+      ok: false,
+      scanned: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      hasMore: false,
+      error: error?.message || 'Post-sync takeaway enrichment failed',
+    };
+  }
+}
+
 async function fetchAdvisorStreamArticleById(baseUrl: string, token: string, articleId: string) {
   const base = baseUrl.replace(/\/$/, '');
   const response = await fetch(`${base}/wealth-management/advisor-content/v3/bas-content-api/articles/${encodeURIComponent(articleId)}`, {
@@ -834,6 +867,8 @@ export async function POST(req: Request) {
     }
   }
 
+  const postSyncTakeaways = await runPostSyncTakeawayBatch(req, mode === 'provider' || mode === 'provider-rich-update');
+
   return NextResponse.json({
     ok: true,
     mode,
@@ -861,6 +896,7 @@ export async function POST(req: Request) {
       detailFetchMiss: (typeof detailFetchMiss !== 'undefined' ? detailFetchMiss : 0),
       detailDateMapped: (typeof detailDateMapped !== 'undefined' ? detailDateMapped : 0),
       detailPublisherMapped: (typeof detailPublisherMapped !== 'undefined' ? detailPublisherMapped : 0),
+      postSyncTakeaways,
     } : undefined,
   });
   } catch (error: any) {

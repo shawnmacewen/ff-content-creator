@@ -140,9 +140,10 @@ export default function GeneratePage() {
   const [audience, setAudience] = useState('Clients and prospects');
   const [articlePreviewLayout, setArticlePreviewLayout] = useState<'spotlight' | 'summary' | 'reader'>('spotlight');
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isGeneratingSourceTakeaways, setIsGeneratingSourceTakeaways] = useState(false);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
-  const { data: selectedSource } = useSWR<any>(
+  const { data: selectedSource, mutate: mutateSelectedSource } = useSWR<any>(
     selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
     fetcher
   );
@@ -190,6 +191,36 @@ export default function GeneratePage() {
     }
     setDetailOpen(true);
   }, [detailContent]);
+
+  const handleGenerateSourceTakeaways = useCallback(async () => {
+    if (!selectedSourceId) {
+      toast.error('Select an article first');
+      return;
+    }
+
+    setIsGeneratingSourceTakeaways(true);
+    try {
+      const response = await fetch('/api/source-content/key-takeaways', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [selectedSourceId], overwrite: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || 'Takeaway generation failed');
+
+      const first = Array.isArray(payload.results) ? payload.results[0] : null;
+      if (first?.status === 'updated') toast.success('Key takeaways generated');
+      else if (first?.status === 'skipped') toast.info(first.reason || 'Source body is too short for takeaways');
+      else if (first?.status === 'failed') toast.error(first.reason || 'Takeaway generation failed');
+      else toast.info('Takeaway enrichment finished');
+
+      await mutateSelectedSource();
+    } catch (error: any) {
+      toast.error(error?.message || 'Takeaway generation failed');
+    } finally {
+      setIsGeneratingSourceTakeaways(false);
+    }
+  }, [mutateSelectedSource, selectedSourceId]);
 
   const [mode, setMode] = useState<GenerationMode>('kit');
 
@@ -1114,6 +1145,8 @@ export default function GeneratePage() {
                   onClear={handleClearSource}
                   onUseArticle={handleUseDetailArticle}
                   onViewDetails={handleOpenSelectedDetails}
+                  onGenerateTakeaways={handleGenerateSourceTakeaways}
+                  isGeneratingTakeaways={isGeneratingSourceTakeaways}
                   campaignCompact
                   campaignLayout={articlePreviewLayout}
                 />
@@ -1353,6 +1386,8 @@ export default function GeneratePage() {
                 onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
                 onViewDetails={handleOpenSelectedDetails}
+                onGenerateTakeaways={handleGenerateSourceTakeaways}
+                isGeneratingTakeaways={isGeneratingSourceTakeaways}
               />
             </div>
             {selectedSourceIds.length > 1 ? (
@@ -1479,6 +1514,8 @@ export default function GeneratePage() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onUseForGeneration={handleUseDetailArticle}
+        onGenerateTakeaways={handleGenerateSourceTakeaways}
+        isGeneratingTakeaways={isGeneratingSourceTakeaways}
       />
     </div>
   );

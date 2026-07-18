@@ -39,6 +39,14 @@ export interface SourceContentSignal {
   source: 'metadata_rule' | 'content_rule' | 'ai_classification';
 }
 
+export interface TakeawayEnrichment {
+  status: 'ready' | 'needs_enrichment' | 'skipped_short_body' | 'failed';
+  label: string;
+  reason: string;
+  updatedAt?: string | null;
+  wordCount?: number | null;
+}
+
 // Source content from external API
 export interface SourceContent {
   id: string;
@@ -52,6 +60,7 @@ export interface SourceContent {
   tags: string[];
   keyTakeaways?: string[];
   recommendedAudience?: string | null;
+  takeawayStatus?: TakeawayEnrichment;
   contentSignals?: SourceContentSignal[];
   publishedAt: string;
   author: string;

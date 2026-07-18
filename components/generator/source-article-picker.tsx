@@ -113,6 +113,13 @@ function getFilename(c: SourceContent) {
   );
 }
 
+function takeawayStatusClass(status?: string) {
+  if (status === 'ready') return 'text-emerald-700';
+  if (status === 'skipped_short_body') return 'text-amber-700';
+  if (status === 'failed') return 'text-red-700';
+  return 'text-slate-400';
+}
+
 export function SourceArticlePicker({
   selectedId,
   onSelect,
@@ -373,6 +380,7 @@ export function SourceArticlePicker({
                 const primaryLabel = c.tags?.[0] || c.type || 'Editorial Source';
                 const filename = getFilename(c);
                 const signalCount = Array.isArray(c.contentSignals) ? c.contentSignals.length : 0;
+                const takeawayStatus = c.takeawayStatus;
 
                 return (
                   <button
@@ -440,6 +448,7 @@ export function SourceArticlePicker({
                         </span>
                         {filename ? <span className={cn('max-w-[180px] truncate text-slate-400', splitView && 'max-w-[160px]')}>{decodeLite(filename)}</span> : null}
                         {!splitView && words ? <span>{words.toLocaleString()} words</span> : null}
+                        {takeawayStatus?.label ? <span className={takeawayStatusClass(takeawayStatus.status)}>{takeawayStatus.label}</span> : null}
                         {signalCount ? <span>{signalCount} signals</span> : (c.tags || []).length > 1 ? <span>{(c.tags || []).length} tags</span> : null}
                       </div>
                     </div>

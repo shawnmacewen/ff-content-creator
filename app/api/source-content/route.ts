@@ -4,6 +4,7 @@ import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
 import { decodeHtmlEntities, getCanonicalBody } from '@/lib/source-content/body';
 import { emptySourceContentSummary, normalizeCachedSummary } from '@/lib/source-content/stats';
 import { normalizeContentSignals } from '@/lib/source-content/signals';
+import { buildTakeawayStatus } from '@/lib/source-content/takeaways';
 
 function parseIntentTokens(query: string) {
   const cleaned = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
@@ -113,6 +114,7 @@ function mapSourceContentRow(row: any) {
     tags: (row.tags || []).map((t: string) => decodeHtmlEntities(String(t))),
     keyTakeaways: Array.isArray(row.key_takeaways) ? row.key_takeaways.map((item: string) => decodeHtmlEntities(String(item))).filter(Boolean) : [],
     recommendedAudience: row.recommended_audience ? decodeHtmlEntities(String(row.recommended_audience)) : null,
+    takeawayStatus: buildTakeawayStatus(row),
     contentSignals: normalizeContentSignals(metadata.contentSignals),
     publishedAt: row.published_at || null,
     author: row.source_system === 'sample-seed' ? 'Sample' : (row.author || 'Unknown'),

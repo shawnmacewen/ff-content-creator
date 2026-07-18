@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { MOCK_SOURCE_CONTENT } from '@/lib/api/source-content-mock';
 import { getBodyFormat, getCanonicalBody } from '@/lib/source-content/body';
 import { normalizeContentSignals } from '@/lib/source-content/signals';
+import { buildTakeawayStatus } from '@/lib/source-content/takeaways';
 
 export async function GET(
   _request: NextRequest,
@@ -53,6 +54,7 @@ export async function GET(
     tags: data.tags || [],
     keyTakeaways: Array.isArray(data.key_takeaways) ? data.key_takeaways : [],
     recommendedAudience: data.recommended_audience || null,
+    takeawayStatus: buildTakeawayStatus(data),
     contentSignals: normalizeContentSignals(data.content_signals || metadata.contentSignals),
     publishedAt: data.published_at || null,
     author: data.source_system === 'sample-seed' ? 'Sample' : (data.author || 'Unknown'),

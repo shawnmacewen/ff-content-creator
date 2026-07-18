@@ -8,6 +8,7 @@ import {
   Check,
   ExternalLink,
   FileText,
+  Loader2,
   Sparkles,
   Target,
   TrendingUp,
@@ -172,6 +173,8 @@ export function SelectedArticlePreview({
   onClear,
   onUseArticle,
   onViewDetails,
+  onGenerateTakeaways,
+  isGeneratingTakeaways = false,
   className,
   campaignCompact = false,
   campaignLayout = 'summary',
@@ -182,6 +185,8 @@ export function SelectedArticlePreview({
   onClear: () => void;
   onUseArticle: () => void;
   onViewDetails?: () => void;
+  onGenerateTakeaways?: () => void;
+  isGeneratingTakeaways?: boolean;
   className?: string;
   campaignCompact?: boolean;
   campaignLayout?: 'spotlight' | 'summary' | 'reader';
@@ -228,9 +233,11 @@ export function SelectedArticlePreview({
     ? takeawaySource.map((item: string) => decodeEntities(String(item))).filter(Boolean).slice(0, 3)
     : [];
   const recommendedAudience = decodeEntities(String(detailContent?.recommendedAudience || article.recommendedAudience || '')).trim();
+  const takeawayStatus = detailContent?.takeawayStatus || article.takeawayStatus || null;
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
   const contentSignals = normalizeSignals(detailContent?.contentSignals || article.contentSignals);
+  const hasTakeawaySupport = Boolean(takeaways.length || recommendedAudience || onGenerateTakeaways);
   const previewSignals = [
     ...contentSignals.filter((signal) => signal.type === 'content_opportunity'),
     ...contentSignals.filter((signal) => signal.type === 'generation_guidance'),
@@ -421,7 +428,21 @@ export function SelectedArticlePreview({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm leading-6 text-slate-700">Review the full article preview for supporting details and audience fit.</p>
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
+                  <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>
+                  <p>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
+                  {onGenerateTakeaways ? (
+                    <button
+                      type="button"
+                      onClick={onGenerateTakeaways}
+                      disabled={isGeneratingTakeaways}
+                      className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
+                    >
+                      {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
+                    </button>
+                  ) : null}
+                </div>
               )}
             </div>
 
@@ -503,7 +524,21 @@ export function SelectedArticlePreview({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm leading-6 text-slate-700">Review the full article preview for supporting details and audience fit.</p>
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
+                  <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>
+                  <p>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
+                  {onGenerateTakeaways ? (
+                    <button
+                      type="button"
+                      onClick={onGenerateTakeaways}
+                      disabled={isGeneratingTakeaways}
+                      className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
+                    >
+                      {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
+                    </button>
+                  ) : null}
+                </div>
               )}
             </div>
           </div>
@@ -582,8 +617,8 @@ export function SelectedArticlePreview({
         </div>
       </div>
 
-      <div className={cn('relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 sm:px-8', takeaways.length || recommendedAudience ? 'md:grid-cols-[0.68fr_1fr]' : 'md:grid-cols-1')}>
-        {takeaways.length || recommendedAudience ? (
+      <div className={cn('relative z-10 grid flex-1 gap-6 px-6 pb-7 pt-7 sm:px-8', hasTakeawaySupport ? 'md:grid-cols-[0.68fr_1fr]' : 'md:grid-cols-1')}>
+        {hasTakeawaySupport ? (
           <aside className="space-y-4">
             {takeaways.length ? (
               <div className="space-y-4">
@@ -610,7 +645,26 @@ export function SelectedArticlePreview({
                   })}
                 </div>
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                <div className="flex items-center gap-3 font-semibold">
+                  <Sparkles className="h-4 w-4" />
+                  {takeawayStatus?.label || 'Needs enrichment'}
+                </div>
+                <p className="mt-1">{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
+                {onGenerateTakeaways ? (
+                  <button
+                    type="button"
+                    onClick={onGenerateTakeaways}
+                    disabled={isGeneratingTakeaways}
+                    className="mt-3 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
+                  >
+                    {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
+                  </button>
+                ) : null}
+              </div>
+            )}
 
             {recommendedAudience ? (
               <div className="space-y-3 border-t border-slate-200/80 pt-4">
@@ -629,7 +683,7 @@ export function SelectedArticlePreview({
           </aside>
         ) : null}
 
-        <article className={cn('border-slate-200/80', (takeaways.length || recommendedAudience) && 'md:border-l md:pl-6')}>
+        <article className={cn('border-slate-200/80', hasTakeawaySupport && 'md:border-l md:pl-6')}>
           <div className="space-y-3.5 break-words text-[13px] leading-6 text-slate-700">
             {paragraphs.length ? (
               paragraphs.slice(0, 3).map((paragraph, index) => (

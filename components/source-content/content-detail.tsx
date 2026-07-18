@@ -19,6 +19,7 @@ import {
   Bookmark,
   Check,
   Copy,
+  Loader2,
   Sparkles,
   Target,
   TrendingUp,
@@ -417,6 +418,8 @@ interface ContentDetailProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUseForGeneration?: (content: SourceContent) => void;
+  onGenerateTakeaways?: () => void;
+  isGeneratingTakeaways?: boolean;
   /**
    * Optional snippet strings to highlight inside the displayed body.
    * Intended for EchoWrite “Used in this output” evidence.
@@ -429,6 +432,8 @@ export function ContentDetail({
   open,
   onOpenChange,
   onUseForGeneration,
+  onGenerateTakeaways,
+  isGeneratingTakeaways = false,
   highlightSnippets,
 }: ContentDetailProps) {
   const [copied, setCopied] = useState(false);
@@ -498,6 +503,7 @@ export function ContentDetail({
     ? content.keyTakeaways.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 3)
     : [];
   const recommendedAudience = decodeEntitiesBrowser(String(content.recommendedAudience || '')).trim();
+  const takeawayStatus = content.takeawayStatus || null;
   const visibleBlocks = richBlocks.length ? richBlocks : plainTextBlocks(displayBodyText);
 
   const renderMetadataValue = (value: unknown) => {
@@ -682,12 +688,17 @@ export function ContentDetail({
 
           <div className="mx-auto grid max-w-6xl gap-7 px-7 pb-44 pt-8 sm:px-10 md:grid-cols-[0.62fr_1.38fr] lg:px-12">
             <aside className="space-y-8">
-              {storedTakeaways.length ? (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 text-sm font-semibold text-slate-950">
                     <Sparkles className="h-5 w-5 text-blue-600" />
                     Key Takeaways
+                    {takeawayStatus?.label ? (
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        {takeawayStatus.label}
+                      </span>
+                    ) : null}
                   </div>
+                {storedTakeaways.length ? (
                   <div className="space-y-6">
                     {storedTakeaways.map((item, index) => {
                       const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
@@ -701,8 +712,26 @@ export function ContentDetail({
                       );
                     })}
                   </div>
-                </div>
-              ) : null}
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                    <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>
+                    <p>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
+                    {onGenerateTakeaways ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 gap-2 border-amber-300 bg-white/80 text-amber-900 hover:bg-white"
+                        onClick={onGenerateTakeaways}
+                        disabled={isGeneratingTakeaways}
+                      >
+                        {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
+                      </Button>
+                    ) : null}
+                  </div>
+                )}
+              </div>
 
               {recommendedAudience ? (
                 <div className={cn('space-y-3', storedTakeaways.length ? 'border-t border-slate-200/80 pt-6' : '')}>
