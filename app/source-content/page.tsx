@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentCard } from '@/components/source-content/content-card';
 import { ContentFilters } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
-import { Clock, FolderOpen, Settings, Sparkles } from 'lucide-react';
+import { Database, FolderOpen, Loader2, Sparkles } from 'lucide-react';
 import useSWR from 'swr';
 import { PageHeader } from '@/components/layout/page-header';
+import { toast } from 'sonner';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -40,6 +40,14 @@ interface FilterResponse {
   availableAuthors: string[];
   availablePublishers: string[];
 }
+
+type SyncProgress = {
+  currentBatch: number;
+  maxBatches: number;
+  processed: number;
+  inserted: number;
+  updated: number;
+};
 
 const emptyFilters: FilterResponse = {
   availableTags: [],
@@ -87,6 +95,8 @@ export default function SourceContentPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(initialFilters.q);
   const [page, setPage] = useState(1);
+  const [runningSourceSync, setRunningSourceSync] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -109,7 +119,7 @@ export default function SourceContentPage() {
     return `/api/source-content?${params.toString()}`;
   }, [debouncedQuery, searchScope, selectedType, selectedTag, selectedPublisher, page]);
 
-  const { data, error, isLoading } = useSWR<ApiResponse>(apiUrl(), fetcher, {
+  const { data, error, isLoading, mutate: mutateSourceContent } = useSWR<ApiResponse>(apiUrl(), fetcher, {
     keepPreviousData: true,
     shouldRetryOnError: false,
   });
@@ -121,6 +131,90 @@ export default function SourceContentPage() {
   const contentItems = Array.isArray(data?.data) ? data.data : [];
   const filters = filterData || data?.filters || emptyFilters;
   const totalAvailableItems = data?.meta?.totalSourceContent || data?.total || 0;
+  const syncProgressPercent = syncProgress
+    ? Math.max(4, Math.min(100, Math.round((syncProgress.currentBatch / syncProgress.maxBatches) * 100)))
+    : 0;
+
+  const refreshSourceStatsCache = async () => {
+    const response = await fetch('/api/source-content/stats', { method: 'POST' });
+    const json = await response.json();
+    if (!response.ok || !json?.ok) {
+      throw new Error(json?.error || 'Source stats refresh failed');
+    }
+    return json;
+  };
+
+  const runBroadridgeContentSync = async () => {
+    setRunningSourceSync(true);
+    setSyncProgress({ currentBatch: 0, maxBatches: 20, processed: 0, inserted: 0, updated: 0 });
+
+    try {
+      const batches: any[] = [];
+      let startPage = 0;
+      const maxBatches = 20;
+      const seenWindows = new Set<string>();
+
+      for (let i = 0; i < maxBatches; i += 1) {
+        const response = await fetch('/api/source-content/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'provider',
+            dryRun: false,
+            maxItems: 250,
+            maxPages: 10,
+            startPage,
+          }),
+        });
+
+        const json = await response.json();
+        batches.push({ batch: i + 1, startPage, ...json });
+
+        const processed = batches.reduce((n, b) => n + (b.processed || 0), 0);
+        const inserted = batches.reduce((n, b) => n + (b.inserted || 0), 0);
+        const updated = batches.reduce((n, b) => n + (b.updated || 0), 0);
+        setSyncProgress({ currentBatch: i + 1, maxBatches, processed, inserted, updated });
+
+        if (!response.ok || !json?.ok) {
+          throw new Error(json?.error || 'Broadridge content sync failed');
+        }
+        if (json?.repeatingPageDetected) break;
+        if ((json?.processed ?? 0) === 0) break;
+
+        const windowKey = `${json?.startPage ?? startPage}-${json?.endPage ?? startPage}`;
+        if (seenWindows.has(windowKey)) break;
+        seenWindows.add(windowKey);
+
+        const nextFromServer = Number(json?.nextStartPage);
+        const endPage = Number(json?.endPage);
+        const computedNext = Number.isFinite(endPage) ? endPage + 1 : NaN;
+        const nextStartPage = Number.isFinite(nextFromServer) && nextFromServer > startPage ? nextFromServer : computedNext;
+        if (!Number.isFinite(nextStartPage) || nextStartPage <= startPage) break;
+        startPage = nextStartPage;
+      }
+
+      const result = {
+        batchesRun: batches.length,
+        totals: {
+          processed: batches.reduce((n, b) => n + (b.processed || 0), 0),
+          inserted: batches.reduce((n, b) => n + (b.inserted || 0), 0),
+          updated: batches.reduce((n, b) => n + (b.updated || 0), 0),
+        },
+      };
+
+      await refreshSourceStatsCache();
+      await mutateSourceContent();
+
+      toast.success(
+        `Broadridge content sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
+      );
+    } catch (error: any) {
+      toast.error(error?.message || 'Broadridge content sync failed');
+    } finally {
+      setRunningSourceSync(false);
+      setSyncProgress(null);
+    }
+  };
 
   const handleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -206,21 +300,40 @@ export default function SourceContentPage() {
             iconClassName: 'bg-info text-info-foreground',
           },
           {
-            label: 'Last sync',
-            detail: data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a',
-            icon: Clock,
-            trailing: (
-              <Button
-                asChild
-                variant="ghost"
-                size="icon"
-                className="ml-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-              >
-                <Link href="/settings?tab=content-sync" aria-label="Open Content Sync settings">
-                  <Settings className="h-4 w-4" />
-                </Link>
-              </Button>
+            label: 'Sync Broadridge Content',
+            detail: (
+              <div className="mt-0.5 space-y-2">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Last sync: {data?.meta?.lastSyncedAt ? new Date(data.meta.lastSyncedAt).toLocaleString() : 'n/a'}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-md text-xs"
+                  onClick={runBroadridgeContentSync}
+                  disabled={runningSourceSync}
+                  title="Runs the batched Broadridge provider sync from Source Content."
+                >
+                  {runningSourceSync ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5" />}
+                  {runningSourceSync ? 'Syncing...' : 'Sync Broadridge Content'}
+                </Button>
+                {syncProgress ? (
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] font-medium text-muted-foreground">
+                      Batch {syncProgress.currentBatch} of {syncProgress.maxBatches} · {syncProgress.processed.toLocaleString()} processed · {syncProgress.inserted.toLocaleString()} inserted · {syncProgress.updated.toLocaleString()} updated
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${syncProgressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             ),
+            icon: Database,
           },
         ]}
       />

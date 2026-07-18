@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 type HeaderMetric = {
   label: string;
-  detail?: string;
+  detail?: ReactNode;
   icon: ComponentType<{ className?: string }>;
   active?: boolean;
   iconClassName?: string;
@@ -56,7 +56,7 @@ export function PageHeader({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold leading-5">{metric.label}</p>
                 {metric.detail ? (
-                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{metric.detail}</p>
+                  <div className="mt-0.5 text-xs leading-5 text-muted-foreground">{metric.detail}</div>
                 ) : null}
               </div>
               {metric.trailing ? <div className="shrink-0">{metric.trailing}</div> : null}
