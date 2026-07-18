@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, FileText, Info, Link2, Loader2, PlusCircle, Save, Settings2, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, FileText, Info, Link2, Loader2, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -682,13 +682,9 @@ Separately (client-side), we:
                 <FileText className="h-12 w-12 text-slate-500" />
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">{loading ? 'Finding sources...' : 'No sources yet'}</h3>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
-                  {loading ? 'EchoWrite is retrieving matching source content.' : 'Add your own sources or let EchoWrite retrieve relevant references when you generate.'}
+                  {loading ? 'EchoWrite is retrieving matching source content.' : 'EchoWrite will retrieve relevant references when you generate.'}
                 </p>
-                <Button variant="outline" className="mt-6 h-11 gap-2 border-slate-200 bg-white px-5 text-blue-700" onClick={() => window.location.assign('/source-content')}>
-                  <PlusCircle className="h-4 w-4" />
-                  Add a source
-                </Button>
-                <div className="sources-info-callout mt-16 flex w-full items-center gap-3 rounded-lg border p-4 text-left text-sm">
+                <div className="sources-info-callout mt-16 flex w-full items-center justify-center gap-3 rounded-lg border p-4 text-center text-sm">
                   <Info className="h-4 w-4 shrink-0 text-slate-600" />
                   <span>Citations and retrieved references will appear here.</span>
                 </div>
