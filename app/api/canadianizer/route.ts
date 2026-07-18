@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { mergeGenerationUsages, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
@@ -446,6 +446,12 @@ export async function POST(req: Request) {
         warningLevel,
         mode,
         languagePackage,
+        ...mergeGenerationUsages([
+          result.usage,
+          translation?.usage,
+          frenchQuality?.usage,
+          evaluation.usage,
+        ]),
       },
     });
 

@@ -3,7 +3,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
 import { CAROUSEL_TEMPLATES, pickCarouselTemplate } from '@/lib/generator/carousel-templates';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { mergeGenerationUsages, recordGenerationEvent } from '@/lib/generation-events';
 
 function buildForegroundPrompt(args: { theme: any; motif: string; placement: string; index: number; total: number }) {
   return [
@@ -39,8 +39,8 @@ async function generateImage(apiKey: string, prompt: string, size: '1024x1536' |
   }
 
   const first = data?.data?.[0];
-  if (first?.url) return { imageUrl: first.url as string };
-  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` };
+  if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}`, usage: data?.usage };
   return { imageUrl: null as string | null, error: 'Image API returned no image payload' };
 }
 
@@ -82,10 +82,12 @@ export async function POST(req: Request) {
   if (masterPlate && masterPlate.startsWith('data:image')) {
     // optional lightweight motif generation (no compositing)
     let motifUrl: string | null = null;
+    let motifUsage: Record<string, any> | undefined;
     if (motif) {
       const fgPrompt = buildForegroundPrompt({ theme, motif, placement, index, total });
       const fg = await generateImage(env.OPENAI_API_KEY, fgPrompt, '1024x1024');
       motifUrl = fg.imageUrl;
+      motifUsage = fg.usage;
     }
 
     const denom = Math.max(1, total - 1);
@@ -104,6 +106,7 @@ export async function POST(req: Request) {
           total,
           style,
           usedMasterPlate: true,
+          ...mergeGenerationUsages([motifUsage]),
         },
       });
     }
@@ -266,6 +269,7 @@ export async function POST(req: Request) {
         style,
         template,
         size,
+        ...mergeGenerationUsages([promptRes.usage, img.usage]),
       },
     });
   }

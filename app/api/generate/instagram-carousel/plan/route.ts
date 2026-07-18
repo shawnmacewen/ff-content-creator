@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { mergeGenerationUsages, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
@@ -189,6 +189,7 @@ export async function POST(req: Request) {
   // Generate ONE master background plate (landscape) used to create connected slide pans.
   // Best-effort: if this fails, we still return theme+slides so the UI can proceed.
   let masterPlate: string | null = null;
+  let masterPlateUsage: Record<string, any> | undefined;
   if (generationMode === 'master-plate') {
     try {
       const masterPrompt = [
@@ -229,6 +230,7 @@ export async function POST(req: Request) {
       if (imgRes.ok) {
         const first = imgData?.data?.[0];
         masterPlate = first?.b64_json ? `data:image/png;base64,${first.b64_json}` : (first?.url || null);
+        masterPlateUsage = imgData?.usage;
       } else {
         console.error('master plate generation failed', imgData?.error?.message || imgRes.status);
       }
@@ -249,6 +251,7 @@ export async function POST(req: Request) {
       style,
       sourceContentCount: sourceContentIds?.length || 0,
       hasMasterPlate: Boolean(masterPlate),
+      ...mergeGenerationUsages([themeRes.usage, planRes.usage]),
     },
   });
 
@@ -263,6 +266,7 @@ export async function POST(req: Request) {
         generationMode,
         style,
         slideCount: slides.length,
+        ...mergeGenerationUsages([masterPlateUsage]),
       },
     });
   }

@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { mergeGenerationUsages, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
@@ -69,8 +69,8 @@ async function generateSlideImage(apiKey: string, prompt: string) {
   }
 
   const first = data?.data?.[0];
-  if (first?.url) return { imageUrl: first.url as string };
-  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` };
+  if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}`, usage: data?.usage };
   return { imageUrl: null as string | null, error: 'Image API returned no image payload' };
 }
 
@@ -173,10 +173,12 @@ export async function POST(req: Request) {
 
   // Generate images per slide (all share the same theme)
   const images: Array<{ slideId: string; imageUrl: string | null; error?: string }> = [];
+  const imageUsages: Array<Record<string, any> | undefined> = [];
   for (let i = 0; i < slides.length; i += 1) {
     const s = slides[i];
     const imgPrompt = buildSlideImagePrompt({ theme, headline: s.headline, summary: s.summary, index: i, total: slides.length });
     const img = await generateSlideImage(env.OPENAI_API_KEY, imgPrompt);
+    imageUsages.push(img.usage);
     images.push({ slideId: s.id, imageUrl: img.imageUrl, error: img.error });
   }
 
@@ -190,6 +192,7 @@ export async function POST(req: Request) {
       slideCount: slides.length,
       sourceContentCount: sourceContentIds?.length || 0,
       route: 'legacy-carousel',
+      ...mergeGenerationUsages([result.usage, themeRes.usage]),
     },
   });
 
@@ -204,6 +207,7 @@ export async function POST(req: Request) {
       meta: {
         slideCount: slides.length,
         route: 'legacy-carousel',
+        ...mergeGenerationUsages(imageUsages),
       },
     });
   }

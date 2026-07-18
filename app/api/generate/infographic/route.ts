@@ -1,5 +1,5 @@
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 
 function buildInfographicPrompt(args: {
   infographicCopy: string;
@@ -52,8 +52,8 @@ async function generateInfographicImage(apiKey: string, prompt: string) {
   }
 
   const first = data?.data?.[0];
-  if (first?.url) return { imageUrl: first.url as string };
-  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` };
+  if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}`, usage: data?.usage };
   return { imageUrl: null as string | null, error: 'Image API returned no image payload' };
 }
 
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
       meta: {
         source: 'generate-content-kit',
         sourceContentCount: sourceContentIds.length,
+        ...normalizeGenerationUsage(image.usage),
       },
     });
 

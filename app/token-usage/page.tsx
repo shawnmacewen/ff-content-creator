@@ -67,15 +67,27 @@ function getAssetCount(row: GenerationEventRow) {
 }
 
 function getTokenEstimate(row: GenerationEventRow) {
-  const value =
+  const totalValue =
     row.meta?.totalTokens ||
     row.meta?.total_tokens ||
+    row.meta?.tokenUsage?.totalTokens ||
+    row.meta?.tokenUsage?.total_tokens ||
     row.meta?.tokens ||
     row.meta?.estimatedTokens ||
     row.meta?.estimated_tokens;
+  const inputValue = row.meta?.inputTokens || row.meta?.input_tokens || row.meta?.tokenUsage?.inputTokens || row.meta?.tokenUsage?.input_tokens;
+  const outputValue = row.meta?.outputTokens || row.meta?.output_tokens || row.meta?.tokenUsage?.outputTokens || row.meta?.tokenUsage?.output_tokens;
+  const totalTokens = Number(totalValue);
+  const inputTokens = Number(inputValue);
+  const outputTokens = Number(outputValue);
 
-  const tokens = Number(value);
-  return Number.isFinite(tokens) && tokens > 0 ? formatNumber(tokens) : 'Not tracked yet';
+  if (!Number.isFinite(totalTokens) || totalTokens <= 0) return 'Not tracked yet';
+
+  const breakdown = Number.isFinite(inputTokens) && Number.isFinite(outputTokens)
+    ? ` (${formatNumber(inputTokens)} in / ${formatNumber(outputTokens)} out)`
+    : '';
+
+  return `${formatNumber(totalTokens)} total${breakdown}`;
 }
 
 function getCostEstimate(row: GenerationEventRow) {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 
 const ReferenceImageUrlSchema = z.string().refine(
   (value) => value.startsWith('data:image/') || /^https?:\/\//i.test(value),
@@ -68,8 +68,8 @@ async function generateImage(
     }
 
     const first = data?.data?.[0];
-    if (first?.url) return { imageUrl: first.url as string };
-    if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` };
+    if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+    if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}`, usage: data?.usage };
     return { imageUrl: null as string | null, error: 'Image API returned no image payload', details: data };
   }
 
@@ -92,8 +92,8 @@ async function generateImage(
   }
 
   const first = data?.data?.[0];
-  if (first?.url) return { imageUrl: first.url as string };
-  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` };
+  if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+  if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}`, usage: data?.usage };
   return { imageUrl: null as string | null, error: 'Image API returned no image payload', details: data };
 }
 
@@ -135,6 +135,7 @@ export async function POST(req: Request) {
         route: 'instagram-carousel-2-image-test',
         size,
         usedReferenceImage: Boolean(parsed.data.referenceImageUrl),
+        ...normalizeGenerationUsage(out.usage),
       },
     });
   }

@@ -1,7 +1,7 @@
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { mergeGenerationUsages, normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
@@ -71,7 +71,7 @@ function buildInstagramImagePrompt(caption: string) {
   ].join(' ');
 }
 
-async function generateInstagramImage(apiKey: string, prompt: string): Promise<{ imageUrl: string | null; error?: string }> {
+async function generateInstagramImage(apiKey: string, prompt: string): Promise<{ imageUrl: string | null; error?: string; usage?: Record<string, any> }> {
   try {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -90,8 +90,8 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
       return { imageUrl: null, error: data?.error?.message || `Image API error (${res.status})` };
     }
     const first = data?.data?.[0];
-    if (first?.url) return { imageUrl: first.url as string };
-    if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` as string };
+    if (first?.url) return { imageUrl: first.url as string, usage: data?.usage };
+    if (first?.b64_json) return { imageUrl: `data:image/png;base64,${first.b64_json}` as string, usage: data?.usage };
     return { imageUrl: null, error: 'Image API returned no image payload' };
   } catch (err: any) {
     return { imageUrl: null, error: err?.message || 'Image generation request failed' };
@@ -167,7 +167,8 @@ export async function POST(req: Request) {
     }
 
     const images: Record<string, string> = {};
-    const outputs = await Promise.all(assets.map(async (asset) => {
+    const imageUsages: Array<Record<string, any> | undefined> = [];
+    const generatedAssets = await Promise.all(assets.map(async (asset) => {
       const systemPrompt = buildSystemPrompt(asset.type, tone);
       const userPrompt = buildUserPrompt(asset.type, sourceText, customPrompt, additionalContext);
       const result = await generateText({
@@ -184,13 +185,19 @@ export async function POST(req: Request) {
         const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
         if (image.imageUrl) {
           images.instagram = image.imageUrl;
+          imageUsages.push(image.usage);
           sectionText += `\n\nImage generation status: success`;
         } else {
           sectionText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
         }
       }
 
-      return { type: asset.type, label: asset.label, content: sectionText };
+      return { type: asset.type, label: asset.label, content: sectionText, usage: result.usage };
+    }));
+    const outputs = generatedAssets.map((asset) => ({
+      type: asset.type,
+      label: asset.label,
+      content: asset.content,
     }));
     const sectionScores = outputs.map((output) => ({ label: output.label, ...assessCompliance(output.content) }));
 
@@ -208,6 +215,7 @@ export async function POST(req: Request) {
         selectedTypes: assets.map((asset) => asset.type),
         tone,
         sourceContentCount: sourceContentIds?.length || 0,
+        ...mergeGenerationUsages(generatedAssets.map((asset) => asset.usage)),
       },
     });
 
@@ -222,6 +230,7 @@ export async function POST(req: Request) {
         meta: {
           source: 'generate-content-kit',
           selectedTypes: assets.map((asset) => asset.type),
+          ...mergeGenerationUsages(imageUsages),
         },
       });
     }
@@ -241,11 +250,13 @@ export async function POST(req: Request) {
 
   let outputText = result.text;
   const images: Record<string, string> = {};
+  let imageUsage: Record<string, any> | undefined;
   if (includeInstagramImage && type === 'social-instagram') {
     const imagePrompt = buildInstagramImagePrompt(outputText);
     const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
     if (image.imageUrl) {
       images.instagram = image.imageUrl;
+      imageUsage = image.usage;
       outputText += `\n\nImage generation status: success`;
     } else {
       outputText += `\n\nImage generation status: failed (${image.error || 'unknown error'})`;
@@ -264,6 +275,7 @@ export async function POST(req: Request) {
       mode,
       tone,
       sourceContentCount: sourceContentIds?.length || 0,
+      ...normalizeGenerationUsage(result.usage),
     },
   });
 
@@ -277,6 +289,7 @@ export async function POST(req: Request) {
       meta: {
         source: 'generate-content-single',
         contentType: type,
+        ...normalizeGenerationUsage(imageUsage),
       },
     });
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 
 export async function POST(req: Request) {
   try {
@@ -36,6 +36,7 @@ export async function POST(req: Request) {
         model: 'gpt-image-1',
         meta: {
           route: 'generate-image-test',
+          ...normalizeGenerationUsage(data?.usage),
         },
       });
     }

@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { recordGenerationEvent } from '@/lib/generation-events';
+import { normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
@@ -221,6 +221,7 @@ export async function POST(req: Request) {
       meta: {
         sourceContentCount: sources.length,
         questionCount: coursePackage.questions.length,
+        ...normalizeGenerationUsage(result.usage),
       },
     });
 
