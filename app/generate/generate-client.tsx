@@ -1326,7 +1326,6 @@ export default function GeneratePage() {
                   <div className="space-y-3">
                     <div>
                       <div className="text-sm font-semibold text-slate-950">Tone</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Choose the voice for the campaign copy.</p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                       {(['professional', 'casual', 'friendly', 'authoritative', 'conversational', 'urgent'] as ToneType[]).map((option) => (
@@ -1356,7 +1355,6 @@ export default function GeneratePage() {
                   <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <div>
                       <div className="text-sm font-semibold text-slate-950">Audience</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Who should this campaign speak to?</p>
                     </div>
                     <select
                       value={audience}
@@ -1373,7 +1371,6 @@ export default function GeneratePage() {
                   <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <div>
                       <div className="text-sm font-semibold text-slate-950">Additional options</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Add instructions and campaign preferences.</p>
                     </div>
                     <label className="block space-y-2">
                       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Additional instructions</span>

@@ -273,7 +273,12 @@ export function SourceArticlePicker({
   }
 
   return (
-    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'flex h-full min-h-0 flex-col gap-0 rounded-lg shadow-none' : 'rounded-[1.5rem]', className)}>
+    <Card className={cn(
+      splitView
+        ? 'flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border-0 bg-transparent shadow-none'
+        : 'overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]',
+      className
+    )}>
       <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-3 py-2.5 sm:px-3')}>
         {splitView ? null : (
           <div className="min-w-0">
