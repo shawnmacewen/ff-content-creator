@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { estimateGenerationCostUsd, getModelPricingRule } from '@/lib/model-pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -93,7 +94,15 @@ function getTokenEstimate(row: GenerationEventRow) {
 function getCostEstimate(row: GenerationEventRow) {
   const value = row.meta?.costUsd || row.meta?.cost_usd || row.meta?.estimatedCostUsd || row.meta?.estimated_cost_usd;
   const cost = Number(value);
-  return Number.isFinite(cost) && cost > 0 ? `$${cost.toFixed(4)}` : 'Not tracked yet';
+  if (Number.isFinite(cost) && cost > 0) return `$${cost.toFixed(4)}`;
+
+  const estimate = estimateGenerationCostUsd(row.model, row.meta);
+  return estimate ? `$${estimate.costUsd.toFixed(4)}` : 'Not tracked yet';
+}
+
+function getPricingStatus(row: GenerationEventRow) {
+  if (!row.model) return 'No model';
+  return getModelPricingRule(row.model) ? 'Priced' : 'No rule';
 }
 
 async function getTokenUsageSummary(): Promise<TokenUsageSummary> {
@@ -135,9 +144,9 @@ export default async function TokenUsagePage() {
   const summary = await getTokenUsageSummary();
   const successfulRows = summary.rows.filter((row) => row.success !== false);
   const imageEvents = successfulRows.filter((row) => row.meta?.category === 'image' || row.tool.includes('image'));
-  const knownTokenRows = successfulRows.filter((row) => getTokenEstimate(row) !== 'Not tracked yet');
   const knownCostRows = successfulRows.filter((row) => getCostEstimate(row) !== 'Not tracked yet');
   const modelCount = new Set(successfulRows.map((row) => row.model).filter(Boolean)).size;
+  const pricedModelCount = new Set(successfulRows.filter((row) => getModelPricingRule(row.model)).map((row) => row.model).filter(Boolean)).size;
   const totalAssets = successfulRows.reduce((total, row) => total + getAssetCount(row), 0);
 
   const metricCards = [
@@ -163,9 +172,9 @@ export default async function TokenUsagePage() {
       className: 'bg-cyan-100 text-cyan-700',
     },
     {
-      label: 'Usage fields',
-      value: knownTokenRows.length || knownCostRows.length ? 'Partial' : 'Pending',
-      detail: 'Token and cost fields are ready here once routes write usage metadata',
+      label: 'Cost estimates',
+      value: formatNumber(knownCostRows.length),
+      detail: `${formatNumber(pricedModelCount)} priced model${pricedModelCount === 1 ? '' : 's'} observed in recent events`,
       icon: BadgeDollarSign,
       className: 'bg-amber-100 text-amber-700',
     },
@@ -249,7 +258,14 @@ export default async function TokenUsagePage() {
                       <TableCell className="font-mono text-xs text-muted-foreground">{row.model || 'Not recorded'}</TableCell>
                       <TableCell>{formatNumber(getAssetCount(row))}</TableCell>
                       <TableCell className="text-muted-foreground">{getTokenEstimate(row)}</TableCell>
-                      <TableCell className="pr-4 text-muted-foreground">{getCostEstimate(row)}</TableCell>
+                      <TableCell className="pr-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground">{getCostEstimate(row)}</span>
+                          {row.model ? (
+                            <span className="text-[11px] text-muted-foreground">{getPricingStatus(row)}</span>
+                          ) : null}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -276,8 +292,8 @@ export default async function TokenUsagePage() {
                 This page reads that log for tool, content type, success, model, category, and asset count.
               </p>
               <p>
-                Token and cost estimates are not consistently written yet, so those cells remain blank until the generation
-                routes record usage metadata.
+                New events now add estimated cost metadata when provider usage is available. Older events with token fields
+                are estimated at read time from the same per-model pricing rules.
               </p>
             </CardContent>
           </Card>
@@ -291,11 +307,11 @@ export default async function TokenUsagePage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
               <div className="flex items-start gap-2">
-                <Clock3 className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
                 <span>Add token fields to generation route metadata when the model provider returns usage.</span>
               </div>
               <div className="flex items-start gap-2">
-                <Clock3 className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
                 <span>Add per-model pricing rules so estimated costs can be calculated consistently.</span>
               </div>
               <div className="flex items-start gap-2">

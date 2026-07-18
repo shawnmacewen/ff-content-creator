@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { estimateGenerationCostUsd } from '@/lib/model-pricing';
 
 type GenerationTool =
   | 'generate-content'
@@ -45,9 +46,12 @@ export function normalizeGenerationUsage(usage: UsageLike) {
     noCacheTokens: numberOrUndefined(inputDetails.noCacheTokens ?? inputDetails.no_cache_tokens),
     cacheReadTokens: cachedInputTokens,
     cacheWriteTokens: numberOrUndefined(inputDetails.cacheWriteTokens ?? inputDetails.cache_write_tokens),
+    textTokens: numberOrUndefined(inputDetails.textTokens ?? inputDetails.text_tokens),
+    imageTokens: numberOrUndefined(inputDetails.imageTokens ?? inputDetails.image_tokens),
   });
   const normalizedOutputDetails = compactObject({
     textTokens: numberOrUndefined(outputDetails.textTokens ?? outputDetails.text_tokens),
+    imageTokens: numberOrUndefined(outputDetails.imageTokens ?? outputDetails.image_tokens),
     reasoningTokens,
   });
   const tokenUsage = compactObject({
@@ -80,6 +84,10 @@ export function mergeGenerationUsages(usages: UsageLike[]) {
     totalTokens: 0,
     reasoningTokens: 0,
     cachedInputTokens: 0,
+    inputTextTokens: 0,
+    inputImageTokens: 0,
+    outputTextTokens: 0,
+    outputImageTokens: 0,
   };
   const seen = {
     inputTokens: false,
@@ -87,6 +95,10 @@ export function mergeGenerationUsages(usages: UsageLike[]) {
     totalTokens: false,
     reasoningTokens: false,
     cachedInputTokens: false,
+    inputTextTokens: false,
+    inputImageTokens: false,
+    outputTextTokens: false,
+    outputImageTokens: false,
   };
 
   for (const usage of usages) {
@@ -98,14 +110,47 @@ export function mergeGenerationUsages(usages: UsageLike[]) {
         seen[key] = true;
       }
     }
+    const tokenUsage = (normalized.tokenUsage || {}) as Record<string, any>;
+    const inputDetails = (tokenUsage.inputTokenDetails || {}) as Record<string, unknown>;
+    const outputDetails = (tokenUsage.outputTokenDetails || {}) as Record<string, unknown>;
+    const inputTextTokens = numberOrUndefined(inputDetails.textTokens);
+    const inputImageTokens = numberOrUndefined(inputDetails.imageTokens);
+    const outputTextTokens = numberOrUndefined(outputDetails.textTokens);
+    const outputImageTokens = numberOrUndefined(outputDetails.imageTokens);
+    if (inputTextTokens !== undefined) {
+      totals.inputTextTokens += inputTextTokens;
+      seen.inputTextTokens = true;
+    }
+    if (inputImageTokens !== undefined) {
+      totals.inputImageTokens += inputImageTokens;
+      seen.inputImageTokens = true;
+    }
+    if (outputTextTokens !== undefined) {
+      totals.outputTextTokens += outputTextTokens;
+      seen.outputTextTokens = true;
+    }
+    if (outputImageTokens !== undefined) {
+      totals.outputImageTokens += outputImageTokens;
+      seen.outputImageTokens = true;
+    }
   }
 
+  const inputTokenDetails = compactObject({
+    textTokens: seen.inputTextTokens ? totals.inputTextTokens : undefined,
+    imageTokens: seen.inputImageTokens ? totals.inputImageTokens : undefined,
+  });
+  const outputTokenDetails = compactObject({
+    textTokens: seen.outputTextTokens ? totals.outputTextTokens : undefined,
+    imageTokens: seen.outputImageTokens ? totals.outputImageTokens : undefined,
+  });
   const merged = compactObject({
     inputTokens: seen.inputTokens ? totals.inputTokens : undefined,
     outputTokens: seen.outputTokens ? totals.outputTokens : undefined,
     totalTokens: seen.totalTokens ? totals.totalTokens : undefined,
     reasoningTokens: seen.reasoningTokens ? totals.reasoningTokens : undefined,
     cachedInputTokens: seen.cachedInputTokens ? totals.cachedInputTokens : undefined,
+    inputTokenDetails: Object.keys(inputTokenDetails).length ? inputTokenDetails : undefined,
+    outputTokenDetails: Object.keys(outputTokenDetails).length ? outputTokenDetails : undefined,
   });
 
   return Object.keys(merged).length ? { ...merged, tokenUsage: merged } : {};
@@ -123,6 +168,7 @@ export async function recordGenerationEvent(args: {
   try {
     const supabase = getSupabaseServerClient();
     const assetCount = Math.max(1, Math.floor(Number(args.assetCount || 1)));
+    const costEstimate = estimateGenerationCostUsd(args.model, args.meta);
 
     await supabase.from('generation_events').insert({
       tool: args.tool,
@@ -131,6 +177,14 @@ export async function recordGenerationEvent(args: {
       model: args.model || null,
       meta: {
         ...(args.meta || {}),
+        ...(costEstimate
+          ? {
+              estimatedCostUsd: costEstimate.costUsd,
+              pricingModel: costEstimate.pricingModel,
+              pricingSource: costEstimate.pricingSource,
+              pricingUnit: costEstimate.pricingUnit,
+            }
+          : {}),
         category: args.category || 'content',
         assetCount,
       },
