@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import type { SourceContent } from '@/lib/types/content';
 import { Calendar, Check, ChevronDown, FileText, Filter, Search, Sparkles } from 'lucide-react';
 
-type Topic = 'All Topics' | 'Markets' | 'Economy' | 'Energy' | 'AI & Tech' | 'Banking' | 'Geopolitics' | 'ESG';
+type Topic = 'All Topics' | 'Markets' | 'Economy' | 'Energy' | 'AI & Tech' | 'Banking' | 'Medicare' | 'Geopolitics' | 'ESG';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -132,7 +132,7 @@ export function SourceArticlePicker({
 
   const { data, isLoading } = useSWR<ApiResponse>(apiUrl, fetcher);
 
-  const topics: Topic[] = ['All Topics', 'Markets', 'Economy', 'Energy', 'AI & Tech', 'Banking', 'Geopolitics', 'ESG'];
+  const topics: Topic[] = ['All Topics', 'Markets', 'Economy', 'AI & Tech', 'Banking', 'Medicare', 'Energy', 'Geopolitics', 'ESG'];
 
   const filtered = React.useMemo(() => {
     const items = data?.data ?? [];
@@ -144,6 +144,7 @@ export function SourceArticlePicker({
       Energy: ['energy', 'oil', 'crude', 'petroleum', 'gas', 'opec'],
       'AI & Tech': ['ai', 'tech', 'technology', 'crypto', 'digital assets', 'blockchain'],
       Banking: ['bank', 'banking', 'credit', 'lending', 'rates'],
+      Medicare: ['medicare', 'social security', 'healthcare', 'health care'],
       Geopolitics: ['geopolitics', 'war', 'conflict', 'sanctions', 'election'],
       ESG: ['esg', 'sustainable', 'sustainability', 'responsible', 'impact', 'investing'],
     };
@@ -231,7 +232,7 @@ export function SourceArticlePicker({
   }
 
   return (
-    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'flex h-full min-h-0 flex-col gap-0 rounded-2xl shadow-[0_14px_42px_rgba(15,23,42,0.08)]' : 'rounded-[1.5rem]', className)}>
+    <Card className={cn('overflow-hidden border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]', splitView ? 'flex h-full min-h-0 flex-col gap-0 rounded-lg shadow-none' : 'rounded-[1.5rem]', className)}>
       <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-3 py-2.5 sm:px-3')}>
         {splitView ? null : (
           <div className="min-w-0">
@@ -263,7 +264,7 @@ export function SourceArticlePicker({
             {splitView ? (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
                 <Sparkles className="h-3 w-3" />
-                Editorial Sources
+                Editorial Sources - {data?.total?.toLocaleString?.() || '50'}
               </div>
             ) : null}
             <div className={cn('flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-500 shadow-sm', splitView && 'gap-1.5 px-2.5 py-1 text-[11px]')}>
@@ -293,7 +294,7 @@ export function SourceArticlePicker({
                 onClick={() => setTopic(t)}
                 className={cn(
                   'shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors',
-                  splitView && 'px-2 py-0.5 text-[10px]',
+                  splitView && 'px-2.5 py-1 text-[11px]',
                   active
                     ? 'border-slate-950 bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.20)]'
                     : 'border-slate-200 bg-white/78 text-slate-500 hover:border-cyan-200 hover:text-slate-900'
@@ -335,8 +336,8 @@ export function SourceArticlePicker({
                     onClick={() => onSelect(selected ? null : c.id)}
                     className={cn(
                       'group relative overflow-hidden rounded-[1.25rem] border bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(15,23,42,0.16)]',
-                      splitView ? 'min-h-[94px] rounded-xl shadow-[0_10px_30px_rgba(15,23,42,0.08)]' : 'min-h-44',
-                      selected ? 'border-cyan-300 ring-2 ring-cyan-200/80' : 'border-slate-200/80'
+                      splitView ? 'min-h-[88px] rounded-lg shadow-none' : 'min-h-44',
+                      selected ? 'border-primary ring-2 ring-primary/25' : 'border-slate-200/80'
                     )}
                   >
                     <div className={cn('absolute inset-y-0 left-0 overflow-hidden bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.96),rgba(255,255,255,0)_34%),linear-gradient(135deg,#eff6ff_0%,#bfdbfe_45%,#f8fafc_100%)]', splitView ? 'w-[24%]' : 'w-[36%]')}>
@@ -363,7 +364,7 @@ export function SourceArticlePicker({
                           className={cn(
                             'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm',
                             splitView && 'h-6 w-6',
-                            selected ? 'border-cyan-300 bg-cyan-500 text-white' : 'border-slate-200 bg-white/90 text-transparent'
+                            selected ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white/90 text-transparent'
                           )}
                           aria-hidden
                         >

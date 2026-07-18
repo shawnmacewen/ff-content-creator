@@ -13,37 +13,32 @@ export function GenerationModeToggle({
   onChange: (m: GenerationMode) => void;
 }) {
   return (
-    <div className="rounded-md border bg-card p-3 shadow-sm">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="w-full max-w-[320px] rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
+      <div className="grid grid-cols-2 gap-0.5">
         <button
           type="button"
           onClick={() => onChange('kit')}
           className={cn(
-            'rounded-md border px-4 py-3 text-left transition-all',
+            'h-10 rounded-md px-4 text-center text-sm font-semibold transition-all',
             mode === 'kit'
-              ? 'border-primary/60 bg-primary/10 shadow-sm'
-              : 'bg-background/60 hover:bg-background'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-slate-600 hover:bg-slate-50'
           )}
         >
-          <div className="flex items-center gap-2">
-            <div className="text-sm font-semibold">KIT (Campaign)</div>
-            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-white">NEW</span>
-          </div>
-          <div className="text-xs text-muted-foreground">Coordinated multi-format package</div>
+          Campaign Kit
         </button>
 
         <button
           type="button"
           onClick={() => onChange('single')}
           className={cn(
-            'rounded-md border px-4 py-3 text-left transition-all',
+            'h-10 rounded-md px-4 text-center text-sm font-semibold transition-all',
             mode === 'single'
-              ? 'border-primary/60 bg-primary/10 shadow-sm'
-              : 'bg-background/60 hover:bg-background'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-slate-600 hover:bg-slate-50'
           )}
         >
-          <div className="text-sm font-semibold">Single Asset</div>
-          <div className="text-xs text-muted-foreground">Generate one piece of content</div>
+          Single Asset
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type ComponentType } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,20 +9,29 @@ import { ContentTypeSelector } from '@/components/generator/content-type-selecto
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
-import { BouncingDots, GeneratingOutputState } from '@/components/generator/generating-dots';
+import { GeneratingOutputState } from '@/components/generator/generating-dots';
 import { GenerationModeToggle, type GenerationMode } from '@/components/generator/generation-mode-toggle';
 import { KitGeneratedOutput, type KitOutputStatus } from '@/components/generator/kit-generated-output';
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 import { ContentDetail } from '@/components/source-content/content-detail';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
-import { PageHeader } from '@/components/layout/page-header';
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import {
+  Bookmark,
   CheckCircle2,
+  Edit3,
+  FileText,
+  Grid2X2,
+  Instagram,
+  Linkedin,
   Loader2,
+  Mail,
+  Save,
+  Sparkles,
+  User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -47,6 +56,66 @@ function decodeEntitiesLite(input: string): string {
     .replace(/&apos;/g, "'");
 }
 
+type WorkflowStep = 1 | 2 | 3;
+
+const iconByContentType: Partial<Record<ContentType, ComponentType<{ className?: string }>>> = {
+  'social-instagram': Instagram,
+  'social-linkedin': Linkedin,
+  'email-marketing': Mail,
+};
+
+function toneLabel(tone: ToneType) {
+  return tone.charAt(0).toUpperCase() + tone.slice(1);
+}
+
+function toneDescription(tone: ToneType) {
+  const descriptions: Partial<Record<ToneType, string>> = {
+    professional: 'Clear, credible, and client-friendly',
+    casual: 'Relaxed and approachable',
+    friendly: 'Warm and personable',
+    authoritative: 'Expert and confident',
+    conversational: 'Natural and easy to read',
+    urgent: 'Timely and action-oriented',
+  };
+  return descriptions[tone] || 'Ready for review';
+}
+
+function compactOutputLabel(type: ContentType, instagramVariant?: 'single' | 'carousel' | null) {
+  if (type === 'social-instagram') return instagramVariant === 'carousel' ? 'Instagram carousel' : 'Instagram post';
+  if (type === 'email-marketing') return 'Marketing email';
+  if (type === 'social-linkedin') return 'LinkedIn post';
+  return CONTENT_TYPE_MAP[type]?.label ?? type;
+}
+
+function WorkflowStepMarker({
+  step,
+  active,
+  complete,
+}: {
+  step: WorkflowStep;
+  active?: boolean;
+  complete?: boolean;
+}) {
+  if (complete && !active) {
+    return (
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+        <CheckCircle2 className="h-5 w-5" />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+        active ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-700'
+      )}
+    >
+      {step}
+    </span>
+  );
+}
+
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -54,6 +123,10 @@ export default function GeneratePage() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [setupCollapsed, setSetupCollapsed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep>(3);
+  const [usePlainLanguage, setUsePlainLanguage] = useState(true);
+  const [includeCallToAction, setIncludeCallToAction] = useState(true);
+  const [audience, setAudience] = useState('Clients and prospects');
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource } = useSWR<any>(
@@ -280,6 +353,12 @@ export default function GeneratePage() {
     const shouldGenerateInlineInstagramImage = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'single' &&
       includeInstagramSingleImages;
+    const guidanceContext = [
+      additionalContext,
+      usePlainLanguage ? 'Use plain language.' : '',
+      includeCallToAction ? 'Include a clear call to action.' : '',
+      audience ? `Audience: ${audience}.` : '',
+    ].filter(Boolean).join('\n');
 
     try {
       // Generate KIT text first so non-Instagram outputs show ASAP.
@@ -295,7 +374,7 @@ export default function GeneratePage() {
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
-          additionalContext,
+          additionalContext: guidanceContext,
         }),
       });
 
@@ -329,7 +408,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -345,6 +424,12 @@ export default function GeneratePage() {
     const shouldGenerateInlineInstagramImage = primaryType === 'social-instagram' &&
       includeInstagramImage &&
       instagramImageMode === 'single';
+    const guidanceContext = [
+      additionalContext,
+      usePlainLanguage ? 'Use plain language.' : '',
+      includeCallToAction ? 'Include a clear call to action.' : '',
+      audience ? `Audience: ${audience}.` : '',
+    ].filter(Boolean).join('\n');
     setImageStatus(shouldGenerateInlineInstagramImage ? 'Generating Instagram single image...' : null);
 
     try {
@@ -359,7 +444,7 @@ export default function GeneratePage() {
           sourceContentIds: selectedSourceIds,
           customPrompt,
           tone,
-          additionalContext,
+          additionalContext: guidanceContext,
         }),
       });
 
@@ -390,7 +475,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext]);
+  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience]);
 
   const handleSave = async (status: ContentStatus) => {
     const primaryType = selectedContentTypes[0];
@@ -449,6 +534,14 @@ export default function GeneratePage() {
   const hasGeneratedOutput = mode === 'kit'
     ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages)
     : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
+  const activeTypes = mode === 'kit' ? kitTypes : selectedContentTypes;
+  const selectedOutputLabels = activeTypes.map((type) => compactOutputLabel(type, instagramKitVariant));
+  const selectedSourceLabel = selectedSourceIds.length
+    ? `${selectedSourceIds.length} article${selectedSourceIds.length === 1 ? '' : 's'} selected`
+    : 'Choose your article';
+  const generateDisabled = mode === 'kit'
+    ? isGeneratingKit || isGeneratingKitCarouselImages || !kitTypes.length || !selectedSourceIds.length
+    : isGenerating || !selectedContentTypes.length || !selectedSourceIds.length;
   const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
   const setupTrayClassName = cn(
     'space-y-6 overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out',
@@ -462,13 +555,56 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="flex w-full max-w-none flex-col gap-6">
-      <PageHeader
-        eyebrow="Campaign generation workflow"
-        title="Generate Content"
-        description="Select a source, tune the generation controls, and review channel-ready assets in a single process."
-        metrics={[]}
-      />
+    <div className="flex w-full max-w-none flex-col gap-4 pb-20">
+      <div className="flex flex-col gap-4 border-b border-slate-200 bg-white px-1 pb-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold leading-tight tracking-normal text-slate-950">Generate Content</h1>
+            <p className="mt-1 text-sm text-slate-600">Turn one trusted article into a coordinated marketing campaign.</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-fit gap-2 rounded-md bg-white"
+            onClick={() => router.push('/library')}
+          >
+            <Bookmark className="h-4 w-4" />
+            Saved drafts
+          </Button>
+        </div>
+        <GenerationModeToggle mode={mode} onChange={handleModeChange} />
+      </div>
+
+      <div className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:grid-cols-3">
+        {([
+          { step: 1 as WorkflowStep, title: mode === 'kit' ? 'Choose outputs' : 'Choose asset', detail: selectedOutputLabels.length ? selectedOutputLabels.slice(0, 1).join('') + (selectedOutputLabels.length > 1 ? ` + ${selectedOutputLabels.length - 1} more` : '') : 'Select output' },
+          { step: 2 as WorkflowStep, title: 'Set guidance', detail: toneLabel(tone) },
+          { step: 3 as WorkflowStep, title: 'Select source', detail: selectedSourceLabel },
+        ]).map((item) => {
+          const active = activeWorkflowStep === item.step;
+          const complete = item.step === 1 ? activeTypes.length > 0 : item.step === 2 ? Boolean(tone) : selectedSourceIds.length > 0;
+          return (
+            <button
+              key={item.step}
+              type="button"
+              onClick={() => setActiveWorkflowStep(item.step)}
+              className={cn(
+                'flex min-h-[76px] items-center gap-4 border-slate-200 px-5 text-left transition-colors hover:bg-slate-50 lg:border-r last:lg:border-r-0',
+                active && 'bg-blue-50/70'
+              )}
+            >
+              <WorkflowStepMarker step={item.step} active={active} complete={complete} />
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-semibold text-slate-950">{item.step}</span>
+                  <span className="font-semibold text-slate-950">{item.title}</span>
+                </div>
+                <p className="mt-1 truncate text-sm text-slate-600">{active ? 'Editing' : item.detail}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
       {hasGeneratedOutput ? (
         <div className="flex justify-end">
@@ -486,54 +622,59 @@ export default function GeneratePage() {
       {mode === 'kit' ? (
         <div className="space-y-6">
           <div className={setupTrayClassName}>
-            <GenerationModeToggle mode={mode} onChange={handleModeChange} />
-
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">1</span>
+                <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>1</span>
                 <div>
-                  <h2 className="text-lg font-semibold">Select KIT Content Types</h2>
-                  <p className="text-sm text-muted-foreground">Choose the channel mix for this campaign package.</p>
+                  <h2 className="text-lg font-semibold">Campaign outputs</h2>
+                  <p className="text-sm text-muted-foreground">{activeWorkflowStep === 1 ? 'Choose the channel mix for this campaign package.' : selectedOutputLabels.join(' - ')}</p>
                 </div>
+                {activeWorkflowStep !== 1 ? (
+                  <Button type="button" variant="ghost" size="sm" className="ml-auto text-primary" onClick={() => setActiveWorkflowStep(1)}>
+                    Edit
+                  </Button>
+                ) : null}
               </div>
-              <KitContentTypeSelector
-                selected={kitTypes}
-                onToggle={(t) => {
-                  // Base selection (multi-select)
-                  toggleKitType(t);
-                }}
-                instagramVariant={instagramKitVariant}
-                setInstagramVariant={(v) => setInstagramKitVariant(v)}
-                includeInstagramSingleImages={includeInstagramSingleImages}
-                includeInstagramCarouselImages={includeInstagramCarouselImages}
-                onToggleInstagramSingleImages={() => {
-                  // selecting single deselects carousel
-                  setInstagramKitVariant('single');
-                  setIncludeInstagramCarouselImages(false);
+              {activeWorkflowStep === 1 ? (
+                <>
+                  <KitContentTypeSelector
+                    selected={kitTypes}
+                    onToggle={(t) => {
+                      // Base selection (multi-select)
+                      toggleKitType(t);
+                    }}
+                    instagramVariant={instagramKitVariant}
+                    setInstagramVariant={(v) => setInstagramKitVariant(v)}
+                    includeInstagramSingleImages={includeInstagramSingleImages}
+                    includeInstagramCarouselImages={includeInstagramCarouselImages}
+                    onToggleInstagramSingleImages={() => {
+                      // selecting single deselects carousel
+                      setInstagramKitVariant('single');
+                      setIncludeInstagramCarouselImages(false);
 
-                  // ensure instagram is in kit types
-                  setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+                      // ensure instagram is in kit types
+                      setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
 
-                  setInstagramImageMode('single');
-                  setIncludeInstagramImage(true);
-                  setIncludeInstagramSingleImages((v) => !v);
-                }}
-                onToggleInstagramCarouselImages={() => {
-                  // selecting carousel deselects single
-                  setInstagramKitVariant('carousel');
-                  setIncludeInstagramSingleImages(false);
+                      setInstagramImageMode('single');
+                      setIncludeInstagramImage(true);
+                      setIncludeInstagramSingleImages((v) => !v);
+                    }}
+                    onToggleInstagramCarouselImages={() => {
+                      // selecting carousel deselects single
+                      setInstagramKitVariant('carousel');
+                      setIncludeInstagramSingleImages(false);
 
-                  // ensure instagram is in kit types
-                  setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
+                      // ensure instagram is in kit types
+                      setKitTypes((prev) => (prev.includes('social-instagram') ? prev : [...prev, 'social-instagram']));
 
-                  setInstagramImageMode('carousel');
-                  setIncludeInstagramImage(true);
-                  setIncludeInstagramCarouselImages((v) => !v);
-                }}
-              />
+                      setInstagramImageMode('carousel');
+                      setIncludeInstagramImage(true);
+                      setIncludeInstagramCarouselImages((v) => !v);
+                    }}
+                  />
             
-              {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
+                  {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
                 <Card className="mt-6 rounded-lg border-border shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-base">Instagram Carousel</CardTitle>
@@ -648,38 +789,122 @@ export default function GeneratePage() {
                     ) : null}
                   </CardContent>
                 </Card>
-              ) : null}
+                  ) : null}
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Cancel</Button>
+                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Save outputs</Button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {activeTypes.map((type) => {
+                      const Icon = iconByContentType[type] || FileText;
+                      return (
+                        <span key={type} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+                          <Icon className="h-4 w-4" />
+                          {compactOutputLabel(type, instagramKitVariant)}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' ? (
+                    <p className="text-sm text-slate-600">Carousel - {kitCarouselSlideCount} slides - {kitCarouselVisualStyle === 'classic' ? 'Classic Current Look' : 'Bright Editorial'}</p>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">2</span>
+                <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-emerald-100 text-emerald-800')}>2</span>
                 <div>
-                  <h2 className="text-lg font-semibold">Generation Settings</h2>
-                  <p className="text-sm text-muted-foreground">Set tone, instructions, and campaign context.</p>
+                  <h2 className="text-lg font-semibold">Writing guidance</h2>
+                  <p className="text-sm text-muted-foreground">{activeWorkflowStep === 2 ? 'Set tone, instructions, and campaign context.' : toneDescription(tone)}</p>
                 </div>
+                {activeWorkflowStep !== 2 ? (
+                  <Button type="button" variant="outline" size="sm" className="ml-auto gap-2 rounded-md" onClick={() => setActiveWorkflowStep(2)}>
+                    <Edit3 className="h-4 w-4" />
+                    Edit
+                  </Button>
+                ) : null}
               </div>
-              <ToneControls
-                tone={tone}
-                onToneChange={setTone}
-                customPrompt={customPrompt}
-                onCustomPromptChange={setCustomPrompt}
-                additionalContext={additionalContext}
-                onAdditionalContextChange={setAdditionalContext}
-              />
+              {activeWorkflowStep === 2 ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-slate-950">Tone</div>
+                    <div className="flex flex-wrap gap-2">
+                      {(['professional', 'casual', 'friendly', 'authoritative', 'conversational', 'urgent'] as ToneType[]).map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setTone(option)}
+                          className={cn(
+                            'h-10 rounded-md border px-4 text-sm font-medium transition-colors',
+                            tone === option ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/20' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                          )}
+                        >
+                          {toneLabel(option)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <label className="block space-y-2">
+                    <span className="text-sm font-semibold text-slate-950">Additional instructions (optional)</span>
+                    <textarea
+                      className="min-h-20 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                      placeholder="Add audience, key message, compliance notes, or calls to action..."
+                      value={customPrompt}
+                      onChange={(event) => setCustomPrompt(event.target.value)}
+                    />
+                  </label>
+                  <div className="flex flex-wrap items-center gap-5">
+                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                      <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
+                      Use plain language
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                      <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
+                      Include a call to action
+                    </label>
+                    <label className="ml-auto flex min-w-[260px] items-center gap-2 text-sm text-slate-700">
+                      <span>Audience:</span>
+                      <select
+                        value={audience}
+                        onChange={(event) => setAudience(event.target.value)}
+                        className="h-10 flex-1 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                      >
+                        <option>Clients and prospects</option>
+                        <option>Existing clients</option>
+                        <option>Prospective clients</option>
+                        <option>Advisors</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Cancel</Button>
+                    <Button type="button" className="rounded-md" onClick={() => setActiveWorkflowStep(3)}>Save guidance</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-slate-950">{toneLabel(tone)}</h3>
+                  <p className="text-sm text-slate-600">{toneDescription(tone)}</p>
+                </div>
+              )}
 
             </div>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
             <div className="mb-2 flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">3</span>
+              <span className={cn('flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold', activeWorkflowStep === 3 ? 'bg-primary text-primary-foreground' : selectedSourceIds.length ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700')}>3</span>
               <div>
-                <h2 className="text-lg font-semibold">Select Content</h2>
-                <p className="text-sm text-muted-foreground">Pick the source article that will anchor the output.</p>
+                <h2 className="text-lg font-semibold">Choose a source article</h2>
+                <p className="text-sm text-muted-foreground">Select the trusted article EchoWrite should transform into your campaign.</p>
               </div>
             </div>
-            <div className="grid items-stretch gap-3 xl:h-[735px] xl:max-h-[735px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
+            <div className="grid items-stretch gap-5 xl:h-[560px] xl:max-h-[560px] xl:min-h-0 xl:overflow-hidden xl:grid-cols-[minmax(390px,42%)_minmax(0,58%)] 2xl:grid-cols-[minmax(420px,42%)_minmax(0,58%)]">
               <div className="min-h-0 xl:h-full">
                 <SourceArticlePicker
                   className="xl:h-full"
@@ -697,6 +922,7 @@ export default function GeneratePage() {
                 onClear={handleClearSource}
                 onUseArticle={handleUseDetailArticle}
                 onViewDetails={handleOpenSelectedDetails}
+                campaignCompact
               />
             </div>
             {selectedSourceIds.length > 1 ? (
@@ -706,24 +932,6 @@ export default function GeneratePage() {
             ) : null}
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button className="rounded-md" onClick={() => router.push('/library')} variant="outline">
-              Saved Drafts
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                className="rounded-md"
-                onClick={handleGenerateKit}
-                disabled={isGeneratingKit || isGeneratingKitCarouselImages}
-              >
-                Generate
-              </Button>
-
-              {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
-                <BouncingDots className="gap-1" dotClassName="h-1.5 w-1.5" />
-              ) : null}
-            </div>
-          </div>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
@@ -872,8 +1080,6 @@ export default function GeneratePage() {
       ) : (
         <div className="space-y-6">
           <div className={setupTrayClassName}>
-            <GenerationModeToggle mode={mode} onChange={handleModeChange} />
-
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -953,26 +1159,6 @@ export default function GeneratePage() {
             ) : null}
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button className="rounded-md" onClick={() => router.push('/library')} variant="outline">
-              Saved Drafts
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                className="rounded-md"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating...' : 'Generate'}
-              </Button>
-
-              {isGenerating ? (
-                <BouncingDots className="gap-1" dotClassName="h-1.5 w-1.5" />
-              ) : null}
-            </div>
-          </div>
-
-
           {selectedContentTypes[0] === 'social-instagram' && includeInstagramImage && instagramImageMode === 'carousel' ? (
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
@@ -1028,6 +1214,56 @@ export default function GeneratePage() {
           </div>
         </div>
       )}
+      <div className="fixed inset-x-4 bottom-3 z-40 rounded-lg border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_14px_44px_rgba(15,23,42,0.18)] backdrop-blur md:left-[calc(var(--sidebar-width,0px)+1rem)]">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-2">
+              <Grid2X2 className="h-4 w-4 text-slate-500" />
+              {activeTypes.length} output{activeTypes.length === 1 ? '' : 's'}
+            </span>
+            <span className="text-slate-300">-</span>
+            <span className="inline-flex items-center gap-2">
+              <User className="h-4 w-4 text-slate-500" />
+              {toneLabel(tone)} tone
+            </span>
+            <span className="text-slate-300">-</span>
+            <span className="inline-flex items-center gap-2">
+              <FileText className="h-4 w-4 text-slate-500" />
+              {selectedSourceIds.length || 0} source selected
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-md bg-white px-6"
+              onClick={() => {
+                if (mode === 'single' && generatedContent.trim()) {
+                  void handleSave('draft');
+                } else {
+                  toast.info('Draft saving is available after generation.');
+                }
+              }}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save draft
+            </Button>
+            <Button
+              type="button"
+              className="h-11 rounded-md px-6"
+              onClick={mode === 'kit' ? handleGenerateKit : handleGenerate}
+              disabled={generateDisabled}
+            >
+              {(isGenerating || isGeneratingKit || isGeneratingKitCarouselImages) ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              {mode === 'kit' ? 'Generate campaign' : 'Generate asset'}
+            </Button>
+          </div>
+        </div>
+      </div>
       <ContentDetail
         content={detailContent}
         open={detailOpen}

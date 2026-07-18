@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import {
   Bookmark,
   Calendar,
+  Check,
   ExternalLink,
   FileText,
   Sparkles,
@@ -139,6 +140,7 @@ export function SelectedArticlePreview({
   onUseArticle,
   onViewDetails,
   className,
+  campaignCompact = false,
 }: {
   selectedSource: any;
   detailContent?: any;
@@ -147,10 +149,25 @@ export function SelectedArticlePreview({
   onUseArticle: () => void;
   onViewDetails?: () => void;
   className?: string;
+  campaignCompact?: boolean;
 }) {
   const article = selectedSource?.data ?? selectedSource ?? null;
 
   if (!article) {
+    if (campaignCompact) {
+      return (
+        <div className={cn('flex min-h-[520px] items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center', className)}>
+          <div className="max-w-xs space-y-3">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="text-base font-semibold text-slate-950">Select a source article</div>
+            <p className="text-sm leading-6 text-slate-600">The campaign source preview will appear here.</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={cn('flex min-h-[640px] items-center justify-center overflow-hidden rounded-[1.5rem] border border-dashed border-primary/20 bg-[linear-gradient(135deg,rgba(248,250,252,0.96),rgba(239,246,255,0.72))] p-8 text-center shadow-sm', className)}>
         <div className="max-w-sm space-y-3">
@@ -178,6 +195,77 @@ export function SelectedArticlePreview({
   const recommendedAudience = decodeEntities(String(detailContent?.recommendedAudience || article.recommendedAudience || '')).trim();
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
+
+  if (campaignCompact) {
+    return (
+      <section className={cn('flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
+        <div className="relative h-32 overflow-hidden bg-slate-100">
+          {imageUrl ? (
+            <div
+              className="h-full w-full bg-cover bg-center"
+              style={{ backgroundImage: `url("${imageUrl.replace(/"/g, '\\"')}")` }}
+            />
+          ) : (
+            <div className="h-full w-full bg-[linear-gradient(135deg,#eff6ff,#dbeafe_52%,#f8fafc)]" />
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="space-y-3">
+            <div className="inline-flex w-fit max-w-full rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700">
+              <span className="truncate">{decodeEntities(designation)}</span>
+            </div>
+            <h3 className="text-xl font-semibold leading-tight tracking-normal text-slate-950">{title}</h3>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                {formatDate(publishedAt)}
+              </span>
+              {tags.length ? <span>{tags.length} content signals</span> : null}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-slate-950">Why this source?</h4>
+            <p className="line-clamp-2 text-sm leading-6 text-slate-700">
+              {decodeEntities(String(article.excerpt || paragraphs[0] || 'This selected article will ground the generated campaign.'))}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-slate-950">Key takeaways</h4>
+            {takeaways.length ? (
+              <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-slate-700">
+                {takeaways.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm leading-6 text-slate-700">Review the full article preview for supporting details and audience fit.</p>
+            )}
+          </div>
+
+          <div className="mt-auto space-y-3">
+            {onViewDetails ? (
+              <Button variant="link" className="h-auto p-0 text-primary" onClick={onViewDetails}>
+                Preview full article
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            ) : null}
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-3 text-sm font-semibold text-primary">
+              <span className="inline-flex items-center gap-2">
+                <Check className="h-4 w-4" />
+                Selected as campaign source
+              </span>
+              <button type="button" onClick={onClear} className="text-xs font-semibold text-slate-500 hover:text-slate-900">
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={cn('group relative isolate flex min-h-[640px] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_28px_90px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/70', className)}>
