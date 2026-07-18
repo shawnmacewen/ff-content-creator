@@ -1262,7 +1262,7 @@ export default function GeneratePage() {
                           type="button"
                           onClick={() => setTone(option)}
                           className={cn(
-                            'relative min-h-16 rounded-md border bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50/50',
+                            'relative flex h-[92px] flex-col items-start justify-start rounded-md border bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50/50',
                             tone === option ? 'border-cyan-400 bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200' : 'border-slate-200'
                           )}
                         >
@@ -1272,9 +1272,9 @@ export default function GeneratePage() {
                             </span>
                           ) : null}
                           <span className="block pr-6">{toneLabel(option)}</span>
-                          {tone === option ? (
-                            <span className="mt-1 block max-w-[170px] text-xs font-medium leading-5 text-cyan-700">{toneDescription(option)}</span>
-                          ) : null}
+                          <span className={cn('mt-1 line-clamp-2 block max-w-[170px] text-xs font-medium leading-5', tone === option ? 'text-cyan-700' : 'text-slate-500')}>
+                            {toneDescription(option)}
+                          </span>
                         </button>
                       ))}
                     </div>
