@@ -44,7 +44,6 @@ import {
   HelpCircle,
   Instagram,
   Linkedin,
-  ListOrdered,
   Loader2,
   Mail,
   Mails,
@@ -57,6 +56,7 @@ import {
   StepBack,
   StepForward,
   User,
+  Video,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -94,8 +94,8 @@ const iconByContentType: Partial<Record<ContentType, ComponentType<{ className?:
   infographic: ChartColumn,
   'infographic-copy': ChartColumn,
   article: FileText,
-  faq: ListOrdered,
-  'video-script': Monitor,
+  faq: HelpCircle,
+  'video-script': Video,
 };
 
 function toneLabel(tone: ToneType) {
