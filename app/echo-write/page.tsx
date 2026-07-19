@@ -670,26 +670,6 @@ Separately (client-side), we:
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={copyOutput}
-                    disabled={!content.trim()}
-                    className="generated-draft-action generated-draft-action--copy gap-2"
-                  >
-                    <Copy className="h-4 w-4" />
-                    Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={saveDraft}
-                    disabled={!content.trim() || saving}
-                    className="generated-draft-action generated-draft-action--save gap-2"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    {saving ? 'Saving...' : 'Save draft'}
-                  </Button>
                   {groundingStatus.hasOutput ? (
                     <>
                     <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1">
@@ -735,6 +715,30 @@ Separately (client-side), we:
                 onChange={setContent}
                 showMatches={showMatches}
                 hoveredSourceId={hoverSourceId}
+                toolbarActions={(
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={copyOutput}
+                      disabled={!content.trim()}
+                      className="generated-draft-action generated-draft-action--copy gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={saveDraft}
+                      disabled={!content.trim() || saving}
+                      className="generated-draft-action generated-draft-action--save gap-2"
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {saving ? 'Saving...' : 'Save draft'}
+                    </Button>
+                  </>
+                )}
                 onHoverSpan={(sourceId, snippet) => {
                   setHoverSourceId(sourceId);
                   setHoverSnippet(snippet);

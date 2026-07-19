@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -69,6 +70,7 @@ export function EchoWriteEditor({
   onHoverSpan,
   showMatches,
   hoveredSourceId,
+  toolbarActions,
 }: {
   value: string;
   spans: AttributionSpan[];
@@ -76,6 +78,7 @@ export function EchoWriteEditor({
   onHoverSpan: (sourceId: string | null, snippet: string | null) => void;
   showMatches: boolean;
   hoveredSourceId: string | null;
+  toolbarActions?: ReactNode;
 }) {
   const [mode, setMode] = useState<'edit' | 'highlight'>('highlight');
   const applyingRef = useRef(false);
@@ -225,13 +228,14 @@ export function EchoWriteEditor({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-xs text-muted-foreground">
           {mode === 'highlight'
             ? 'Hover highlights to see supporting snippets and linked sources.'
             : 'Edit mode: changes will update the raw text output.'}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          {toolbarActions}
           <Toggle
             pressed={mode === 'edit'}
             onClick={() => setMode('edit')}
