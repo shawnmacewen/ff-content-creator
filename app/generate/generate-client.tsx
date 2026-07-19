@@ -42,6 +42,7 @@ import {
   NotebookText,
   Save,
   Sparkles,
+  Smartphone,
   Twitter,
   User,
 } from 'lucide-react';
@@ -1869,7 +1870,9 @@ export default function GeneratePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button type="button" variant="outline" size="sm" className="rounded-md border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Preview</Button>
                       <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={copyActiveCampaignOutput}>Copy</Button>
-                      <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={handleGenerateKit} disabled={isGeneratingKit}>Regenerate</Button>
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md text-slate-400" disabled title="Desktop preview coming soon"><Monitor className="h-4 w-4" /></Button>
+                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md text-slate-400" disabled title="Mobile preview coming soon"><Smartphone className="h-4 w-4" /></Button>
+                      <Button type="button" variant="outline" size="sm" className="rounded-md text-slate-400" disabled>Regenerate</Button>
                       <Button
                         type="button"
                         variant="outline"

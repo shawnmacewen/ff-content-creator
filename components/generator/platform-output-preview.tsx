@@ -7,7 +7,6 @@ import {
   Bookmark,
   CheckCircle2,
   Heart,
-  Linkedin,
   Mail,
   MessageCircle,
   MoreHorizontal,
@@ -126,39 +125,31 @@ function LinkedInPreview({ content }: { content: string }) {
   const text = cleanGeneratedText(content);
 
   return (
-    <PhoneShell>
-      <div className="border-b border-slate-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-2 text-[#0a66c2]">
-          <Linkedin className="h-6 w-6 fill-current" />
-          <span className="text-base font-bold">LinkedIn</span>
-        </div>
-      </div>
-      <div className="min-h-[520px] bg-slate-100 p-3">
-        <article className="rounded-xl bg-white shadow-sm">
-          <div className="flex items-start gap-3 px-4 py-3">
-            <Avatar />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1">
-                <span className="font-semibold">editorial</span>
-                <CheckCircle2 className="h-3.5 w-3.5 fill-[#0a66c2] text-white" />
-              </div>
-              <div className="text-[11px] leading-tight text-slate-500">Editorial content team · Now</div>
+    <div className="min-h-[520px] rounded-b-lg bg-emerald-50/45 px-4 py-6 sm:px-6">
+      <article className="mx-auto w-full max-w-[680px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-start gap-3 px-4 py-3">
+          <Avatar />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-slate-950">editorial</span>
+              <CheckCircle2 className="h-3.5 w-3.5 fill-[#0a66c2] text-white" />
             </div>
-            <MoreHorizontal className="h-5 w-5 text-slate-500" />
+            <div className="text-[11px] leading-tight text-slate-500">Editorial content team · Now</div>
           </div>
-          <div className="whitespace-pre-wrap px-4 pb-4 text-[14px] leading-relaxed text-slate-900">
-            {text || 'Generated LinkedIn copy will appear here.'}
-          </div>
-          <div className="border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500">12 reactions · 3 comments</div>
-          <div className="grid grid-cols-4 border-t border-slate-100 px-1 py-1 text-[12px] font-medium text-slate-600">
-            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Like</button>
-            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Comment</button>
-            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Repost</button>
-            <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Send</button>
-          </div>
-        </article>
-      </div>
-    </PhoneShell>
+          <MoreHorizontal className="h-5 w-5 text-slate-500" />
+        </div>
+        <div className="whitespace-pre-wrap px-4 pb-4 text-[14px] leading-relaxed text-slate-900">
+          {text || 'Generated LinkedIn copy will appear here.'}
+        </div>
+        <div className="border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500">12 reactions · 3 comments</div>
+        <div className="grid grid-cols-4 border-t border-slate-100 px-1 py-1 text-[12px] font-medium text-slate-600">
+          <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Like</button>
+          <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Comment</button>
+          <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Repost</button>
+          <button className="rounded-md px-2 py-2 hover:bg-slate-50" type="button">Send</button>
+        </div>
+      </article>
+    </div>
   );
 }
 
