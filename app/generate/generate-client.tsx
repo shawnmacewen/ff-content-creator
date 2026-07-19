@@ -1677,13 +1677,13 @@ export default function GeneratePage() {
               <div className="min-h-0 overflow-hidden">
             <div className="space-y-5 p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
-                <div className="flex min-h-[142px] items-center gap-4">
+                <div className="flex min-h-[142px] items-start gap-4">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
                     className={cn(
-                      'h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
+                      'mt-[50px] h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
                       hasPreviousCampaignNode && 'animate-pulse border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
                     )}
                     disabled={!hasPreviousCampaignNode}
@@ -1692,7 +1692,7 @@ export default function GeneratePage() {
                     <StepBack className="h-5 w-5" />
                   </Button>
                   <div className="relative -my-10 flex min-w-0 flex-1 justify-center overflow-hidden px-2 py-10">
-                    <div className="absolute left-10 right-10 top-[4.25rem] hidden h-px bg-slate-200 lg:block" />
+                    <div className="absolute left-10 right-10 top-[4.5rem] hidden h-px bg-slate-200 lg:block" />
                     <div className="relative z-10 -my-10 flex w-full flex-nowrap items-start justify-center gap-x-8 overflow-hidden py-10">
                       {campaignOutputNodes.map((node) => {
                         const Icon = node.icon;
@@ -1769,7 +1769,7 @@ export default function GeneratePage() {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      'h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
+                      'mt-[50px] h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
                       hasNextCampaignNode && 'animate-pulse border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
                     )}
                     disabled={!hasNextCampaignNode}
