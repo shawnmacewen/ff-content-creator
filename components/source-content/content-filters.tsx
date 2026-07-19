@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Columns2, GalleryHorizontal, LayoutGrid, List, Rows3, Search, X } from 'lucide-react';
+import { Columns2, GalleryHorizontal, Info, LayoutGrid, List, Rows3, Search, X } from 'lucide-react';
 
 export type SourceContentViewMode = 'grid' | 'small-grid' | 'detailed-grid' | 'stacked' | 'quick';
 
@@ -63,14 +63,43 @@ export function ContentFilters({
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search content..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="bg-white pl-9"
-        />
+      <div className="flex flex-1 items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search content..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="bg-white pl-9"
+          />
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0 bg-white text-muted-foreground hover:text-foreground"
+              aria-label="How Source Content search works"
+            >
+              <Info className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="end" className="max-w-[360px] text-left leading-5">
+            <div className="space-y-2">
+              <div className="font-semibold">Searches loaded content</div>
+              <p>
+                Search runs against the source articles currently loaded in this page. Use Load more or Load full library above to expand what can be searched.
+              </p>
+              <p>
+                Search all checks titles, filenames, summaries, tags, takeaways, audience notes, and body text. Title only and Filename only narrow the match field.
+              </p>
+              <p>
+                Filters combine with search, so designation, tag, and publisher choices can hide otherwise matching articles.
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
       
       <div className="flex flex-wrap gap-2 sm:justify-end">
