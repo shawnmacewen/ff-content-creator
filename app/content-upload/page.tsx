@@ -45,6 +45,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -258,10 +259,38 @@ export default function ContentUploadPage() {
     };
   }, []);
 
-  const typeOptions = useMemo(() => {
-    const defaults = ['Article', 'Newsletter', 'Market Commentary', 'Topic Discussion', 'Client Education'];
-    return uniqueOptions([...filters.availableTypes, ...defaults]);
+  const contentDesignationOptions = useMemo(() => {
+    return filters.availableTypes.length ? filters.availableTypes : ['Article'];
   }, [filters.availableTypes]);
+
+  const contentTypeOptions = useMemo(() => {
+    return uniqueOptions(['Article', 'Newsletter', 'Market Commentary', 'Topic Discussion', 'Client Education', 'Custom Content']);
+  }, []);
+
+  const advancedSchemaFields = useMemo(() => [
+    { label: 'external_id', value: savedId || 'Generated on save' },
+    { label: 'source_system', value: 'custom-upload' },
+    { label: 'Publisher', value: 'Custom Content' },
+    { label: 'type', value: draft.type || 'Not selected' },
+    { label: 'content_designation', value: draft.contentDesignation || 'Not selected' },
+    { label: 'body_format', value: 'plain' },
+    { label: 'author', value: draft.author || 'Not detected' },
+    { label: 'tags', value: draft.tags.length ? draft.tags.join(', ') : 'Not selected' },
+    { label: 'published_at', value: draft.publishedAt || 'Not provided' },
+    { label: 'bas_content_id', value: savedId || 'Generated on save' },
+    { label: 'bas_content_filename', value: draft.filename || 'Generated on scan' },
+    { label: 'content_format', value: 'Custom Content' },
+    { label: 'finra_approved', value: 'false' },
+    { label: 'ap_content_type', value: draft.type || 'Not selected' },
+    { label: 'evergreen', value: 'null' },
+    { label: 'key_takeaways', value: '[]' },
+    { label: 'recommended_audience', value: draft.recommendedAudience || 'Not generated' },
+    { label: 'metadata.excerpt', value: draft.summary || 'Generated on scan' },
+    { label: 'metadata.url', value: draft.sourceUrl || 'Not provided' },
+    { label: 'metadata.uploadSource', value: 'paste' },
+    { label: 'metadata.originalFilename', value: draft.filename || 'Generated on scan' },
+    { label: 'metadata.extraPropertiesSelected.Format', value: 'Custom Content' },
+  ], [draft, savedId]);
 
   const canScan = pasteText.trim().length >= 40 && !scanning;
   const canSave = Boolean(
@@ -380,10 +409,11 @@ export default function ContentUploadPage() {
                   value={pasteText}
                   onChange={(event) => setPasteText(event.target.value)}
                   placeholder="Paste the article or approved source material here..."
-                  className="min-h-[330px] resize-y rounded-none border-0 bg-white p-4 text-sm leading-6 shadow-none focus-visible:ring-0"
+                  maxLength={24000}
+                  className="max-h-[430px] min-h-[330px] resize-y overflow-y-auto rounded-none border-0 bg-white p-4 text-sm leading-6 shadow-none [scrollbar-color:#0f766e_#e2e8f0] [scrollbar-width:thin] focus-visible:ring-0 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-teal-700 [&::-webkit-scrollbar-track]:bg-slate-200 [&::-webkit-scrollbar]:w-2"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm">
-                  <span className="text-slate-600">{countWords(pasteText).toLocaleString()} words · {pasteText.trim().length.toLocaleString()} characters</span>
+                  <span className="text-slate-600">{countWords(pasteText).toLocaleString()} words · {pasteText.trim().length.toLocaleString()} / 24,000 characters</span>
                   <span className={cn('inline-flex items-center gap-1.5 font-medium', pasteText.trim() ? 'text-emerald-700' : 'text-slate-500')}>
                     <CheckCircle2 className="h-4 w-4" />
                     {pasteText.trim() ? 'Rich text detected' : 'Ready for paste'}
@@ -409,15 +439,6 @@ export default function ContentUploadPage() {
                 <Button type="button" variant="outline" className="h-10 min-w-24 border-slate-200 bg-white" onClick={() => setPasteText('')}>
                   Clear
                 </Button>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button type="button" variant="outline" className="h-10 min-w-40 border-blue-300 bg-white text-blue-700 hover:bg-blue-50" onClick={() => toast.info('Draft is kept on this page until you scan or save.')}>
-                    Save as draft
-                  </Button>
-                  <Button type="button" onClick={scanContent} disabled={!canScan} className="h-10 min-w-40 gap-2 bg-violet-600 font-semibold hover:bg-violet-700">
-                    {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    {scanning ? 'Scanning...' : 'Scan content'}
-                  </Button>
-                </div>
               </div>
               <div className="mt-3 flex justify-end text-xs text-slate-500">
                 <span className="inline-flex items-center gap-1.5">
@@ -440,7 +461,13 @@ export default function ContentUploadPage() {
                     <p className="mt-1 text-sm leading-6 text-slate-500">AI reads the pasted content and prepares an editable source record.</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="rounded-md border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">Not scanned</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-md border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">Not scanned</Badge>
+                  <Button type="button" onClick={scanContent} disabled={!canScan} className="h-9 gap-2 bg-violet-600 px-4 font-semibold hover:bg-violet-700">
+                    {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {scanning ? 'Scanning...' : 'Scan content'}
+                  </Button>
+                </div>
               </div>
 
               <div className="mt-5 overflow-hidden rounded-md border border-slate-200">
@@ -594,85 +621,113 @@ export default function ContentUploadPage() {
                 <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">AI prefilled</Badge>
               </div>
 
-              <div className="mt-5 grid gap-5 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="upload-title">Title <span className="text-red-500">*</span></Label>
-                  <Input id="upload-title" value={draft.title} onChange={(event) => setDraft((value) => ({ ...value, title: event.target.value }))} className="border-slate-200 bg-white shadow-sm" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <Label htmlFor="upload-summary">Summary <span className="text-red-500">*</span></Label>
-                    <span className="text-xs text-slate-500">{draft.summary.length} / 300</span>
-                  </div>
-                  <Textarea id="upload-summary" value={draft.summary} onChange={(event) => setDraft((value) => ({ ...value, summary: event.target.value.slice(0, 300) }))} className="min-h-20 resize-y border-slate-200 bg-white text-sm leading-6 shadow-sm" />
-                </div>
+              <Tabs defaultValue="source-details" className="mt-5">
+                <TabsList className="grid h-10 w-full grid-cols-2 bg-slate-100 p-1">
+                  <TabsTrigger value="source-details">Source Details</TabsTrigger>
+                  <TabsTrigger value="advanced-schema">Advanced Schema</TabsTrigger>
+                </TabsList>
 
-                <div className="space-y-2">
-                  <Label>Content designation <span className="text-red-500">*</span></Label>
-                  <Select value={draft.contentDesignation} onValueChange={(contentDesignation) => setDraft((value) => ({ ...value, contentDesignation, type: value.type || contentDesignation }))}>
-                    <SelectTrigger className="h-10 w-full border-slate-200 bg-white shadow-sm">
-                      <SelectValue placeholder={loadingFilters ? 'Loading designations...' : 'Select designation'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {typeOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-500">Choose one approved designation.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Content type <span className="text-red-500">*</span></Label>
-                  <Select value={draft.type} onValueChange={(type) => setDraft((value) => ({ ...value, type }))}>
-                    <SelectTrigger className="h-10 w-full border-slate-200 bg-white shadow-sm">
-                      <SelectValue placeholder={loadingFilters ? 'Loading types...' : 'Select type'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {typeOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-500">Choose one approved type.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="upload-author">Author <span className="font-normal text-slate-500">Optional</span></Label>
-                  <Input id="upload-author" value={draft.author} onChange={(event) => setDraft((value) => ({ ...value, author: event.target.value }))} placeholder="Editorial Team" className="border-slate-200 bg-white shadow-sm" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="upload-date">Publication date</Label>
-                  <Input id="upload-date" type="date" value={draft.publishedAt} onChange={(event) => setDraft((value) => ({ ...value, publishedAt: event.target.value }))} className="border-slate-200 bg-white shadow-sm" />
-                  <p className="text-xs text-slate-500">Date the content was published or released.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="upload-filename">Content label / filename <span className="text-red-500">*</span></Label>
-                  <Input id="upload-filename" value={draft.filename} onChange={(event) => setDraft((value) => ({ ...value, filename: event.target.value }))} placeholder="custom-content.html" className="border-slate-200 bg-white shadow-sm" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tags <span className="text-red-500">*</span> <span className="font-normal text-slate-500">{draft.tags.length} of 3 selected</span></Label>
-                  <TagPicker availableTags={filters.availableTags} selectedTags={draft.tags} onChange={(tags) => setDraft((value) => ({ ...value, tags }))} />
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-md border border-slate-200 bg-white p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                      <ChevronsUpDown className="h-4 w-4 rotate-90 text-blue-700" />
-                      Additional metadata
+                <TabsContent value="source-details" className="mt-5">
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="upload-title">Title <span className="text-red-500">*</span></Label>
+                      <Input id="upload-title" value={draft.title} onChange={(event) => setDraft((value) => ({ ...value, title: event.target.value }))} className="border-slate-200 bg-white shadow-sm" />
                     </div>
-                    <Badge variant="outline" className="rounded-md text-xs">3</Badge>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label htmlFor="upload-summary">Summary <span className="text-red-500">*</span></Label>
+                        <span className="text-xs text-slate-500">{draft.summary.length} / 300</span>
+                      </div>
+                      <Textarea id="upload-summary" value={draft.summary} onChange={(event) => setDraft((value) => ({ ...value, summary: event.target.value.slice(0, 300) }))} className="min-h-20 resize-y border-slate-200 bg-white text-sm leading-6 shadow-sm" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Content designation <span className="text-red-500">*</span></Label>
+                      <Select value={draft.contentDesignation} onValueChange={(contentDesignation) => setDraft((value) => ({ ...value, contentDesignation }))}>
+                        <SelectTrigger className="h-10 w-full border-slate-200 bg-white shadow-sm">
+                          <SelectValue placeholder={loadingFilters ? 'Loading designations...' : 'Select designation'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {contentDesignationOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500">Choose one approved content designation from the source taxonomy.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Content type <span className="text-red-500">*</span></Label>
+                      <Select value={draft.type} onValueChange={(type) => setDraft((value) => ({ ...value, type }))}>
+                        <SelectTrigger className="h-10 w-full border-slate-200 bg-white shadow-sm">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {contentTypeOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500">Choose one broad content format.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="upload-author">Author <span className="font-normal text-slate-500">Optional</span></Label>
+                      <Input id="upload-author" value={draft.author} onChange={(event) => setDraft((value) => ({ ...value, author: event.target.value }))} placeholder="Editorial Team" className="border-slate-200 bg-white shadow-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="upload-date">Publication date</Label>
+                      <Input id="upload-date" type="date" value={draft.publishedAt} onChange={(event) => setDraft((value) => ({ ...value, publishedAt: event.target.value }))} className="border-slate-200 bg-white shadow-sm" />
+                      <p className="text-xs text-slate-500">Date the content was published or released.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="upload-filename">Content label / filename <span className="text-red-500">*</span></Label>
+                      <Input id="upload-filename" value={draft.filename} onChange={(event) => setDraft((value) => ({ ...value, filename: event.target.value }))} placeholder="custom-content.html" className="border-slate-200 bg-white shadow-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tags <span className="text-red-500">*</span> <span className="font-normal text-slate-500">{draft.tags.length} of 3 selected</span></Label>
+                      <TagPicker availableTags={filters.availableTags} selectedTags={draft.tags} onChange={(tags) => setDraft((value) => ({ ...value, tags }))} />
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-500">Categories, sub-categories, evergreen flag, FINRA approval.</p>
-                </div>
-                <div className="rounded-md border border-blue-200 bg-blue-50/60 p-4">
-                  <div className="grid gap-2 text-sm sm:grid-cols-2">
-                    <span className="font-semibold text-slate-950">Publisher</span>
-                    <span className="text-slate-600">Custom Content</span>
-                    <span className="font-semibold text-slate-950">Source system</span>
-                    <span className="text-slate-600">Custom upload</span>
+
+                  <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-md border border-slate-200 bg-white p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                          <ChevronsUpDown className="h-4 w-4 rotate-90 text-blue-700" />
+                          Additional metadata
+                        </div>
+                        <Badge variant="outline" className="rounded-md text-xs">3</Badge>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">Categories, sub-categories, evergreen flag, FINRA approval.</p>
+                    </div>
+                    <div className="rounded-md border border-blue-200 bg-blue-50/60 p-4">
+                      <div className="grid gap-2 text-sm sm:grid-cols-2">
+                        <span className="font-semibold text-slate-950">Publisher</span>
+                        <span className="text-slate-600">Custom Content</span>
+                        <span className="font-semibold text-slate-950">Source system</span>
+                        <span className="text-slate-600">Custom upload</span>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">Assigned automatically so uploaded content behaves like other source content.</p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">Assigned automatically so uploaded content behaves like other source content.</p>
-                </div>
-              </div>
+                </TabsContent>
+
+                <TabsContent value="advanced-schema" className="mt-5">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {advancedSchemaFields.map((field) => (
+                      <div key={field.label} className="rounded-md border border-slate-200 bg-slate-50/70 p-3">
+                        <div className="text-xs font-semibold uppercase tracking-normal text-slate-500">{field.label}</div>
+                        <div className="mt-1 break-words text-sm font-medium text-slate-800">{field.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="advanced-summary">Generated summary</Label>
+                    <Textarea id="advanced-summary" value={draft.summary} readOnly className="min-h-24 resize-none border-slate-200 bg-slate-50 text-sm leading-6 shadow-sm" />
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="advanced-body">Body text</Label>
+                    <Textarea id="advanced-body" value={draft.bodyText} readOnly className="max-h-[260px] min-h-36 resize-y overflow-y-auto border-slate-200 bg-slate-50 text-sm leading-6 shadow-sm [scrollbar-color:#0f766e_#e2e8f0] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-teal-700 [&::-webkit-scrollbar-track]:bg-slate-200 [&::-webkit-scrollbar]:w-2" />
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
                 <div className="flex flex-wrap items-center gap-3 text-sm">

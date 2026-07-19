@@ -24,6 +24,28 @@ function summaryFromText(text: string) {
   return source.replace(/\s+/g, ' ').slice(0, 360).trim();
 }
 
+function authorFromText(text: string) {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 16);
+
+  for (const line of lines) {
+    const directMatch = line.match(/^(?:by|author|written by|prepared by)[:\s]+(.{2,80})$/i);
+    if (directMatch?.[1]) {
+      return directMatch[1].replace(/\s*\|.*$/, '').trim();
+    }
+
+    const labeledMatch = line.match(/^(.{2,80})\s+-\s+(?:author|advisor|editorial team)$/i);
+    if (labeledMatch?.[1]) {
+      return labeledMatch[1].trim();
+    }
+  }
+
+  return '';
+}
+
 function normalizeForMatch(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -101,9 +123,9 @@ export async function POST(request: NextRequest) {
         summary: summaryFromText(rawText),
         bodyText: rawText,
         contentDesignation: designationSuggestion,
-        type: designationSuggestion,
+        type: 'Article',
         tags: tagSuggestions,
-        author: '',
+        author: authorFromText(rawText),
         filename: `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) || 'custom-content'}.txt`,
         publishedAt: new Date().toISOString().slice(0, 10),
         recommendedAudience: '',
