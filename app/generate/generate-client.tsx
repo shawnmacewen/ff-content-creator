@@ -1138,7 +1138,7 @@ export default function GeneratePage() {
                   </div>
                 </div>
                 <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Included outputs</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Outputs</div>
                   <div className="mt-2 flex min-h-9 flex-wrap items-center gap-2 overflow-hidden">
                     {visibleOutputTypes.map((type) => {
                       const Icon = iconByContentType[type] || FileText;
@@ -1157,7 +1157,7 @@ export default function GeneratePage() {
                 <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   {hasCampaignContextSettings ? (
                     <>
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Contextual settings</div>
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Settings</div>
                       <div className="mt-2 flex min-h-9 items-center gap-3 text-sm font-semibold text-slate-800">
                         <Instagram className="h-4 w-4 shrink-0 text-violet-700" />
                         <span className="truncate">{campaignContextSummary}</span>
@@ -1232,7 +1232,7 @@ export default function GeneratePage() {
                           <Instagram className="h-6 w-6" />
                         </span>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Contextual settings</div>
+                          <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Settings</div>
                           <h3 className="mt-1 text-base font-semibold text-slate-950">Instagram carousel</h3>
                           <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">These controls appear only while Instagram carousel is selected.</p>
                         </div>
@@ -1382,7 +1382,7 @@ export default function GeneratePage() {
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{audience}</p>
                 </div>
                 <div className="min-w-0 self-start border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Additional options</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
                 <div className="flex items-center justify-start gap-3 self-center lg:justify-self-end">
@@ -1450,7 +1450,7 @@ export default function GeneratePage() {
 
                   <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <div>
-                      <div className="text-sm font-semibold text-slate-950">Additional options</div>
+                      <div className="text-sm font-semibold text-slate-950">Details</div>
                     </div>
                     <label className="block space-y-2">
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
