@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { tagLabelClass } from '@/lib/content-label-colors';
+import { designationLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import type { SourceContent } from '@/lib/types/content';
 import { buildSourceContentSearchText, sourceContentMatchesQuery } from '@/lib/source-content/search';
@@ -127,6 +127,24 @@ function getFilename(c: SourceContent) {
     (c as any)?.externalId ||
     null
   );
+}
+
+function getDesignation(c: SourceContent) {
+  const meta = parseMetadata(c);
+  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
+  const selected: any = meta?.extraPropertiesSelected || null;
+
+  return decodeLite(String(
+    c.type ||
+    meta?.contentDesignation ||
+    selected?.ContentDesignation ||
+    selected?.ContentType ||
+    selected?.Format ||
+    extraMap?.ContentDesignation ||
+    extraMap?.ContentType ||
+    extraMap?.Format ||
+    'Editorial Source'
+  ));
 }
 
 function takeawayStatusClass(status?: string) {
@@ -435,7 +453,7 @@ export function SourceArticlePicker({
                 const selected = selectedId === c.id;
                 const thumb = getThumb(c);
                 const words = c.body ? c.body.split(/\s+/).filter(Boolean).length : 0;
-                const primaryLabel = c.tags?.[0] || c.type || 'Editorial Source';
+                const primaryLabel = getDesignation(c);
                 const filename = getFilename(c);
                 const signalCount = Array.isArray(c.contentSignals) ? c.contentSignals.length : 0;
                 const takeawayStatus = c.takeawayStatus;
@@ -475,8 +493,8 @@ export function SourceArticlePicker({
 
                     <div className={cn('relative flex flex-col p-4 sm:p-5', splitView ? 'ml-[158px] min-h-[76px] py-2 pl-3 pr-11 sm:py-2 sm:pl-3 sm:pr-11' : 'ml-[40%] min-h-44')}>
                       <div className="flex items-start justify-between gap-2">
-                        <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[180px] px-2 py-0 text-[10px]', tagLabelClass(primaryLabel))}>
-                          {decodeLite(primaryLabel)}
+                        <Badge variant="outline" className={cn('max-w-[180px] truncate rounded-full bg-white/82 text-[11px] font-semibold', splitView && 'max-w-[180px] px-2 py-0 text-[10px]', designationLabelClass(primaryLabel))}>
+                          {primaryLabel}
                         </Badge>
                         <span
                           className={cn(
