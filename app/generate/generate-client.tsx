@@ -1126,7 +1126,7 @@ export default function GeneratePage() {
                   {hasCampaignContextSettings ? (
                     <>
                       <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Contextual settings</div>
-                      <div className="mt-2 flex min-h-9 items-center gap-3 rounded-md border border-violet-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
+                      <div className="mt-2 flex min-h-9 items-center gap-3 text-sm font-semibold text-slate-800">
                         <Instagram className="h-4 w-4 shrink-0 text-violet-700" />
                         <span className="truncate">{campaignContextSummary}</span>
                       </div>
