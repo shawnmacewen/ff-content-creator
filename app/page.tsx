@@ -189,7 +189,7 @@ function TokenSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboa
   }).join(' ');
   return (
     <svg viewBox="0 0 120 42" className="h-10 w-24">
-      <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={points} fill="none" stroke="#0891b2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -239,7 +239,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           value={formatNumber(generatedThisWeek)}
           detail={`${formatNumber(metrics.totals.generatedAssetsThisWeek)} articles - ${formatNumber(metrics.totals.generatedImagesThisWeek)} images`}
           icon={TrendingUp}
-          tone="bg-blue-100 text-blue-700"
+          tone="bg-violet-100 text-violet-700"
         >
           <WeekChange value={weeklyChangePercent} />
         </StatCard>
@@ -255,7 +255,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           value={formatCompact(metrics.tokenSummary.totalTokensThisWeek)}
           detail={`${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
           icon={ChartColumnIncreasing}
-          tone="bg-blue-100 text-blue-700"
+          tone="bg-cyan-100 text-cyan-700"
           action={<TokenUsageSparkline daily={metrics.daily} />}
         />
       </section>
