@@ -20,7 +20,7 @@ import { KitContentTypeSelector } from '@/components/generator/kit-content-type-
 import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
-import { designationLabelClass, tagLabelClass } from '@/lib/content-label-colors';
+import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import {
   AlertCircle,
   BadgeCheck,
@@ -927,8 +927,10 @@ export default function GeneratePage() {
     String(detailContent?.excerpt || normalizedBodyPreview.split(/\n{2,}/)[0] || '')
   );
   const selectedArticleTags = Array.isArray(detailContent?.tags)
-    ? (detailContent.tags as unknown[]).map((tag: unknown) => decodeEntitiesLite(String(tag))).filter(Boolean).slice(0, 4)
+    ? (detailContent.tags as unknown[]).map((tag: unknown) => decodeEntitiesLite(String(tag))).filter(Boolean)
     : [];
+  const visibleSelectedArticleTags = selectedArticleTags.slice(0, 3);
+  const extraSelectedArticleTagCount = Math.max(0, selectedArticleTags.length - visibleSelectedArticleTags.length);
   const selectedArticleFilename = getSourceFilename(detailContent);
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const selectedArticleMetadata = detailContent?.metadata && typeof detailContent.metadata === 'object' && !Array.isArray(detailContent.metadata)
@@ -1479,10 +1481,19 @@ export default function GeneratePage() {
                       {selectedArticleTitle || 'Choose a source article'}
                     </h2>
                   </div>
-                  {selectedArticleFilename ? (
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-500">
-                      File: {decodeEntitiesLite(String(selectedArticleFilename))}
-                    </p>
+                  {selectedArticleFilename || selectedArticleContentType ? (
+                    <div className="mt-1 flex max-w-full items-center gap-2 overflow-hidden">
+                      {selectedArticleFilename ? (
+                        <span className="min-w-0 truncate text-xs leading-5 text-slate-500">
+                          File: {decodeEntitiesLite(String(selectedArticleFilename))}
+                        </span>
+                      ) : null}
+                      {selectedArticleContentType ? (
+                        <span className={cn('shrink-0 truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', designationLabelClass(selectedArticleContentType))}>
+                          {selectedArticleContentType}
+                        </span>
+                      ) : null}
+                    </div>
                   ) : (
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Select the trusted article to transform into your campaign.</p>
                   )}
@@ -1504,18 +1515,18 @@ export default function GeneratePage() {
                   {selectedArticleTitle ? (
                     <>
                       <div>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</div>
-                      {selectedArticleContentType || selectedArticleTags.length ? (
-                        <div className="flex max-w-full flex-wrap gap-1.5 overflow-hidden pt-1">
-                          {selectedArticleContentType ? (
-                            <span className={cn('max-w-[140px] truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', designationLabelClass(selectedArticleContentType))}>
-                              {selectedArticleContentType}
-                            </span>
-                          ) : null}
-                          {selectedArticleTags.map((tag) => (
-                            <span key={tag} className={cn('max-w-[120px] truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', tagLabelClass(tag))}>
+                      {selectedArticleTags.length ? (
+                        <div className="flex max-w-full items-center gap-1.5 overflow-hidden whitespace-nowrap pt-1">
+                          {visibleSelectedArticleTags.map((tag) => (
+                            <span key={tag} className={cn('max-w-[92px] shrink truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', tagLabelClass(tag))}>
                               {tag}
                             </span>
                           ))}
+                          {extraSelectedArticleTagCount ? (
+                            <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', overflowLabelClass())}>
+                              +{extraSelectedArticleTagCount}
+                            </span>
+                          ) : null}
                         </div>
                       ) : null}
                     </>
