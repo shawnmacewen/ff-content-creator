@@ -19,6 +19,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
 import { cn } from '@/lib/utils';
+import { designationLabelClass } from '@/lib/content-label-colors';
+import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import type { SourceContentSignal } from '@/lib/types/content';
 
 function decodeEntities(input: string): string {
@@ -74,20 +76,6 @@ function getImageUrl(article: any) {
     article?.imageUrl;
 
   return typeof image === 'string' && image.trim() ? image.trim() : null;
-}
-
-function getDesignation(article: any) {
-  const meta = parseMetadata(article);
-  const extra = meta?.extraProperties || meta?.raw?.extraProperties || {};
-  return (
-    extra?.ContentDesignation ||
-    extra?.contentDesignation ||
-    extra?.Designation ||
-    extra?.designation ||
-    extra?.APContentType ||
-    article?.type ||
-    'Editorial Source'
-  );
 }
 
 function getFilename(article: any) {
@@ -225,7 +213,7 @@ export function SelectedArticlePreview({
 
   const title = decodeEntities(String(article.title || 'Untitled article'));
   const imageUrl = getImageUrl(article);
-  const designation = String(getDesignation(article));
+  const designation = String(getSourceContentDesignation(article));
   const filename = getFilename(article);
   const publishedAt = article.publishedAt || article.published_at;
   const takeawaySource = detailContent?.keyTakeaways || article.keyTakeaways;
@@ -272,7 +260,7 @@ export function SelectedArticlePreview({
               <div className="absolute inset-0 bg-[linear-gradient(135deg,#eff6ff,#dbeafe_52%,#f8fafc)]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/45 via-slate-950/10 to-transparent" />
-            <div className="absolute left-4 top-4 inline-flex max-w-[240px] rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <div className={cn('absolute left-4 top-4 inline-flex max-w-[240px] rounded-full border px-2.5 py-1 text-[11px] font-semibold', designationLabelClass(designation))}>
               <span className="truncate">{decodeEntities(designation)}</span>
             </div>
             <button
@@ -359,7 +347,7 @@ export function SelectedArticlePreview({
               </button>
             </div>
             <div className="absolute bottom-0 left-4 z-20 w-[min(560px,calc(100%-2rem))] translate-y-1/2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
-              <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              <div className={cn('inline-flex w-fit max-w-full rounded-full border px-2.5 py-1 text-[11px] font-semibold', designationLabelClass(designation))}>
                 <span className="truncate">{decodeEntities(designation)}</span>
               </div>
               <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-tight tracking-normal text-slate-950">{title}</h3>
@@ -472,7 +460,7 @@ export function SelectedArticlePreview({
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-slate-950/25 to-transparent" />
           <div className="absolute left-5 right-5 top-4 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="inline-flex w-fit max-w-full rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              <div className={cn('inline-flex w-fit max-w-full rounded-full border px-2.5 py-1 text-[11px] font-semibold', designationLabelClass(designation))}>
                 <span className="truncate">{decodeEntities(designation)}</span>
               </div>
               <h3 className="mt-3 line-clamp-2 text-2xl font-semibold leading-tight tracking-normal text-white">{title}</h3>

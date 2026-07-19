@@ -21,6 +21,7 @@ import { generateId } from '@/lib/storage/local-storage';
 import type { ContentType, ToneType, ContentStatus, GeneratedContent } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
+import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import {
   AlertCircle,
   BadgeCheck,
@@ -933,16 +934,7 @@ export default function GeneratePage() {
   const extraSelectedArticleTagCount = Math.max(0, selectedArticleTags.length - visibleSelectedArticleTags.length);
   const selectedArticleFilename = getSourceFilename(detailContent);
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
-  const selectedArticleMetadata = detailContent?.metadata && typeof detailContent.metadata === 'object' && !Array.isArray(detailContent.metadata)
-    ? detailContent.metadata
-    : {};
-  const selectedArticleContentType = decodeEntitiesLite(String(
-    selectedArticleMetadata.contentDesignation ||
-    selectedArticleMetadata.extraPropertiesSelected?.ContentDesignation ||
-    selectedArticleMetadata.extraProperties?.ContentDesignation ||
-    detailContent?.type ||
-    ''
-  ));
+  const selectedArticleContentType = selectedArticleTitle ? decodeEntitiesLite(getSourceContentDesignation(detailContent)) : '';
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
   const hasCampaignContextSettings = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel';

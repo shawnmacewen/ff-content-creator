@@ -9,6 +9,7 @@ const designationClassByKey: Record<string, string> = {
   newsletter: 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/35 dark:bg-sky-500/15 dark:text-sky-200',
   presentation: 'border-fuchsia-300 bg-fuchsia-50 text-fuchsia-700 dark:border-fuchsia-500/35 dark:bg-fuchsia-500/15 dark:text-fuchsia-200',
   report: 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/35 dark:bg-indigo-500/15 dark:text-indigo-200',
+  textclientalert: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-200',
   video: 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-500/35 dark:bg-orange-500/15 dark:text-orange-200',
   webinar: 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-500/35 dark:bg-purple-500/15 dark:text-purple-200',
 };

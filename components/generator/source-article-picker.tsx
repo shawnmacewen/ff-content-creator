@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { designationLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import type { SourceContent } from '@/lib/types/content';
+import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import { buildSourceContentSearchText, sourceContentMatchesQuery } from '@/lib/source-content/search';
 import { Calendar, Check, ChevronDown, FileText, Filter, Search, Sparkles } from 'lucide-react';
 
@@ -127,24 +128,6 @@ function getFilename(c: SourceContent) {
     (c as any)?.externalId ||
     null
   );
-}
-
-function getDesignation(c: SourceContent) {
-  const meta = parseMetadata(c);
-  const extraMap: any = meta?.extraProperties || meta?.raw?.extraProperties || null;
-  const selected: any = meta?.extraPropertiesSelected || null;
-
-  return decodeLite(String(
-    c.type ||
-    meta?.contentDesignation ||
-    selected?.ContentDesignation ||
-    selected?.ContentType ||
-    selected?.Format ||
-    extraMap?.ContentDesignation ||
-    extraMap?.ContentType ||
-    extraMap?.Format ||
-    'Editorial Source'
-  ));
 }
 
 function takeawayStatusClass(status?: string) {
@@ -466,7 +449,7 @@ export function SourceArticlePicker({
                 const selected = selectedId === c.id;
                 const thumb = getThumb(c);
                 const words = c.body ? c.body.split(/\s+/).filter(Boolean).length : 0;
-                const primaryLabel = getDesignation(c);
+                const primaryLabel = decodeLite(getSourceContentDesignation(c));
                 const filename = getFilename(c);
                 const signalCount = Array.isArray(c.contentSignals) ? c.contentSignals.length : 0;
                 const takeawayStatus = c.takeawayStatus;
