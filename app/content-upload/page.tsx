@@ -327,12 +327,7 @@ export default function ContentUploadPage() {
         title="Content Upload"
         description="Paste custom content, scan it into source metadata, review controlled fields, and save it for use across Editorial tools."
         variant="azure"
-        metrics={[
-          { label: 'Paste content', detail: 'Step 1 input', icon: FileText, iconClassName: 'bg-blue-100 text-blue-700' },
-          { label: 'Scan metadata', detail: 'AI-assisted draft schema', icon: Sparkles, iconClassName: 'bg-violet-100 text-violet-700' },
-          { label: '1-3 tags', detail: 'Existing taxonomy only', icon: Tags, iconClassName: 'bg-emerald-100 text-emerald-700' },
-          { label: 'Custom Content', detail: 'Saved as source content', icon: Database, iconClassName: 'bg-cyan-100 text-cyan-700' },
-        ]}
+        metrics={[]}
       />
       <ContentUploadStepper currentStep={currentStep} />
 
@@ -459,7 +454,7 @@ export default function ContentUploadPage() {
                   { label: 'Content label / filename', icon: FileText },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-3 border-b border-slate-200 px-4 py-3 last:border-b-0">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-700">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-700">
                       <item.icon className="h-4 w-4" />
                     </span>
                     <span className="text-sm font-semibold text-slate-800">{item.label}</span>
