@@ -79,7 +79,7 @@ function StatCard({
 }) {
   return (
     <Card className="gap-0 overflow-hidden rounded-lg border-slate-200 bg-white py-0 shadow-sm">
-      <CardContent className="grid h-[144px] grid-cols-[52px_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] content-start gap-x-4 p-4">
+      <CardContent className="grid h-[144px] grid-cols-[52px_minmax(0,1fr)_minmax(76px,112px)] grid-rows-[auto_auto_auto] content-start gap-x-4 p-4">
         <div className="col-start-2 flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0 text-sm font-bold leading-5 text-slate-900">{label}</div>
         </div>
@@ -90,7 +90,7 @@ function StatCard({
         <div className="col-start-2 row-start-2 mt-1 text-[30px] font-semibold leading-9 tracking-normal text-slate-950">{value}</div>
         <div className="col-start-2 row-start-3 mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
         {action ? (
-          <div className="col-start-3 row-span-2 row-start-2 self-center">
+          <div className="col-start-3 row-span-3 row-start-1 self-center justify-self-end">
             {action}
           </div>
         ) : null}
@@ -245,7 +245,7 @@ function TokenSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboa
     return `${x},${y}`;
   }).join(' ');
   return (
-    <svg viewBox="0 0 120 42" className="h-10 w-28">
+    <svg viewBox="0 0 120 42" className="h-10 w-24">
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
