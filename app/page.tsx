@@ -2,12 +2,12 @@ import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 import {
   ArrowRight,
-  DatabaseZap,
+  ChartColumnIncreasing,
+  FileText,
   FolderOpen,
   Image,
   Sparkles,
   TrendingUp,
-  WalletCards,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -217,7 +217,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     { label: 'Articles generated', value: metrics.totals.generatedAssets, icon: Sparkles, tone: 'bg-violet-100 text-violet-700' },
     { label: 'Images generated', value: metrics.totals.generatedImages, icon: Image, tone: 'bg-sky-100 text-sky-700' },
     { label: 'Saved outputs', value: metrics.totals.savedOutputs, icon: FolderOpen, tone: 'bg-emerald-100 text-emerald-700' },
-    { label: 'Source articles', value: metrics.source.totalSourceContent, icon: DatabaseZap, tone: 'bg-blue-100 text-blue-700' },
+    { label: 'Source articles', value: metrics.source.totalSourceContent, icon: FileText, tone: 'bg-blue-100 text-blue-700' },
   ];
 
   return (
@@ -247,14 +247,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           label="Source library"
           value={formatNumber(metrics.source.totalSourceContent)}
           detail={`${formatNumber(metrics.source.finraReviewedCount)} FINRA-reviewed`}
-          icon={DatabaseZap}
+          icon={FileText}
           tone="bg-blue-100 text-blue-700"
         />
         <StatCard
           label="Token usage"
           value={formatCompact(metrics.tokenSummary.totalTokensThisWeek)}
           detail={`${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
-          icon={WalletCards}
+          icon={ChartColumnIncreasing}
           tone="bg-blue-100 text-blue-700"
           action={<TokenUsageSparkline daily={metrics.daily} />}
         />

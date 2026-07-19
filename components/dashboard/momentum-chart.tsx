@@ -102,7 +102,6 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
   const chartTop = 24;
   const chartHeight = 176;
   const chartBottom = chartTop + chartHeight;
-  const isLineOnly = rangeDays >= 90;
 
   const { maxValue, countTicks, points, barWidth, labelIndexes } = useMemo(() => {
     const rawMaxTotal = Math.max(10, ...daily.map((day) => day.total));
@@ -134,8 +133,6 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
   }, [chartBottom, chartHeight, daily, rangeDays]);
 
   const totalPath = makeSmoothPath(points.map(({ x, y }) => ({ x, y })));
-  const articlePath = makeSmoothPath(points.map(({ x, articleY }) => ({ x, y: articleY })));
-  const imagePath = makeSmoothPath(points.map(({ x, imageY }) => ({ x, y: imageY })));
 
   function toggleSeries(key: SeriesKey) {
     setVisible((current) => ({ ...current, [key]: !current[key] }));
@@ -197,7 +194,7 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
           );
         })}
 
-        {!isLineOnly && points.map(({ day, barX }) => {
+        {points.map(({ day, barX }) => {
           const articleHeight = visible.articles ? Math.max(0, (day.articles / maxValue) * chartHeight) : 0;
           const imageHeight = visible.images ? Math.max(0, (day.images / maxValue) * chartHeight) : 0;
           const imageY = chartBottom - imageHeight;
@@ -209,32 +206,24 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
               onMouseMove={(event) => setTooltip({ day, x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY })}
               onMouseLeave={() => setTooltip(null)}
             >
-              <rect x={barX - barWidth / 2} y={articleY} width={barWidth} height={articleHeight} rx="4" fill={SERIES.articles.color} opacity="0.82" />
-              <rect x={barX - barWidth / 2} y={imageY} width={barWidth} height={imageHeight} rx="4" fill={SERIES.images.color} opacity="0.9" />
+              <rect x={barX - barWidth / 2} y={articleY} width={barWidth} height={articleHeight} fill={SERIES.articles.color} opacity="0.82" />
+              <rect x={barX - barWidth / 2} y={imageY} width={barWidth} height={imageHeight} fill={SERIES.images.color} opacity="0.9" />
               <rect x={barX - Math.max(18, barWidth) / 2} y={chartTop} width={Math.max(18, barWidth)} height={chartHeight} fill="transparent" />
             </g>
           );
         })}
 
-        {isLineOnly && visible.articles ? (
-          <path d={articlePath} fill="none" stroke={SERIES.articles.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.72" />
-        ) : null}
-        {isLineOnly && visible.images ? (
-          <path d={imagePath} fill="none" stroke={SERIES.images.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.78" />
-        ) : null}
         {visible.total ? (
-          <path d={totalPath} fill="none" stroke={SERIES.total.color} strokeWidth={isLineOnly ? '2.2' : '3.6'} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={totalPath} fill="none" stroke={SERIES.total.color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
         ) : null}
 
-        {points.map(({ day, x, y, articleY, imageY }) => (
+        {points.map(({ day, x, y }) => (
           <g
             key={`${day.date}-points`}
             onMouseMove={(event) => setTooltip({ day, x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY })}
             onMouseLeave={() => setTooltip(null)}
           >
-            {isLineOnly && visible.articles ? <circle cx={x} cy={articleY} r="3.2" fill={SERIES.articles.color} /> : null}
-            {isLineOnly && visible.images ? <circle cx={x} cy={imageY} r="3.2" fill={SERIES.images.color} /> : null}
-            {visible.total ? <circle cx={x} cy={y} r={isLineOnly ? '3.8' : '4.8'} fill="#ffffff" stroke={SERIES.total.color} strokeWidth="2.6" /> : null}
+            {visible.total ? <circle cx={x} cy={y} r="3.6" fill="#ffffff" stroke={SERIES.total.color} strokeWidth="2" /> : null}
             <circle cx={x} cy={y} r="10" fill="transparent" />
           </g>
         ))}
