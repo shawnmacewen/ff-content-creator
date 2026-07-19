@@ -22,6 +22,7 @@ import {
   Redo2,
   Save,
   Search,
+  SearchCode,
   Sparkles,
   Tags,
   Type,
@@ -48,6 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 type FilterResponse = {
@@ -545,8 +547,8 @@ export default function ContentUploadPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="rounded-md border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">Not scanned</Badge>
-                  <Button type="button" variant="outline" onClick={() => scanContent('quick')} disabled={!canScan} className="h-9 gap-2 border-blue-200 bg-blue-50 px-4 font-semibold text-blue-700 hover:bg-blue-100">
-                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <Button type="button" variant="outline" onClick={() => scanContent('quick')} disabled={!canScan} className="h-9 gap-2 border-slate-200 bg-slate-50 px-4 font-semibold text-slate-700 hover:bg-slate-100">
+                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchCode className="h-4 w-4" />}
                     {isQuickScanning ? 'Scanning...' : 'Quick Scan'}
                   </Button>
                   <Button type="button" onClick={() => scanContent('ai')} disabled={!canScan} className="h-9 gap-2 bg-violet-600 px-4 font-semibold hover:bg-violet-700">
@@ -621,8 +623,8 @@ export default function ContentUploadPage() {
                   </div>
                 </div>
               </div>
-              <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">
-                <Sparkles className="h-3.5 w-3.5" />
+              <Badge className={cn('rounded-md', lastScan?.mode === 'ai' ? 'bg-violet-100 text-violet-700 hover:bg-violet-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-100')}>
+                {lastScan?.mode === 'ai' ? <Sparkles className="h-3.5 w-3.5" /> : <SearchCode className="h-3.5 w-3.5" />}
                 {lastScan?.mode === 'ai' ? 'AI Scan prefilled source fields' : 'Quick Scan prefilled source fields'}
               </Badge>
               <div className="flex flex-wrap items-center gap-3">
@@ -630,8 +632,8 @@ export default function ContentUploadPage() {
                   <FileText className="h-4 w-4" />
                   Edit pasted content
                 </Button>
-                <Badge className="rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
+                <Badge className={cn('rounded-md', lastScan?.mode === 'ai' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-100')}>
+                  {lastScan?.mode === 'ai' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <SearchCode className="h-3.5 w-3.5" />}
                   {lastScan?.mode === 'ai' ? 'AI Scan complete' : 'Quick Scan complete'}
                 </Badge>
               </div>
@@ -700,12 +702,33 @@ export default function ContentUploadPage() {
                     <p className="mt-1 text-sm leading-6 text-slate-500">Review every field. Suggested values remain editable until you save.</p>
                   </div>
                 </div>
-                <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">
-                  {lastScan?.mode === 'ai' ? 'AI prefilled' : 'Quick Scan prefilled'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {lastScan?.mode === 'quick' ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" aria-label="Quick Scan review details">
+                          <SearchCode className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" align="center" className="max-w-[320px] text-left leading-5">
+                        <div className="font-semibold text-slate-100">Quick Scan review</div>
+                        <div className="mt-1 text-slate-200">Quick Scan uses local keyword matching and simple extraction. No AI tokens were used.</div>
+                        {lastScan.warnings.length ? (
+                          <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-200">
+                            {lastScan.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                          </ul>
+                        ) : null}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  <Badge className={cn('rounded-md', lastScan?.mode === 'ai' ? 'bg-violet-100 text-violet-700 hover:bg-violet-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-100')}>
+                    {lastScan?.mode === 'ai' ? <Sparkles className="h-3.5 w-3.5" /> : <SearchCode className="h-3.5 w-3.5" />}
+                    {lastScan?.mode === 'ai' ? 'AI prefilled' : 'Quick Scan prefilled'}
+                  </Badge>
+                </div>
               </div>
 
-              {lastScan ? (
+              {lastScan?.mode === 'ai' ? (
                 <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/70 p-4 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="font-semibold text-slate-800">
@@ -944,8 +967,8 @@ export default function ContentUploadPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button type="button" variant="outline" className="h-10 border-slate-200 bg-white" onClick={() => setDraft((value) => ({ ...emptyDraft, sourceUrl: value.sourceUrl }))}>Back</Button>
-                  <Button type="button" variant="outline" className="h-10 gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" onClick={() => scanContent('quick')} disabled={!canScan || scanning}>
-                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <Button type="button" variant="outline" className="h-10 gap-2 border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100" onClick={() => scanContent('quick')} disabled={!canScan || scanning}>
+                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchCode className="h-4 w-4" />}
                     Quick Rescan
                   </Button>
                   <Button type="button" variant="outline" className="h-10 gap-2 border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" onClick={() => scanContent('ai')} disabled={!canScan || scanning}>
