@@ -79,23 +79,20 @@ function StatCard({
 }) {
   return (
     <Card className="gap-0 overflow-hidden rounded-lg border-slate-200 bg-white py-0 shadow-sm">
-      <CardContent className="relative grid h-[158px] auto-rows-min grid-cols-[44px_minmax(0,1fr)] content-start gap-x-4 p-4">
-        <span className={`row-span-4 flex h-11 w-11 items-center justify-center rounded-md ${tone}`}>
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="flex min-w-0 items-start justify-between gap-2">
+      <CardContent className="grid h-[144px] grid-cols-[52px_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] content-start gap-x-4 p-4">
+        <div className="col-start-2 flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0 text-sm font-bold leading-5 text-slate-900">{label}</div>
-          <div className="shrink-0">{children}</div>
         </div>
-        <div className="mt-1 text-[30px] font-semibold leading-8 tracking-normal text-slate-950">{value}</div>
-        <div className="mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
+        <div className="col-start-3 row-start-1 shrink-0">{children}</div>
+        <span className={`col-start-1 row-start-2 mt-2 flex h-12 w-12 items-center justify-center rounded-md ${tone}`}>
+          <Icon className="h-6 w-6" />
+        </span>
+        <div className="col-start-2 row-start-2 mt-1 text-[30px] font-semibold leading-9 tracking-normal text-slate-950">{value}</div>
+        <div className="col-start-2 row-start-3 mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
         {action ? (
-          <div className="absolute bottom-2 left-[72px]">
+          <div className="col-start-3 row-span-2 row-start-2 self-center">
             {action}
           </div>
-        ) : null}
-        {!action ? (
-          <div className="col-start-2" aria-hidden="true" />
         ) : null}
       </CardContent>
     </Card>
@@ -113,7 +110,7 @@ function WeekChange({ value }: { value: number | null }) {
 
 function TokenUsageSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboardMetrics>>['daily'] }) {
   return (
-    <div className="pt-4">
+    <div>
       <TokenSparkline daily={daily} />
     </div>
   );
@@ -363,7 +360,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
             ))}
             </div>
-            <div>
+            <div className="mt-4">
               <div className="mb-2 text-sm font-semibold text-slate-700">Generated mix</div>
               <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
                 <div className="bg-violet-500" style={{ width: `${articlePercent}%` }} />
@@ -373,10 +370,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <span>{articlePercent}% Articles</span>
                 <span>{imagePercent}% Images</span>
               </div>
-            </div>
-            <div className="flex items-center justify-between pt-2">
-              <Link href="/library" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600">Open saved content <ArrowRight className="h-4 w-4" /></Link>
-              <Link href="/source-content" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600">Browse sources <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </CardContent>
         </Card>
