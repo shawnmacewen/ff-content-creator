@@ -170,7 +170,7 @@ export function SourceArticlePicker({
   const [query, setQuery] = React.useState('');
   const [topic, setTopic] = React.useState<Topic>('All Topics');
   const [autoLoadAll, setAutoLoadAll] = React.useState(false);
-  const [showTopicFilters, setShowTopicFilters] = React.useState(true);
+  const [showTopicFilters, setShowTopicFilters] = React.useState(false);
 
   const getPageKey = React.useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
     if (previousPageData && !previousPageData.hasNextPage) return null;
@@ -200,6 +200,8 @@ export function SourceArticlePicker({
   const hasNextPage = Boolean(latestPage?.hasNextPage);
   const loadedCount = items.length;
   const isLoadingMore = isValidating && Boolean(pages?.length);
+  const loadProgressPercent = total ? Math.min(100, Math.round((loadedCount / total) * 100)) : 0;
+  const loadProgressWidth = total ? `${Math.max(loadedCount ? 4 : 0, loadProgressPercent)}%` : isLoadingMore ? '8%' : '0%';
 
   React.useEffect(() => {
     if (!autoLoadAll || !hasNextPage || isValidating) return;
@@ -327,7 +329,7 @@ export function SourceArticlePicker({
           </div>
         )}
 
-        <div className={cn('flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between', splitView && 'gap-2')}>
+        <div className={cn('grid gap-2 lg:grid-cols-[auto_minmax(170px,1fr)_auto] lg:items-center', splitView && 'gap-2')}>
           <div className="flex flex-wrap items-center gap-1.5">
             {splitView ? (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
@@ -341,8 +343,19 @@ export function SourceArticlePicker({
                 ? 'Loading sources'
                   : query.trim()
                   ? `${filtered.length.toLocaleString()} search results`
-                  : `${filtered.length.toLocaleString()} shown`}
+                : `${filtered.length.toLocaleString()} shown`}
             </div>
+          </div>
+          <div className={cn('flex min-w-0 items-center gap-2', !splitView && 'lg:max-w-md')}>
+            <div className="h-2 min-w-[120px] flex-1 overflow-hidden rounded-full bg-slate-200/80">
+              <div
+                className="h-full rounded-full bg-cyan-500 transition-all"
+                style={{ width: loadProgressWidth }}
+              />
+            </div>
+            <span className="w-10 text-right text-[11px] font-bold text-cyan-700">
+              {total ? `${loadProgressPercent}%` : '--'}
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
             {splitView && hasNextPage ? (
@@ -407,13 +420,13 @@ export function SourceArticlePicker({
 
         {showTopicFilters ? (
         <div className={cn('flex gap-2 overflow-x-auto pb-1', splitView && 'flex-wrap gap-1 overflow-visible pb-0')}>
-          {TOPICS.map((t) => {
+          {TOPICS.filter((t) => t !== 'All Topics').map((t) => {
             const active = t === topic;
             return (
               <button
                 key={t}
                 type="button"
-                onClick={() => setTopic(t)}
+                onClick={() => setTopic(active ? 'All Topics' : t)}
                 className={cn(
                   'shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors',
                   splitView && 'px-2.5 py-1 text-[11px]',
