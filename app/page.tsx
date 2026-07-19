@@ -77,20 +77,93 @@ function StatCard({
   children?: ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden rounded-lg border-slate-200 bg-white shadow-sm">
-      <CardContent className="flex min-h-[138px] flex-col p-6">
-        <div className="flex items-start justify-between gap-4">
-          <span className={`flex h-12 w-12 items-center justify-center rounded-md ${tone}`}>
-            <Icon className="h-6 w-6" />
-          </span>
-          {children}
+    <Card className="gap-0 overflow-hidden rounded-lg border-slate-200 bg-white py-0 shadow-sm">
+      <CardContent className="relative grid h-[158px] auto-rows-min grid-cols-[44px_minmax(0,1fr)] content-start gap-x-4 p-4">
+        <span className={`row-span-4 flex h-11 w-11 items-center justify-center rounded-md ${tone}`}>
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0 text-sm font-bold leading-5 text-slate-900">{label}</div>
+          <div className="shrink-0">{children}</div>
         </div>
-        <div className="mt-4 text-sm font-bold text-slate-900">{label}</div>
-        <div className="mt-2 text-3xl font-semibold leading-none tracking-normal text-slate-950">{value}</div>
-        <div className="mt-3 text-sm font-medium text-slate-500">{detail}</div>
-        {action ? <div className="mt-auto pt-3">{action}</div> : null}
+        <div className="mt-1 text-[30px] font-semibold leading-8 tracking-normal text-slate-950">{value}</div>
+        <div className="mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
+        {action ? (
+          <div className="absolute bottom-4 left-[72px]">
+            {action}
+          </div>
+        ) : null}
+        {!action ? (
+          <div className="col-start-2" aria-hidden="true" />
+        ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+function WeekChange({ value }: { value: number | null }) {
+  return (
+    <div className={`w-[72px] text-right text-xs font-bold leading-4 ${value === null || value >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+      {value === null ? '-' : `${value > 0 ? '+' : ''}${value}%`}
+      <div className="font-medium text-slate-500">vs last week</div>
+    </div>
+  );
+}
+
+function TokenUsageSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboardMetrics>>['daily'] }) {
+  return (
+    <div className="pt-4">
+      <TokenSparkline daily={daily} />
+    </div>
+  );
+}
+
+function TokenUsageLink() {
+  return (
+    <Link href="/token-usage" className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
+      View token log
+      <ArrowRight className="h-4 w-4" />
+    </Link>
+  );
+}
+
+function HeaderActions() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+        <CalendarDays className="h-4 w-4" />
+        Last 30 days
+      </Button>
+      <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+        <Settings2 className="h-4 w-4" />
+        Customize dashboard
+      </Button>
+      <Button asChild className="h-11 rounded-md bg-blue-600 text-white hover:bg-blue-700">
+        <Link href="/generate">
+          <Plus className="h-4 w-4" />
+          Quick create
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+function DashboardHero() {
+  return (
+    <section className="relative isolate overflow-hidden rounded-lg bg-[linear-gradient(112deg,#0b2a57_0%,#0a4d6d_58%,#075a71_100%)] px-7 py-6 text-white shadow-sm">
+      <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-55" viewBox="0 0 1600 120" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M -80 82 C 180 44, 360 58, 560 78 C 810 103, 955 44, 1160 24 C 1350 6, 1478 26, 1680 12" fill="none" stroke="rgba(255,255,255,0.17)" strokeWidth="1.4" />
+        <path d="M 260 118 C 520 62, 760 95, 1012 84 C 1220 75, 1360 42, 1660 48" fill="none" stroke="rgba(125,211,252,0.18)" strokeWidth="1" />
+        <path d="M 1010 120 C 1115 62, 1288 58, 1440 88 C 1520 104, 1594 105, 1668 92" fill="none" stroke="rgba(45,212,191,0.2)" strokeWidth="1.2" />
+      </svg>
+      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-normal">Dashboard</h1>
+          <p className="mt-2 text-sm font-medium text-white/90">Track source readiness, content production, and editorial workflow momentum.</p>
+        </div>
+        <HeaderActions />
+      </div>
+    </section>
   );
 }
 
@@ -149,7 +222,7 @@ function TokenSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboa
     return `${x},${y}`;
   }).join(' ');
   return (
-    <svg viewBox="0 0 120 42" className="h-12 w-36">
+    <svg viewBox="0 0 120 42" className="h-10 w-28">
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -174,35 +247,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-4">
-      <section className="relative isolate overflow-hidden rounded-lg bg-[linear-gradient(112deg,#0b2a57_0%,#0a4d6d_58%,#075a71_100%)] px-7 py-6 text-white shadow-sm">
-        <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-55" viewBox="0 0 1600 120" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M -80 82 C 180 44, 360 58, 560 78 C 810 103, 955 44, 1160 24 C 1350 6, 1478 26, 1680 12" fill="none" stroke="rgba(255,255,255,0.17)" strokeWidth="1.4" />
-          <path d="M 260 118 C 520 62, 760 95, 1012 84 C 1220 75, 1360 42, 1660 48" fill="none" stroke="rgba(125,211,252,0.18)" strokeWidth="1" />
-          <path d="M 1010 120 C 1115 62, 1288 58, 1440 88 C 1520 104, 1594 105, 1668 92" fill="none" stroke="rgba(45,212,191,0.2)" strokeWidth="1.2" />
-        </svg>
-        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-normal">Dashboard</h1>
-            <p className="mt-2 text-sm font-medium text-white/90">Track source readiness, content production, and editorial workflow momentum.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-              <CalendarDays className="h-4 w-4" />
-              Last 30 days
-            </Button>
-            <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-              <Settings2 className="h-4 w-4" />
-              Customize dashboard
-            </Button>
-            <Button asChild className="h-11 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-              <Link href="/generate">
-                <Plus className="h-4 w-4" />
-                Quick create
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <DashboardHero />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -221,10 +266,7 @@ export default async function DashboardPage() {
           icon={TrendingUp}
           tone="bg-blue-100 text-blue-700"
         >
-          <div className={`text-right text-xs font-bold ${weeklyChangePercent === null || weeklyChangePercent >= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {weeklyChangePercent === null ? '-' : `${weeklyChangePercent > 0 ? '+' : ''}${weeklyChangePercent}%`}
-            <div className="font-medium text-slate-500">vs last week</div>
-          </div>
+          <WeekChange value={weeklyChangePercent} />
         </StatCard>
         <StatCard
           label="Source library"
@@ -239,9 +281,9 @@ export default async function DashboardPage() {
           detail={`Estimated ${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
           icon={WalletCards}
           tone="bg-blue-100 text-blue-700"
-          action={<Link href="/token-usage" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600">View token log <ArrowRight className="h-4 w-4" /></Link>}
+          action={<TokenUsageLink />}
         >
-          <TokenSparkline daily={metrics.daily} />
+          <TokenUsageSparkline daily={metrics.daily} />
         </StatCard>
       </section>
 
