@@ -158,6 +158,16 @@
   color: #df806d;
 }
 
+.echowrite-page[data-echowrite-template="aurora-ribbon"] .generated-draft-icon {
+  color: #9f3d33;
+  background: #fde9e3;
+  border-color: rgba(223, 128, 109, 0.5);
+}
+
+.echowrite-page[data-echowrite-template="aurora-ribbon"] .generated-draft-icon .generated-draft-sparkle {
+  color: currentColor;
+}
+
 .echowrite-page[data-echowrite-template="aurora-ribbon"] .sources-info-callout {
   color: #445565;
   background: #fbfdfd;
@@ -208,6 +218,16 @@
 
 .echowrite-page[data-echowrite-template="desert-modern"] .generated-draft-sparkle {
   color: #e2a264;
+}
+
+.echowrite-page[data-echowrite-template="desert-modern"] .generated-draft-icon {
+  color: #8a4f10;
+  background: #fff1d6;
+  border-color: rgba(226, 162, 100, 0.52);
+}
+
+.echowrite-page[data-echowrite-template="desert-modern"] .generated-draft-icon .generated-draft-sparkle {
+  color: currentColor;
 }
 
 .echowrite-page[data-echowrite-template="desert-modern"] .sources-info-callout {
@@ -315,18 +335,27 @@
   height: 100%;
 }
 
-.generated-draft-badge {
+.generated-draft-title {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 15px;
+  gap: 10px;
   color: #ffffff;
-  background: rgba(12, 22, 48, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.generated-draft-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #155e75;
+  background: #cffafe;
+  border: 1px solid rgba(103, 232, 249, 0.72);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(6, 182, 212, 0.18);
 }
 
 .generated-draft-actions {
@@ -338,16 +367,42 @@
 .generated-draft-action {
   min-height: 40px;
   padding: 0 16px;
-  color: #233047;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.48);
   border-radius: 8px;
+  font-weight: 650;
 }
 
-.generated-draft-action:disabled {
+.generated-draft-action--copy {
+  color: #0f2f57;
+  background: #eaf4ff;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.generated-draft-action--copy:hover {
+  color: #0f2f57;
+  background: #dcecff;
+}
+
+.generated-draft-action--save {
+  color: #ffffff;
+  background: var(--ew-action-blue);
+  border: 1px solid var(--ew-action-blue);
+  box-shadow: 0 8px 24px rgba(23, 105, 194, 0.22);
+}
+
+.generated-draft-action--save:hover {
+  color: #ffffff;
+  background: #145fb0;
+  border-color: #145fb0;
+}
+
+.generated-draft-action:disabled,
+.generated-draft-action:disabled:hover {
   color: rgba(35, 48, 71, 0.56);
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 8px;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .echowrite-draft-body {

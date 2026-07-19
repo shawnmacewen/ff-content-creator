@@ -443,17 +443,25 @@ export default function EchoWritePage() {
                 <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
               )}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
-              onClick={() => setComposerCollapsed((value) => !value)}
-              aria-expanded={!composerCollapsed}
-            >
-              {composerCollapsed ? 'Show options' : 'Hide options'}
-              {composerCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            </Button>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              {composerCollapsed ? (
+                <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-9 gap-2 px-4 text-sm font-semibold">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate' : 'Generate'}
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
+                onClick={() => setComposerCollapsed((value) => !value)}
+                aria-expanded={!composerCollapsed}
+              >
+                {composerCollapsed ? 'Show' : 'Hide'}
+                {composerCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
           <div
             aria-hidden={composerCollapsed}
@@ -640,9 +648,11 @@ Separately (client-side), we:
           <article className="echowrite-draft-card">
             <EchoWriteAccentHeader placement="draft" template={ECHOWRITE_TEMPLATE}>
               <div className="generated-draft-header">
-              <div className="generated-draft-badge">
-                <Sparkles className="generated-draft-sparkle h-4 w-4" />
-                Generated draft
+              <div className="generated-draft-title">
+                <span className="generated-draft-icon">
+                  <Sparkles className="generated-draft-sparkle h-4 w-4" />
+                </span>
+                <span>Generated draft</span>
               </div>
               <div className="generated-draft-actions">
                 <Button
@@ -650,7 +660,7 @@ Separately (client-side), we:
                   variant="outline"
                   onClick={copyOutput}
                   disabled={!content.trim()}
-                  className="generated-draft-action gap-2 hover:bg-white"
+                  className="generated-draft-action generated-draft-action--copy gap-2"
                 >
                   <Copy className="h-4 w-4" />
                   Copy
@@ -660,7 +670,7 @@ Separately (client-side), we:
                   variant="outline"
                   onClick={saveDraft}
                   disabled={!content.trim() || saving}
-                  className="generated-draft-action gap-2 hover:bg-white"
+                  className="generated-draft-action generated-draft-action--save gap-2"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {saving ? 'Saving...' : 'Save draft'}
