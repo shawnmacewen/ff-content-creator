@@ -903,7 +903,8 @@ export default function GeneratePage() {
 
     void handleGenerateKit();
   };
-  const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
+  const hasStartedCampaignRun = mode === 'kit' && (hasGeneratedOutput || isGeneratingKit);
+  const isSetupCollapsed = setupCollapsed && hasStartedCampaignRun;
   const setupTrayClassName = cn(
     'space-y-6 overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out',
     isSetupCollapsed
@@ -1006,7 +1007,7 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      {hasGeneratedOutput ? (
+      {hasStartedCampaignRun ? (
         <div className={cn(
           'grid gap-3',
           isSetupCollapsed ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]' : 'justify-items-end'
@@ -1716,12 +1717,12 @@ export default function GeneratePage() {
                             )}>
                               <Icon className={cn('h-6 w-6', isInstagramNode && 'stroke-[2.4]')} />
                               <span className={cn(
-                                'absolute -bottom-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white',
+                                'absolute -bottom-2 flex h-5 w-5 items-center justify-center rounded-full border-2',
                                 isGeneratingNode
-                                  ? 'bg-blue-100 text-blue-700'
+                                  ? 'border-white bg-blue-100 text-blue-700'
                                   : isGeneratedNode
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-cyan-100 text-cyan-700'
+                                    ? 'border-white bg-emerald-600 text-white'
+                                    : 'border-slate-200 bg-slate-100 text-slate-500'
                               )}>
                                 {isGeneratingNode ? (
                                   <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-600" />
