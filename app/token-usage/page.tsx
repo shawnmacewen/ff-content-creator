@@ -55,6 +55,7 @@ function formatDateTime(value: string) {
   if (Number.isNaN(date.getTime())) return 'Date unavailable';
 
   return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -423,7 +424,7 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="pl-4">Time</TableHead>
+                        <TableHead className="pl-4">Time (EST)</TableHead>
                         <TableHead>Tool</TableHead>
                         <TableHead>Event Group</TableHead>
                         <TableHead>Content</TableHead>
