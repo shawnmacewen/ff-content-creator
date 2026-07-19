@@ -2,6 +2,8 @@
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -9,7 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, X } from 'lucide-react';
+import { LayoutGrid, List, Rows3, Search, X } from 'lucide-react';
+
+export type SourceContentViewMode = 'grid' | 'stacked' | 'quick';
 
 interface ContentFiltersProps {
   searchQuery: string;
@@ -25,6 +29,8 @@ interface ContentFiltersProps {
   selectedPublisher: string;
   onPublisherChange: (publisher: string) => void;
   availablePublishers: string[];
+  viewMode: SourceContentViewMode;
+  onViewModeChange: (viewMode: SourceContentViewMode) => void;
   onClearFilters: () => void;
 }
 
@@ -42,9 +48,16 @@ export function ContentFilters({
   selectedPublisher,
   onPublisherChange,
   availablePublishers,
+  viewMode,
+  onViewModeChange,
   onClearFilters,
 }: ContentFiltersProps) {
   const hasActiveFilters = searchQuery || searchScope !== 'all' || selectedType || selectedTag || selectedPublisher;
+  const viewOptions: Array<{ value: SourceContentViewMode; label: string; icon: typeof LayoutGrid }> = [
+    { value: 'grid', label: 'Card grid', icon: LayoutGrid },
+    { value: 'stacked', label: 'Stacked list', icon: Rows3 },
+    { value: 'quick', label: 'Quick list', icon: List },
+  ];
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -58,7 +71,7 @@ export function ContentFilters({
         />
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 sm:justify-end">
         <Select value={searchScope} onValueChange={onSearchScopeChange}>
           <SelectTrigger className="w-[135px] bg-white">
             <SelectValue placeholder="Search all" />
@@ -111,6 +124,36 @@ export function ContentFilters({
             ))}
           </SelectContent>
         </Select>
+
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(value) => {
+            if (value) onViewModeChange(value as SourceContentViewMode);
+          }}
+          variant="outline"
+          size="sm"
+          className="h-10 rounded-md border border-border bg-white p-1"
+          aria-label="Source content view"
+        >
+          {viewOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <Tooltip key={option.value}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem
+                    value={option.value}
+                    aria-label={option.label}
+                    className="h-8 w-8 rounded-sm p-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>{option.label}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </ToggleGroup>
 
         {hasActiveFilters && (
           <Button

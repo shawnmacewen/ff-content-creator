@@ -8,7 +8,7 @@ import type { SourceContent } from '@/lib/types/content';
 import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar, ExternalLink, FileText, User } from 'lucide-react';
+import { Calendar, ExternalLink, FileText, MoreHorizontal, PlayCircle, User, Users } from 'lucide-react';
 
 function parseMetadata(content: SourceContent) {
   const meta = content.metadata;
@@ -69,6 +69,7 @@ interface ContentCardProps {
   onSelect?: (id: string, selected: boolean) => void;
   onViewDetail?: (content: SourceContent) => void;
   selectable?: boolean;
+  variant?: 'grid' | 'stacked' | 'quick';
 }
 
 export function ContentCard({
@@ -77,10 +78,215 @@ export function ContentCard({
   onSelect,
   onViewDetail,
   selectable = false,
+  variant = 'grid',
 }: ContentCardProps) {
   const thumbnailUrl = getThumbnailUrl(content);
   const filename = content.metadata?.extraPropertiesSelected?.BasContentFilename || 'Unavailable';
   const isFinraApproved = String(content.metadata?.extraPropertiesSelected?.FinraApproved ?? '').toLowerCase() === 'true';
+  const publisherLabel = getPublisherLabel(content);
+  const publishedLabel = content.publishedAt
+    ? format(new Date(content.publishedAt), 'MMM d, yyyy')
+    : 'Date unavailable';
+  const typeIcon = String(content.type || '').toLowerCase().includes('video') ? PlayCircle : FileText;
+  const TypeIcon = typeIcon;
+
+  if (variant === 'quick') {
+    return (
+      <div
+        className={cn(
+          'grid min-h-[62px] grid-cols-[32px_minmax(280px,1.7fr)_minmax(140px,0.8fr)_minmax(120px,0.65fr)_minmax(140px,0.75fr)_minmax(110px,0.55fr)_92px] items-center gap-4 border-b border-border bg-card px-4 py-2 text-sm transition-colors hover:bg-secondary/40',
+          isSelected && 'bg-primary/5 ring-1 ring-inset ring-primary/40'
+        )}
+      >
+        <div>
+          {selectable ? (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
+              className="h-4 w-4 rounded border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+              aria-label={`Select ${content.title}`}
+            />
+          ) : null}
+        </div>
+
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-primary/18 via-info/8 to-secondary">
+            {thumbnailUrl ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-primary/45">
+                <FileText className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="line-clamp-1 font-semibold leading-5 text-foreground">{content.title}</div>
+            <div className="line-clamp-1 text-xs leading-5 text-muted-foreground">
+              {content.excerpt || filename}
+            </div>
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          {content.type ? (
+            <Badge variant="outline" className={cn('max-w-full truncate text-[11px] font-medium', designationLabelClass(content.type))}>
+              {content.type}
+            </Badge>
+          ) : null}
+          {isFinraApproved ? (
+            <Badge className="ml-1 bg-primary text-[10px] text-primary-foreground hover:bg-primary">FINRA</Badge>
+          ) : null}
+        </div>
+
+        <div className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+          <TypeIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{content.type || 'Content'}</span>
+        </div>
+
+        <div className="truncate text-xs text-muted-foreground">{publisherLabel}</div>
+        <div className="truncate text-xs text-muted-foreground">{publishedLabel}</div>
+
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onViewDetail?.(content)}
+            className="h-8 w-8"
+            aria-label={`Preview ${content.title}`}
+            title="Preview"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions" title="More actions">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === 'stacked') {
+    return (
+      <Card
+        className={cn(
+          'group overflow-hidden rounded-lg border-border bg-card shadow-sm transition-all hover:border-primary/50 hover:shadow-md',
+          isSelected && 'border-primary ring-2 ring-primary/25'
+        )}
+      >
+        <div className="grid gap-4 p-4 lg:grid-cols-[28px_190px_minmax(260px,1.2fr)_minmax(260px,1fr)_minmax(220px,0.85fr)_140px] lg:items-start">
+          <div className="pt-1">
+            {selectable ? (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(checked) => onSelect?.(content.id, checked as boolean)}
+                className="h-5 w-5 rounded border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                aria-label={`Select ${content.title}`}
+              />
+            ) : null}
+          </div>
+
+          <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-gradient-to-br from-primary/18 via-info/8 to-secondary">
+            {thumbnailUrl ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-[1.03]"
+                style={{ backgroundImage: `url("${thumbnailUrl.replace(/"/g, '\\"')}")` }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-primary/45">
+                <FileText className="h-9 w-9" />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 space-y-2">
+            <div className="flex min-h-5 flex-wrap items-center gap-2">
+              {content.type ? (
+                <Badge variant="outline" className={cn('text-[11px] font-medium', designationLabelClass(content.type))}>
+                  {content.type}
+                </Badge>
+              ) : null}
+              {isFinraApproved ? (
+                <Badge className="bg-primary text-[10px] text-primary-foreground hover:bg-primary">FINRA</Badge>
+              ) : null}
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <TypeIcon className="h-3 w-3" />
+                {content.type || 'Content'}
+              </span>
+            </div>
+            <CardTitle className="line-clamp-2 text-base font-semibold leading-snug">{content.title}</CardTitle>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <span className="font-medium text-primary">{publisherLabel}</span>
+              <span aria-hidden>•</span>
+              <span>{publishedLabel}</span>
+              <span aria-hidden>•</span>
+              <span className="truncate">Filename: {filename}</span>
+            </div>
+            <div>
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-foreground">Summary</div>
+              <p className="line-clamp-3 text-sm leading-5 text-muted-foreground">
+                {content.excerpt || 'No summary available for this content item.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="min-h-[116px] rounded-lg border border-cyan-100 bg-cyan-50/70 p-3">
+            <div className="text-xs font-semibold text-cyan-800">Key takeaways</div>
+            {content.keyTakeaways?.length ? (
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-slate-700">
+                {content.keyTakeaways.slice(0, 3).map((takeaway) => (
+                  <li key={takeaway} className="line-clamp-2">{takeaway}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">No takeaways available yet.</p>
+            )}
+          </div>
+
+          <div className="min-h-[116px] rounded-lg border border-emerald-100 bg-emerald-50/70 p-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+              <Users className="h-3.5 w-3.5" />
+              Recommended audience
+            </div>
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-700">
+              {content.recommendedAudience || 'No audience recommendation available yet.'}
+            </p>
+            <div className="mt-3 text-[11px] font-semibold text-slate-700">Why it fits</div>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+              {content.recommendedAudience
+                ? 'Useful for matching this source to advisor outreach and campaign planning.'
+                : 'Run enrichment to generate audience guidance for this item.'}
+            </p>
+          </div>
+
+          <div className="flex h-full min-h-[116px] flex-col items-end justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewDetail?.(content)}
+              className="h-8 gap-1.5 text-primary"
+            >
+              Preview
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewDetail?.(content)}
+              className="h-8 min-w-[116px] border-primary/50 text-primary"
+            >
+              View details
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions" title="More actions">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card

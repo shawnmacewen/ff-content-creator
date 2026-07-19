@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ContentCard } from '@/components/source-content/content-card';
-import { ContentFilters } from '@/components/source-content/content-filters';
+import { ContentFilters, type SourceContentViewMode } from '@/components/source-content/content-filters';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { Sparkles } from 'lucide-react';
@@ -159,6 +159,7 @@ export default function SourceContentPage() {
   const [runningSourceSync, setRunningSourceSync] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [syncPhraseIndex, setSyncPhraseIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<SourceContentViewMode>('grid');
 
   // Debounce search query
   useEffect(() => {
@@ -527,20 +528,50 @@ export default function SourceContentPage() {
             selectedPublisher={selectedPublisher}
             onPublisherChange={setSelectedPublisher}
             availablePublishers={filters.availablePublishers}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
             onClearFilters={handleClearFilters}
           />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {visibleContentItems.map((content) => (
-              <ContentCard
-                key={content.id}
-                content={content}
-                isSelected={selectedIds.has(content.id)}
-                onSelect={handleSelect}
-                onViewDetail={handleViewDetail}
-                selectable
-              />
-            ))}
-          </div>
+          {viewMode === 'quick' ? (
+            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+              <div className="grid min-w-[1060px] grid-cols-[32px_minmax(280px,1.7fr)_minmax(140px,0.8fr)_minmax(120px,0.65fr)_minmax(140px,0.75fr)_minmax(110px,0.55fr)_92px] items-center gap-4 border-b border-border bg-secondary/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div />
+                <div>Content</div>
+                <div>Designation</div>
+                <div>Type</div>
+                <div>Publisher</div>
+                <div>Date</div>
+                <div className="text-right">Action</div>
+              </div>
+              <div className="min-w-[1060px]">
+                {visibleContentItems.map((content) => (
+                  <ContentCard
+                    key={content.id}
+                    content={content}
+                    isSelected={selectedIds.has(content.id)}
+                    onSelect={handleSelect}
+                    onViewDetail={handleViewDetail}
+                    selectable
+                    variant="quick"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={viewMode === 'stacked' ? 'flex flex-col gap-3' : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
+              {visibleContentItems.map((content) => (
+                <ContentCard
+                  key={content.id}
+                  content={content}
+                  isSelected={selectedIds.has(content.id)}
+                  onSelect={handleSelect}
+                  onViewDetail={handleViewDetail}
+                  selectable
+                  variant={viewMode}
+                />
+              ))}
+            </div>
+          )}
           {visibleContentItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground">No content found matching your filters</p>
