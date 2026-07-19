@@ -53,6 +53,8 @@ import {
   Save,
   Sparkles,
   Smartphone,
+  StepBack,
+  StepForward,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -1681,13 +1683,13 @@ export default function GeneratePage() {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      'h-9 w-9 rounded-md transition-colors',
-                      hasPreviousCampaignNode && 'animate-pulse border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                      'h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
+                      hasPreviousCampaignNode && 'animate-pulse border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
                     )}
                     disabled={!hasPreviousCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex - 1)}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <StepBack className="h-5 w-5" />
                   </Button>
                   <div className="relative -my-10 flex min-w-0 flex-1 justify-center overflow-hidden px-2 py-10">
                     <div className="absolute left-10 right-10 top-[4.25rem] hidden h-px bg-slate-200 lg:block" />
@@ -1767,13 +1769,13 @@ export default function GeneratePage() {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      'h-9 w-9 rounded-md transition-colors',
-                      hasNextCampaignNode && 'animate-pulse border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                      'h-11 w-11 rounded-lg border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-700',
+                      hasNextCampaignNode && 'animate-pulse border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50'
                     )}
                     disabled={!hasNextCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex + 1)}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <StepForward className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
