@@ -5,6 +5,16 @@ import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
@@ -273,6 +283,7 @@ export default function GeneratePage() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [setupCollapsed, setSetupCollapsed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [confirmRegenerateOpen, setConfirmRegenerateOpen] = useState(false);
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep | null>(3);
   const [usePlainLanguage, setUsePlainLanguage] = useState(true);
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
@@ -822,6 +833,20 @@ export default function GeneratePage() {
   const generateDisabled = mode === 'kit'
     ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length
     : isGenerating || !selectedContentTypes.length || !selectedSourceIds.length;
+  const shouldConfirmCampaignRegenerate = mode === 'kit' && hasGeneratedOutput;
+  const campaignGenerateLabel = shouldConfirmCampaignRegenerate ? 'Regenerate Campaign' : 'Generate Campaign';
+  const campaignGenerateButtonClassName = cn(
+    'rounded-md',
+    shouldConfirmCampaignRegenerate && 'border border-amber-300 bg-amber-500 text-white hover:bg-amber-600'
+  );
+  const handleCampaignGenerateRequest = () => {
+    if (shouldConfirmCampaignRegenerate) {
+      setConfirmRegenerateOpen(true);
+      return;
+    }
+
+    void handleGenerateKit();
+  };
   const isSetupCollapsed = setupCollapsed && hasGeneratedOutput;
   const setupTrayClassName = cn(
     'space-y-6 overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out',
@@ -1571,8 +1596,8 @@ export default function GeneratePage() {
                 </Button>
                 <Button
                   type="button"
-                  className="rounded-md"
-                  onClick={handleGenerateKit}
+                  className={campaignGenerateButtonClassName}
+                  onClick={handleCampaignGenerateRequest}
                   disabled={generateDisabled}
                 >
                   {(isGeneratingKit || isGeneratingKitCarouselImages) ? (
@@ -1580,7 +1605,7 @@ export default function GeneratePage() {
                   ) : (
                     <Sparkles className="h-4 w-4" />
                   )}
-                  Generate Campaign
+                  {campaignGenerateLabel}
                 </Button>
               </div>
             </div>
@@ -2121,8 +2146,8 @@ export default function GeneratePage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <Button
               type="button"
-              className="h-11 rounded-md px-6"
-              onClick={mode === 'kit' ? handleGenerateKit : handleGenerate}
+              className={cn('h-11 px-6', mode === 'kit' ? campaignGenerateButtonClassName : 'rounded-md')}
+              onClick={mode === 'kit' ? handleCampaignGenerateRequest : handleGenerate}
               disabled={generateDisabled}
             >
               {(isGenerating || isGeneratingKit || isGeneratingKitCarouselImages) ? (
@@ -2130,11 +2155,33 @@ export default function GeneratePage() {
               ) : (
                 <Sparkles className="mr-2 h-4 w-4" />
               )}
-              {mode === 'kit' ? 'Generate campaign' : 'Generate asset'}
+              {mode === 'kit' ? campaignGenerateLabel : 'Generate asset'}
             </Button>
           </div>
         </div>
       </div>
+      <AlertDialog open={confirmRegenerateOpen} onOpenChange={setConfirmRegenerateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate a new campaign kit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will run the campaign generation again and may replace the current preview content. Continue only if you want a new version of this campaign kit.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              onClick={() => {
+                setConfirmRegenerateOpen(false);
+                void handleGenerateKit();
+              }}
+            >
+              Regenerate Campaign
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ContentDetail
         content={detailContent}
         open={detailOpen}
