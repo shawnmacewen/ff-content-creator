@@ -654,28 +654,6 @@ Separately (client-side), we:
                 </span>
                 <span>Generated draft</span>
               </div>
-              <div className="generated-draft-actions">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={copyOutput}
-                  disabled={!content.trim()}
-                  className="generated-draft-action generated-draft-action--copy gap-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={saveDraft}
-                  disabled={!content.trim() || saving}
-                  className="generated-draft-action generated-draft-action--save gap-2"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {saving ? 'Saving...' : 'Save draft'}
-                </Button>
-              </div>
             </div>
             </EchoWriteAccentHeader>
             <div className="echowrite-draft-body">
@@ -691,15 +669,37 @@ Separately (client-side), we:
                     </p>
                   </div>
                 </div>
-                {groundingStatus.hasOutput ? (
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={copyOutput}
+                    disabled={!content.trim()}
+                    className="generated-draft-action generated-draft-action--copy gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={saveDraft}
+                    disabled={!content.trim() || saving}
+                    className="generated-draft-action generated-draft-action--save gap-2"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {saving ? 'Saving...' : 'Save draft'}
+                  </Button>
+                  {groundingStatus.hasOutput ? (
+                    <>
                     <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                       {groundingStatus.citedSentences}/{groundingStatus.totalSentences} cited
                     </span>
                     <span className="rounded-md border border-slate-200 px-2.5 py-1">{sources.length} retrieved</span>
-                  </div>
-                ) : null}
+                    </>
+                  ) : null}
+                </div>
               </div>
             {loading ? (
               <div className="flex min-h-[520px] flex-col justify-center rounded-lg border border-blue-100 bg-[linear-gradient(180deg,#f8fbff,#ffffff)] p-8 shadow-inner">
