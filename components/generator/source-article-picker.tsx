@@ -312,10 +312,10 @@ export function SourceArticlePicker({
           </div>
         )}
 
-        <div className={cn('grid gap-2 lg:grid-cols-[auto_minmax(170px,1fr)_auto] lg:items-center', splitView && 'gap-2')}>
-          <div className="flex flex-wrap items-center gap-1.5">
+        <div className={cn('grid gap-2 lg:grid-cols-[auto_minmax(120px,0.7fr)_auto] lg:items-center', splitView && 'gap-2')}>
+          <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden">
             {splitView ? (
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
+              <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
                 <Sparkles className="h-3 w-3" />
                 Editorial Sources
               </div>
@@ -330,7 +330,7 @@ export function SourceArticlePicker({
             </div>
           </div>
           <div className={cn('flex min-w-0 items-center gap-2', !splitView && 'lg:max-w-md')}>
-            <div className="h-2 min-w-[120px] flex-1 overflow-hidden rounded-full bg-slate-200/80">
+            <div className="h-2 min-w-[84px] flex-1 overflow-hidden rounded-full bg-slate-200/80">
               <div
                 className="h-full rounded-full bg-cyan-500 transition-all"
                 style={{ width: loadProgressWidth }}
