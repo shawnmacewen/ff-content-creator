@@ -2,7 +2,7 @@
 
 import './echowrite.css';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, Info, Link2, Loader2, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +71,14 @@ const CONTENT_TYPE_OPTIONS: { value: EchoWriteContentType; label: string }[] = [
   { value: 'podcast-outline', label: 'Podcast outline' },
   { value: 'executive-summary', label: 'Executive Summary' },
   { value: 'video-script', label: 'Video Script' },
+];
+
+const ECHOWRITE_GENERATION_PHRASES = [
+  'Finding the strongest source matches...',
+  'Building grounded context from retrieved articles...',
+  'Drafting with citations in mind...',
+  'Checking claims against source passages...',
+  'Preparing highlights and supporting references...',
 ];
 
 function contentTypeLabel(contentType: EchoWriteContentType) {
@@ -224,6 +232,7 @@ export default function EchoWritePage() {
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [composerCollapsed, setComposerCollapsed] = useState(false);
+  const [generationPhraseIndex, setGenerationPhraseIndex] = useState(0);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
@@ -286,6 +295,19 @@ export default function EchoWritePage() {
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
   const showComposerSummary = composerCollapsed;
   const promptSummary = prompt.trim() || 'No prompt entered';
+
+  useEffect(() => {
+    if (!loading) {
+      setGenerationPhraseIndex(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setGenerationPhraseIndex((index) => (index + 1) % ECHOWRITE_GENERATION_PHRASES.length);
+    }, 2200);
+
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   const generate = async () => {
     setLoading(true);
@@ -652,9 +674,11 @@ Separately (client-side), we:
                   <FileText className="h-5 w-5 shrink-0 text-blue-700" />
                   <div className="min-w-0">
                     <h2 className="truncate text-base font-semibold text-slate-950">
-                      {content.trim() ? outputTitle : contentTypeLabel(contentType)}
+                      {loading ? `Generating ${contentTypeLabel(contentType)}` : content.trim() ? outputTitle : contentTypeLabel(contentType)}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-600">Highlights connect claims to supporting sources.</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {loading ? 'EchoWrite is retrieving sources and shaping the draft.' : 'Highlights connect claims to supporting sources.'}
+                    </p>
                   </div>
                 </div>
                 {groundingStatus.hasOutput ? (
@@ -667,7 +691,34 @@ Separately (client-side), we:
                   </div>
                 ) : null}
               </div>
-            {content.trim() ? (
+            {loading ? (
+              <div className="flex min-h-[520px] flex-col justify-center rounded-lg border border-blue-100 bg-[linear-gradient(180deg,#f8fbff,#ffffff)] p-8 shadow-inner">
+                <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <div className="absolute inset-0 animate-ping rounded-full bg-blue-200/45" />
+                    <Loader2 className="relative h-7 w-7 animate-spin" />
+                  </div>
+                  <h3 className="mt-6 text-lg font-semibold text-slate-950">Generating your draft</h3>
+                  <p className="mt-2 min-h-6 text-sm font-medium text-blue-700">
+                    {ECHOWRITE_GENERATION_PHRASES[generationPhraseIndex]}
+                  </p>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                    This can take a moment while EchoWrite finds relevant source content, writes the draft, and prepares evidence highlights.
+                  </p>
+                </div>
+                <div className="mx-auto mt-8 w-full max-w-2xl space-y-3">
+                  <div className="h-4 w-2/3 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-4 w-full animate-pulse rounded-full bg-slate-100" />
+                  <div className="h-4 w-11/12 animate-pulse rounded-full bg-slate-100" />
+                  <div className="h-4 w-4/5 animate-pulse rounded-full bg-slate-100" />
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <div className="h-16 animate-pulse rounded-lg bg-blue-50" />
+                    <div className="h-16 animate-pulse rounded-lg bg-slate-50" />
+                    <div className="h-16 animate-pulse rounded-lg bg-slate-50" />
+                  </div>
+                </div>
+              </div>
+            ) : content.trim() ? (
               <EchoWriteEditor
                 value={content}
                 spans={spans}
