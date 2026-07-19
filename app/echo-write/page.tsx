@@ -284,7 +284,7 @@ export default function EchoWritePage() {
     };
   }, [content, sources.length, spans]);
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
-  const showComposerSummary = composerCollapsed && (loading || hasGeneratedOutput);
+  const showComposerSummary = composerCollapsed;
   const promptSummary = prompt.trim() || 'No prompt entered';
 
   const generate = async () => {
@@ -389,63 +389,54 @@ export default function EchoWritePage() {
       </EchoWriteAccentHeader>
 
         <section className="echowrite-composer">
-          {showComposerSummary ? (
-            <div className="echowrite-composer-summary">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-950">
-                    {loading ? 'Generating draft' : 'Draft setup'}
-                  </span>
-                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                    {contentTypeLabel(contentType)}
-                  </span>
-                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                    {writingStyleLabel(writingStyle)}
-                  </span>
-                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                    {lengthLabel(length)}
-                  </span>
-                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                    {referencesLabel(maxSources)}
-                  </span>
-                  {targetWordCount.trim() ? (
-                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                      {targetWordCount.trim()} words
+          <div className="echowrite-composer-summary">
+            <div className="min-w-0">
+              {showComposerSummary ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-950">
+                      {loading ? 'Generating draft' : 'Draft setup'}
                     </span>
-                  ) : null}
-                </div>
-                <p className="mt-2 truncate text-sm text-slate-600">{promptSummary}</p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
-                onClick={() => setComposerCollapsed(false)}
-                aria-expanded={false}
-              >
-                Show options
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                      {contentTypeLabel(contentType)}
+                    </span>
+                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                      {writingStyleLabel(writingStyle)}
+                    </span>
+                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                      {lengthLabel(length)}
+                    </span>
+                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                      {referencesLabel(maxSources)}
+                    </span>
+                    {targetWordCount.trim() ? (
+                      <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                        {targetWordCount.trim()} words
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 truncate text-sm text-slate-600">{promptSummary}</p>
+                </>
+              ) : (
                 <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
-                {hasGeneratedOutput ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
-                    onClick={() => setComposerCollapsed(true)}
-                    aria-expanded={true}
-                  >
-                    Hide options
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                ) : null}
-              </div>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
+              onClick={() => setComposerCollapsed((value) => !value)}
+              aria-expanded={!composerCollapsed}
+            >
+              {composerCollapsed ? 'Show options' : 'Hide options'}
+              {composerCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </Button>
+          </div>
+          <div
+            aria-hidden={composerCollapsed}
+            className={`echowrite-composer-body ${composerCollapsed ? 'echowrite-composer-body--collapsed' : 'echowrite-composer-body--open'}`}
+          >
               <Textarea
                 placeholder="Describe your topic, audience, key message, and anything the draft should include..."
                 value={prompt}
@@ -525,8 +516,7 @@ export default function EchoWritePage() {
                   </Button>
                 </div>
               </div>
-            </>
-          )}
+          </div>
           {error ? (
             <div className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

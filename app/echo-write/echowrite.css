@@ -241,6 +241,24 @@
   color: var(--ew-muted);
 }
 
+.echowrite-composer-body {
+  overflow: hidden;
+  transition: max-height 500ms ease-in-out, opacity 500ms ease-in-out, transform 500ms ease-in-out;
+}
+
+.echowrite-composer-body--open {
+  max-height: 900px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.echowrite-composer-body--collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+}
+
 .echowrite-composer__settings {
   display: grid;
   grid-template-columns:
@@ -269,6 +287,12 @@
   justify-content: space-between;
   gap: 18px;
   min-height: 68px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .echowrite-composer-body {
+    transition: none;
+  }
 }
 
 .echowrite-page .primary-action {
