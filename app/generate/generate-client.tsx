@@ -1673,7 +1673,7 @@ export default function GeneratePage() {
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
             )}>
               <div className="min-h-0 overflow-hidden">
-            <div className="space-y-5 bg-[linear-gradient(180deg,rgba(209,250,229,0.72),rgba(236,253,245,0.48)_44%,rgba(255,255,255,0.72))] p-5">
+            <div className="space-y-5 bg-[linear-gradient(180deg,#d3ebe4_0%,#e0f1ec_48%,#f0faf6_100%)] p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
@@ -1691,7 +1691,7 @@ export default function GeneratePage() {
                   </Button>
                   <div className="relative -my-10 flex min-w-0 flex-1 justify-center overflow-hidden px-2 py-10">
                     <div className="absolute left-10 right-10 top-[4.25rem] hidden h-px bg-slate-200 lg:block" />
-                    <div className="relative z-10 -my-10 flex w-full flex-nowrap items-start justify-start gap-x-8 overflow-hidden py-10">
+                    <div className="relative z-10 -my-10 flex w-full flex-nowrap items-start justify-center gap-x-8 overflow-hidden py-10">
                       {campaignOutputNodes.map((node) => {
                         const Icon = node.icon;
                         const active = activeCampaignNode?.id === node.id;
