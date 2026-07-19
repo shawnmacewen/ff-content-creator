@@ -3,7 +3,7 @@
 import './echowrite.css';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, FileText, Info, Link2, Loader2, Save, Settings2, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, Info, Link2, Loader2, Save, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -97,6 +97,22 @@ function toneFromWritingStyle(style: 'professional' | 'fun' | 'educational') {
   if (style === 'fun') return 'friendly';
   if (style === 'educational') return 'authoritative';
   return 'professional';
+}
+
+function writingStyleLabel(style: 'professional' | 'fun' | 'educational') {
+  if (style === 'fun') return 'Fun';
+  if (style === 'educational') return 'Educational';
+  return 'Professional';
+}
+
+function lengthLabel(length: 'short' | 'medium' | 'long') {
+  if (length === 'short') return 'Short';
+  if (length === 'long') return 'Long';
+  return 'Medium';
+}
+
+function referencesLabel(maxSources: number) {
+  return maxSources === 0 ? 'No references' : `Up to ${maxSources} references`;
 }
 
 function AuroraRibbonDecoration() {
@@ -207,6 +223,7 @@ export default function EchoWritePage() {
   const [promptOpen, setPromptOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [composerCollapsed, setComposerCollapsed] = useState(false);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailContent, setDetailContent] = useState<SourceContent | null>(null);
@@ -267,10 +284,13 @@ export default function EchoWritePage() {
     };
   }, [content, sources.length, spans]);
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
+  const showComposerSummary = composerCollapsed && (loading || hasGeneratedOutput);
+  const promptSummary = prompt.trim() || 'No prompt entered';
 
   const generate = async () => {
     setLoading(true);
     setError(null);
+    setComposerCollapsed(true);
     try {
       const res = await fetch('/api/echo-write', {
         method: 'POST',
@@ -299,6 +319,7 @@ export default function EchoWritePage() {
     } catch (err: any) {
       const message = err?.message || 'EchoWrite generation failed';
       setError(message);
+      setComposerCollapsed(false);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -368,86 +389,144 @@ export default function EchoWritePage() {
       </EchoWriteAccentHeader>
 
         <section className="echowrite-composer">
-          <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
-          <Textarea
-            placeholder="Describe your topic, audience, key message, and anything the draft should include..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={5}
-            className="echowrite-composer__prompt"
-          />
-          <div className="echowrite-composer__settings">
-            <div className="contents">
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-slate-600">Writing style</div>
-                <Select value={writingStyle} onValueChange={(v: any) => setWritingStyle(v)}>
-                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="fun">Fun</SelectItem>
-                    <SelectItem value="educational">Educational</SelectItem>
-                  </SelectContent>
-                </Select>
+          {showComposerSummary ? (
+            <div className="echowrite-composer-summary">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-950">
+                    {loading ? 'Generating draft' : 'Draft setup'}
+                  </span>
+                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                    {contentTypeLabel(contentType)}
+                  </span>
+                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                    {writingStyleLabel(writingStyle)}
+                  </span>
+                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                    {lengthLabel(length)}
+                  </span>
+                  <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                    {referencesLabel(maxSources)}
+                  </span>
+                  {targetWordCount.trim() ? (
+                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
+                      {targetWordCount.trim()} words
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 truncate text-sm text-slate-600">{promptSummary}</p>
               </div>
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-slate-600">Content type</div>
-                <Select value={contentType} onValueChange={(v: any) => setContentType(v)}>
-                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CONTENT_TYPE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-slate-600">Length</div>
-                <Select value={length} onValueChange={(v: any) => setLength(v)}>
-                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="short">Short</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="long">Long</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-slate-600">Target words</div>
-                <Input
-                  value={targetWordCount}
-                  onChange={(e) => setTargetWordCount(e.target.value)}
-                  placeholder="Optional"
-                  className="h-11 border-slate-200 bg-white shadow-sm placeholder:text-slate-500"
-                />
-              </div>
-              <div>
-                <div className="mb-1.5 text-xs font-medium text-slate-600">References</div>
-                <Select value={String(maxSources)} onValueChange={(value) => setMaxSources(Number(value))}>
-                  <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {[0, 3, 6, 10, 12].map((count) => (
-                      <SelectItem key={count} value={String(count)}>
-                        {count === 0 ? 'None' : `Up to ${count}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="echowrite-composer__actions">
-              <div className="hidden h-12 w-px bg-slate-200 xl:block" />
-              <Button variant="outline" className="h-11 gap-2 border-slate-200 bg-white px-5 text-slate-800 shadow-sm" onClick={() => setAdvancedOpen(true)}>
-                <Settings2 className="h-4 w-4" />
-                Advanced settings
-              </Button>
-              <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-11 gap-2 px-5 font-semibold">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate draft' : 'Generate draft'}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
+                onClick={() => setComposerCollapsed(false)}
+                aria-expanded={false}
+              >
+                Show options
+                <ChevronDown className="h-4 w-4" />
               </Button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
+                {hasGeneratedOutput ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0 gap-2 border-slate-200 bg-white text-slate-800 shadow-sm"
+                    onClick={() => setComposerCollapsed(true)}
+                    aria-expanded={true}
+                  >
+                    Hide options
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                ) : null}
+              </div>
+              <Textarea
+                placeholder="Describe your topic, audience, key message, and anything the draft should include..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={5}
+                className="echowrite-composer__prompt"
+              />
+              <div className="echowrite-composer__settings">
+                <div className="contents">
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium text-slate-600">Writing style</div>
+                    <Select value={writingStyle} onValueChange={(v: any) => setWritingStyle(v)}>
+                      <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="fun">Fun</SelectItem>
+                        <SelectItem value="educational">Educational</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium text-slate-600">Content type</div>
+                    <Select value={contentType} onValueChange={(v: any) => setContentType(v)}>
+                      <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CONTENT_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium text-slate-600">Length</div>
+                    <Select value={length} onValueChange={(v: any) => setLength(v)}>
+                      <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="short">Short</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="long">Long</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium text-slate-600">Target words</div>
+                    <Input
+                      value={targetWordCount}
+                      onChange={(e) => setTargetWordCount(e.target.value)}
+                      placeholder="Optional"
+                      className="h-11 border-slate-200 bg-white shadow-sm placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium text-slate-600">References</div>
+                    <Select value={String(maxSources)} onValueChange={(value) => setMaxSources(Number(value))}>
+                      <SelectTrigger className="h-11 w-full border-slate-200 bg-white shadow-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[0, 3, 6, 10, 12].map((count) => (
+                          <SelectItem key={count} value={String(count)}>
+                            {count === 0 ? 'None' : `Up to ${count}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="echowrite-composer__actions">
+                  <div className="hidden h-12 w-px bg-slate-200 xl:block" />
+                  <Button variant="outline" className="h-11 gap-2 border-slate-200 bg-white px-5 text-slate-800 shadow-sm" onClick={() => setAdvancedOpen(true)}>
+                    <Settings2 className="h-4 w-4" />
+                    Advanced settings
+                  </Button>
+                  <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-11 gap-2 px-5 font-semibold">
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate draft' : 'Generate draft'}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
           {error ? (
             <div className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

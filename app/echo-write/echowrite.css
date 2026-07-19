@@ -263,6 +263,14 @@
   gap: 12px;
 }
 
+.echowrite-composer-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 68px;
+}
+
 .echowrite-page .primary-action {
   color: #ffffff;
   background: var(--ew-action-blue);
@@ -349,6 +357,11 @@
 
   .echowrite-composer__actions {
     justify-content: flex-start;
+  }
+
+  .echowrite-composer-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
