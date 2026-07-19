@@ -35,6 +35,8 @@ type RichBlock =
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'table'; rows: string[][] };
 
+const TAKEAWAY_UNAVAILABLE_MESSAGE = 'Generation not available, body is under 100 characters.';
+
 const tableTags = ['table', 'informaltable', 'tgroup', 'thead', 'tbody'];
 const rowTags = ['tr', 'row', 'table_row', 'tablerow'];
 const cellTags = ['th', 'td', 'cell', 'entry', 'table_cell', 'tablecell'];
@@ -504,6 +506,7 @@ export function ContentDetail({
     : [];
   const recommendedAudience = decodeEntitiesBrowser(String(content.recommendedAudience || '')).trim();
   const takeawayStatus = content.takeawayStatus || null;
+  const takeawaysUnavailable = !storedTakeaways.length && (takeawayStatus?.status === 'skipped_short_body' || displayBodyText.length < 100);
   const visibleBlocks = richBlocks.length ? richBlocks : plainTextBlocks(displayBodyText);
 
   const renderMetadataValue = (value: unknown) => {
@@ -712,6 +715,10 @@ export function ContentDetail({
                       );
                     })}
                   </div>
+                ) : takeawaysUnavailable ? (
+                  <p className="text-sm font-medium leading-6 text-slate-400">
+                    {TAKEAWAY_UNAVAILABLE_MESSAGE}
+                  </p>
                 ) : (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                     <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>

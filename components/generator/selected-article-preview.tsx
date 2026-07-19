@@ -16,10 +16,11 @@ import {
   WandSparkles,
   X,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
 import { cn } from '@/lib/utils';
-import { designationLabelClass } from '@/lib/content-label-colors';
+import { designationLabelClass, overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import type { SourceContentSignal } from '@/lib/types/content';
 
@@ -138,6 +139,8 @@ function normalizeSignals(value: unknown): SourceContentSignal[] {
     .slice(0, 12) as SourceContentSignal[];
 }
 
+const TAKEAWAY_UNAVAILABLE_MESSAGE = 'Generation not available, body is under 100 characters.';
+
 function signalTypeLabel(type: string) {
   if (type === 'content_opportunity') return 'Opportunity';
   if (type === 'generation_guidance') return 'Guidance';
@@ -224,8 +227,41 @@ export function SelectedArticlePreview({
   const takeawayStatus = detailContent?.takeawayStatus || article.takeawayStatus || null;
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
+  const visibleTags: string[] = tags.map((tag: unknown) => decodeEntities(String(tag))).filter(Boolean).slice(0, 4);
+  const overflowTagCount = Math.max(0, tags.length - visibleTags.length);
   const contentSignals = normalizeSignals(detailContent?.contentSignals || article.contentSignals);
-  const hasTakeawaySupport = Boolean(takeaways.length || recommendedAudience || onGenerateTakeaways);
+  const cleanBodyLength = cleanText(bodyPreview || String(article?.bodyText || article?.body || '')).length;
+  const takeawaysUnavailable = !takeaways.length && (takeawayStatus?.status === 'skipped_short_body' || cleanBodyLength < 100);
+  const hasTakeawaySupport = Boolean(takeaways.length || recommendedAudience || (onGenerateTakeaways && !takeawaysUnavailable));
+  const renderTakeawayUnavailable = (className?: string) => (
+    <p className={cn('text-sm font-medium leading-6 text-slate-400', className)}>
+      {TAKEAWAY_UNAVAILABLE_MESSAGE}
+    </p>
+  );
+  const renderTakeawayGenerateState = (size: 'compact' | 'default' = 'default') => {
+    if (takeawaysUnavailable) return renderTakeawayUnavailable(size === 'compact' ? 'text-xs leading-5' : undefined);
+
+    return (
+      <div className={cn('rounded-md border border-amber-200 bg-amber-50 text-amber-900', size === 'compact' ? 'px-3 py-2 text-sm leading-6' : 'p-4 text-sm leading-6')}>
+        <div className={cn('font-semibold', size === 'default' && 'flex items-center gap-3')}>
+          {size === 'default' ? <Sparkles className="h-4 w-4" /> : null}
+          {takeawayStatus?.label || 'Needs enrichment'}
+        </div>
+        <p className={cn(size === 'default' && 'mt-1')}>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
+        {onGenerateTakeaways ? (
+          <button
+            type="button"
+            onClick={onGenerateTakeaways}
+            disabled={isGeneratingTakeaways}
+            className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
+          >
+            {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
+          </button>
+        ) : null}
+      </div>
+    );
+  };
   const previewSignals = [
     ...contentSignals.filter((signal) => signal.type === 'content_opportunity'),
     ...contentSignals.filter((signal) => signal.type === 'generation_guidance'),
@@ -410,23 +446,7 @@ export function SelectedArticlePreview({
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
-                  <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>
-                  <p>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
-                  {onGenerateTakeaways ? (
-                    <button
-                      type="button"
-                      onClick={onGenerateTakeaways}
-                      disabled={isGeneratingTakeaways}
-                      className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
-                    >
-                      {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                      {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
-                    </button>
-                  ) : null}
-                </div>
-              )}
+              ) : renderTakeawayGenerateState('compact')}
             </div>
 
             <div className="mt-auto flex items-center justify-between gap-3">
@@ -484,7 +504,17 @@ export function SelectedArticlePreview({
               <Calendar className="h-4 w-4 text-primary" />
               {formatDate(publishedAt)}
             </span>
-            {filename ? <span className="basis-full break-all text-slate-500">File: {filename}</span> : null}
+            {filename ? <span className="break-all text-slate-500">File: {filename}</span> : null}
+            {visibleTags.map((tag) => (
+              <Badge key={tag} variant="outline" className={cn('rounded-full text-xs font-normal', tagLabelClass(tag))}>
+                {tag}
+              </Badge>
+            ))}
+            {overflowTagCount ? (
+              <Badge variant="outline" className={cn('rounded-full text-xs font-normal', overflowLabelClass())}>
+                +{overflowTagCount}
+              </Badge>
+            ) : null}
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
@@ -496,33 +526,35 @@ export function SelectedArticlePreview({
             <div className="space-y-2">
               <h4 className="text-sm font-semibold text-slate-950">Key takeaways</h4>
               {takeaways.length ? (
-                <div className="space-y-2">
-                  {takeaways.map((item, index) => (
-                    <div key={index} className="grid grid-cols-[20px_minmax(0,1fr)] gap-2 text-sm leading-6 text-slate-700">
-                      <span className="mt-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
-                        <Check className="h-3 w-3" />
-                      </span>
-                      <span>{item}</span>
+                <div className="space-y-3">
+                  {takeaways.map((item, index) => {
+                    const Icon = index === 0 ? TrendingUp : index === 1 ? Users : WandSparkles;
+                    return (
+                      <div key={index} className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.18),0_12px_28px_rgba(6,182,212,0.12)]">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <p className="pt-0.5 text-sm font-semibold leading-6 text-slate-700">{item}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : renderTakeawayGenerateState('compact')}
+
+              {recommendedAudience ? (
+                <div className="space-y-2 border-t border-slate-200/80 pt-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+                    <Target className="h-4 w-4 text-blue-600" />
+                    Recommended Audience
+                  </div>
+                  <div className="grid grid-cols-[36px_minmax(0,1fr)] items-start gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(37,99,235,0.16),0_12px_28px_rgba(37,99,235,0.1)]">
+                      <Users className="h-4 w-4" />
                     </div>
-                  ))}
+                    <p className="pt-0.5 text-sm font-semibold leading-6 text-slate-700">{recommendedAudience}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
-                  <div className="font-semibold">{takeawayStatus?.label || 'Needs enrichment'}</div>
-                  <p>{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
-                  {onGenerateTakeaways ? (
-                    <button
-                      type="button"
-                      onClick={onGenerateTakeaways}
-                      disabled={isGeneratingTakeaways}
-                      className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
-                    >
-                      {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                      {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
-                    </button>
-                  ) : null}
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -628,26 +660,7 @@ export function SelectedArticlePreview({
                   })}
                 </div>
               </div>
-            ) : (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                <div className="flex items-center gap-3 font-semibold">
-                  <Sparkles className="h-4 w-4" />
-                  {takeawayStatus?.label || 'Needs enrichment'}
-                </div>
-                <p className="mt-1">{takeawayStatus?.reason || 'Key takeaways have not been generated for this source yet.'}</p>
-                {onGenerateTakeaways ? (
-                  <button
-                    type="button"
-                    onClick={onGenerateTakeaways}
-                    disabled={isGeneratingTakeaways}
-                    className="mt-3 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white disabled:opacity-60"
-                  >
-                    {isGeneratingTakeaways ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                    {isGeneratingTakeaways ? 'Generating...' : 'Generate takeaways'}
-                  </button>
-                ) : null}
-              </div>
-            )}
+            ) : renderTakeawayGenerateState()}
 
             {recommendedAudience ? (
               <div className="space-y-3 border-t border-slate-200/80 pt-4">
