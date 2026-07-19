@@ -1609,8 +1609,8 @@ export default function GeneratePage() {
             )}>
               <div className="min-h-0 overflow-hidden">
             <div className="space-y-5 p-5">
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="flex items-center gap-3">
+              <div className="px-1 py-5">
+                <div className="flex min-h-[142px] items-center gap-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1621,43 +1621,58 @@ export default function GeneratePage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto px-1 pb-1">
-                    {campaignOutputNodes.map((node) => {
-                      const Icon = node.icon;
-                      const active = activeCampaignNode?.id === node.id;
-                      const approved = approvedKitOutputIds.includes(String(node.id));
-                      const isGeneratingNode = node.status === 'generating';
-                      return (
-                        <button
-                          key={node.id}
-                          type="button"
-                          onClick={() => goToCampaignNode(String(node.id))}
-                          className={cn(
-                            'relative flex min-w-[118px] flex-col items-center gap-2 rounded-lg border px-3 py-3 text-center transition-all',
-                            active
-                              ? 'border-emerald-400 bg-emerald-50 text-emerald-800 shadow-[0_0_0_8px_rgba(16,185,129,0.08)]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'
-                          )}
-                        >
-                          <span className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white">
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <span className="line-clamp-1 text-xs font-bold">{node.shortLabel}</span>
-                          <span className="absolute -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-cyan-100 text-cyan-700">
-                            {isGeneratingNode ? (
-                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                            ) : approved ? (
-                              <Check className="h-2.5 w-2.5" />
-                            ) : (
-                              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                  <div className="relative flex min-w-0 flex-1 justify-center px-2">
+                    <div className="absolute left-8 right-8 top-11 hidden h-px bg-slate-200 lg:block" />
+                    <div className="relative z-10 flex w-full flex-wrap items-start justify-center gap-x-7 gap-y-5">
+                      {campaignOutputNodes.map((node) => {
+                        const Icon = node.icon;
+                        const active = activeCampaignNode?.id === node.id;
+                        const approved = approvedKitOutputIds.includes(String(node.id));
+                        const isGeneratingNode = node.status === 'generating';
+                        return (
+                          <button
+                            key={node.id}
+                            type="button"
+                            onClick={() => goToCampaignNode(String(node.id))}
+                            className={cn(
+                              'group flex w-[102px] flex-col items-center gap-2 rounded-lg px-2 py-1.5 text-center text-slate-700 transition-colors hover:text-emerald-800',
+                              active && 'text-emerald-800'
                             )}
-                          </span>
-                          {active ? (
-                            <span className="absolute -bottom-7 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">Now reviewing</span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
+                          >
+                            <span className={cn(
+                              'relative flex h-12 w-12 items-center justify-center rounded-md border bg-white shadow-sm transition-all',
+                              active
+                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 shadow-[0_0_0_12px_rgba(16,185,129,0.10)]'
+                                : 'border-slate-200 text-slate-600 group-hover:border-emerald-200 group-hover:bg-emerald-50/60'
+                            )}>
+                              <Icon className="h-5 w-5" />
+                              <span className={cn(
+                                'absolute -bottom-2 flex h-4 w-4 items-center justify-center rounded-full border border-white',
+                                isGeneratingNode
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : approved
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-cyan-100 text-cyan-700'
+                              )}>
+                                {isGeneratingNode ? (
+                                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                ) : approved ? (
+                                  <Check className="h-2.5 w-2.5" />
+                                ) : (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                )}
+                              </span>
+                            </span>
+                            <span className="line-clamp-2 min-h-8 text-xs font-bold leading-4">{node.shortLabel}</span>
+                            {active ? (
+                              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold leading-4 text-emerald-700">Now reviewing</span>
+                            ) : (
+                              <span className="h-5" aria-hidden />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <Button
                     type="button"
@@ -1670,7 +1685,6 @@ export default function GeneratePage() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="mt-8 text-xs font-medium text-muted-foreground">Review in campaign order, or jump directly to any channel.</p>
               </div>
 
               <div className={cn(
