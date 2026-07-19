@@ -76,9 +76,11 @@ export function KitGeneratedOutput({
     const txt = out?.content || '';
     const label = out?.label || CONTENT_TYPE_MAP[type]?.label || type;
     const status = getStatus(type);
+    const compactPreview = !showTabs;
 
     return (
       <div className="space-y-3">
+        {compactPreview ? null : (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -106,8 +108,9 @@ export function KitGeneratedOutput({
             {copiedType === type ? 'Copied' : 'Copy'}
           </Button>
         </div>
+        )}
         {txt ? (
-          <div className="rounded-2xl border bg-muted/20 p-3 sm:p-5">
+          <div className={compactPreview ? '' : 'rounded-2xl border bg-muted/20 p-3 sm:p-5'}>
             <PlatformOutputPreview type={type} label={label} content={txt} />
           </div>
         ) : (
@@ -119,77 +122,89 @@ export function KitGeneratedOutput({
     );
   };
 
-  return (
-    <Card className="rounded-2xl border bg-card shadow-sm">
-      <CardContent className="space-y-4 pt-6">
-        {onGenerate ? (
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              className="rounded-2xl bg-primary hover:bg-primary/90"
-              onClick={onGenerate}
-              disabled={!!isGenerating}
-            >
-              {isGenerating ? 'Generating…' : 'Generate'}
-            </Button>
-          </div>
-        ) : null}
+  const content = (
+    <>
+      {onGenerate ? (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            className="rounded-2xl bg-primary hover:bg-primary/90"
+            onClick={onGenerate}
+            disabled={!!isGenerating}
+          >
+            {isGenerating ? 'Generating…' : 'Generate'}
+          </Button>
+        </div>
+      ) : null}
 
-        {showTabs && effectiveActive !== 'all' ? (
-          <Tabs value={effectiveActive} onValueChange={(v) => setActiveInternal(v as ContentType)} className="w-full">
-            <TabsList className={cn('w-full justify-start', types.length > 3 && 'flex-wrap h-auto')}>
-              {types.map((t) => (
-                <TabsTrigger key={t} value={t} className="rounded-2xl">
-                  {renderStatusIcon(getStatus(t))}
-                  {CONTENT_TYPE_MAP[t]?.label ?? t}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+      {showTabs && effectiveActive !== 'all' ? (
+        <Tabs value={effectiveActive} onValueChange={(v) => setActiveInternal(v as ContentType)} className="w-full">
+          <TabsList className={cn('w-full justify-start', types.length > 3 && 'flex-wrap h-auto')}>
+            {types.map((t) => (
+              <TabsTrigger key={t} value={t} className="rounded-2xl">
+                {renderStatusIcon(getStatus(t))}
+                {CONTENT_TYPE_MAP[t]?.label ?? t}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-            {types.map((t) => {
-              return (
-                <TabsContent key={t} value={t} className="mt-4">
-                  {!hasAnyOutput ? (
-                    <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
-                      Generated output will appear here after you click Generate.
-                    </div>
-                  ) : (
-                    renderOutput(t)
-                  )}
-                </TabsContent>
-              );
-            })}
-          </Tabs>
-        ) : (
-          <div className="w-full">
-            {!hasAnyOutput ? (
-              <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
-                Generated output will appear here after you click Generate.
-              </div>
-            ) : effectiveActive === 'all' ? (
-              <div className="space-y-3">
-                {types.map((t) => {
-                  return (
-                    <div key={t} className="rounded-2xl border bg-background p-4 shadow-sm">
-                      {renderOutput(t)}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              (() => {
-                return renderOutput(effectiveActive);
-              })()
-            )}
-          </div>
-        )}
+          {types.map((t) => {
+            return (
+              <TabsContent key={t} value={t} className="mt-4">
+                {!hasAnyOutput ? (
+                  <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
+                    Generated output will appear here after you click Generate.
+                  </div>
+                ) : (
+                  renderOutput(t)
+                )}
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      ) : (
+        <div className="w-full">
+          {!hasAnyOutput ? (
+            <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
+              Generated output will appear here after you click Generate.
+            </div>
+          ) : effectiveActive === 'all' ? (
+            <div className="space-y-3">
+              {types.map((t) => {
+                return (
+                  <div key={t} className={showTabs ? 'rounded-2xl border bg-background p-4 shadow-sm' : ''}>
+                    {renderOutput(t)}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            (() => {
+              return renderOutput(effectiveActive);
+            })()
+          )}
+        </div>
+      )}
 
+      {showTabs ? (
         <div className="rounded-2xl border bg-primary/10 px-4 py-3 text-xs text-primary">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <span>AI-generated content. Review and edit before posting.</span>
           </div>
         </div>
+      ) : null}
+    </>
+  );
+
+  if (!showTabs) {
+    return <div className="w-full">{content}</div>;
+  }
+
+  return (
+    <Card className="rounded-2xl border bg-card shadow-sm">
+      <CardContent className="space-y-4 pt-6">
+        {content}
       </CardContent>
     </Card>
   );

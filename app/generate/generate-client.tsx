@@ -38,12 +38,10 @@ import {
   Mail,
   Mails,
   Monitor,
-  MoreHorizontal,
   Newspaper,
   NotebookText,
   Save,
   Sparkles,
-  Smartphone,
   Twitter,
   User,
 } from 'lucide-react';
@@ -1839,8 +1837,10 @@ export default function GeneratePage() {
               </div>
 
               <div className={cn(
-                'grid gap-4 transition-[grid-template-columns] duration-300 ease-in-out xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]',
-                !isReviewPanelOpen && 'xl:grid-cols-[minmax(0,1fr)_52px] 2xl:grid-cols-[minmax(0,1fr)_52px]'
+                'grid gap-4 transition-[grid-template-columns] duration-300 ease-in-out',
+                isReviewPanelOpen
+                  ? 'xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]'
+                  : 'xl:grid-cols-[minmax(0,1fr)]'
               )}>
                 <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1869,11 +1869,20 @@ export default function GeneratePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button type="button" variant="outline" size="sm" className="rounded-md border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Preview</Button>
                       <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={copyActiveCampaignOutput}>Copy</Button>
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Monitor className="h-4 w-4" /></Button>
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><Smartphone className="h-4 w-4" /></Button>
-                      <Button type="button" variant="outline" size="sm" className="rounded-md">Edit</Button>
                       <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={handleGenerateKit} disabled={isGeneratingKit}>Regenerate</Button>
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className={cn(
+                          'h-9 w-9 rounded-md transition-colors',
+                          !isReviewPanelOpen && 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800'
+                        )}
+                        onClick={() => setIsReviewPanelOpen((value) => !value)}
+                        title={isReviewPanelOpen ? 'Hide Review & Refine' : 'Show Review & Refine'}
+                      >
+                        <ChevronRight className={cn('h-4 w-4 transition-transform', isReviewPanelOpen && 'rotate-180')} />
+                      </Button>
                     </div>
                   </div>
 
@@ -1988,11 +1997,9 @@ export default function GeneratePage() {
 
                 <div className={cn(
                   'overflow-hidden rounded-lg border border-slate-200 bg-white transition-all duration-300 ease-in-out',
-                  isReviewPanelOpen ? 'p-4 opacity-100' : 'p-2 opacity-100'
+                  isReviewPanelOpen ? 'p-4 opacity-100' : 'hidden'
                 )}>
-                  <div className={cn('flex items-center gap-3', isReviewPanelOpen ? 'mb-4 justify-between' : 'justify-center')}>
-                    {isReviewPanelOpen ? (
-                      <>
+                  <div className="mb-4 flex items-center justify-between gap-3">
                         <h3 className="text-base font-semibold text-slate-950">Review & refine</h3>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-muted-foreground">Asset {activeCampaignNodeIndex + 1 || 0} of {campaignOutputNodes.length}</span>
@@ -2006,19 +2013,6 @@ export default function GeneratePage() {
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </div>
-                      </>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-md"
-                        onClick={() => setIsReviewPanelOpen(true)}
-                        title="Show review panel"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                   <div className={cn(
                     'transition-[opacity,transform] duration-300 ease-in-out',
