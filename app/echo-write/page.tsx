@@ -295,6 +295,21 @@ export default function EchoWritePage() {
   const hasGeneratedOutput = Boolean(content.trim() || sources.length);
   const showComposerSummary = composerCollapsed;
   const promptSummary = prompt.trim() || 'No prompt entered';
+  const composerSummaryOptions = [
+    contentTypeLabel(contentType),
+    writingStyleLabel(writingStyle),
+    lengthLabel(length),
+    referencesLabel(maxSources),
+    targetWordCount.trim() ? `${targetWordCount.trim()} words` : null,
+  ].filter(Boolean) as string[];
+  const collapsedGenerateButtonClassName = [
+    'primary-action h-9 gap-2 px-4 text-sm font-semibold',
+    hasGeneratedOutput && !loading ? 'echowrite-regenerate-action' : '',
+  ].filter(Boolean).join(' ');
+  const expandedGenerateButtonClassName = [
+    'primary-action h-11 gap-2 px-5 font-semibold',
+    hasGeneratedOutput && !loading ? 'echowrite-regenerate-action' : '',
+  ].filter(Boolean).join(' ');
 
   useEffect(() => {
     if (!loading) {
@@ -412,40 +427,31 @@ export default function EchoWritePage() {
 
         <section className="echowrite-composer">
           <div className="echowrite-composer-summary">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               {showComposerSummary ? (
-                <>
-                  <div className="flex flex-wrap items-center gap-2">
+                <div className="echowrite-composer-summary__content">
+                  <div className="echowrite-composer-summary__setup min-w-0">
                     <span className="text-sm font-semibold text-slate-950">
                       {loading ? 'Generating draft' : 'Draft setup'}
                     </span>
-                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                      {contentTypeLabel(contentType)}
-                    </span>
-                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                      {writingStyleLabel(writingStyle)}
-                    </span>
-                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                      {lengthLabel(length)}
-                    </span>
-                    <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                      {referencesLabel(maxSources)}
-                    </span>
-                    {targetWordCount.trim() ? (
-                      <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                        {targetWordCount.trim()} words
-                      </span>
-                    ) : null}
+                    <p className="mt-2 truncate text-sm text-slate-600">{promptSummary}</p>
                   </div>
-                  <p className="mt-2 truncate text-sm text-slate-600">{promptSummary}</p>
-                </>
+                  <div className="echowrite-composer-summary__separator" aria-hidden="true" />
+                  <div className="echowrite-composer-summary__options" aria-label="Draft options">
+                    {composerSummaryOptions.map((option) => (
+                      <span key={option} className="echowrite-summary-badge">
+                        {option}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <h2 className="text-lg font-semibold tracking-normal text-slate-950">What would you like to create?</h2>
               )}
             </div>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {composerCollapsed ? (
-                <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-9 gap-2 px-4 text-sm font-semibold">
+                <Button onClick={generate} disabled={loading || !prompt.trim()} className={collapsedGenerateButtonClassName}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate' : 'Generate'}
                 </Button>
@@ -540,7 +546,7 @@ export default function EchoWritePage() {
                     <Settings2 className="h-4 w-4" />
                     Advanced settings
                   </Button>
-                  <Button onClick={generate} disabled={loading || !prompt.trim()} className="primary-action h-11 gap-2 px-5 font-semibold">
+                  <Button onClick={generate} disabled={loading || !prompt.trim()} className={expandedGenerateButtonClassName}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {loading ? 'Generating...' : hasGeneratedOutput ? 'Regenerate draft' : 'Generate draft'}
                   </Button>
