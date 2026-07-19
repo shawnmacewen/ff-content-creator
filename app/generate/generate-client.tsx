@@ -1784,7 +1784,10 @@ export default function GeneratePage() {
                             </span>
                             <span className="line-clamp-2 min-h-8 text-xs font-bold leading-4">{node.shortLabel}</span>
                             {active ? (
-                              <span className="inline-flex min-h-5 items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold leading-4 text-blue-700">
+                              <span className={cn(
+                                'inline-flex min-h-5 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold leading-4',
+                                isGeneratedNode || isGeneratingNode ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                              )}>
                                 {isGeneratingNode ? (
                                   <>
                                     Generating
@@ -1794,8 +1797,10 @@ export default function GeneratePage() {
                                       <span className="h-1 w-1 animate-pulse rounded-full bg-current [animation-delay:300ms]" />
                                     </span>
                                   </>
+                                ) : isGeneratedNode ? (
+                                  'Reviewing'
                                 ) : (
-                                  'Now Reviewing'
+                                  'Pending'
                                 )}
                               </span>
                             ) : (
