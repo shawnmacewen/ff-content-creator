@@ -918,6 +918,8 @@ export default function GeneratePage() {
   const activeCampaignNodeIndex = activeCampaignNode
     ? Math.max(0, campaignOutputNodes.findIndex((node) => node.id === activeCampaignNode.id))
     : -1;
+  const hasPreviousCampaignNode = activeCampaignNodeIndex > 0;
+  const hasNextCampaignNode = activeCampaignNodeIndex >= 0 && activeCampaignNodeIndex < campaignOutputNodes.length - 1;
   const generatedCampaignCount = campaignOutputNodes.filter((node) => node.status === 'complete').length;
   const approvedCampaignCount = campaignOutputNodes.filter((node) => approvedKitOutputIds.includes(String(node.id))).length;
   const needsReviewCount = Math.max(0, generatedCampaignCount - approvedCampaignCount);
@@ -1643,21 +1645,24 @@ export default function GeneratePage() {
             )}>
               <div className="min-h-0 overflow-hidden">
             <div className="space-y-5 p-5">
-              <div className="px-1 py-5">
+              <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 rounded-md"
-                    disabled={activeCampaignNodeIndex <= 0}
+                    className={cn(
+                      'h-9 w-9 rounded-md transition-colors',
+                      hasPreviousCampaignNode && 'animate-pulse border-blue-200 text-blue-700'
+                    )}
+                    disabled={!hasPreviousCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex - 1)}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <div className="relative flex min-w-0 flex-1 justify-center px-2">
+                  <div className="relative flex min-w-0 flex-1 justify-center overflow-hidden px-2">
                     <div className="absolute left-10 right-10 top-8 hidden h-px bg-slate-200 lg:block" />
-                    <div className="relative z-10 flex w-full flex-wrap items-start justify-center gap-x-8 gap-y-5">
+                    <div className="relative z-10 flex w-full flex-nowrap items-start justify-start gap-x-8 overflow-hidden">
                       {campaignOutputNodes.map((node) => {
                         const Icon = node.icon;
                         const active = activeCampaignNode?.id === node.id;
@@ -1732,8 +1737,11 @@ export default function GeneratePage() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 rounded-md"
-                    disabled={activeCampaignNodeIndex >= campaignOutputNodes.length - 1}
+                    className={cn(
+                      'h-9 w-9 rounded-md transition-colors',
+                      hasNextCampaignNode && 'animate-pulse border-blue-200 text-blue-700'
+                    )}
+                    disabled={!hasNextCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex + 1)}
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -1811,7 +1819,7 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  <div className="min-h-[520px] bg-slate-50/70 p-4">
+                  <div className={cn('bg-slate-50/70 p-4', hasRenderedKitOutputs || isGeneratingKit ? 'min-h-[520px]' : 'min-h-[220px]')}>
                     {(isGeneratingKit && !hasRenderedKitOutputs) ? (
                       <div className="mb-4 rounded-lg border border-emerald-100 bg-white p-4 shadow-sm">
                         <GeneratingOutputState
@@ -1865,7 +1873,7 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-slate-200 p-4">
+                  <div className={cn('grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-slate-200', hasRenderedKitOutputs ? 'p-4' : 'p-3')}>
                     <Button
                       type="button"
                       variant="outline"

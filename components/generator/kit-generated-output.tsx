@@ -113,7 +113,7 @@ export function KitGeneratedOutput({
           <div className={compactPreview ? '' : 'rounded-2xl border bg-muted/20 p-3 sm:p-5'}>
             <PlatformOutputPreview type={type} label={label} content={txt} />
           </div>
-        ) : (
+        ) : compactPreview ? null : (
           <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
             {status === 'generating' ? 'Generating this output...' : 'No output has been generated for this type yet.'}
           </div>
@@ -164,7 +164,7 @@ export function KitGeneratedOutput({
         </Tabs>
       ) : (
         <div className="w-full">
-          {!hasAnyOutput ? (
+          {!hasAnyOutput && !showTabs ? null : !hasAnyOutput ? (
             <div className="rounded-2xl border bg-muted/20 p-6 text-sm text-muted-foreground">
               Generated output will appear here after you click Generate.
             </div>
