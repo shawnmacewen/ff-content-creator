@@ -32,16 +32,20 @@ import {
   FileText,
   Grid2X2,
   HelpCircle,
+  Image,
   Instagram,
   Linkedin,
   Loader2,
   Mail,
+  Mails,
   Monitor,
   MoreHorizontal,
+  Newspaper,
   NotebookText,
   Save,
   Sparkles,
   Smartphone,
+  Twitter,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -114,7 +118,15 @@ type WorkflowStep = 1 | 2 | 3;
 const iconByContentType: Partial<Record<ContentType, ComponentType<{ className?: string }>>> = {
   'social-instagram': Instagram,
   'social-linkedin': Linkedin,
+  'social-twitter': Twitter,
   'email-marketing': Mail,
+  'email-sequence': Mails,
+  newsletter: Newspaper,
+  infographic: Image,
+  'infographic-copy': Image,
+  article: FileText,
+  faq: BadgeCheck,
+  'video-script': Monitor,
 };
 
 function toneLabel(tone: ToneType) {
@@ -1618,7 +1630,6 @@ export default function GeneratePage() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-4">
-                <span className="rounded-md bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">Generation progress</span>
                 <div className="text-sm font-semibold text-slate-800">
                   {generatedCampaignCount} of {campaignOutputNodes.length || 0} generated
                 </div>
@@ -1666,42 +1677,43 @@ export default function GeneratePage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="relative flex min-w-0 flex-1 justify-center px-2">
-                    <div className="absolute left-8 right-8 top-11 hidden h-px bg-slate-200 lg:block" />
-                    <div className="relative z-10 flex w-full flex-wrap items-start justify-center gap-x-7 gap-y-5">
+                    <div className="absolute left-10 right-10 top-8 hidden h-px bg-slate-200 lg:block" />
+                    <div className="relative z-10 flex w-full flex-wrap items-start justify-center gap-x-8 gap-y-5">
                       {campaignOutputNodes.map((node) => {
                         const Icon = node.icon;
                         const active = activeCampaignNode?.id === node.id;
                         const approved = approvedKitOutputIds.includes(String(node.id));
                         const isGeneratingNode = node.status === 'generating';
+                        const isGeneratedNode = node.status === 'complete' || approved;
                         return (
                           <button
                             key={node.id}
                             type="button"
                             onClick={() => goToCampaignNode(String(node.id))}
                             className={cn(
-                              'group flex w-[102px] flex-col items-center gap-2 rounded-lg px-2 py-1.5 text-center text-slate-700 transition-colors hover:text-emerald-800',
+                              'group flex w-[112px] flex-col items-center gap-2 rounded-lg px-2 py-1.5 text-center text-slate-700 transition-colors hover:text-emerald-800',
                               active && 'text-emerald-800'
                             )}
                           >
                             <span className={cn(
-                              'relative flex h-12 w-12 items-center justify-center rounded-md border bg-white shadow-sm transition-all',
+                              'relative flex h-14 w-14 items-center justify-center rounded-xl border bg-white shadow-sm transition-all after:pointer-events-none after:absolute after:-inset-3 after:-z-10 after:rounded-full after:opacity-0 after:transition-opacity',
                               active
-                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 shadow-[0_0_0_12px_rgba(16,185,129,0.10)]'
+                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 shadow-[0_12px_28px_rgba(16,185,129,0.16)] after:bg-emerald-200/45 after:opacity-100'
                                 : 'border-slate-200 text-slate-600 group-hover:border-emerald-200 group-hover:bg-emerald-50/60'
                             )}>
-                              <Icon className="h-5 w-5" />
+                              <Icon className="h-6 w-6" />
                               <span className={cn(
-                                'absolute -bottom-2 flex h-4 w-4 items-center justify-center rounded-full border border-white',
+                                'absolute -bottom-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white',
                                 isGeneratingNode
                                   ? 'bg-blue-100 text-blue-700'
-                                  : approved
+                                  : isGeneratedNode
                                     ? 'bg-emerald-600 text-white'
                                     : 'bg-cyan-100 text-cyan-700'
                               )}>
                                 {isGeneratingNode ? (
-                                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                ) : approved ? (
-                                  <Check className="h-2.5 w-2.5" />
+                                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-600" />
+                                ) : isGeneratedNode ? (
+                                  <Check className="h-3 w-3" />
                                 ) : (
                                   <span className="h-1.5 w-1.5 rounded-full bg-current" />
                                 )}
