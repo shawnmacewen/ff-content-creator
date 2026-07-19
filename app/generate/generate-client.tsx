@@ -1624,7 +1624,7 @@ export default function GeneratePage() {
 
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-emerald-100 bg-card shadow-sm transition-colors">
+          <div className="overflow-hidden rounded-lg border border-emerald-100 bg-[#EFF8FA] shadow-sm transition-colors">
             <div className="flex flex-col gap-4 border-b border-emerald-100 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
@@ -1673,7 +1673,7 @@ export default function GeneratePage() {
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
             )}>
               <div className="min-h-0 overflow-hidden">
-            <div className="space-y-5 bg-[#EFF8FA] p-5">
+            <div className="space-y-5 p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
