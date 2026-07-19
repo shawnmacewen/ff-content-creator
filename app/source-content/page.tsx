@@ -75,6 +75,59 @@ const fetcher = async (url: string) => {
 
 const SOURCE_CONTENT_PAGE_SIZE = 50;
 
+const SOURCE_SYNC_LOADING_PHRASES = [
+  'Checking the provider window...',
+  'Reading the next content slice...',
+  'Comparing provider records...',
+  'Refreshing article metadata...',
+  'Looking for updated summaries...',
+  'Matching source identifiers...',
+  'Reconciling content designations...',
+  'Reviewing publication dates...',
+  'Scanning for new Broadridge rows...',
+  'Preparing the next provider page...',
+  'Keeping the sync connection warm...',
+  'Validating article payloads...',
+  'Normalizing source fields...',
+  'Collecting article updates...',
+  'Checking for duplicate windows...',
+  'Saving fresh source records...',
+  'Updating existing articles...',
+  'Reviewing body content fields...',
+  'Mapping provider filenames...',
+  'Refreshing search metadata...',
+  'Checking FINRA review fields...',
+  'Staging the next batch...',
+  'Measuring provider response...',
+  'Reading pagination markers...',
+  'Keeping batch progress active...',
+  'Preparing source counts...',
+  'Organizing content tags...',
+  'Verifying content types...',
+  'Updating article timestamps...',
+  'Comparing local and remote records...',
+  'Collecting richer article details...',
+  'Refreshing source cache inputs...',
+  'Checking sync safety limits...',
+  'Reading provider page offsets...',
+  'Reviewing inserted records...',
+  'Reviewing updated records...',
+  'Waiting on provider response...',
+  'Keeping the import moving...',
+  'Processing content inventory...',
+  'Checking article body text...',
+  'Resolving metadata changes...',
+  'Preparing database writes...',
+  'Confirming batch totals...',
+  'Walking the content library...',
+  'Indexing synced source data...',
+  'Watching for repeat pages...',
+  'Refreshing source coverage...',
+  'Tracking provider progress...',
+  'Finishing this batch window...',
+  'Getting the next update ready...',
+];
+
 function getInitialSourceFilters() {
   if (typeof window === 'undefined') {
     return { q: '', searchScope: 'all', contentDesignation: '', tags: '', publisher: '' };
@@ -105,6 +158,7 @@ export default function SourceContentPage() {
   const [autoLoadAll, setAutoLoadAll] = useState(false);
   const [runningSourceSync, setRunningSourceSync] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
+  const [syncPhraseIndex, setSyncPhraseIndex] = useState(0);
 
   // Debounce search query
   useEffect(() => {
@@ -113,6 +167,19 @@ export default function SourceContentPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (!runningSourceSync) {
+      setSyncPhraseIndex(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setSyncPhraseIndex((index) => (index + 1) % SOURCE_SYNC_LOADING_PHRASES.length);
+    }, 2500);
+
+    return () => window.clearInterval(timer);
+  }, [runningSourceSync]);
 
   // Build API URL with filters
   const apiUrl = useCallback((pageIndex: number, previousPageData: ApiResponse | null) => {
@@ -427,8 +494,15 @@ export default function SourceContentPage() {
             </div>
             {syncProgress ? (
               <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
-                <div className="text-[11px] font-medium text-muted-foreground">
-                  Batch {syncProgress.currentBatch} of {syncProgress.maxBatches} · {syncProgress.processed.toLocaleString()} processed · {syncProgress.inserted.toLocaleString()} inserted · {syncProgress.updated.toLocaleString()} updated
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium text-muted-foreground">
+                  <span>
+                    Batch {syncProgress.currentBatch} of {syncProgress.maxBatches} · {syncProgress.processed.toLocaleString()} processed · {syncProgress.inserted.toLocaleString()} inserted · {syncProgress.updated.toLocaleString()} updated
+                  </span>
+                  {runningSourceSync ? (
+                    <span className="animate-pulse text-primary/80">
+                      · {SOURCE_SYNC_LOADING_PHRASES[syncPhraseIndex]}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <div
