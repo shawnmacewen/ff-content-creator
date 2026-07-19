@@ -1058,7 +1058,7 @@ export default function GeneratePage() {
             >
               <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-700 text-white">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                     <Sparkles className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
@@ -1168,7 +1168,7 @@ export default function GeneratePage() {
                   <CardContent className="space-y-4 p-4">
                     <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)] lg:items-center">
                       <div className="flex min-w-0 items-center gap-4">
-                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-700 text-white">
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                           <Instagram className="h-6 w-6" />
                         </span>
                         <div className="min-w-0">
@@ -1301,7 +1301,7 @@ export default function GeneratePage() {
             >
               <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-700 text-white">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
                     <NotebookText className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
@@ -1427,7 +1427,7 @@ export default function GeneratePage() {
           >
             <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
               <div className="flex min-w-0 items-center gap-4">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-700 text-white">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700">
                   <FileText className="h-6 w-6" />
                 </span>
                 <div className="min-w-0">
@@ -1563,7 +1563,7 @@ export default function GeneratePage() {
           <div className="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-sm">
             <div className="flex flex-col gap-4 border-b border-emerald-200 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
                   <BadgeCheck className="h-5 w-5" />
                 </span>
                 <div>
