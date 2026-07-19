@@ -1144,15 +1144,29 @@ export default function GeneratePage() {
               </button>
             </>
           ) : null}
-          <div className={cn('flex items-start justify-end', isSetupCollapsed && 'lg:min-w-[178px]')}>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn('rounded-md bg-white', isSetupCollapsed && 'h-full min-h-[96px] px-5')}
-              onClick={() => setSetupCollapsed((value) => !value)}
-            >
-              {isSetupCollapsed ? 'Show setup controls' : 'Hide setup controls'}
-            </Button>
+          <div className={cn('flex items-start justify-end', isSetupCollapsed && 'lg:min-w-[190px]')}>
+            {isSetupCollapsed ? (
+              <button
+                type="button"
+                className="group flex h-full min-h-[96px] w-full flex-col justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100/70 hover:shadow-md lg:max-w-[210px]"
+                onClick={() => setSetupCollapsed(false)}
+              >
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm transition group-hover:bg-emerald-700">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <span className="mt-2 text-sm font-bold leading-5 text-emerald-900">Change options</span>
+                <span className="mt-0.5 text-xs font-medium leading-4 text-emerald-700">Adjust setup and generate again.</span>
+              </button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-md bg-white"
+                onClick={() => setSetupCollapsed(true)}
+              >
+                Hide options
+              </Button>
+            )}
           </div>
         </div>
       ) : null}
