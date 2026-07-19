@@ -912,6 +912,9 @@ export default function GeneratePage() {
   const selectedArticleSummary = decodeEntitiesLite(
     String(detailContent?.excerpt || normalizedBodyPreview.split(/\n{2,}/)[0] || '')
   );
+  const selectedArticleTags = Array.isArray(detailContent?.tags)
+    ? (detailContent.tags as unknown[]).map((tag: unknown) => decodeEntitiesLite(String(tag))).filter(Boolean).slice(0, 4)
+    : [];
   const selectedArticleFilename = getSourceFilename(detailContent);
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const visibleOutputTypes = activeTypes.slice(0, 3);
@@ -1416,24 +1419,31 @@ export default function GeneratePage() {
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold leading-tight text-slate-950">Choose a source article</h2>
+                    <h2 className="line-clamp-1 text-lg font-semibold leading-tight text-slate-950">{selectedArticleTitle || 'Choose a source article'}</h2>
                     {activeWorkflowStep === 3 ? (
                       <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Editing</span>
                     ) : null}
                   </div>
-                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Select the trusted article to transform into your campaign.</p>
+                  {selectedArticleTags.length ? (
+                    <div className="mt-1 flex max-w-full flex-wrap gap-1.5 overflow-hidden">
+                      {selectedArticleTags.map((tag) => (
+                        <span key={tag} className="max-w-[120px] truncate rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold leading-5 text-blue-700">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Select the trusted article to transform into your campaign.</p>
+                  )}
                 </div>
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Selected article</div>
+                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Summary</div>
                 <div className="mt-2 min-h-[64px] space-y-1">
                   {selectedArticleTitle ? (
-                    <>
-                    <div className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900">{selectedArticleTitle}</div>
                     <p className="line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
                       {selectedArticleSummary || 'Summary unavailable for this selected article.'}
                     </p>
-                    </>
                   ) : (
                     <p className="min-h-[60px] text-sm font-semibold leading-5 text-amber-700">{selectedSourceLabel}</p>
                   )}
