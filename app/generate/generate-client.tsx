@@ -1685,23 +1685,24 @@ export default function GeneratePage() {
                         const approved = approvedKitOutputIds.includes(String(node.id));
                         const isGeneratingNode = node.status === 'generating';
                         const isGeneratedNode = node.status === 'complete' || approved;
+                        const isInstagramNode = node.id === 'carousel' || node.id === 'social-instagram';
                         return (
                           <button
                             key={node.id}
                             type="button"
                             onClick={() => goToCampaignNode(String(node.id))}
                             className={cn(
-                              'group flex w-[112px] flex-col items-center gap-2 rounded-lg px-2 py-1.5 text-center text-slate-700 transition-colors hover:text-emerald-800',
-                              active && 'text-emerald-800'
+                              'group flex w-[112px] flex-col items-center gap-2 rounded-lg px-2 py-1.5 text-center text-slate-700 transition-colors hover:text-blue-800',
+                              active && 'text-blue-800'
                             )}
                           >
                             <span className={cn(
-                              'relative flex h-14 w-14 items-center justify-center rounded-xl border bg-white shadow-sm transition-all after:pointer-events-none after:absolute after:-inset-3 after:-z-10 after:rounded-full after:opacity-0 after:transition-opacity',
+                              'relative flex h-14 w-14 items-center justify-center rounded-xl border bg-white shadow-sm transition-all after:pointer-events-none after:absolute after:-inset-9 after:-z-10 after:rounded-full after:opacity-0 after:transition-opacity',
                               active
-                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 shadow-[0_12px_28px_rgba(16,185,129,0.16)] after:bg-emerald-200/45 after:opacity-100'
-                                : 'border-slate-200 text-slate-600 group-hover:border-emerald-200 group-hover:bg-emerald-50/60'
+                                ? 'border-blue-400 bg-blue-50 text-blue-700 shadow-[0_12px_28px_rgba(37,99,235,0.16)] after:bg-[radial-gradient(circle,rgba(59,130,246,0.30)_0%,rgba(59,130,246,0.14)_45%,rgba(59,130,246,0)_74%)] after:opacity-100'
+                                : 'border-slate-200 text-slate-600 group-hover:border-blue-200 group-hover:bg-blue-50/60'
                             )}>
-                              <Icon className="h-6 w-6" />
+                              <Icon className={cn('h-6 w-6', isInstagramNode && 'stroke-[2.4]')} />
                               <span className={cn(
                                 'absolute -bottom-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white',
                                 isGeneratingNode
@@ -1721,7 +1722,7 @@ export default function GeneratePage() {
                             </span>
                             <span className="line-clamp-2 min-h-8 text-xs font-bold leading-4">{node.shortLabel}</span>
                             {active ? (
-                              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold leading-4 text-emerald-700">Now reviewing</span>
+                              <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold leading-4 text-blue-700">Now reviewing</span>
                             ) : (
                               <span className="h-5" aria-hidden />
                             )}
@@ -1751,8 +1752,8 @@ export default function GeneratePage() {
                   <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-3">
                       {activeCampaignNode ? (
-                          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600 text-white">
-                          <activeCampaignNode.icon className="h-4 w-4" />
+                          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white">
+                          <activeCampaignNode.icon className={cn('h-4 w-4', (activeCampaignNode.id === 'carousel' || activeCampaignNode.id === 'social-instagram') && 'stroke-[2.4]')} />
                         </span>
                       ) : null}
                       <div>
