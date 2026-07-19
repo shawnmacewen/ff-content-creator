@@ -65,6 +65,28 @@ function getLabelStep(length: number) {
   return 15;
 }
 
+function getCountStep(maxValue: number) {
+  if (maxValue <= 60) return 10;
+  if (maxValue <= 150) return 25;
+  return 50;
+}
+
+function roundUpToStep(value: number, step: number) {
+  return Math.max(step, Math.ceil(value / step) * step);
+}
+
+function getLabelIndexes(length: number, labelStep: number) {
+  const indexes = new Set<number>();
+  for (let index = 0; index < length; index += labelStep) indexes.add(index);
+
+  if (length > 0) {
+    indexes.delete(length - 2);
+    indexes.add(length - 1);
+  }
+
+  return indexes;
+}
+
 export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rangeDays: number }) {
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     articles: true,
@@ -75,15 +97,17 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
 
   const width = 780;
   const height = 270;
-  const chartLeft = 28;
-  const chartRight = 24;
-  const chartTop = 18;
+  const chartLeft = 58;
+  const chartRight = 28;
+  const chartTop = 24;
   const chartHeight = 176;
   const chartBottom = chartTop + chartHeight;
   const isLineOnly = rangeDays >= 90;
 
-  const { maxValue, points, barWidth, labelStep } = useMemo(() => {
-    const maxTotal = Math.max(10, ...daily.map((day) => day.total));
+  const { maxValue, countTicks, points, barWidth, labelIndexes } = useMemo(() => {
+    const rawMaxTotal = Math.max(10, ...daily.map((day) => day.total));
+    const nextCountStep = getCountStep(rawMaxTotal);
+    const maxTotal = roundUpToStep(rawMaxTotal, nextCountStep);
     const chartWidth = width - chartLeft - chartRight;
     const step = daily.length > 1 ? chartWidth / (daily.length - 1) : chartWidth;
     const barStep = daily.length ? chartWidth / daily.length : chartWidth;
@@ -95,7 +119,8 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
 
     return {
       maxValue: maxTotal,
-      labelStep: getLabelStep(daily.length),
+      countTicks: Array.from({ length: Math.floor(maxTotal / nextCountStep) + 1 }, (_, index) => index * nextCountStep),
+      labelIndexes: getLabelIndexes(daily.length, getLabelStep(daily.length)),
       barWidth: nextBarWidth,
       points: daily.map((day, index) => {
         const x = daily.length > 1 ? chartLeft + index * step : chartLeft + chartWidth / 2;
@@ -157,9 +182,19 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
       {renderTooltip()}
 
       <svg viewBox={`0 0 ${width} ${height}`} className="h-[285px] w-full overflow-visible">
-        {[0, 1, 2, 3, 4].map((tick) => {
-          const y = chartTop + tick * (chartHeight / 4);
-          return <line key={tick} x1={chartLeft} x2={width - chartRight} y1={y} y2={y} stroke="#e2e8f0" strokeWidth="1" />;
+        <text x={chartLeft - 44} y={chartTop - 10} className="fill-slate-500 text-[11px] font-bold">
+          Generated assets
+        </text>
+        {countTicks.map((tick) => {
+          const y = chartBottom - (tick / maxValue) * chartHeight;
+          return (
+            <g key={tick}>
+              <line x1={chartLeft} x2={width - chartRight} y1={y} y2={y} stroke="#e2e8f0" strokeWidth="1" />
+              <text x={chartLeft - 10} y={y + 4} textAnchor="end" className="fill-slate-500 text-[11px] font-semibold">
+                {formatNumber(tick)}
+              </text>
+            </g>
+          );
         })}
 
         {!isLineOnly && points.map(({ day, barX }) => {
@@ -204,7 +239,7 @@ export function MomentumChart({ daily, rangeDays }: { daily: MomentumDay[]; rang
           </g>
         ))}
 
-        {daily.filter((_, index) => index % labelStep === 0 || index === daily.length - 1).map((day, index) => {
+        {daily.filter((_, index) => labelIndexes.has(index)).map((day, index) => {
           const originalIndex = daily.findIndex((entry) => entry.date === day.date);
           const point = points[originalIndex];
           return (
