@@ -540,6 +540,7 @@ export default function GeneratePage() {
     setKitOutputs(null);
     setKitCarouselProgress(null);
     setIsOutputStoryboardOpen(true);
+    setSetupCollapsed(true);
     const generationGroupId = `kit-${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
     setKitGenerationGroupId(generationGroupId);
 
@@ -572,45 +573,70 @@ export default function GeneratePage() {
     ].filter(Boolean).join('\n');
 
     try {
-      // Generate KIT text first so non-Instagram outputs show ASAP.
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // type is ignored for kit mode but we send a stable value
-          type: textKitTypes[0],
-          mode: 'kit',
-          selectedTypes: textKitTypes,
-          includeInstagramImage: shouldGenerateInlineInstagramImage,
-          sourceContentIds: selectedSourceIds,
-          customPrompt,
-          tone,
-          additionalContext: guidanceContext,
-          generationGroupId,
-        }),
+      const generatedTextOutputs: Array<{ type: ContentType; label?: string; content: string }> = [];
+      const textResults = await Promise.allSettled(textKitTypes.map(async (assetType) => {
+        if (kitStatusRunRef.current !== statusRunId) return null;
+        setKitOutputStatusOverrides((current) => ({ ...current, [assetType]: 'generating' }));
+
+        try {
+          const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: assetType,
+              mode: 'kit',
+              selectedTypes: [assetType],
+              includeInstagramImage: shouldGenerateInlineInstagramImage && assetType === 'social-instagram',
+              sourceContentIds: selectedSourceIds,
+              customPrompt,
+              tone,
+              additionalContext: guidanceContext,
+              generationGroupId,
+            }),
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload?.error || `${CONTENT_TYPE_MAP[assetType]?.label || assetType} generation failed`);
+
+          const output = Array.isArray(payload?.outputs)
+            ? payload.outputs.find((item: { type: ContentType; content?: string }) => item.type === assetType) || payload.outputs[0]
+            : null;
+
+          if (!output?.content?.trim()) throw new Error(`${CONTENT_TYPE_MAP[assetType]?.label || assetType} returned no content`);
+          if (kitStatusRunRef.current !== statusRunId) return output;
+
+          setKitOutputs((current) => {
+            const base = (current || []).filter((item) => item.type !== output.type);
+            return [...base, output];
+          });
+          setKitOutputStatusOverrides((current) => ({ ...current, [assetType]: 'complete' }));
+          return output as { type: ContentType; label?: string; content: string };
+        } catch (error) {
+          if (kitStatusRunRef.current === statusRunId) {
+            setKitOutputStatusOverrides((current) => ({ ...current, [assetType]: 'failed' }));
+          }
+          throw error;
+        }
+      }));
+
+      textResults.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          generatedTextOutputs.push(result.value);
+        } else if (result.status === 'rejected') {
+          const failedType = textKitTypes[index];
+          setKitOutputStatusOverrides((current) => ({ ...current, [failedType]: 'failed' }));
+          console.error('KIT asset generation error:', result.reason);
+        }
       });
 
-      if (!response.ok) throw new Error('KIT generation failed');
-      const payload = await response.json().catch(() => ({}));
-      const outputs = Array.isArray(payload?.outputs) ? payload.outputs : null;
-      setKitOutputs(outputs);
-      setSetupCollapsed(true);
       setIsGeneratingKit(false);
-      const completedTextTypes = textKitTypes.filter((type) =>
-        outputs?.some((output: { type: ContentType; content: string }) => output.type === type && output.content?.trim())
-      );
-      void (async () => {
-        for (const type of completedTextTypes) {
-          if (kitStatusRunRef.current !== statusRunId) return;
-          setKitOutputStatusOverrides((current) => ({ ...current, [type]: 'generating' }));
-          await new Promise((resolve) => window.setTimeout(resolve, 220));
-          if (kitStatusRunRef.current !== statusRunId) return;
-          setKitOutputStatusOverrides((current) => ({ ...current, [type]: 'complete' }));
-        }
-      })();
+
+      if (!generatedTextOutputs.length) {
+        throw new Error('KIT generation failed');
+      }
 
       if (shouldGenerateInfographic) {
-        const infographicCopy = outputs?.find((output: { type: ContentType; content: string }) => output.type === 'infographic-copy')?.content || '';
+        const infographicCopy = generatedTextOutputs.find((output) => output.type === 'infographic-copy')?.content || '';
         if (!infographicCopy.trim()) {
           toast.error('Infographic Copy was not generated, so the infographic image could not run.');
         } else {
@@ -633,7 +659,7 @@ export default function GeneratePage() {
               }
 
               setKitOutputs((current) => {
-                const base = (current || outputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
+                const base = (current || generatedTextOutputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
                 return [
                   ...base,
                   {
@@ -654,7 +680,7 @@ export default function GeneratePage() {
             .catch((err) => {
               console.error('Infographic image generation error:', err);
               setKitOutputs((current) => {
-                const base = (current || outputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
+                const base = (current || generatedTextOutputs || []).filter((output: { type: ContentType }) => output.type !== 'infographic');
                 return [
                   ...base,
                   {
@@ -1645,7 +1671,7 @@ export default function GeneratePage() {
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
             )}>
               <div className="min-h-0 overflow-hidden">
-            <div className="space-y-5 p-5">
+            <div className="space-y-5 bg-emerald-50/25 p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
@@ -1661,9 +1687,9 @@ export default function GeneratePage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <div className="relative flex min-w-0 flex-1 justify-center overflow-hidden px-2">
-                    <div className="absolute left-10 right-10 top-8 hidden h-px bg-slate-200 lg:block" />
-                    <div className="relative z-10 flex w-full flex-nowrap items-start justify-start gap-x-8 overflow-hidden">
+                  <div className="relative -my-10 flex min-w-0 flex-1 justify-center overflow-hidden px-2 py-10">
+                    <div className="absolute left-10 right-10 top-[4.25rem] hidden h-px bg-slate-200 lg:block" />
+                    <div className="relative z-10 -my-10 flex w-full flex-nowrap items-start justify-start gap-x-8 overflow-hidden py-10">
                       {campaignOutputNodes.map((node) => {
                         const Icon = node.icon;
                         const active = activeCampaignNode?.id === node.id;
