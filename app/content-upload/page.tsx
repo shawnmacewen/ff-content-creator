@@ -561,10 +561,6 @@ export default function ContentUploadPage() {
                   </span>
                   <h2 className="text-base font-bold text-slate-950">Content preview</h2>
                 </div>
-                <div className="inline-flex overflow-hidden rounded-md border border-slate-200 text-sm font-semibold">
-                  <button type="button" className="bg-blue-50 px-4 py-2 text-blue-700">Preview</button>
-                  <button type="button" className="border-l border-slate-200 px-4 py-2 text-slate-600">Edit body</button>
-                </div>
               </div>
 
               <div className="mt-5 max-h-[520px] overflow-auto rounded-md border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-800">
@@ -621,13 +617,23 @@ export default function ContentUploadPage() {
                 <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">AI prefilled</Badge>
               </div>
 
-              <Tabs defaultValue="source-details" className="mt-5">
-                <TabsList className="grid h-10 w-full grid-cols-2 bg-slate-100 p-1">
-                  <TabsTrigger value="source-details">Source Details</TabsTrigger>
-                  <TabsTrigger value="advanced-schema">Advanced Schema</TabsTrigger>
+              <Tabs defaultValue="source-details" className="mt-5 gap-0 overflow-hidden rounded-md border border-slate-200 bg-white">
+                <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-slate-50/70 px-5 py-0">
+                  <TabsTrigger
+                    value="source-details"
+                    className="h-auto flex-none rounded-none border-b-2 border-transparent bg-transparent px-3 py-3 text-sm font-medium text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
+                  >
+                    Source Details
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="advanced-schema"
+                    className="h-auto flex-none rounded-none border-b-2 border-transparent bg-transparent px-3 py-3 text-sm font-medium text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
+                  >
+                    Advanced Schema
+                  </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="source-details" className="mt-5">
+                <TabsContent value="source-details" className="mt-0 p-5">
                   <div className="grid gap-5 lg:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="upload-title">Title <span className="text-red-500">*</span></Label>
@@ -709,7 +715,7 @@ export default function ContentUploadPage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="advanced-schema" className="mt-5">
+                <TabsContent value="advanced-schema" className="mt-0 p-5">
                   <div className="grid gap-3 lg:grid-cols-2">
                     {advancedSchemaFields.map((field) => (
                       <div key={field.label} className="rounded-md border border-slate-200 bg-slate-50/70 p-3">
