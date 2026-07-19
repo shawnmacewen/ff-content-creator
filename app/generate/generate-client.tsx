@@ -1596,8 +1596,8 @@ export default function GeneratePage() {
           <div className="overflow-hidden rounded-lg border border-emerald-100 bg-card shadow-sm transition-colors">
             <div className="flex flex-col gap-4 border-b border-emerald-100 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
-                  <BadgeCheck className="h-5 w-5" />
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                  <BadgeCheck className="h-6 w-6" />
                 </span>
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Generated Output</div>
