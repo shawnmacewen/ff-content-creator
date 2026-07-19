@@ -43,7 +43,6 @@ import {
   Save,
   Sparkles,
   Smartphone,
-  Twitter,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -55,6 +54,7 @@ import InstagramCarousel2Client, {
 } from '@/app/instagram-carousel-2/instagram-carousel-2-client';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
+import { XLogoIcon } from '@/components/generator/x-logo-icon';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -116,7 +116,7 @@ type WorkflowStep = 1 | 2 | 3;
 const iconByContentType: Partial<Record<ContentType, ComponentType<{ className?: string }>>> = {
   'social-instagram': Instagram,
   'social-linkedin': Linkedin,
-  'social-twitter': Twitter,
+  'social-twitter': XLogoIcon,
   'email-marketing': Mail,
   'email-sequence': Mails,
   newsletter: Newspaper,
@@ -144,9 +144,10 @@ function toneDescription(tone: ToneType) {
 }
 
 function compactOutputLabel(type: ContentType, instagramVariant?: 'single' | 'carousel' | null) {
-  if (type === 'social-instagram') return instagramVariant === 'carousel' ? 'Instagram carousel' : 'Instagram post';
+  if (type === 'social-instagram') return instagramVariant === 'carousel' ? 'Instagram caption' : 'Instagram post';
   if (type === 'email-marketing') return 'Marketing email';
   if (type === 'social-linkedin') return 'LinkedIn post';
+  if (type === 'social-twitter') return 'X post';
   if (type === 'infographic') return 'Infographic';
   return CONTENT_TYPE_MAP[type]?.label ?? type;
 }

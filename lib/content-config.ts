@@ -3,12 +3,12 @@ import type { ContentType, ContentTypeInfo, ToneType } from './types/content';
 export const CONTENT_TYPES: ContentTypeInfo[] = [
   {
     id: 'social-twitter',
-    label: 'Twitter/X Post',
-    description: 'Short-form posts for Twitter/X (280 chars)',
-    icon: 'twitter',
+    label: 'X Post',
+    description: 'Short-form posts for X (280 chars)',
+    icon: 'x',
     category: 'social',
     maxLength: 280,
-    placeholder: 'Create an engaging tweet about...',
+    placeholder: 'Create an engaging X post about...',
   },
   {
     id: 'social-linkedin',

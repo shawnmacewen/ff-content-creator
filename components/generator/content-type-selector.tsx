@@ -3,7 +3,6 @@
 import { getContentTypesByCategory } from '@/lib/content-config';
 import type { ContentType } from '@/lib/types/content';
 import {
-  Twitter,
   Linkedin,
   Instagram,
   Mail,
@@ -13,9 +12,10 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { XLogoIcon } from '@/components/generator/x-logo-icon';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  twitter: Twitter,
+  x: XLogoIcon,
   linkedin: Linkedin,
   instagram: Instagram,
   mail: Mail,

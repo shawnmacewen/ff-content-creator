@@ -6,7 +6,6 @@ import { getContentTypesByCategory } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
 import {
   Check,
-  Twitter,
   Linkedin,
   Instagram,
   Mail,
@@ -17,9 +16,10 @@ import {
   HelpCircle,
   Video,
 } from 'lucide-react';
+import { XLogoIcon } from '@/components/generator/x-logo-icon';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  twitter: Twitter,
+  x: XLogoIcon,
   linkedin: Linkedin,
   instagram: Instagram,
   mail: Mail,
@@ -73,7 +73,7 @@ export function KitContentTypeSelector({
                 const Icon = iconMap[ct.icon] || FileText;
                 const isSelected = selected.includes(ct.id);
 
-                // Social ordering preference: show LinkedIn before Twitter (next row after Instagram chips)
+                // Social ordering preference: show LinkedIn before X (next row after Instagram chips)
                 if (category === 'social' && (ct.id === 'social-twitter' || ct.id === 'social-linkedin')) {
                   // handled in a second pass below
                   return null;

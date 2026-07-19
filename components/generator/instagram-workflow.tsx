@@ -216,7 +216,7 @@ export function InstagramGenerateWorkflow({
                 <CardTitle className="text-base">2. Choose Social Platform</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-4 gap-3">
-                {['Twitter/X', 'LinkedIn', 'Instagram', 'Facebook'].map((p) => (
+                {['X', 'LinkedIn', 'Instagram', 'Facebook'].map((p) => (
                   <button
                     key={p}
                     type="button"

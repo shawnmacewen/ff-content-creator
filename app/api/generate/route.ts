@@ -154,7 +154,7 @@ export async function POST(req: Request) {
         assetType === 'email-sequence' ? '3 Touch Email Sequence' :
         assetType === 'social-instagram' ? 'Instagram Caption' :
         assetType === 'social-linkedin' ? 'LinkedIn Post' :
-        assetType === 'social-twitter' ? 'Twitter/X Post' :
+        assetType === 'social-twitter' ? 'X Post' :
         assetType === 'newsletter' ? 'Newsletter' :
         assetType === 'article' ? 'Article/Blog Post' :
         assetType === 'infographic' ? 'Infographic' :

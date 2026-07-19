@@ -19,6 +19,7 @@ import {
 import type { ContentType } from '@/lib/types/content';
 import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import { cn } from '@/lib/utils';
+import { XLogoIcon } from '@/components/generator/x-logo-icon';
 
 function cleanGeneratedText(content: string) {
   return String(content || '')
@@ -153,12 +154,14 @@ function LinkedInPreview({ content }: { content: string }) {
   );
 }
 
-function TwitterPreview({ content }: { content: string }) {
+function XPreview({ content }: { content: string }) {
   const text = cleanGeneratedText(content);
 
   return (
     <PhoneShell variant="dark">
-      <div className="border-b border-white/10 px-4 py-3 text-center text-base font-bold">X</div>
+      <div className="flex items-center justify-center border-b border-white/10 px-4 py-3">
+        <XLogoIcon className="h-5 w-5 text-white" />
+      </div>
       <div className="min-h-[520px] bg-black">
         <article className="border-b border-white/10 px-4 py-4">
           <div className="flex items-start gap-3">
@@ -403,7 +406,7 @@ export function PlatformOutputPreview({
   content: string;
 }) {
   if (type === 'social-linkedin') return <LinkedInPreview content={content} />;
-  if (type === 'social-twitter') return <TwitterPreview content={content} />;
+  if (type === 'social-twitter') return <XPreview content={content} />;
   if (type === 'social-instagram') return <InstagramCaptionPreview content={content} />;
   if (type === 'email-sequence') return <EmailSequencePreview content={content} label={label} />;
   if (type === 'email-marketing' || type === 'newsletter') return <EmailPreview content={content} label={label} />;
