@@ -1673,7 +1673,7 @@ export default function GeneratePage() {
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
             )}>
               <div className="min-h-0 overflow-hidden">
-            <div className="space-y-5 bg-[linear-gradient(180deg,#d3ebe4_0%,#e0f1ec_48%,#f0faf6_100%)] p-5">
+            <div className="space-y-5 bg-[#EFF8FA] p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
