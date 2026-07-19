@@ -1103,7 +1103,7 @@ export default function GeneratePage() {
       ) : null}
 
       {mode === 'kit' ? (
-        <div className="space-y-6">
+        <div className={cn(isSetupCollapsed ? 'space-y-2' : 'space-y-6')}>
           <div className={setupTrayClassName}>
           <div className="space-y-4">
             <div
