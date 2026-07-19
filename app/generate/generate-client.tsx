@@ -955,6 +955,7 @@ export default function GeneratePage() {
     : 0;
   const activeCampaignStatus = activeCampaignNode?.status || 'idle';
   const activeCampaignApproved = activeCampaignNode ? approvedKitOutputIds.includes(String(activeCampaignNode.id)) : false;
+  const activeCampaignPrefersPhone = activeCampaignNode?.id === 'carousel' || activeCampaignNode?.id === 'social-instagram';
   const goToCampaignNode = (nodeId: string) => {
     setKitOutputTab(nodeId as ContentType | 'carousel');
   };
@@ -1671,7 +1672,7 @@ export default function GeneratePage() {
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
             )}>
               <div className="min-h-0 overflow-hidden">
-            <div className="space-y-5 bg-emerald-50/25 p-5">
+            <div className="space-y-5 bg-[linear-gradient(180deg,rgba(209,250,229,0.72),rgba(236,253,245,0.48)_44%,rgba(255,255,255,0.72))] p-5">
               <div className={cn('px-1', hasRenderedKitOutputs ? 'py-5' : 'py-3')}>
                 <div className="flex min-h-[142px] items-center gap-4">
                   <Button
@@ -1680,7 +1681,7 @@ export default function GeneratePage() {
                     size="icon"
                     className={cn(
                       'h-9 w-9 rounded-md transition-colors',
-                      hasPreviousCampaignNode && 'animate-pulse border-blue-200 text-blue-700'
+                      hasPreviousCampaignNode && 'animate-pulse border-emerald-300 text-emerald-700 hover:bg-emerald-50'
                     )}
                     disabled={!hasPreviousCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex - 1)}
@@ -1766,7 +1767,7 @@ export default function GeneratePage() {
                     size="icon"
                     className={cn(
                       'h-9 w-9 rounded-md transition-colors',
-                      hasNextCampaignNode && 'animate-pulse border-blue-200 text-blue-700'
+                      hasNextCampaignNode && 'animate-pulse border-emerald-300 text-emerald-700 hover:bg-emerald-50'
                     )}
                     disabled={!hasNextCampaignNode}
                     onClick={() => goToCampaignIndex(activeCampaignNodeIndex + 1)}
@@ -1809,8 +1810,40 @@ export default function GeneratePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Button type="button" variant="outline" size="sm" className="rounded-md border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Preview</Button>
                       <Button type="button" variant="outline" size="sm" className="rounded-md" onClick={copyActiveCampaignOutput}>Copy</Button>
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md text-slate-400" disabled title="Desktop preview coming soon"><Monitor className="h-4 w-4" /></Button>
-                      <Button type="button" variant="outline" size="icon" className="h-9 w-9 rounded-md text-slate-400" disabled title="Mobile preview coming soon"><Smartphone className="h-4 w-4" /></Button>
+                      <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-0.5" aria-label="Preview device">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'h-8 w-8 rounded-[5px]',
+                            activeCampaignPrefersPhone
+                              ? 'text-slate-300'
+                              : 'bg-white text-blue-700 shadow-sm hover:bg-white hover:text-blue-800'
+                          )}
+                          disabled={activeCampaignPrefersPhone}
+                          aria-pressed={!activeCampaignPrefersPhone}
+                          title={activeCampaignPrefersPhone ? 'Desktop preview is not available for this format yet' : 'Desktop preview'}
+                        >
+                          <Monitor className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'h-8 w-8 rounded-[5px]',
+                            activeCampaignPrefersPhone
+                              ? 'bg-white text-blue-700 shadow-sm hover:bg-white hover:text-blue-800'
+                              : 'text-slate-300'
+                          )}
+                          disabled={!activeCampaignPrefersPhone}
+                          aria-pressed={activeCampaignPrefersPhone}
+                          title={activeCampaignPrefersPhone ? 'Phone preview' : 'Phone preview is not available for this format yet'}
+                        >
+                          <Smartphone className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="inline-flex">
