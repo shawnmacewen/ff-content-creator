@@ -2,8 +2,6 @@ import {
   Activity,
   BadgeDollarSign,
   BarChart3,
-  CheckCircle2,
-  DatabaseZap,
   Gauge,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
@@ -78,6 +76,24 @@ function formatTool(value: string) {
 
 function getAssetCount(row: GenerationEventRow) {
   return Math.max(1, Math.floor(Number(row.meta?.assetCount || row.meta?.asset_count || 1)));
+}
+
+function getEventGroupId(row: GenerationEventRow) {
+  const value =
+    row.meta?.generationGroupId ||
+    row.meta?.generation_group_id ||
+    row.meta?.kitGenerationId ||
+    row.meta?.kit_generation_id ||
+    row.meta?.parentEventId ||
+    row.meta?.parent_event_id;
+
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function formatEventGroup(row: GenerationEventRow) {
+  const groupId = getEventGroupId(row);
+  if (!groupId) return 'Standalone';
+  return groupId.length > 18 ? `${groupId.slice(0, 14)}...` : groupId;
 }
 
 function pushModelName(models: string[], value: unknown) {
@@ -298,7 +314,7 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
         ))}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <section>
         <Card className="overflow-hidden rounded-lg border-border bg-card shadow-sm">
           <CardHeader className="border-b border-border">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -400,6 +416,7 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
                       <TableRow>
                         <TableHead className="pl-4">Time</TableHead>
                         <TableHead>Tool</TableHead>
+                        <TableHead>Event Group</TableHead>
                         <TableHead>Content</TableHead>
                         <TableHead>Models</TableHead>
                         <TableHead>Assets</TableHead>
@@ -412,6 +429,15 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
                         <TableRow key={row.id}>
                           <TableCell className="pl-4 text-muted-foreground">{formatDateTime(row.created_at)}</TableCell>
                           <TableCell className="font-medium">{formatTool(row.tool)}</TableCell>
+                          <TableCell>
+                            {getEventGroupId(row) ? (
+                              <Badge variant="outline" className="max-w-[150px] border-blue-200 bg-blue-50 font-mono text-[11px] text-blue-700" title={getEventGroupId(row) || undefined}>
+                                <span className="truncate">{formatEventGroup(row)}</span>
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Standalone</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span>{formatTool(row.content_type)}</span>
@@ -443,51 +469,6 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
             )}
           </CardContent>
         </Card>
-
-        <div className="space-y-4">
-          <Card className="rounded-lg border-border bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <DatabaseZap className="h-4 w-4 text-primary" />
-                Data source
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-              <p>
-                Editorial already stores generation activity in <span className="font-mono text-xs">generation_events</span>.
-                This page reads that log for tool, content type, success, model names, category, asset count, token usage,
-                and estimated USD cost.
-              </p>
-              <p>
-                New events now add estimated cost metadata when provider usage is available. Older events with token fields
-                are estimated at read time from the same per-model pricing rules.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-lg border-border bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Next wiring
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Add token fields to generation route metadata when the model provider returns usage.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Add per-model pricing rules so estimated costs can be calculated consistently.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Add filters for tool, model, date range, and successful or failed generations.</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </section>
     </div>
   );

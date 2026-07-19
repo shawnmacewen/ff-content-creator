@@ -63,6 +63,7 @@ export async function POST(req: Request) {
     const infographicCopy = String(body?.infographicCopy || '').trim();
     const sourceContentIds = Array.isArray(body?.sourceContentIds) ? body.sourceContentIds.map(String).filter(Boolean) : [];
     const guidance = String(body?.guidance || '').trim();
+    const generationGroupId = String(body?.generationGroupId || '').trim() || undefined;
 
     if (!infographicCopy) {
       return new Response(JSON.stringify({ error: 'Infographic Copy is required before generating an infographic image.' }), { status: 400 });
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
       category: 'image',
       assetCount: 1,
       model: 'gpt-image-1',
+      generationGroupId,
       meta: {
         source: 'generate-content-kit',
         sourceContentCount: sourceContentIds.length,

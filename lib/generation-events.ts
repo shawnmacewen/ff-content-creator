@@ -201,6 +201,7 @@ export async function recordGenerationEvent(args: {
   model?: string | null;
   category?: GenerationCategory;
   assetCount?: number;
+  generationGroupId?: string | null;
   meta?: Record<string, any>;
 }) {
   try {
@@ -216,6 +217,7 @@ export async function recordGenerationEvent(args: {
       model: args.model || null,
       meta: {
         ...(args.meta || {}),
+        ...(args.generationGroupId ? { generationGroupId: args.generationGroupId } : {}),
         ...(costEstimate
           ? {
               estimatedCostUsd: costEstimate.costUsd,

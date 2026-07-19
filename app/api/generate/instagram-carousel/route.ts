@@ -76,7 +76,7 @@ async function generateSlideImage(apiKey: string, prompt: string) {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { sourceContentIds, slideCount = 6 } = body as { sourceContentIds: string[]; slideCount?: number };
+  const { sourceContentIds, slideCount = 6, generationGroupId } = body as { sourceContentIds: string[]; slideCount?: number; generationGroupId?: string };
 
   const env = getServerEnv();
   if (!env.OPENAI_API_KEY) {
@@ -188,6 +188,7 @@ export async function POST(req: Request) {
     category: 'content',
     assetCount: 1,
     model: env.OPENAI_MODEL,
+    generationGroupId,
     meta: {
       slideCount: slides.length,
       sourceContentCount: sourceContentIds?.length || 0,
@@ -204,6 +205,7 @@ export async function POST(req: Request) {
       category: 'image',
       assetCount: successfulImages,
       model: 'gpt-image-1',
+      generationGroupId,
       meta: {
         slideCount: slides.length,
         route: 'legacy-carousel',

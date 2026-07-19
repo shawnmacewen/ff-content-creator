@@ -59,7 +59,7 @@ type Slide = {
 export type InstagramCarouselVisualStyle = 'classic' | 'bright-editorial';
 
 export type InstagramCarousel2ClientHandle = {
-  generate: () => Promise<void>;
+  generate: (options?: { generationGroupId?: string }) => Promise<void>;
   openPromptLog: () => void;
   scrollToSlides: () => void;
   scrollToMasterplates: () => void;
@@ -104,6 +104,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   onLoadingChange?: (loading: boolean) => void;
   /** Notify parent of slide-level progress while a carousel run is active. */
   onProgress?: (progress: InstagramCarouselProgress | null) => void;
+  /** Link embedded carousel image events to the same kit run in the generation log. */
+  generationGroupId?: string;
 
   // Controlled settings (used when embedding in Generate page)
   slideCount?: number;
@@ -403,6 +405,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
           model,
           size: editingImage.size,
           referenceImageUrl: editingImage.imageUrl,
+          generationGroupId: props.generationGroupId,
         }),
       });
 
@@ -524,7 +527,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   const generateOneMasterplate = async (
     promptToSend: string,
     opts: { size: '1536x512' | '1024x512' | '512x512' },
-    referenceImageUrl?: string
+    referenceImageUrl?: string,
+    generationGroupId?: string
   ) => {
     const r = await fetch('/api/generate/instagram-carousel-2/image-test', {
       method: 'POST',
@@ -534,6 +538,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         model,
         size: opts.size,
         referenceImageUrl: referenceImageUrl || undefined,
+        generationGroupId: generationGroupId || props.generationGroupId,
       }),
     });
 
@@ -556,7 +561,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     return { imageUrl: url, promptUsed: promptToSend };
   };
 
-  const generatePreviewBackground = async (args: { totalSlides: number; platesNeeded: number }) => {
+  const generatePreviewBackground = async (args: { totalSlides: number; platesNeeded: number; generationGroupId?: string }) => {
     const sourceLine = selectedSourceTitle
       ? `Source topic: ${selectedSourceTitle}.`
       : topic.trim()
@@ -590,6 +595,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
           prompt: promptToSend,
           model,
           size: '1536x1024',
+          generationGroupId: args.generationGroupId || props.generationGroupId,
         }),
       });
 
@@ -701,7 +707,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     return promptToSend;
   };
 
-  const runCarouselGeneration = async () => {
+  const runCarouselGeneration = async (options?: { generationGroupId?: string }) => {
 
     console.log('runCarouselGeneration:start', { slideCount, cohesionMethod, imageRefMode, model, visualStyle, topic });
 
@@ -777,13 +783,13 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
 
         let out: { imageUrl: string; promptUsed: string };
         try {
-          out = await generateOneMasterplate(promptToSend, { size }, referenceUrl);
+          out = await generateOneMasterplate(promptToSend, { size }, referenceUrl, options?.generationGroupId);
         } catch (e: any) {
           // If image-ref edits fail (often due to size/aspect constraints), fall back to prompt-only generation.
           if (referenceUrl && cohesionMethod === 'image-ref') {
             const msg = typeof e?.message === 'string' ? e.message : 'Image reference cohesion failed; retrying without reference.';
             toast.error(`${msg} (fallback: prompt-only)`);
-            out = await generateOneMasterplate(promptToSend, { size }, undefined);
+            out = await generateOneMasterplate(promptToSend, { size }, undefined, options?.generationGroupId);
           } else {
             throw e;
           }
@@ -831,7 +837,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         activeSlide: Math.max(0, count - 1),
         stage: 'background',
       });
-      await generatePreviewBackground({ totalSlides: count, platesNeeded });
+      await generatePreviewBackground({ totalSlides: count, platesNeeded, generationGroupId: options?.generationGroupId });
       props.onProgress?.({
         total: count,
         done: count,
@@ -1034,7 +1040,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         <div className="flex flex-wrap items-center gap-2">
           <Button
             className="rounded-2xl bg-primary hover:bg-primary/90"
-            onClick={runCarouselGeneration}
+            onClick={() => void runCarouselGeneration()}
             disabled={isLoading || !topic.trim()}
           >
             {props.generateLabel ?? 'Generate Carousel'}
@@ -1216,7 +1222,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         className="rounded-2xl bg-primary hover:bg-primary/90"
-                        onClick={runCarouselGeneration}
+                        onClick={() => void runCarouselGeneration()}
                         disabled={isLoading || !topic.trim()}
                       >
                         {props.generateLabel ?? 'Generate Carousel'}
@@ -1426,7 +1432,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         className="rounded-2xl bg-primary hover:bg-primary/90"
-                        onClick={runCarouselGeneration}
+                        onClick={() => void runCarouselGeneration()}
                         disabled={isLoading || !topic.trim()}
                       >
                         {props.generateLabel ?? 'Generate Carousel'}

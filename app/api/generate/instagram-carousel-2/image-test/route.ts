@@ -12,6 +12,7 @@ const BodySchema = z.object({
   // NOTE: OpenAI Images sizes must be divisible by 16.
   size: z.enum(['1024x1024', '1024x1536', '1536x1024', '1536x512', '1024x512', '512x512']).optional(),
   model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
+  generationGroupId: z.string().trim().min(1).max(120).optional(),
   // Optional reference image to drive cohesion across masterplates.
   // Accepts either a data: URL (data:image/png;base64,...) or an http(s) URL.
   referenceImageUrl: ReferenceImageUrlSchema.optional(),
@@ -131,6 +132,7 @@ export async function POST(req: Request) {
       category: 'image',
       assetCount: 1,
       model,
+      generationGroupId: parsed.data.generationGroupId,
       meta: {
         route: 'instagram-carousel-2-image-test',
         size,

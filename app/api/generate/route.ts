@@ -101,7 +101,7 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext } = body as {
+  const { type, mode = 'single', selectedTypes, includeInstagramImage = false, sourceContentIds, customPrompt, tone, additionalContext, generationGroupId } = body as {
     type: ContentType;
     mode?: 'single' | 'kit';
     selectedTypes?: ContentType[];
@@ -110,6 +110,7 @@ export async function POST(req: Request) {
     customPrompt?: string;
     tone: ToneType;
     additionalContext?: string;
+    generationGroupId?: string;
   };
 
   if ((!type && mode !== 'kit') || !tone) {
@@ -210,6 +211,7 @@ export async function POST(req: Request) {
       category: 'content',
       assetCount: outputs.length,
       model: env.OPENAI_MODEL,
+      generationGroupId,
       meta: {
         mode,
         selectedTypes: assets.map((asset) => asset.type),
@@ -227,6 +229,7 @@ export async function POST(req: Request) {
         category: 'image',
         assetCount: generatedImageCount,
         model: 'gpt-image-1',
+        generationGroupId,
         meta: {
           source: 'generate-content-kit',
           selectedTypes: assets.map((asset) => asset.type),
@@ -271,6 +274,7 @@ export async function POST(req: Request) {
     category: 'content',
     assetCount: 1,
     model: env.OPENAI_MODEL,
+    generationGroupId,
     meta: {
       mode,
       tone,
@@ -286,6 +290,7 @@ export async function POST(req: Request) {
       category: 'image',
       assetCount: Object.keys(images).length,
       model: 'gpt-image-1',
+      generationGroupId,
       meta: {
         source: 'generate-content-single',
         contentType: type,

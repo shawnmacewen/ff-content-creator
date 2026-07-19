@@ -323,6 +323,8 @@ export default function GeneratePage() {
   const [articlePreviewLayout, setArticlePreviewLayout] = useState<'spotlight' | 'summary' | 'reader'>('spotlight');
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isGeneratingSourceTakeaways, setIsGeneratingSourceTakeaways] = useState(false);
+  const [kitGenerationGroupId, setKitGenerationGroupId] = useState<string | null>(null);
+  const [pendingKitGenerationGroupId, setPendingKitGenerationGroupId] = useState<string | null>(null);
 
   const selectedSourceId = selectedSourceIds[0] ?? null;
   const { data: selectedSource, mutate: mutateSelectedSource } = useSWR<any>(
@@ -500,15 +502,16 @@ export default function GeneratePage() {
     const handle = kitCarousel2Ref.current;
     if (!handle) return;
 
-    void handle.generate()
+    void handle.generate({ generationGroupId: pendingKitGenerationGroupId || kitGenerationGroupId || undefined })
       .catch((err) => {
         console.error('KIT carousel generation error:', err);
         toast.error('Carousel image generation failed');
       })
       .finally(() => {
         setPendingKitCarouselGenerate(false);
+        setPendingKitGenerationGroupId(null);
       });
-  }, [pendingKitCarouselGenerate, kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
+  }, [pendingKitCarouselGenerate, pendingKitGenerationGroupId, kitGenerationGroupId, kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
   const toggleKitType = (t: ContentType) => {
     setKitTypes((prev) => {
@@ -626,6 +629,8 @@ export default function GeneratePage() {
     setKitOutputs(null);
     setKitCarouselProgress(null);
     setIsOutputStoryboardOpen(true);
+    const generationGroupId = `kit-${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+    setKitGenerationGroupId(generationGroupId);
 
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
@@ -661,6 +666,7 @@ export default function GeneratePage() {
           customPrompt,
           tone,
           additionalContext: guidanceContext,
+          generationGroupId,
         }),
       });
 
@@ -685,6 +691,7 @@ export default function GeneratePage() {
               infographicCopy,
               sourceContentIds: selectedSourceIds,
               guidance: guidanceContext,
+              generationGroupId,
             }),
           })
             .then(async (imageResponse) => {
@@ -736,11 +743,12 @@ export default function GeneratePage() {
       // Carousel images run asynchronously so text outputs stay usable while image generation continues.
       if (shouldGenerateCarousel) {
         if (kitCarousel2Ref.current) {
-          void kitCarousel2Ref.current.generate().catch((err) => {
+          void kitCarousel2Ref.current.generate({ generationGroupId }).catch((err) => {
             console.error('KIT carousel generation error:', err);
             toast.error('Carousel image generation failed');
           });
         } else {
+          setPendingKitGenerationGroupId(generationGroupId);
           setPendingKitCarouselGenerate(true);
         }
       }
@@ -1919,6 +1927,7 @@ export default function GeneratePage() {
                           hideSettingsControls
                           defaultTab="carousel"
                           generateLabel="Generate Images"
+                          generationGroupId={kitGenerationGroupId || undefined}
                           onLoadingChange={setIsGeneratingKitCarouselImages}
                           onProgress={setKitCarouselProgress}
                           slideCount={kitCarouselSlideCount}
