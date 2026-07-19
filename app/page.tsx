@@ -115,15 +115,6 @@ function TokenUsageSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDa
   );
 }
 
-function TokenUsageLink() {
-  return (
-    <Link href="/token-usage" className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
-      View token log
-      <ArrowRight className="h-4 w-4" />
-    </Link>
-  );
-}
-
 function DashboardHeroDecoration() {
   return (
     <svg
@@ -301,10 +292,8 @@ export default async function DashboardPage() {
           detail={`Estimated ${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
           icon={WalletCards}
           tone="bg-blue-100 text-blue-700"
-          action={<TokenUsageLink />}
-        >
-          <TokenUsageSparkline daily={metrics.daily} />
-        </StatCard>
+          action={<TokenUsageSparkline daily={metrics.daily} />}
+        />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.95fr)]">
