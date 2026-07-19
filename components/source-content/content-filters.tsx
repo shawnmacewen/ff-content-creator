@@ -75,15 +75,13 @@ export function ContentFilters({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 shrink-0 bg-white text-muted-foreground hover:text-foreground"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               aria-label="How Source Content search works"
             >
               <Info className="h-4 w-4" />
-            </Button>
+            </button>
           </TooltipTrigger>
           <TooltipContent side="bottom" align="end" className="max-w-[360px] text-left leading-5">
             <div className="space-y-2">
