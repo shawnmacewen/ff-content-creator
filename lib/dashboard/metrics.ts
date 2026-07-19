@@ -32,14 +32,13 @@ export type DashboardMetricsSummary = {
   }>;
   recentEvents: Array<{
     id: string;
+    groupId: string;
     time: string;
     feature: string;
-    model: string;
-    inputTokens: number | null;
-    outputTokens: number | null;
+    models: string[];
+    assets: number;
     totalTokens: number | null;
     estimatedCostUsd: number | null;
-    success: boolean;
   }>;
   tokenSummary: {
     totalTokensThisWeek: number;
@@ -113,6 +112,56 @@ function getTokenValue(meta: Record<string, any>, key: 'input' | 'output' | 'tot
   return value ?? null;
 }
 
+function getEventGroupId(id: string, meta: Record<string, any>) {
+  const value =
+    meta.generationGroupId ||
+    meta.generation_group_id ||
+    meta.kitGenerationId ||
+    meta.kit_generation_id ||
+    meta.parentEventId ||
+    meta.parent_event_id;
+
+  return typeof value === 'string' && value.trim() ? value.trim() : id;
+}
+
+function pushUniqueValue(values: string[], value: unknown) {
+  if (!value) return;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed && !values.some((entry) => entry.toLowerCase() === trimmed.toLowerCase())) values.push(trimmed);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => pushUniqueValue(values, entry));
+    return;
+  }
+
+  if (typeof value === 'object') {
+    const modelValue = (value as Record<string, unknown>).model || (value as Record<string, unknown>).modelName;
+    pushUniqueValue(values, modelValue);
+  }
+}
+
+function getModelNames(model: string, meta: Record<string, any>) {
+  const models: string[] = [];
+  pushUniqueValue(models, model);
+  pushUniqueValue(models, meta.modelsUsed);
+  pushUniqueValue(models, meta.models_used);
+  pushUniqueValue(models, meta.models);
+  pushUniqueValue(models, meta.modelNames);
+  pushUniqueValue(models, meta.model_names);
+  pushUniqueValue(models, meta.modelUsed);
+  pushUniqueValue(models, meta.model_used);
+  pushUniqueValue(models, meta.textModel);
+  pushUniqueValue(models, meta.text_model);
+  pushUniqueValue(models, meta.imageModel);
+  pushUniqueValue(models, meta.image_model);
+
+  return models.length ? models : ['Not recorded'];
+}
+
 export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
   try {
     const supabase = getSupabaseServerClient();
@@ -146,7 +195,19 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
     const imageByType: Record<string, number> = {};
     const daily = buildEmptyDailySeries();
     const dailyByDate = new Map(daily.map((day) => [day.date, day]));
-    const recentEvents: DashboardMetricsSummary['recentEvents'] = [];
+    const recentEventGroups = new Map<string, {
+      id: string;
+      groupId: string;
+      time: string;
+      timestamp: number;
+      features: string[];
+      models: string[];
+      assets: number;
+      totalTokens: number;
+      hasTokenTotal: boolean;
+      estimatedCostUsd: number;
+      hasCostEstimate: boolean;
+    }>();
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
     const previousWeekAgo = now - 14 * 24 * 60 * 60 * 1000;
@@ -166,14 +227,14 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
       const tool = String((row as any).tool || 'unknown');
       const meta = ((row as any).meta || {}) as Record<string, any>;
       const model = String((row as any).model || meta.modelUsed || meta.model_used || 'Not recorded');
+      const id = String((row as any).id || `${tool}-${(row as any).created_at || ''}`);
+      const groupId = getEventGroupId(id, meta);
       const assetCount = Math.max(1, Math.floor(Number(meta.assetCount || meta.asset_count || 1)));
       const createdAt = new Date((row as any).created_at || 0).getTime();
       const isThisWeek = Number.isFinite(createdAt) && createdAt >= weekAgo;
       const isPreviousWeek = Number.isFinite(createdAt) && createdAt >= previousWeekAgo && createdAt < weekAgo;
       const isImage = meta.category === 'image' || tool.includes('image') || type.includes('image');
       const day = Number.isFinite(createdAt) ? dailyByDate.get(new Date(createdAt).toISOString().slice(0, 10)) : null;
-      const inputTokens = getTokenValue(meta, 'input');
-      const outputTokens = getTokenValue(meta, 'output');
       const totalTokens = getTokenValue(meta, 'total');
       const storedCost = Number(meta.costUsd || meta.cost_usd || meta.estimatedCostUsd || meta.estimated_cost_usd);
       const estimatedCost = Number.isFinite(storedCost) && storedCost > 0
@@ -184,6 +245,36 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
         if (totalTokens) totalTokensThisWeek += totalTokens;
         if (estimatedCost) estimatedCostThisWeek += estimatedCost;
       }
+
+      const eventGroup = recentEventGroups.get(groupId) || {
+        id: groupId,
+        groupId,
+        time: (row as any).created_at || '',
+        timestamp: Number.isFinite(createdAt) ? createdAt : 0,
+        features: [],
+        models: [],
+        assets: 0,
+        totalTokens: 0,
+        hasTokenTotal: false,
+        estimatedCostUsd: 0,
+        hasCostEstimate: false,
+      };
+      if (createdAt > eventGroup.timestamp) {
+        eventGroup.timestamp = createdAt;
+        eventGroup.time = (row as any).created_at || eventGroup.time;
+      }
+      pushUniqueValue(eventGroup.features, titleCase(tool));
+      getModelNames(model, meta).forEach((entry) => pushUniqueValue(eventGroup.models, entry));
+      eventGroup.assets += assetCount;
+      if (totalTokens) {
+        eventGroup.totalTokens += totalTokens;
+        eventGroup.hasTokenTotal = true;
+      }
+      if (estimatedCost) {
+        eventGroup.estimatedCostUsd += estimatedCost;
+        eventGroup.hasCostEstimate = true;
+      }
+      recentEventGroups.set(groupId, eventGroup);
 
       if (isImage) {
         generatedImages += assetCount;
@@ -206,22 +297,22 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
         }
       }
 
-      if (recentEvents.length < 7) {
-        recentEvents.push({
-          id: String((row as any).id || `${tool}-${createdAt}`),
-          time: (row as any).created_at || '',
-          feature: titleCase(tool),
-          model,
-          inputTokens,
-          outputTokens,
-          totalTokens,
-          estimatedCostUsd: estimatedCost,
-          success: (row as any).success !== false,
-        });
-      }
     }
 
     const sourceSummary = normalizeCachedSummary(sourceSummaryResult.data?.value || emptySourceContentSummary);
+    const recentEvents: DashboardMetricsSummary['recentEvents'] = Array.from(recentEventGroups.values())
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 7)
+      .map((group) => ({
+        id: group.id,
+        groupId: group.groupId,
+        time: group.time,
+        feature: group.features.length ? group.features.join(', ') : 'Not recorded',
+        models: group.models.length ? group.models : ['Not recorded'],
+        assets: group.assets,
+        totalTokens: group.hasTokenTotal ? group.totalTokens : null,
+        estimatedCostUsd: group.hasCostEstimate ? group.estimatedCostUsd : null,
+      }));
 
     return {
       fallback: false,

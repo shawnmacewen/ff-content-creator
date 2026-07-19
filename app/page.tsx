@@ -375,48 +375,50 @@ export default async function DashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <CardTitle className="text-xl font-semibold text-slate-950">Recent token activity</CardTitle>
-            <Badge variant="outline" className="rounded-md bg-slate-50">Last {metrics.recentEvents.length || 0} events</Badge>
+            <Badge variant="outline" className="rounded-md bg-slate-50">Last {metrics.recentEvents.length || 0} groups</Badge>
           </div>
           <Link href="/token-usage" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600">Full token log <ArrowRight className="h-4 w-4" /></Link>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] text-left text-sm">
+            <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="border-b border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="py-2">Time</th>
+                  <th>Event ID</th>
                   <th>Feature</th>
-                  <th>Model</th>
-                  <th>Input</th>
-                  <th>Output</th>
+                  <th>Models</th>
+                  <th>Assets</th>
                   <th>Total tokens</th>
-                  <th>Est. cost</th>
-                  <th>Status</th>
+                  <th>Estimated cost</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {metrics.recentEvents.map((event) => (
                   <tr key={event.id}>
                     <td className="py-2 font-medium text-slate-700">{formatRelativeTime(event.time)}</td>
+                    <td>
+                      <span className="block max-w-[230px] whitespace-normal break-all font-mono text-[11px] leading-4 text-slate-600" title={event.groupId}>
+                        {event.groupId}
+                      </span>
+                    </td>
                     <td className="font-semibold text-slate-900">{event.feature}</td>
-                    <td><Badge variant="outline" className="rounded-md bg-blue-50 text-blue-700">{event.model}</Badge></td>
-                    <td>{formatTokenValue(event.inputTokens)}</td>
-                    <td>{formatTokenValue(event.outputTokens)}</td>
+                    <td className="max-w-[250px] whitespace-normal text-slate-700">{event.models.join(', ')}</td>
+                    <td className="font-semibold">{formatNumber(event.assets)}</td>
                     <td className="font-semibold">{formatTokenValue(event.totalTokens)}</td>
                     <td>{formatCost(event.estimatedCostUsd)}</td>
-                    <td><Badge className="rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-100">{event.success ? 'Complete' : 'Failed'}</Badge></td>
                   </tr>
                 ))}
                 {!metrics.recentEvents.length ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-sm text-slate-500">Recent token events are not available yet.</td>
+                    <td colSpan={7} className="py-8 text-center text-sm text-slate-500">Recent token events are not available yet.</td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
           </div>
           <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium text-slate-500">
-            <span>{metrics.recentEvents.length} events</span>
+            <span>{metrics.recentEvents.length} event groups</span>
             <span>-</span>
             <span>{formatTokenValue(metrics.tokenSummary.totalTokensThisWeek)} tokens this week</span>
             <span>-</span>
