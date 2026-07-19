@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LayoutGrid, List, Rows3, Search, X } from 'lucide-react';
+import { Columns2, GalleryHorizontal, LayoutGrid, List, Rows3, Search, X } from 'lucide-react';
 
-export type SourceContentViewMode = 'grid' | 'stacked' | 'quick';
+export type SourceContentViewMode = 'grid' | 'small-grid' | 'detailed-grid' | 'stacked' | 'quick';
 
 interface ContentFiltersProps {
   searchQuery: string;
@@ -55,6 +55,8 @@ export function ContentFilters({
   const hasActiveFilters = searchQuery || searchScope !== 'all' || selectedType || selectedTag || selectedPublisher;
   const viewOptions: Array<{ value: SourceContentViewMode; label: string; icon: typeof LayoutGrid }> = [
     { value: 'grid', label: 'Card grid', icon: LayoutGrid },
+    { value: 'small-grid', label: 'Small grid', icon: GalleryHorizontal },
+    { value: 'detailed-grid', label: 'Detailed cards', icon: Columns2 },
     { value: 'stacked', label: 'Stacked list', icon: Rows3 },
     { value: 'quick', label: 'Quick list', icon: List },
   ];

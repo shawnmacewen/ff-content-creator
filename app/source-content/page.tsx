@@ -17,6 +17,7 @@ import {
   sourceContentMatchesQuery,
   type SourceContentSearchScope,
 } from '@/lib/source-content/search';
+import { cn } from '@/lib/utils';
 
 interface ApiResponse {
   data: SourceContent[];
@@ -558,7 +559,14 @@ export default function SourceContentPage() {
               </div>
             </div>
           ) : (
-            <div className={viewMode === 'stacked' ? 'flex flex-col gap-3' : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
+            <div
+              className={cn(
+                viewMode === 'stacked' && 'flex flex-col gap-3',
+                viewMode === 'grid' && 'grid gap-4 md:grid-cols-2 lg:grid-cols-3',
+                viewMode === 'small-grid' && 'grid gap-4 md:grid-cols-2 xl:grid-cols-4',
+                viewMode === 'detailed-grid' && 'grid gap-4 xl:grid-cols-2'
+              )}
+            >
               {visibleContentItems.map((content) => (
                 <ContentCard
                   key={content.id}

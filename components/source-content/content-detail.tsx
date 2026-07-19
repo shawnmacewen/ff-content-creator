@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { overflowLabelClass, tagLabelClass } from '@/lib/content-label-colors';
 import { articleActionButtonClassName } from '@/lib/generator/article-action-button';
+import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import type { SourceContent } from '@/lib/types/content';
 import { cn } from '@/lib/utils';
 import {
@@ -500,7 +501,7 @@ export function ContentDetail({
     { label: 'Sub-categories', value: meta?.subCategories },
   ];
   const publisherLabel = getPublisherLabel(content);
-  const designation = meta?.contentDesignation || content.type || 'Editorial Source';
+  const designation = getSourceContentDesignation(content);
   const storedTakeaways = Array.isArray(content.keyTakeaways)
     ? content.keyTakeaways.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 3)
     : [];
