@@ -656,23 +656,23 @@ export default function ContentUploadPage() {
                 </div>
               ) : null}
 
-              <Tabs defaultValue="source-details" className="mt-5 gap-0 overflow-hidden rounded-md border border-slate-200 bg-white">
-                <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-slate-50/70 px-5 py-0">
+              <Tabs defaultValue="source-details" className="mt-5 gap-0">
+                <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-transparent px-0 py-0">
                   <TabsTrigger
                     value="source-details"
-                    className="h-auto flex-none rounded-none border-b-2 border-transparent bg-transparent px-3 py-3 text-sm font-medium text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
+                    className="h-auto flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
                   >
                     Source Details
                   </TabsTrigger>
                   <TabsTrigger
                     value="advanced-schema"
-                    className="h-auto flex-none rounded-none border-b-2 border-transparent bg-transparent px-3 py-3 text-sm font-medium text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
+                    className="ml-7 h-auto flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
                   >
                     Advanced Schema
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="source-details" className="mt-0 p-5">
+                <TabsContent value="source-details" className="mt-5">
                   <div className="grid gap-5 lg:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="upload-title">Title <span className="text-red-500">*</span></Label>
@@ -754,7 +754,7 @@ export default function ContentUploadPage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="advanced-schema" className="mt-0 p-5">
+                <TabsContent value="advanced-schema" className="mt-5">
                   <div className="grid gap-3 lg:grid-cols-2">
                     {advancedSchemaFields.map((field) => (
                       <div key={field.label} className="rounded-md border border-slate-200 bg-slate-50/70 p-3">
