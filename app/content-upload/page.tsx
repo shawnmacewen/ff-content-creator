@@ -70,6 +70,14 @@ type UploadDraft = {
   sourceUrl: string;
 };
 
+type ScanMode = 'quick' | 'ai';
+
+type ScanResult = {
+  mode: ScanMode;
+  confidence: number | null;
+  warnings: string[];
+};
+
 const emptyFilters: FilterResponse = {
   availableTags: [],
   availableTypes: [],
@@ -232,7 +240,8 @@ export default function ContentUploadPage() {
   const [pasteText, setPasteText] = useState('');
   const [draft, setDraft] = useState<UploadDraft>(emptyDraft);
   const [loadingFilters, setLoadingFilters] = useState(true);
-  const [scanning, setScanning] = useState(false);
+  const [activeScanMode, setActiveScanMode] = useState<ScanMode | null>(null);
+  const [lastScan, setLastScan] = useState<ScanResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
@@ -292,6 +301,9 @@ export default function ContentUploadPage() {
     { label: 'metadata.extraPropertiesSelected.Format', value: 'Custom Content' },
   ], [draft, savedId]);
 
+  const scanning = Boolean(activeScanMode);
+  const isQuickScanning = activeScanMode === 'quick';
+  const isAiScanning = activeScanMode === 'ai';
   const canScan = pasteText.trim().length >= 40 && !scanning;
   const canSave = Boolean(
     draft.title.trim() &&
@@ -304,14 +316,14 @@ export default function ContentUploadPage() {
   );
   const currentStep: 1 | 2 | 3 = savedId ? 3 : draft.bodyText.trim() ? 2 : 1;
 
-  const scanContent = async () => {
-    setScanning(true);
+  const scanContent = async (mode: ScanMode) => {
+    setActiveScanMode(mode);
     setSavedId(null);
     try {
       const response = await fetch('/api/content-upload/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pasteText, sourceUrl: draft.sourceUrl }),
+        body: JSON.stringify({ text: pasteText, sourceUrl: draft.sourceUrl, mode }),
       });
       const body = await readJson(response);
       if (body?.filters) {
@@ -323,11 +335,12 @@ export default function ContentUploadPage() {
         });
       }
       setDraft({ ...emptyDraft, sourceUrl: draft.sourceUrl, ...body.draft });
-      toast.success('Content scanned');
+      setLastScan(body?.scan || { mode, confidence: null, warnings: [] });
+      toast.success(mode === 'ai' ? 'AI Scan complete' : 'Quick Scan complete');
     } catch (error: any) {
       toast.error(error?.message || 'Scan failed');
     } finally {
-      setScanning(false);
+      setActiveScanMode(null);
     }
   };
 
@@ -458,14 +471,18 @@ export default function ContentUploadPage() {
                   </span>
                   <div>
                     <h2 className="text-lg font-bold text-slate-950">What the scan will prepare</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">AI reads the pasted content and prepares an editable source record.</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">Choose Quick Scan for fast keyword prefill, or AI Scan for model-assisted source details.</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="rounded-md border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">Not scanned</Badge>
-                  <Button type="button" onClick={scanContent} disabled={!canScan} className="h-9 gap-2 bg-violet-600 px-4 font-semibold hover:bg-violet-700">
-                    {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    {scanning ? 'Scanning...' : 'Scan content'}
+                  <Button type="button" variant="outline" onClick={() => scanContent('quick')} disabled={!canScan} className="h-9 gap-2 border-blue-200 bg-blue-50 px-4 font-semibold text-blue-700 hover:bg-blue-100">
+                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    {isQuickScanning ? 'Scanning...' : 'Quick Scan'}
+                  </Button>
+                  <Button type="button" onClick={() => scanContent('ai')} disabled={!canScan} className="h-9 gap-2 bg-violet-600 px-4 font-semibold hover:bg-violet-700">
+                    {isAiScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {isAiScanning ? 'Scanning...' : 'AI Scan'}
                   </Button>
                 </div>
               </div>
@@ -507,7 +524,7 @@ export default function ContentUploadPage() {
               <div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-slate-700">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                  <span>After saving, this content appears in Source Content and can be used in Generate Content, EchoWrite, Canadianizer, and other supported tools.</span>
+                  <span>Quick Scan uses no tokens. AI Scan writes usage to Token Usage and returns confidence and review warnings.</span>
                 </div>
               </div>
 
@@ -537,7 +554,7 @@ export default function ContentUploadPage() {
               </div>
               <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">
                 <Sparkles className="h-3.5 w-3.5" />
-                7 fields suggested by AI
+                {lastScan?.mode === 'ai' ? 'AI Scan prefilled source fields' : 'Quick Scan prefilled source fields'}
               </Badge>
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="button" variant="outline" className="h-10 gap-2 border-slate-200 bg-white" onClick={() => setDraft((value) => ({ ...emptyDraft, sourceUrl: value.sourceUrl }))}>
@@ -546,7 +563,7 @@ export default function ContentUploadPage() {
                 </Button>
                 <Badge className="rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Scan complete
+                  {lastScan?.mode === 'ai' ? 'AI Scan complete' : 'Quick Scan complete'}
                 </Badge>
               </div>
             </div>
@@ -614,8 +631,30 @@ export default function ContentUploadPage() {
                     <p className="mt-1 text-sm leading-6 text-slate-500">Review every field. Suggested values remain editable until you save.</p>
                   </div>
                 </div>
-                <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">AI prefilled</Badge>
+                <Badge className="rounded-md bg-violet-100 text-violet-700 hover:bg-violet-100">
+                  {lastScan?.mode === 'ai' ? 'AI prefilled' : 'Quick Scan prefilled'}
+                </Badge>
               </div>
+
+              {lastScan ? (
+                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50/70 p-4 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="font-semibold text-slate-800">
+                      {lastScan.mode === 'ai' ? 'AI Scan review' : 'Quick Scan review'}
+                    </div>
+                    <Badge variant="outline" className="rounded-md border-slate-200 bg-white text-slate-600">
+                      {typeof lastScan.confidence === 'number' ? `${Math.round(lastScan.confidence * 100)}% confidence` : 'No AI confidence'}
+                    </Badge>
+                  </div>
+                  {lastScan.warnings.length ? (
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-slate-600">
+                      {lastScan.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-slate-600">No scan warnings returned.</p>
+                  )}
+                </div>
+              ) : null}
 
               <Tabs defaultValue="source-details" className="mt-5 gap-0 overflow-hidden rounded-md border border-slate-200 bg-white">
                 <TabsList className="h-auto w-full justify-start rounded-none border-b border-slate-200 bg-slate-50/70 px-5 py-0">
@@ -746,9 +785,13 @@ export default function ContentUploadPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button type="button" variant="outline" className="h-10 border-slate-200 bg-white" onClick={() => setDraft((value) => ({ ...emptyDraft, sourceUrl: value.sourceUrl }))}>Back</Button>
-                  <Button type="button" variant="outline" className="h-10 border-slate-200 bg-white" onClick={scanContent} disabled={!canScan || scanning}>
-                    {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    Rescan content
+                  <Button type="button" variant="outline" className="h-10 gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" onClick={() => scanContent('quick')} disabled={!canScan || scanning}>
+                    {isQuickScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    Quick Rescan
+                  </Button>
+                  <Button type="button" variant="outline" className="h-10 gap-2 border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" onClick={() => scanContent('ai')} disabled={!canScan || scanning}>
+                    {isAiScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    AI Rescan
                   </Button>
                   <Button type="button" onClick={saveContent} disabled={!canSave} className={cn('h-10 gap-2 px-5 font-semibold', canSave ? 'bg-emerald-600 hover:bg-emerald-700' : '')}>
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

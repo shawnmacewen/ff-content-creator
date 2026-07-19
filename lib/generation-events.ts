@@ -4,6 +4,7 @@ import { estimateGenerationCostUsd } from '@/lib/model-pricing';
 type GenerationTool =
   | 'generate-content'
   | 'echowrite'
+  | 'content-upload'
   | 'carousel-plan'
   | 'carousel-image'
   | 'ce-course-creator'
