@@ -26,6 +26,44 @@ function compactObject(value: Record<string, unknown>) {
   );
 }
 
+function addModelName(models: string[], value: unknown) {
+  if (!value) return;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed && !models.some((model) => model.toLowerCase() === trimmed.toLowerCase())) models.push(trimmed);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => addModelName(models, entry));
+    return;
+  }
+
+  if (typeof value === 'object') {
+    const modelValue = (value as Record<string, unknown>).model || (value as Record<string, unknown>).modelName;
+    addModelName(models, modelValue);
+  }
+}
+
+function normalizeEventModels(model: string | null | undefined, meta: Record<string, any> | undefined) {
+  const models: string[] = [];
+  addModelName(models, model);
+  addModelName(models, meta?.modelsUsed);
+  addModelName(models, meta?.models_used);
+  addModelName(models, meta?.models);
+  addModelName(models, meta?.modelNames);
+  addModelName(models, meta?.model_names);
+  addModelName(models, meta?.modelUsed);
+  addModelName(models, meta?.model_used);
+  addModelName(models, meta?.textModel);
+  addModelName(models, meta?.text_model);
+  addModelName(models, meta?.imageModel);
+  addModelName(models, meta?.image_model);
+
+  return models;
+}
+
 export function normalizeGenerationUsage(usage: UsageLike) {
   if (!usage || typeof usage !== 'object') return {};
 
@@ -169,6 +207,7 @@ export async function recordGenerationEvent(args: {
     const supabase = getSupabaseServerClient();
     const assetCount = Math.max(1, Math.floor(Number(args.assetCount || 1)));
     const costEstimate = estimateGenerationCostUsd(args.model, args.meta);
+    const modelsUsed = normalizeEventModels(args.model, args.meta);
 
     await supabase.from('generation_events').insert({
       tool: args.tool,
@@ -185,6 +224,7 @@ export async function recordGenerationEvent(args: {
               pricingUnit: costEstimate.pricingUnit,
             }
           : {}),
+        ...(modelsUsed.length ? { modelsUsed } : {}),
         category: args.category || 'content',
         assetCount,
       },

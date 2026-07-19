@@ -3,7 +3,6 @@ import {
   BadgeDollarSign,
   BarChart3,
   CheckCircle2,
-  Clock3,
   DatabaseZap,
   Gauge,
 } from 'lucide-react';
@@ -39,6 +38,20 @@ type TokenUsageSummary = {
   fallbackReason?: string;
 };
 
+type TokenUsageSearchParams = Record<string, string | string[] | undefined>;
+
+type TokenUsagePageProps = {
+  searchParams?: TokenUsageSearchParams | Promise<TokenUsageSearchParams>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizeFilterValue(value: string | string[] | undefined) {
+  return String(firstParam(value) || '').trim();
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Date unavailable';
@@ -65,6 +78,49 @@ function formatTool(value: string) {
 
 function getAssetCount(row: GenerationEventRow) {
   return Math.max(1, Math.floor(Number(row.meta?.assetCount || row.meta?.asset_count || 1)));
+}
+
+function pushModelName(models: string[], value: unknown) {
+  if (!value) return;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed && !models.some((model) => model.toLowerCase() === trimmed.toLowerCase())) models.push(trimmed);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => pushModelName(models, entry));
+    return;
+  }
+
+  if (typeof value === 'object') {
+    const modelValue = (value as Record<string, unknown>).model || (value as Record<string, unknown>).modelName;
+    pushModelName(models, modelValue);
+  }
+}
+
+function getModelNames(row: GenerationEventRow) {
+  const models: string[] = [];
+  pushModelName(models, row.model);
+  pushModelName(models, row.meta?.modelsUsed);
+  pushModelName(models, row.meta?.models_used);
+  pushModelName(models, row.meta?.models);
+  pushModelName(models, row.meta?.modelNames);
+  pushModelName(models, row.meta?.model_names);
+  pushModelName(models, row.meta?.modelUsed);
+  pushModelName(models, row.meta?.model_used);
+  pushModelName(models, row.meta?.textModel);
+  pushModelName(models, row.meta?.text_model);
+  pushModelName(models, row.meta?.imageModel);
+  pushModelName(models, row.meta?.image_model);
+
+  return models;
+}
+
+function getModelDisplay(row: GenerationEventRow) {
+  const models = getModelNames(row);
+  return models.length ? models.join(', ') : 'Not recorded';
 }
 
 function getTokenEstimate(row: GenerationEventRow) {
@@ -94,15 +150,38 @@ function getTokenEstimate(row: GenerationEventRow) {
 function getCostEstimate(row: GenerationEventRow) {
   const value = row.meta?.costUsd || row.meta?.cost_usd || row.meta?.estimatedCostUsd || row.meta?.estimated_cost_usd;
   const cost = Number(value);
-  if (Number.isFinite(cost) && cost > 0) return `$${cost.toFixed(4)}`;
+  if (Number.isFinite(cost) && cost > 0) return `$${cost.toFixed(4)} USD`;
 
   const estimate = estimateGenerationCostUsd(row.model, row.meta);
-  return estimate ? `$${estimate.costUsd.toFixed(4)}` : 'Not tracked yet';
+  return estimate ? `$${estimate.costUsd.toFixed(4)} USD` : 'Not tracked yet';
 }
 
-function getPricingStatus(row: GenerationEventRow) {
-  if (!row.model) return 'No model';
-  return getModelPricingRule(row.model) ? 'Priced' : 'No rule';
+function getDateBoundary(value: string, endOfDay = false) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function filterRows(
+  rows: GenerationEventRow[],
+  filters: { tool: string; model: string; status: string; from: string; to: string }
+) {
+  const fromDate = getDateBoundary(filters.from);
+  const toDate = getDateBoundary(filters.to, true);
+  const selectedModel = filters.model.toLowerCase();
+
+  return rows.filter((row) => {
+    if (filters.tool && row.tool !== filters.tool) return false;
+    if (selectedModel && !getModelNames(row).some((model) => model.toLowerCase() === selectedModel)) return false;
+    if (filters.status === 'successful' && row.success === false) return false;
+    if (filters.status === 'failed' && row.success !== false) return false;
+
+    const createdAt = new Date(row.created_at);
+    if (fromDate && createdAt < fromDate) return false;
+    if (toDate && createdAt > toDate) return false;
+
+    return true;
+  });
 }
 
 async function getTokenUsageSummary(): Promise<TokenUsageSummary> {
@@ -140,14 +219,26 @@ async function getTokenUsageSummary(): Promise<TokenUsageSummary> {
   }
 }
 
-export default async function TokenUsagePage() {
+export default async function TokenUsagePage({ searchParams }: TokenUsagePageProps) {
   const summary = await getTokenUsageSummary();
-  const successfulRows = summary.rows.filter((row) => row.success !== false);
+  const params = await Promise.resolve(searchParams || {});
+  const filters = {
+    tool: normalizeFilterValue(params.tool),
+    model: normalizeFilterValue(params.model),
+    status: normalizeFilterValue(params.status),
+    from: normalizeFilterValue(params.from),
+    to: normalizeFilterValue(params.to),
+  };
+  const filteredRows = filterRows(summary.rows, filters);
+  const successfulRows = filteredRows.filter((row) => row.success !== false);
   const imageEvents = successfulRows.filter((row) => row.meta?.category === 'image' || row.tool.includes('image'));
   const knownCostRows = successfulRows.filter((row) => getCostEstimate(row) !== 'Not tracked yet');
-  const modelCount = new Set(successfulRows.map((row) => row.model).filter(Boolean)).size;
+  const modelCount = new Set(successfulRows.flatMap((row) => getModelNames(row))).size;
   const pricedModelCount = new Set(successfulRows.filter((row) => getModelPricingRule(row.model)).map((row) => row.model).filter(Boolean)).size;
   const totalAssets = successfulRows.reduce((total, row) => total + getAssetCount(row), 0);
+  const toolOptions = Array.from(new Set(summary.rows.map((row) => row.tool).filter(Boolean))).sort();
+  const modelOptions = Array.from(new Set(summary.rows.flatMap((row) => getModelNames(row)))).sort((a, b) => a.localeCompare(b));
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   const metricCards = [
     {
@@ -217,9 +308,16 @@ export default async function TokenUsagePage() {
                   Recent rows from the existing <span className="font-mono text-xs">generation_events</span> table.
                 </p>
               </div>
-              <Badge variant="outline" className="w-fit">
-                Last 200 events
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                {activeFilterCount ? (
+                  <Badge variant="outline" className="w-fit border-violet-200 bg-violet-50 text-violet-700">
+                    {formatNumber(filteredRows.length)} filtered
+                  </Badge>
+                ) : null}
+                <Badge variant="outline" className="w-fit">
+                  Last 200 events
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -228,48 +326,116 @@ export default async function TokenUsagePage() {
                 Token usage data is unavailable right now: {summary.fallbackReason || 'database unavailable'}.
               </div>
             ) : summary.rows.length ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-4">Time</TableHead>
-                    <TableHead>Tool</TableHead>
-                    <TableHead>Content</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Assets</TableHead>
-                    <TableHead>Tokens</TableHead>
-                    <TableHead className="pr-4">Cost</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {summary.rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="pl-4 text-muted-foreground">{formatDateTime(row.created_at)}</TableCell>
-                      <TableCell className="font-medium">{formatTool(row.tool)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span>{formatTool(row.content_type)}</span>
-                          {row.success === false ? (
-                            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
-                              Failed
-                            </Badge>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{row.model || 'Not recorded'}</TableCell>
-                      <TableCell>{formatNumber(getAssetCount(row))}</TableCell>
-                      <TableCell className="text-muted-foreground">{getTokenEstimate(row)}</TableCell>
-                      <TableCell className="pr-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground">{getCostEstimate(row)}</span>
-                          {row.model ? (
-                            <span className="text-[11px] text-muted-foreground">{getPricingStatus(row)}</span>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <>
+                <form className="grid gap-3 border-b border-border bg-slate-50/70 p-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tool</span>
+                    <select
+                      name="tool"
+                      defaultValue={filters.tool}
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    >
+                      <option value="">All tools</option>
+                      {toolOptions.map((tool) => (
+                        <option key={tool} value={tool}>{formatTool(tool)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model</span>
+                    <select
+                      name="model"
+                      defaultValue={filters.model}
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    >
+                      <option value="">All models</option>
+                      {modelOptions.map((model) => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date from</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={filters.from}
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date to</span>
+                    <input
+                      type="date"
+                      name="to"
+                      defaultValue={filters.to}
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</span>
+                    <select
+                      name="status"
+                      defaultValue={filters.status}
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    >
+                      <option value="">All statuses</option>
+                      <option value="successful">Successful</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                  </label>
+                  <div className="flex items-end gap-2">
+                    <button type="submit" className="h-9 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                      Apply
+                    </button>
+                    <a href="/token-usage" className="inline-flex h-9 items-center rounded-md border border-input bg-white px-3 text-sm font-medium text-muted-foreground shadow-xs transition hover:bg-slate-100">
+                      Reset
+                    </a>
+                  </div>
+                </form>
+
+                {filteredRows.length ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="pl-4">Time</TableHead>
+                        <TableHead>Tool</TableHead>
+                        <TableHead>Content</TableHead>
+                        <TableHead>Models</TableHead>
+                        <TableHead>Assets</TableHead>
+                        <TableHead>Tokens</TableHead>
+                        <TableHead className="pr-4">Estimated Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredRows.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="pl-4 text-muted-foreground">{formatDateTime(row.created_at)}</TableCell>
+                          <TableCell className="font-medium">{formatTool(row.tool)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{formatTool(row.content_type)}</span>
+                              {row.success === false ? (
+                                <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                                  Failed
+                                </Badge>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[220px] font-mono text-xs leading-5 text-muted-foreground">{getModelDisplay(row)}</TableCell>
+                          <TableCell>{formatNumber(getAssetCount(row))}</TableCell>
+                          <TableCell className="text-muted-foreground">{getTokenEstimate(row)}</TableCell>
+                          <TableCell className="pr-4 text-muted-foreground">{getCostEstimate(row)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="p-6 text-sm text-muted-foreground">
+                    No generation events match those filters.
+                  </div>
+                )}
+              </>
             ) : (
               <div className="p-6 text-sm text-muted-foreground">
                 No generation events have been logged yet.
@@ -289,7 +455,8 @@ export default async function TokenUsagePage() {
             <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
               <p>
                 Editorial already stores generation activity in <span className="font-mono text-xs">generation_events</span>.
-                This page reads that log for tool, content type, success, model, category, and asset count.
+                This page reads that log for tool, content type, success, model names, category, asset count, token usage,
+                and estimated USD cost.
               </p>
               <p>
                 New events now add estimated cost metadata when provider usage is available. Older events with token fields
@@ -315,7 +482,7 @@ export default async function TokenUsagePage() {
                 <span>Add per-model pricing rules so estimated costs can be calculated consistently.</span>
               </div>
               <div className="flex items-start gap-2">
-                <Clock3 className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
                 <span>Add filters for tool, model, date range, and successful or failed generations.</span>
               </div>
             </CardContent>
