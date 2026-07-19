@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, type ComponentType, type Reac
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
@@ -28,6 +29,7 @@ import {
   ChevronRight,
   FileText,
   Grid2X2,
+  HelpCircle,
   Instagram,
   Linkedin,
   Loader2,
@@ -221,6 +223,21 @@ function PencilSparklesIcon({ className }: { className?: string }) {
       <path d="M6 7H2" />
       <path d="M9 2v2" />
     </svg>
+  );
+}
+
+function GuidanceTooltip({ children }: { children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700">
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className="max-w-[240px] text-left leading-5">
+        {children}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -1393,7 +1410,10 @@ export default function GeneratePage() {
                       <div className="text-sm font-semibold text-slate-950">Additional options</div>
                     </div>
                     <label className="block space-y-2">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Additional instructions</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Additional instructions
+                        <GuidanceTooltip>Add specific audience notes, key messages, compliance language, or campaign goals for this generation.</GuidanceTooltip>
+                      </span>
                       <textarea
                         className="min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                         placeholder="Add audience, key message, compliance notes, or calls to action..."
@@ -1402,14 +1422,20 @@ export default function GeneratePage() {
                       />
                     </label>
                     <div className="grid gap-2">
-                      <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
-                        Use plain language
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
-                        Include a call to action
-                      </label>
+                      <div className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                        <label className="inline-flex items-center gap-2">
+                          <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
+                          Use plain language
+                        </label>
+                        <GuidanceTooltip>Simplifies wording, reduces jargon, and makes the copy easier for clients to scan and understand.</GuidanceTooltip>
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                        <label className="inline-flex items-center gap-2">
+                          <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
+                          Include a call to action
+                        </label>
+                        <GuidanceTooltip>Adds a clear next step, such as scheduling a review, replying, or contacting the advisor.</GuidanceTooltip>
+                      </div>
                     </div>
                   </div>
                 </div>
