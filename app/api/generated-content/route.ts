@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('generated_content')
-      .select('*')
+      .select('*, generated_content_versions(id,note,created_at)')
       .order('updated_at', { ascending: false })
       .limit(200);
 
