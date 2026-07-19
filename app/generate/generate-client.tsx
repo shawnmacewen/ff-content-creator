@@ -613,6 +613,7 @@ export default function GeneratePage() {
     setIsGeneratingKit(true);
     setKitOutputs(null);
     setKitCarouselProgress(null);
+    setIsOutputStoryboardOpen(true);
 
     const shouldGenerateCarousel = kitTypes.includes('social-instagram') &&
       instagramKitVariant === 'carousel' &&
@@ -743,7 +744,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress]);
+  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress, setIsOutputStoryboardOpen]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -1646,15 +1647,6 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {(isGeneratingKit && !hasRenderedKitOutputs) ? (
-              <div className="p-5 pb-0">
-                <GeneratingOutputState
-                  label="Generating editorial assets"
-                  detail="The selected content formats are being drafted and will appear here as soon as the request completes."
-                />
-              </div>
-            ) : null}
-
             <div className={cn(
               'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
               isOutputStoryboardOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
@@ -1779,6 +1771,15 @@ export default function GeneratePage() {
                   </div>
 
                   <div className="min-h-[520px] bg-slate-50/70 p-4">
+                    {(isGeneratingKit && !hasRenderedKitOutputs) ? (
+                      <div className="mb-4 rounded-lg border border-emerald-100 bg-white p-4 shadow-sm">
+                        <GeneratingOutputState
+                          label="Generating editorial assets"
+                          detail="The selected content formats are being drafted and will appear here as soon as the request completes."
+                        />
+                      </div>
+                    ) : null}
+
                     <div className={cn(kitOutputTab !== 'carousel' && 'hidden')}>
                       {carouselStatusLabel ? (
                         <div className="mb-3 rounded-md border bg-white p-3 text-sm text-muted-foreground">
