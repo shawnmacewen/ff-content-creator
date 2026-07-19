@@ -230,36 +230,81 @@ function EmailPreview({ content, label }: { content: string; label?: string }) {
   const email = parseEmail(content);
 
   return (
-    <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border bg-white text-slate-950 shadow-sm">
-      <div className="border-b bg-slate-50 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Mail className="h-4 w-4" />
-          {label || 'Marketing Email'}
-        </div>
-      </div>
-      <div className="grid gap-0 md:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b bg-slate-50 p-3 md:border-b-0 md:border-r">
-          <div className="rounded-lg bg-white p-3 shadow-sm">
-            <div className="text-xs font-semibold text-slate-900">editorial</div>
-            <div className="mt-1 line-clamp-2 text-xs text-slate-600">{email.subject}</div>
+    <div className="mx-auto w-full max-w-5xl rounded-2xl bg-slate-100/80 p-3 shadow-[0_22px_70px_rgba(15,23,42,0.16)] ring-1 ring-slate-200">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm">
+        <div className="flex h-10 items-center justify-between border-b border-slate-200 bg-slate-50 px-4">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+            <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
           </div>
-        </aside>
-        <article className="min-h-[430px] p-5">
-          <div className="border-b pb-4">
-            <h3 className="text-xl font-semibold leading-snug">{email.subject}</h3>
-            <div className="mt-2 text-sm text-slate-500">{email.preheader}</div>
-            <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
-              <Avatar className="h-8 w-8 text-sm" />
-              <div>
-                <div className="font-medium text-slate-800">Editorial Team</div>
-                <div>to advisor audience</div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <Mail className="h-3.5 w-3.5" />
+            Mail
+          </div>
+          <MoreHorizontal className="h-4 w-4 text-slate-400" />
+        </div>
+
+        <div className="grid min-h-[560px] gap-0 lg:grid-cols-[250px_minmax(0,1fr)]">
+          <aside className="hidden border-r border-slate-200 bg-slate-100/75 p-3 lg:block">
+            <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>Inbox</span>
+              <span>Today</span>
+            </div>
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 shadow-sm">
+              <div className="flex items-start gap-2">
+                <Avatar className="h-8 w-8 text-xs" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="truncate text-xs font-bold text-slate-950">Editorial Team</div>
+                    <div className="shrink-0 text-[10px] text-slate-500">9:41 AM</div>
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-xs font-semibold leading-snug text-slate-800">{email.subject}</div>
+                  <div className="mt-1 line-clamp-2 text-[11px] leading-snug text-slate-500">{email.preheader}</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
-            {email.body || 'Generated email copy will appear here.'}
-          </div>
-        </article>
+            <div className="mt-2 rounded-xl border border-transparent bg-white/60 p-3 text-xs text-slate-500">
+              <div className="font-semibold text-slate-700">Drafts</div>
+              <div className="mt-1">Campaign copy and saved previews</div>
+            </div>
+          </aside>
+
+          <article className="bg-white">
+            <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+              <div className="grid gap-1 text-xs text-slate-600">
+                <div><span className="font-semibold text-slate-800">From:</span> Editorial Team &lt;editorial@advisors.com&gt;</div>
+                <div><span className="font-semibold text-slate-800">To:</span> Advisor Audience</div>
+                <div><span className="font-semibold text-slate-800">Subject:</span> <span className="font-bold text-slate-950">{email.subject}</span></div>
+              </div>
+            </div>
+
+            <div className="bg-white px-4 py-4 sm:px-6">
+              <div className="mb-3 flex items-center justify-between gap-3 text-xs">
+                <span className="font-medium text-slate-700">{email.preheader}</span>
+                <span className="shrink-0 text-blue-600">View in browser</span>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-emerald-100 bg-[linear-gradient(135deg,#f0fbf8_0%,#ffffff_55%,#e5f6f2_100%)]">
+                <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_180px] sm:p-7">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">{label || 'Marketing Email'}</div>
+                    <h3 className="mt-2 max-w-xl text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{email.subject}</h3>
+                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-700">{email.preheader}</p>
+                  </div>
+                  <div className="hidden items-center justify-center sm:flex">
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-emerald-200/70 text-emerald-700 shadow-inner">
+                      <Mail className="h-14 w-14" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 whitespace-pre-wrap rounded-xl border border-slate-100 bg-white p-5 text-sm leading-relaxed text-slate-800 shadow-sm">
+                {email.body || 'Generated email copy will appear here.'}
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
     </div>
   );

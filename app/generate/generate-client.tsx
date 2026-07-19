@@ -413,6 +413,7 @@ export default function GeneratePage() {
   const [isOutputStoryboardOpen, setIsOutputStoryboardOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
+  const [kitOutputStatusOverrides, setKitOutputStatusOverrides] = useState<Partial<Record<ContentType, KitOutputStatus>>>({});
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
 
   // Carousel 2.0 settings (KIT multipost)
@@ -427,6 +428,7 @@ export default function GeneratePage() {
 
   const kitCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
   const singleCarousel2Ref = useRef<InstagramCarousel2ClientHandle | null>(null);
+  const kitStatusRunRef = useRef(0);
 
   // Parse URL params
   useEffect(() => {
@@ -499,11 +501,11 @@ export default function GeneratePage() {
   };
 
   const getKitTypeStatus = useCallback((type: ContentType): KitOutputStatus => {
+    if (kitOutputStatusOverrides[type]) return kitOutputStatusOverrides[type]!;
     if (type === 'infographic' && isGeneratingKitInfographic) return 'generating';
     if (kitOutputs?.some((output) => output.type === type && output.content?.trim())) return 'complete';
-    if (isGeneratingKit && kitTypes.includes(type)) return 'generating';
     return 'idle';
-  }, [isGeneratingKit, isGeneratingKitInfographic, kitOutputs, kitTypes]);
+  }, [isGeneratingKitInfographic, kitOutputStatusOverrides, kitOutputs]);
 
   const kitOutputStatuses = kitTypes.reduce<Partial<Record<ContentType, KitOutputStatus>>>((acc, type) => {
     acc[type] = getKitTypeStatus(type);
@@ -549,9 +551,18 @@ export default function GeneratePage() {
       instagramKitVariant === 'single' &&
       includeInstagramSingleImages;
     const shouldGenerateInfographic = kitTypes.includes('infographic');
-    const textKitTypes = shouldGenerateInfographic
-      ? Array.from(new Set([...kitTypes.filter((type) => type !== 'infographic'), 'infographic-copy']))
+    const textKitTypes: ContentType[] = shouldGenerateInfographic
+      ? Array.from(new Set<ContentType>([...kitTypes.filter((type) => type !== 'infographic'), 'infographic-copy']))
       : kitTypes;
+    const statusRunId = kitStatusRunRef.current + 1;
+    kitStatusRunRef.current = statusRunId;
+    setKitOutputStatusOverrides(() => {
+      const next: Partial<Record<ContentType, KitOutputStatus>> = {};
+      textKitTypes.forEach((type, index) => {
+        next[type] = index === 0 ? 'generating' : 'idle';
+      });
+      return next;
+    });
     const guidanceContext = [
       additionalContext,
       usePlainLanguage ? 'Use plain language.' : '',
@@ -585,6 +596,18 @@ export default function GeneratePage() {
       setKitOutputs(outputs);
       setSetupCollapsed(true);
       setIsGeneratingKit(false);
+      const completedTextTypes = textKitTypes.filter((type) =>
+        outputs?.some((output: { type: ContentType; content: string }) => output.type === type && output.content?.trim())
+      );
+      void (async () => {
+        for (const type of completedTextTypes) {
+          if (kitStatusRunRef.current !== statusRunId) return;
+          setKitOutputStatusOverrides((current) => ({ ...current, [type]: 'generating' }));
+          await new Promise((resolve) => window.setTimeout(resolve, 220));
+          if (kitStatusRunRef.current !== statusRunId) return;
+          setKitOutputStatusOverrides((current) => ({ ...current, [type]: 'complete' }));
+        }
+      })();
 
       if (shouldGenerateInfographic) {
         const infographicCopy = outputs?.find((output: { type: ContentType; content: string }) => output.type === 'infographic-copy')?.content || '';
@@ -669,6 +692,13 @@ export default function GeneratePage() {
       toast.success(shouldGenerateCarousel || shouldGenerateInfographic ? 'KIT copy generated; image generation is running' : 'KIT generated');
     } catch (err) {
       console.error('KIT generation error:', err);
+      setKitOutputStatusOverrides((current) => {
+        const next = { ...current };
+        kitTypes.forEach((type) => {
+          next[type] = 'failed';
+        });
+        return next;
+      });
       toast.error('Failed to generate kit');
     } finally {
       setIsGeneratingKit(false);
