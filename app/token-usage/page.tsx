@@ -102,7 +102,7 @@ function getEventGroupId(row: GenerationEventRow) {
 function formatEventGroup(row: GenerationEventRow) {
   const groupId = getEventGroupId(row);
   if (!groupId) return 'Standalone';
-  return groupId.length > 18 ? `${groupId.slice(0, 14)}...` : groupId;
+  return groupId;
 }
 
 function pushModelName(models: string[], value: unknown) {
@@ -440,8 +440,8 @@ export default async function TokenUsagePage({ searchParams }: TokenUsagePagePro
                           <TableCell className="font-medium">{formatTool(row.tool)}</TableCell>
                           <TableCell>
                             {getEventGroupId(row) ? (
-                              <Badge variant="outline" className="max-w-[150px] border-blue-200 bg-blue-50 font-mono text-[11px] text-blue-700" title={getEventGroupId(row) || undefined}>
-                                <span className="truncate">{formatEventGroup(row)}</span>
+                              <Badge variant="outline" className="whitespace-normal break-all border-blue-200 bg-blue-50 font-mono text-[11px] leading-4 text-blue-700" title={getEventGroupId(row) || undefined}>
+                                {formatEventGroup(row)}
                               </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">Standalone</span>
