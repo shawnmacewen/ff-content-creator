@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,11 @@ import {
   Sparkles,
   Globe2,
   Package,
+  ArrowRight,
+  Clock3,
+  Columns3,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LibraryGridProps {
   items: GeneratedContent[];
@@ -224,6 +229,237 @@ export function LibraryGrid({ items, onView, onEdit, onDelete, onCopy }: Library
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: LibraryGridProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id || null);
+
+  useEffect(() => {
+    if (!items.length) {
+      setSelectedId(null);
+      return;
+    }
+
+    if (!selectedId || !items.some((item) => item.id === selectedId)) {
+      setSelectedId(items[0].id);
+    }
+  }, [items, selectedId]);
+
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id === selectedId) || items[0] || null,
+    [items, selectedId]
+  );
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
+        <h3 className="text-lg font-medium">No content yet</h3>
+        <p className="text-muted-foreground text-sm mt-1">
+          Generate your first piece of content to see it here
+        </p>
+      </div>
+    );
+  }
+
+  const selectedMeta = selectedItem ? inferSavedContentMeta(selectedItem) : null;
+  const SelectedToolIcon = selectedMeta?.Icon || FileText;
+  const selectedTypeInfo = selectedItem ? CONTENT_TYPE_MAP[selectedItem.type] : null;
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.9fr)]">
+      <Card className="overflow-hidden border-border bg-card shadow-sm">
+        <CardHeader className="border-b border-border p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">{items.length} saved package{items.length === 1 ? '' : 's'}</CardTitle>
+              <CardDescription className="mt-1 text-xs">Compact list of saved generated work.</CardDescription>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="h-9 gap-2 rounded-md border-slate-200 bg-white">
+              <Columns3 className="h-4 w-4" />
+              Columns
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="grid grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] border-b border-border bg-slate-50/80 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 max-xl:hidden">
+            <span />
+            <span>Package</span>
+            <span>Created by</span>
+            <span>Package type</span>
+            <span>Contents</span>
+            <span>Status</span>
+            <span className="text-right">Action</span>
+          </div>
+          <div className="divide-y divide-border">
+            {items.map((item) => {
+              const typeInfo = CONTENT_TYPE_MAP[item.type];
+              const TypeIcon = getIconForType(item.type);
+              const meta = inferSavedContentMeta(item);
+              const ToolIcon = meta.Icon;
+              const selected = selectedItem?.id === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setSelectedId(item.id)}
+                  onDoubleClick={() => onView(item)}
+                  className={cn(
+                    'grid w-full grid-cols-1 gap-3 px-4 py-3 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
+                    selected && 'bg-blue-50/70 hover:bg-blue-50'
+                  )}
+                >
+                  <span className="hidden xl:flex">
+                    <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')} />
+                  </span>
+                  <span className="flex min-w-0 items-start gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
+                      <ToolIcon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-slate-950">{item.title}</span>
+                      <span className="mt-1 block line-clamp-1 text-xs text-slate-500">{item.content}</span>
+                    </span>
+                  </span>
+                  <span>
+                    <Badge variant="outline" className={meta.badgeClassName}>
+                      <ToolIcon className="h-3.5 w-3.5" />
+                      {meta.tool}
+                    </Badge>
+                  </span>
+                  <span>
+                    <Badge variant="outline" className="border-slate-200 bg-white text-slate-700">
+                      <Layers3 className="h-3.5 w-3.5" />
+                      {meta.assetScope}
+                    </Badge>
+                  </span>
+                  <span className="flex flex-col gap-1 text-xs text-slate-600">
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                      <TypeIcon className="h-3.5 w-3.5" />
+                      {typeInfo?.label || item.type}
+                    </span>
+                    <span>{item.sourceContentIds.length || 0} source{item.sourceContentIds.length === 1 ? '' : 's'}</span>
+                  </span>
+                  <span>
+                    <Badge variant="secondary" className={STATUS_COLORS[item.status]}>
+                      {item.status}
+                    </Badge>
+                  </span>
+                  <span className="flex items-center justify-end gap-2">
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={(event) => { event.stopPropagation(); onView(item); }}>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="border-b border-border p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">Package preview</CardTitle>
+              <CardDescription className="mt-1 text-xs">Selected saved content details.</CardDescription>
+            </div>
+            {selectedItem ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(selectedItem)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onCopy(selectedItem.content)}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onDelete(selectedItem.id)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
+        </CardHeader>
+        {selectedItem && selectedMeta ? (
+          <CardContent className="space-y-5 p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={selectedMeta.badgeClassName}>
+                <SelectedToolIcon className="h-3.5 w-3.5" />
+                {selectedMeta.tool}
+              </Badge>
+              <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                {selectedMeta.assetScope}
+              </Badge>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold leading-tight text-slate-950">{selectedItem.title}</h3>
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{selectedItem.content}</p>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Included content</div>
+              <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                  {selectedTypeInfo ? <FileText className="h-4 w-4" /> : <SelectedToolIcon className="h-4 w-4" />}
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-950">{selectedTypeInfo?.label || selectedItem.type}</div>
+                  <div className="mt-0.5 text-xs text-slate-500">{selectedMeta.assetDetail}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</div>
+                <div className="mt-1 inline-flex items-center gap-1.5 text-slate-700">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  {formatDistanceToNow(new Date(selectedItem.createdAt), { addSuffix: true })}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
+                <Badge variant="secondary" className={STATUS_COLORS[selectedItem.status]}>
+                  {selectedItem.status}
+                </Badge>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
+                <div className="mt-1 text-slate-700">{selectedItem.sourceContentIds.length || 0} linked</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Versions</div>
+                <div className="mt-1 text-slate-700">{selectedItem.versions.length || 1}</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+              <Button type="button" className="gap-2 rounded-md" onClick={() => onView(selectedItem)}>
+                <Eye className="h-4 w-4" />
+                Open package
+              </Button>
+              <Button type="button" variant="outline" className="gap-2 rounded-md border-slate-200 bg-white" onClick={() => onCopy(selectedItem.content)}>
+                <Copy className="h-4 w-4" />
+                Reuse
+              </Button>
+            </div>
+          </CardContent>
+        ) : null}
+      </Card>
     </div>
   );
 }

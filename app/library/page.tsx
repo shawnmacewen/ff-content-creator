@@ -10,13 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LibraryGrid } from '@/components/library/library-grid';
+import { LibraryGrid, LibraryList } from '@/components/library/library-grid';
 import { ContentEditor } from '@/components/library/content-editor';
 import useSWR from 'swr';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
-import { Search, X } from 'lucide-react';
+import { LayoutGrid, List, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/page-header';
 
@@ -27,6 +27,7 @@ export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Editor state
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
@@ -141,7 +142,7 @@ export default function LibraryPage() {
         variant="yellow"
       />
 
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm xl:flex-row xl:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -152,7 +153,7 @@ export default function LibraryPage() {
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[160px] bg-muted/50">
               <SelectValue placeholder="All types" />
@@ -185,6 +186,29 @@ export default function LibraryPage() {
               <X className="h-4 w-4" />
             </Button>
           )}
+
+          <div className="ml-auto inline-flex overflow-hidden rounded-md border border-slate-200 bg-white">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={`h-9 rounded-none gap-2 px-3 ${viewMode === 'grid' ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' : 'text-slate-600'}`}
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Cards
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={`h-9 rounded-none gap-2 border-l border-slate-200 px-3 ${viewMode === 'list' ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' : 'text-slate-600'}`}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+              List
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -194,13 +218,23 @@ export default function LibraryPage() {
         </p>
       )}
 
-      <LibraryGrid
-        items={filteredContent}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onCopy={handleCopy}
-      />
+      {viewMode === 'grid' ? (
+        <LibraryGrid
+          items={filteredContent}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+        />
+      ) : (
+        <LibraryList
+          items={filteredContent}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+        />
+      )}
 
       <ContentEditor
         content={selectedContent}
