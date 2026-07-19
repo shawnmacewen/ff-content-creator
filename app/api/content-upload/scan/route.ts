@@ -16,12 +16,12 @@ const AiScanSchema = z.object({
   contentDesignation: z.string().min(1),
   type: z.string().min(1),
   tags: z.array(z.string()).min(0).max(3),
-  author: z.string().optional().default(''),
-  publishedAt: z.string().optional().default(''),
-  filename: z.string().optional().default(''),
-  recommendedAudience: z.string().optional().default(''),
-  confidence: z.number().min(0).max(1).default(0.65),
-  warnings: z.array(z.string()).max(6).default([]),
+  author: z.string(),
+  publishedAt: z.string(),
+  filename: z.string(),
+  recommendedAudience: z.string(),
+  confidence: z.number().min(0).max(1),
+  warnings: z.array(z.string()).max(6),
 });
 
 function normalizeText(value: unknown) {
