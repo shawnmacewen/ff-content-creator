@@ -298,7 +298,7 @@ export function SourceArticlePicker({
         : 'overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]',
       className
     )}>
-      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-3 py-2.5 sm:px-3')}>
+      <CardHeader className={cn('space-y-5 px-5 pb-4 pt-5 sm:px-6', splitView && 'space-y-2 px-0 pb-2 pt-0 sm:px-0')}>
         {splitView ? null : (
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-3 py-1 text-xs font-semibold text-cyan-800">
@@ -312,7 +312,7 @@ export function SourceArticlePicker({
           </div>
         )}
 
-        <div className={cn('grid gap-2 lg:grid-cols-[auto_minmax(120px,0.7fr)_auto] lg:items-center', splitView && 'gap-2')}>
+        <div className={cn('grid gap-2 lg:grid-cols-[auto_minmax(120px,0.7fr)_auto] lg:items-center', splitView && 'grid-cols-[auto_minmax(76px,1fr)_auto] items-center gap-2')}>
           <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden">
             {splitView ? (
               <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-cyan-200/60 bg-cyan-50/80 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
