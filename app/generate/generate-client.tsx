@@ -1062,15 +1062,17 @@ export default function GeneratePage() {
                     <Sparkles className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Generation Type</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Generation Type</span>
+                      {activeWorkflowStep === 1 ? (
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-700">Editing</span>
+                      ) : null}
+                    </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-semibold leading-tight text-slate-950">Campaign Kit</h2>
                       <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">
                         {activeTypes.length} selected
                       </span>
-                      {activeWorkflowStep === 1 ? (
-                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-700">Editing</span>
-                      ) : null}
                     </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
                   </div>
@@ -1303,12 +1305,14 @@ export default function GeneratePage() {
                     <NotebookText className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</span>
                       {activeWorkflowStep === 2 ? (
                         <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-xs font-bold text-cyan-700">Editing</span>
                       ) : null}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
                     </div>
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
                   </div>
@@ -1427,14 +1431,16 @@ export default function GeneratePage() {
                   <FileText className="h-6 w-6" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</span>
+                    {activeWorkflowStep === 3 ? (
+                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Editing</span>
+                    ) : null}
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <h2 className={cn('line-clamp-1 text-lg font-semibold leading-tight', selectedArticleTitle ? 'text-slate-950' : 'text-amber-700')}>
                       {selectedArticleTitle || 'Choose a source article'}
                     </h2>
-                    {activeWorkflowStep === 3 ? (
-                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Editing</span>
-                    ) : null}
                   </div>
                   {selectedArticleTags.length ? (
                     <div className="mt-1 flex max-w-full flex-wrap gap-1.5 overflow-hidden">
