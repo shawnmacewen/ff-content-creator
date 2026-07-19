@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MomentumChart } from '@/components/dashboard/momentum-chart';
 import { getDashboardMetrics } from '@/lib/dashboard/metrics';
 
 export const dynamic = 'force-dynamic';
@@ -179,63 +180,6 @@ function DashboardHero() {
   );
 }
 
-function MomentumChart({ daily }: { daily: Awaited<ReturnType<typeof getDashboardMetrics>>['daily'] }) {
-  const maxValue = Math.max(10, ...daily.map((day) => day.total));
-  const width = 760;
-  const height = 230;
-  const chartTop = 20;
-  const chartHeight = 160;
-  const barWidth = 12;
-  const step = daily.length > 1 ? (width - 40) / (daily.length - 1) : width;
-  const chartPoints = daily.map((day, index) => {
-    const x = 20 + index * step;
-    const y = chartTop + chartHeight - (day.total / maxValue) * chartHeight;
-    return { day, x, y };
-  });
-  const points = chartPoints.map(({ x, y }) => `${x},${y}`).join(' ');
-  const labelStep = daily.length > 45 ? 14 : 7;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-[260px] w-full overflow-visible">
-      {[0, 1, 2, 3, 4].map((tick) => {
-        const y = chartTop + tick * (chartHeight / 4);
-        return <line key={tick} x1="14" x2={width - 12} y1={y} y2={y} stroke="#e2e8f0" strokeWidth="1" />;
-      })}
-      {daily.map((day, index) => {
-        const x = 20 + index * step;
-        const imageHeight = Math.max(2, (day.images / maxValue) * chartHeight);
-        const articleHeight = Math.max(2, (day.articles / maxValue) * chartHeight);
-        const yImages = chartTop + chartHeight - imageHeight;
-        const yArticles = yImages - articleHeight;
-        return (
-          <g key={day.date}>
-            <rect x={x - barWidth / 2} y={yImages} width={barWidth} height={imageHeight} rx="3" fill="#67d5f5" opacity="0.9">
-              <title>{`${day.label}: ${formatNumber(day.images)} images`}</title>
-            </rect>
-            <rect x={x - barWidth / 2} y={yArticles} width={barWidth} height={articleHeight} rx="3" fill="#9257e8" opacity="0.78">
-              <title>{`${day.label}: ${formatNumber(day.articles)} articles`}</title>
-            </rect>
-          </g>
-        );
-      })}
-      <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      {chartPoints.map(({ day, x, y }) => (
-        <circle key={`${day.date}-total`} cx={x} cy={y} r="8" fill="transparent" stroke="transparent">
-          <title>{`${day.label}: ${formatNumber(day.total)} total, ${formatNumber(day.articles)} articles, ${formatNumber(day.images)} images`}</title>
-        </circle>
-      ))}
-      {daily.filter((_, index) => index % labelStep === 0 || index === daily.length - 1).map((day, index) => {
-        const originalIndex = daily.findIndex((entry) => entry.date === day.date);
-        return (
-          <text key={`${day.date}-${index}`} x={20 + originalIndex * step} y={height - 16} textAnchor="middle" className="fill-slate-500 text-[12px] font-medium">
-            {day.label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
 function TokenSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboardMetrics>>['daily'] }) {
   const data = daily.slice(-14);
   const maxValue = Math.max(1, ...data.map((day) => day.total));
@@ -332,12 +276,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </div>
           </CardHeader>
           <CardContent className="pt-4">
-            <div className="mb-3 flex justify-end gap-5 text-xs font-semibold text-slate-600">
-              <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> Articles</span>
-              <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-sky-400" /> Images</span>
-              <span className="inline-flex items-center gap-2"><span className="h-0.5 w-5 rounded-full bg-blue-600" /> Total</span>
-            </div>
-            <MomentumChart daily={metrics.daily} />
+            <MomentumChart daily={metrics.daily} rangeDays={activeRange} />
             <p className="mt-2 text-sm font-medium text-slate-500">Images represent {imagePercent}% of generated assets in this period.</p>
           </CardContent>
         </Card>
