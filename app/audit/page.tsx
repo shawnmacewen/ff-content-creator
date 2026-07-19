@@ -492,7 +492,7 @@ export default function AuditPage() {
       ) : null}
 
       {method === 'search' ? (
-        <>
+        <section className="grid gap-4 lg:grid-cols-[minmax(360px,0.8fr)_minmax(0,1.2fr)]">
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -515,7 +515,7 @@ export default function AuditPage() {
               <span>Use quotation marks for exact phrases. Exclude terms to remove unwanted matches.</span>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-950">Include terms</label>
                 <p className="text-xs text-slate-500">Words or exact phrases the content must contain</p>
@@ -555,7 +555,7 @@ export default function AuditPage() {
 
             <div className="mt-5">
               <div className="text-sm font-semibold text-slate-950">Search scope</div>
-              <div className="mt-2 grid gap-4 md:grid-cols-[minmax(180px,1fr)_minmax(190px,1fr)_minmax(180px,1fr)_minmax(140px,0.7fr)_auto]">
+              <div className="mt-2 grid gap-4">
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
                   Publisher
                   <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
@@ -586,7 +586,7 @@ export default function AuditPage() {
                   </Button>
                 </label>
                 <div className="flex items-end">
-                  <Button type="button" variant="outline" className="h-10 gap-2">
+                  <Button type="button" variant="outline" className="h-10 w-full justify-start gap-2">
                     <SlidersHorizontal className="h-4 w-4" />
                     More filters
                   </Button>
@@ -612,7 +612,7 @@ export default function AuditPage() {
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end gap-3">
+            <div className="mt-4 flex flex-wrap justify-end gap-3">
               <Button type="button" variant="ghost" onClick={clearCriteria} className="text-blue-700 hover:bg-blue-50 hover:text-blue-800">Clear</Button>
               <Button onClick={run} disabled={loading || !includeTerms.trim()} className="h-11 gap-2 bg-blue-700 px-6 font-semibold hover:bg-blue-800">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -621,11 +621,12 @@ export default function AuditPage() {
             </div>
           </section>
 
-          {error ? (
-            <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
-          ) : null}
+          <div className="space-y-4">
+            {error ? (
+              <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
+            ) : null}
 
-          <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100 bg-cyan-50 text-cyan-700">
@@ -787,8 +788,9 @@ export default function AuditPage() {
                 <p className="text-center text-sm text-slate-500">Results update here without leaving the page.</p>
               ) : null}
             </div>
-          </section>
-        </>
+            </section>
+          </div>
+        </section>
       ) : null}
 
       <section className="hidden">
