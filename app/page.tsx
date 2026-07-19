@@ -78,23 +78,22 @@ function StatCard({
   action?: ReactNode;
   children?: ReactNode;
 }) {
+  const aside = action || children;
+
   return (
     <Card className="gap-0 overflow-hidden rounded-lg border-slate-200 bg-white py-0 shadow-sm">
-      <CardContent className="grid h-[144px] grid-cols-[52px_minmax(0,1fr)_minmax(76px,112px)] grid-rows-[auto_auto_auto] content-start gap-x-4 p-4">
-        <div className="col-start-2 flex min-w-0 items-start justify-between gap-2">
-          <div className="min-w-0 text-sm font-bold leading-5 text-slate-900">{label}</div>
-        </div>
-        <div className="col-start-3 row-start-1 shrink-0">{children}</div>
-        <span className={`col-start-1 row-start-2 mt-2 flex h-12 w-12 items-center justify-center rounded-md ${tone}`}>
+      <CardContent className="grid h-[140px] grid-cols-[52px_minmax(0,1fr)_minmax(76px,112px)] grid-rows-[auto_1fr_auto] gap-x-4 p-4">
+        <div className="col-span-3 min-w-0 text-sm font-bold leading-5 text-slate-900">{label}</div>
+        <span className={`col-start-1 row-start-2 flex h-12 w-12 self-center items-center justify-center rounded-md ${tone}`}>
           <Icon className="h-6 w-6" />
         </span>
-        <div className="col-start-2 row-start-2 mt-1 text-[30px] font-semibold leading-9 tracking-normal text-slate-950">{value}</div>
-        <div className="col-start-2 row-start-3 mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
-        {action ? (
-          <div className="col-start-3 row-span-3 row-start-1 self-center justify-self-end">
-            {action}
+        <div className="col-start-2 row-start-2 self-center text-[30px] font-semibold leading-9 tracking-normal text-slate-950">{value}</div>
+        {aside ? (
+          <div className="col-start-3 row-start-2 self-center justify-self-end">
+            {aside}
           </div>
         ) : null}
+        <div className="col-span-3 row-start-3 truncate text-xs font-semibold leading-5 text-slate-500">{detail}</div>
       </CardContent>
     </Card>
   );
@@ -247,14 +246,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <StatCard
           label="Source library"
           value={formatNumber(metrics.source.totalSourceContent)}
-          detail={`${formatNumber(metrics.source.finraReviewedCount)} FINRA-reviewed sources`}
+          detail={`${formatNumber(metrics.source.finraReviewedCount)} FINRA-reviewed`}
           icon={DatabaseZap}
           tone="bg-blue-100 text-blue-700"
         />
         <StatCard
           label="Token usage"
           value={formatCompact(metrics.tokenSummary.totalTokensThisWeek)}
-          detail={`Estimated ${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
+          detail={`${formatCost(metrics.tokenSummary.estimatedCostThisWeek)} this week`}
           icon={WalletCards}
           tone="bg-blue-100 text-blue-700"
           action={<TokenUsageSparkline daily={metrics.daily} />}
