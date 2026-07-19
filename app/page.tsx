@@ -23,6 +23,10 @@ type SnapshotItem = {
   icon: Icon;
   tone: string;
 };
+type DashboardSearchParams = Record<string, string | string[] | undefined>;
+type DashboardPageProps = {
+  searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
+};
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US').format(Math.round(value || 0));
@@ -186,11 +190,13 @@ function MomentumChart({ daily }: { daily: Awaited<ReturnType<typeof getDashboar
   const chartHeight = 160;
   const barWidth = 12;
   const step = daily.length > 1 ? (width - 40) / (daily.length - 1) : width;
-  const points = daily.map((day, index) => {
+  const chartPoints = daily.map((day, index) => {
     const x = 20 + index * step;
     const y = chartTop + chartHeight - (day.total / maxValue) * chartHeight;
-    return `${x},${y}`;
-  }).join(' ');
+    return { day, x, y };
+  });
+  const points = chartPoints.map(({ x, y }) => `${x},${y}`).join(' ');
+  const labelStep = daily.length > 45 ? 14 : 7;
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-[260px] w-full overflow-visible">
@@ -206,13 +212,22 @@ function MomentumChart({ daily }: { daily: Awaited<ReturnType<typeof getDashboar
         const yArticles = yImages - articleHeight;
         return (
           <g key={day.date}>
-            <rect x={x - barWidth / 2} y={yImages} width={barWidth} height={imageHeight} rx="3" fill="#67d5f5" opacity="0.9" />
-            <rect x={x - barWidth / 2} y={yArticles} width={barWidth} height={articleHeight} rx="3" fill="#9257e8" opacity="0.78" />
+            <rect x={x - barWidth / 2} y={yImages} width={barWidth} height={imageHeight} rx="3" fill="#67d5f5" opacity="0.9">
+              <title>{`${day.label}: ${formatNumber(day.images)} images`}</title>
+            </rect>
+            <rect x={x - barWidth / 2} y={yArticles} width={barWidth} height={articleHeight} rx="3" fill="#9257e8" opacity="0.78">
+              <title>{`${day.label}: ${formatNumber(day.articles)} articles`}</title>
+            </rect>
           </g>
         );
       })}
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      {daily.filter((_, index) => index % 7 === 0 || index === daily.length - 1).map((day, index) => {
+      {chartPoints.map(({ day, x, y }) => (
+        <circle key={`${day.date}-total`} cx={x} cy={y} r="8" fill="transparent" stroke="transparent">
+          <title>{`${day.label}: ${formatNumber(day.total)} total, ${formatNumber(day.articles)} articles, ${formatNumber(day.images)} images`}</title>
+        </circle>
+      ))}
+      {daily.filter((_, index) => index % labelStep === 0 || index === daily.length - 1).map((day, index) => {
         const originalIndex = daily.findIndex((entry) => entry.date === day.date);
         return (
           <text key={`${day.date}-${index}`} x={20 + originalIndex * step} y={height - 16} textAnchor="middle" className="fill-slate-500 text-[12px] font-medium">
@@ -239,8 +254,17 @@ function TokenSparkline({ daily }: { daily: Awaited<ReturnType<typeof getDashboa
   );
 }
 
-export default async function DashboardPage() {
-  const metrics = await getDashboardMetrics();
+function getRange(searchParams: DashboardSearchParams) {
+  const rawValue = searchParams.range;
+  const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+  const parsed = Number(value);
+  return [7, 30, 90].includes(parsed) ? parsed : 30;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const activeRange = getRange(params);
+  const metrics = await getDashboardMetrics(activeRange);
   const totalGenerated = metrics.totals.generatedAssets + metrics.totals.generatedImages;
   const generatedThisWeek = metrics.totals.generatedAssetsThisWeek + metrics.totals.generatedImagesThisWeek;
   const generatedPreviousWeek = metrics.totals.generatedAssetsPreviousWeek + metrics.totals.generatedImagesPreviousWeek;
@@ -301,17 +325,13 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-col gap-4 pb-0 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <CardTitle className="text-xl font-semibold text-slate-950">Editorial momentum</CardTitle>
-              <div className="mt-5 grid grid-cols-3 gap-8 text-sm">
-                <div><div className="text-2xl font-semibold text-slate-950">{formatNumber(totalGenerated)}</div><div className="text-slate-500">Total</div></div>
-                <div><div className="text-2xl font-semibold text-slate-950">{formatNumber(metrics.totals.generatedAssets)}</div><div className="text-slate-500">Articles</div></div>
-                <div><div className="text-2xl font-semibold text-slate-950">{formatNumber(metrics.totals.generatedImages)}</div><div className="text-slate-500">Images</div></div>
-              </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {['7 days', '30 days', '90 days'].map((label) => (
-                <Button key={label} variant="outline" size="sm" className={label === '30 days' ? 'border-blue-300 bg-blue-50 text-blue-700' : ''}>{label}</Button>
+              {[7, 30, 90].map((range) => (
+                <Button key={range} asChild variant="outline" size="sm" className={activeRange === range ? 'border-blue-300 bg-blue-50 text-blue-700' : ''}>
+                  <Link href={`/?range=${range}`}>{range} days</Link>
+                </Button>
               ))}
-              <Button variant="outline" size="sm">All generation tools</Button>
             </div>
           </CardHeader>
           <CardContent className="pt-4">
@@ -329,9 +349,10 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-slate-950">Content snapshot</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <div className="overflow-hidden rounded-md border border-slate-200">
             {snapshotItems.map(({ label, value, icon: Icon, tone }) => (
-              <div key={label} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-3">
+              <div key={label} className="flex items-center justify-between border-b border-slate-200 px-3 py-3 last:border-b-0">
                 <div className="flex items-center gap-3">
                   <span className={`flex h-8 w-8 items-center justify-center rounded-md ${tone}`}>
                     <Icon className="h-4 w-4" />
@@ -341,6 +362,7 @@ export default async function DashboardPage() {
                 <span className="text-xl font-semibold text-slate-950">{formatNumber(value)}</span>
               </div>
             ))}
+            </div>
             <div>
               <div className="mb-2 text-sm font-semibold text-slate-700">Generated mix</div>
               <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">

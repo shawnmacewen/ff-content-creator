@@ -46,7 +46,7 @@ export type DashboardMetricsSummary = {
   };
 };
 
-export function emptyDashboardMetrics(reason?: string): DashboardMetricsSummary {
+export function emptyDashboardMetrics(reason?: string, days = 30): DashboardMetricsSummary {
   return {
     fallback: true,
     fallbackReason: reason || 'database-unavailable',
@@ -68,7 +68,7 @@ export function emptyDashboardMetrics(reason?: string): DashboardMetricsSummary 
       byType: {},
       imageByType: {},
     },
-    daily: buildEmptyDailySeries(),
+    daily: buildEmptyDailySeries(days),
     recentEvents: [],
     tokenSummary: {
       totalTokensThisWeek: 0,
@@ -77,11 +77,11 @@ export function emptyDashboardMetrics(reason?: string): DashboardMetricsSummary 
   };
 }
 
-function buildEmptyDailySeries() {
+function buildEmptyDailySeries(days = 30) {
   const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
-  return Array.from({ length: 30 }, (_, index) => {
+  return Array.from({ length: days }, (_, index) => {
     const date = new Date();
-    date.setDate(date.getDate() - (29 - index));
+    date.setDate(date.getDate() - (days - 1 - index));
     const key = date.toISOString().slice(0, 10);
     return {
       date: key,
@@ -162,7 +162,9 @@ function getModelNames(model: string, meta: Record<string, any>) {
   return models.length ? models : ['Not recorded'];
 }
 
-export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
+export async function getDashboardMetrics(days = 30): Promise<DashboardMetricsSummary> {
+  const rangeDays = [7, 30, 90].includes(days) ? days : 30;
+
   try {
     const supabase = getSupabaseServerClient();
     const controller = new AbortController();
@@ -188,12 +190,12 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
     ]).finally(() => clearTimeout(timeout));
 
     const firstError = eventsResult.error || savedCountResult.error || sourceSummaryResult.error;
-    if (firstError) return emptyDashboardMetrics(firstError.message);
+    if (firstError) return emptyDashboardMetrics(firstError.message, rangeDays);
 
     const byType: Record<string, number> = {};
     const byTool: Record<string, number> = {};
     const imageByType: Record<string, number> = {};
-    const daily = buildEmptyDailySeries();
+    const daily = buildEmptyDailySeries(rangeDays);
     const dailyByDate = new Map(daily.map((day) => [day.date, day]));
     const recentEventGroups = new Map<string, {
       id: string;
@@ -342,6 +344,6 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsSummary> {
       },
     };
   } catch (error: any) {
-    return emptyDashboardMetrics(error?.name === 'AbortError' ? 'metrics-timeout' : error?.message);
+    return emptyDashboardMetrics(error?.name === 'AbortError' ? 'metrics-timeout' : error?.message, rangeDays);
   }
 }
