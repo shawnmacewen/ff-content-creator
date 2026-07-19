@@ -278,7 +278,6 @@ export default function GeneratePage() {
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
   const [articlePreviewLayout, setArticlePreviewLayout] = useState<'spotlight' | 'summary' | 'reader'>('spotlight');
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isGeneratingSourceTakeaways, setIsGeneratingSourceTakeaways] = useState(false);
   const [kitGenerationGroupId, setKitGenerationGroupId] = useState<string | null>(null);
   const [pendingKitGenerationGroupId, setPendingKitGenerationGroupId] = useState<string | null>(null);
@@ -783,59 +782,6 @@ export default function GeneratePage() {
     } catch (err) {
       console.error('Save error:', err);
       toast.error('Failed to save');
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    if (mode === 'single') {
-      if (!generatedContent.trim()) {
-        toast.info('Generate an asset before saving a draft.');
-        return;
-      }
-
-      await handleSave('draft');
-      return;
-    }
-
-    const outputsToSave = (kitOutputs || []).filter((output) => output.content?.trim());
-    if (!outputsToSave.length) {
-      toast.info('Generate a campaign before saving drafts.');
-      return;
-    }
-
-    setIsSavingDraft(true);
-    try {
-      for (const output of outputsToSave) {
-        const outputLabel = output.label || CONTENT_TYPE_MAP[output.type]?.label || 'Campaign output';
-        const firstLine = output.content.split('\n').find((line) => line.trim())?.trim() || outputLabel;
-        const response = await fetch('/api/generated-content', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: output.type,
-            title: `${outputLabel}: ${firstLine}`.slice(0, 100),
-            content: output.content,
-            sourceContentIds: selectedSourceIds,
-            prompt: customPrompt,
-            tone,
-            status: 'draft',
-            versionNote: 'Campaign kit draft',
-          }),
-        });
-
-        if (!response.ok) {
-          const body = await response.json().catch(() => ({}));
-          throw new Error(body?.error || `Failed to save ${outputLabel}`);
-        }
-      }
-
-      toast.success(`Saved ${outputsToSave.length} campaign draft${outputsToSave.length === 1 ? '' : 's'}`);
-      router.push('/library');
-    } catch (err) {
-      console.error('Save campaign draft error:', err);
-      toast.error('Failed to save campaign drafts');
-    } finally {
-      setIsSavingDraft(false);
     }
   };
 
@@ -2173,16 +2119,6 @@ export default function GeneratePage() {
             </button>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 rounded-md bg-white px-6"
-              onClick={() => void handleSaveDraft()}
-              disabled={isSavingDraft || isGenerating || isGeneratingKit || isGeneratingKitCarouselImages}
-            >
-              {isSavingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {isSavingDraft ? 'Saving...' : 'Save draft'}
-            </Button>
             <Button
               type="button"
               className="h-11 rounded-md px-6"
