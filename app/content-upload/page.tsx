@@ -29,8 +29,10 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Command,
   CommandEmpty,
@@ -316,12 +318,24 @@ export default function ContentUploadPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-4">
+      <PageHeader
+        eyebrow="Beta Features"
+        title="Content Upload"
+        description="Paste custom content, scan it into source metadata, review controlled fields, and save it for use across Editorial tools."
+        variant="azure"
+        metrics={[
+          { label: 'Paste content', detail: 'Step 1 input', icon: FileText, iconClassName: 'bg-blue-100 text-blue-700' },
+          { label: 'Scan metadata', detail: 'AI-assisted draft schema', icon: Sparkles, iconClassName: 'bg-violet-100 text-violet-700' },
+          { label: '1-3 tags', detail: 'Existing taxonomy only', icon: Tags, iconClassName: 'bg-emerald-100 text-emerald-700' },
+          { label: 'Custom Content', detail: 'Saved as source content', icon: Database, iconClassName: 'bg-cyan-100 text-cyan-700' },
+        ]}
+      />
       <ContentUploadStepper currentStep={currentStep} />
 
       {currentStep === 1 ? (
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)]">
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ring-2 ring-blue-500/80">
-            <div className="border-t-4 border-blue-600 p-5">
+          <Card className="overflow-hidden border-slate-200 bg-white p-5 shadow-sm">
+            <div>
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
                   <FileText className="h-5 w-5" />
@@ -413,10 +427,10 @@ export default function ContentUploadPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ring-2 ring-violet-500/70">
-            <div className="border-t-4 border-violet-600 p-5">
+          <Card className="overflow-hidden border-slate-200 bg-white p-5 shadow-sm">
+            <div>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-700">
@@ -476,7 +490,7 @@ export default function ContentUploadPage() {
                 View schema details
               </button>
             </div>
-          </div>
+          </Card>
         </section>
       ) : (
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

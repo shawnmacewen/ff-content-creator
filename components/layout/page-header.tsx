@@ -18,7 +18,7 @@ type PageHeaderProps = {
   metrics: HeaderMetric[];
   actions?: ReactNode;
   className?: string;
-  variant?: 'teal' | 'pink' | 'yellow' | 'violet' | 'emerald' | 'red';
+  variant?: 'teal' | 'pink' | 'yellow' | 'violet' | 'emerald' | 'red' | 'azure';
 };
 
 const headerVariants = {
@@ -51,6 +51,11 @@ const headerVariants = {
     background: 'linear-gradient(108deg, #10233e 0%, #143a7b 48%, #7d465f 78%, #bf4c56 112%)',
     ribbon: '#bf4c56',
     line: '#f1a0a7',
+  },
+  azure: {
+    background: 'linear-gradient(108deg, #10233e 0%, #143a7b 42%, #0f7cb8 66%, #6d5bd1 90%, #2fbf9b 116%)',
+    ribbon: '#38bdf8',
+    line: '#a7f3d0',
   },
 };
 
@@ -99,6 +104,16 @@ const headerAccentPaths: Record<keyof typeof headerVariants, {
     lines: [
       { d: 'M 130 118 C 350 58, 560 68, 780 104 C 1012 142, 1238 144, 1548 62', width: 1.2, opacity: 0.72 },
       { d: 'M 1118 60 L 1218 130 L 1322 54 L 1436 120', width: 0.95, opacity: 0.5 },
+    ],
+  },
+  azure: {
+    ribbon: 'M -120 126 C 116 82, 302 46, 528 72 C 770 100, 916 155, 1162 132 C 1378 112, 1508 42, 1700 18 L 1700 72 C 1530 110, 1392 164, 1178 166 C 920 170, 762 118, 518 96 C 286 75, 106 110, -120 154 Z',
+    lines: [
+      { d: 'M 54 116 C 274 44, 466 36, 682 78 C 910 122, 1110 150, 1416 80', width: 1.35, opacity: 0.78 },
+      { d: 'M 744 48 C 822 82, 872 122, 894 154 M 842 40 C 934 76, 1000 116, 1032 154 M 958 38 C 1060 72, 1136 108, 1190 150', width: 0.8, opacity: 0.5 },
+      { d: 'M 1088 84 C 1198 40, 1318 40, 1444 82 C 1530 110, 1604 108, 1684 78', width: 1.05, opacity: 0.6 },
+      { d: 'M 126 54 C 164 82, 180 110, 168 142 M 344 38 C 390 66, 408 98, 394 132 M 1470 36 C 1518 68, 1538 98, 1524 128', width: 0.75, opacity: 0.4 },
+      { d: 'M 72 146 L 1540 146', width: 0.65, opacity: 0.3 },
     ],
   },
 };
