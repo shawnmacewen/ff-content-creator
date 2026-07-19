@@ -276,13 +276,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </CardHeader>
           <CardContent className="pt-4">
             <MomentumChart daily={metrics.daily} rangeDays={activeRange} />
-            <p className="mt-2 text-sm font-medium text-slate-500">Images represent {imagePercent}% of generated assets in this period.</p>
           </CardContent>
         </Card>
 
         <Card className="rounded-lg border-slate-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-slate-950">Content snapshot</CardTitle>
+            <CardTitle className="text-lg font-semibold text-slate-950">Content snapshot</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-md border border-slate-200">
@@ -292,19 +291,19 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   <span className={`flex h-8 w-8 items-center justify-center rounded-md ${tone}`}>
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="font-semibold text-slate-800">{label}</span>
+                  <span className="text-sm font-medium text-slate-700">{label}</span>
                 </div>
-                <span className="text-xl font-semibold text-slate-950">{formatNumber(value)}</span>
+                <span className="text-lg font-semibold text-slate-900">{formatNumber(value)}</span>
               </div>
             ))}
             </div>
             <div className="mt-4">
-              <div className="mb-2 text-sm font-semibold text-slate-700">Generated mix</div>
+              <div className="mb-2 text-sm font-medium text-slate-700">Generated mix</div>
               <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
                 <div className="bg-violet-500" style={{ width: `${articlePercent}%` }} />
                 <div className="bg-sky-400" style={{ width: `${imagePercent}%` }} />
               </div>
-              <div className="mt-1 flex justify-between text-xs font-semibold text-slate-500">
+              <div className="mt-1 flex justify-between text-xs font-medium text-slate-500">
                 <span>{articlePercent}% Articles</span>
                 <span>{imagePercent}% Images</span>
               </div>
