@@ -1077,7 +1077,7 @@ export default function GeneratePage() {
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
                   </div>
                 </div>
-                <div className="min-w-0 border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Included outputs</div>
                   <div className="mt-2 flex min-h-9 flex-wrap items-center gap-2 overflow-hidden">
                     {visibleOutputTypes.map((type) => {
@@ -1094,7 +1094,7 @@ export default function GeneratePage() {
                     ) : null}
                   </div>
                 </div>
-                <div className="min-w-0 border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   {hasCampaignContextSettings ? (
                     <>
                       <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Contextual settings</div>
@@ -1317,11 +1317,11 @@ export default function GeneratePage() {
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
                   </div>
                 </div>
-                <div className="min-w-0 border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Audience</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{audience}</p>
                 </div>
-                <div className="min-w-0 border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Additional options</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
@@ -1455,7 +1455,7 @@ export default function GeneratePage() {
                   )}
                 </div>
               </div>
-              <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+              <div className="min-w-0 self-start border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Summary</div>
                 <div className="mt-2 space-y-1">
                   {selectedArticleTitle ? (
@@ -1465,8 +1465,8 @@ export default function GeneratePage() {
                   ) : null}
                   </div>
               </div>
-              <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Article details</div>
+              <div className="min-w-0 self-start border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
                 <div className="mt-2 space-y-1 text-sm font-semibold leading-5 text-slate-800">
                   {selectedArticleTitle ? (
                     <>
