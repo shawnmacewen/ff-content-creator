@@ -2,12 +2,9 @@ import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
 import {
   ArrowRight,
-  CalendarDays,
   DatabaseZap,
   FolderOpen,
   Image,
-  Plus,
-  Settings2,
   Sparkles,
   TrendingUp,
   WalletCards,
@@ -89,7 +86,7 @@ function StatCard({
         <div className="mt-1 text-[30px] font-semibold leading-8 tracking-normal text-slate-950">{value}</div>
         <div className="mt-1 min-w-0 text-xs font-semibold leading-5 text-slate-500">{detail}</div>
         {action ? (
-          <div className="absolute bottom-4 left-[72px]">
+          <div className="absolute bottom-2 left-[72px]">
             {action}
           </div>
         ) : null}
@@ -127,41 +124,64 @@ function TokenUsageLink() {
   );
 }
 
-function HeaderActions() {
+function DashboardHeroDecoration() {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-        <CalendarDays className="h-4 w-4" />
-        Last 30 days
-      </Button>
-      <Button variant="outline" className="h-11 rounded-md border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-        <Settings2 className="h-4 w-4" />
-        Customize dashboard
-      </Button>
-      <Button asChild className="h-11 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-        <Link href="/generate">
-          <Plus className="h-4 w-4" />
-          Quick create
-        </Link>
-      </Button>
-    </div>
+    <svg
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      viewBox="0 0 1600 150"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="dashboard-header-ribbon" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#49aaa6" stopOpacity="0" />
+          <stop offset="38%" stopColor="#49aaa6" stopOpacity="0.23" />
+          <stop offset="72%" stopColor="#9dd9d2" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#9dd9d2" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="dashboard-header-line" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#49aaa6" stopOpacity="0" />
+          <stop offset="44%" stopColor="#49aaa6" stopOpacity="0.46" />
+          <stop offset="90%" stopColor="#9dd9d2" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#9dd9d2" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M -120 126 C 160 62, 425 72, 690 99 C 935 124, 1115 128, 1365 78 C 1500 51, 1595 50, 1700 66 L 1700 116 C 1495 101, 1348 113, 1138 141 C 885 175, 658 137, 430 113 C 205 90, 18 101, -120 146 Z"
+        fill="url(#dashboard-header-ribbon)"
+        opacity="0.8"
+      />
+      <path
+        d="M -80 116 C 230 60, 510 70, 780 98 C 1035 125, 1240 103, 1685 58"
+        fill="none"
+        stroke="url(#dashboard-header-line)"
+        strokeWidth="1.1"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d="M 1050 154 A 142 120 0 0 1 1334 154"
+        fill="none"
+        stroke="url(#dashboard-header-line)"
+        strokeWidth="1.25"
+        opacity="0.58"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 
 function DashboardHero() {
   return (
-    <section className="relative isolate overflow-hidden rounded-lg bg-[linear-gradient(112deg,#0b2a57_0%,#0a4d6d_58%,#075a71_100%)] px-7 py-6 text-white shadow-sm">
-      <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-55" viewBox="0 0 1600 120" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M -80 82 C 180 44, 360 58, 560 78 C 810 103, 955 44, 1160 24 C 1350 6, 1478 26, 1680 12" fill="none" stroke="rgba(255,255,255,0.17)" strokeWidth="1.4" />
-        <path d="M 260 118 C 520 62, 760 95, 1012 84 C 1220 75, 1360 42, 1660 48" fill="none" stroke="rgba(125,211,252,0.18)" strokeWidth="1" />
-        <path d="M 1010 120 C 1115 62, 1288 58, 1440 88 C 1520 104, 1594 105, 1668 92" fill="none" stroke="rgba(45,212,191,0.2)" strokeWidth="1.2" />
-      </svg>
-      <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-normal">Dashboard</h1>
-          <p className="mt-2 text-sm font-medium text-white/90">Track source readiness, content production, and editorial workflow momentum.</p>
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div
+        className="relative isolate overflow-hidden p-6 text-white sm:p-7"
+        style={{ background: 'linear-gradient(108deg, #10233e 0%, #143a7b 50%, #0f6f8f 100%)' }}
+      >
+        <DashboardHeroDecoration />
+        <div className="relative z-10 max-w-3xl">
+          <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Dashboard</h1>
+          <p className="mt-2 text-sm leading-6 text-white/84">Track source readiness, content production, and editorial workflow momentum.</p>
         </div>
-        <HeaderActions />
       </div>
     </section>
   );
