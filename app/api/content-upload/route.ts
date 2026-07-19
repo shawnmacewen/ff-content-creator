@@ -92,6 +92,10 @@ export async function POST(request: NextRequest) {
     const publishedAt = asCleanString(body?.publishedAt) || new Date().toISOString();
     const recommendedAudience = asCleanString(body?.recommendedAudience) || null;
     const sourceUrl = asCleanString(body?.sourceUrl) || null;
+    const thumbnailUrl = asCleanString(body?.thumbnailUrl) || null;
+    const thumbnailStoragePath = asCleanString(body?.thumbnailStoragePath) || null;
+    const thumbnailSource = asCleanString(body?.thumbnailSource) || null;
+    const thumbnailPrompt = asCleanString(body?.thumbnailPrompt) || null;
 
     if (!title) return NextResponse.json({ error: 'Title is required.' }, { status: 400 });
     if (bodyText.length < 40) return NextResponse.json({ error: 'Body text must be at least 40 characters.' }, { status: 400 });
@@ -135,6 +139,12 @@ export async function POST(request: NextRequest) {
       metadata: {
         excerpt: summary || bodyText.slice(0, 220),
         url: sourceUrl,
+        imageUrl: thumbnailUrl,
+        SocialMediaPlatformImages: thumbnailUrl ? { thumbnail: thumbnailUrl } : undefined,
+        socialMediaPlatformImages: thumbnailUrl ? { thumbnail: thumbnailUrl } : undefined,
+        thumbnailStoragePath,
+        thumbnailSource,
+        thumbnailPrompt,
         uploadSource: 'paste',
         originalFilename: filename,
         contentDesignation,

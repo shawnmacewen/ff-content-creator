@@ -12,6 +12,7 @@ import {
   ChevronsUpDown,
   Database,
   FileText,
+  Image as ImageIcon,
   Italic,
   Link2,
   List,
@@ -68,6 +69,10 @@ type UploadDraft = {
   publishedAt: string;
   recommendedAudience: string;
   sourceUrl: string;
+  thumbnailUrl: string;
+  thumbnailStoragePath: string;
+  thumbnailSource: string;
+  thumbnailPrompt: string;
 };
 
 type ScanMode = 'quick' | 'ai';
@@ -97,6 +102,10 @@ const emptyDraft: UploadDraft = {
   publishedAt: new Date().toISOString().slice(0, 10),
   recommendedAudience: '',
   sourceUrl: '',
+  thumbnailUrl: '',
+  thumbnailStoragePath: '',
+  thumbnailSource: '',
+  thumbnailPrompt: '',
 };
 
 async function readJson(response: Response) {
@@ -243,6 +252,8 @@ export default function ContentUploadPage() {
   const [activeScanMode, setActiveScanMode] = useState<ScanMode | null>(null);
   const [lastScan, setLastScan] = useState<ScanResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [creatingThumbnail, setCreatingThumbnail] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -296,6 +307,10 @@ export default function ContentUploadPage() {
     { label: 'recommended_audience', value: draft.recommendedAudience || 'Not generated' },
     { label: 'metadata.excerpt', value: draft.summary || 'Generated on scan' },
     { label: 'metadata.url', value: draft.sourceUrl || 'Not provided' },
+    { label: 'metadata.imageUrl', value: draft.thumbnailUrl || 'Not provided' },
+    { label: 'metadata.SocialMediaPlatformImages.thumbnail', value: draft.thumbnailUrl || 'Not provided' },
+    { label: 'metadata.thumbnailStoragePath', value: draft.thumbnailStoragePath || 'Not provided' },
+    { label: 'metadata.thumbnailSource', value: draft.thumbnailSource || 'Not provided' },
     { label: 'metadata.uploadSource', value: 'paste' },
     { label: 'metadata.originalFilename', value: draft.filename || 'Generated on scan' },
     { label: 'metadata.extraPropertiesSelected.Format', value: 'Custom Content' },
@@ -359,6 +374,60 @@ export default function ContentUploadPage() {
       toast.error(error?.message || 'Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const applyThumbnail = (thumbnail: any) => {
+    setDraft((value) => ({
+      ...value,
+      thumbnailUrl: String(thumbnail?.url || ''),
+      thumbnailStoragePath: String(thumbnail?.path || ''),
+      thumbnailSource: String(thumbnail?.source || ''),
+      thumbnailPrompt: String(thumbnail?.prompt || value.thumbnailPrompt || ''),
+    }));
+  };
+
+  const uploadThumbnail = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingThumbnail(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/content-upload/thumbnail/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const body = await readJson(response);
+      applyThumbnail(body.thumbnail);
+      toast.success('Thumbnail uploaded');
+    } catch (error: any) {
+      toast.error(error?.message || 'Thumbnail upload failed');
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  const createAiThumbnail = async () => {
+    setCreatingThumbnail(true);
+    try {
+      const response = await fetch('/api/content-upload/thumbnail/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draft.title,
+          summary: draft.summary,
+          bodyText: draft.bodyText,
+          tags: draft.tags,
+          contentDesignation: draft.contentDesignation,
+        }),
+      });
+      const body = await readJson(response);
+      applyThumbnail(body.thumbnail);
+      toast.success('AI thumbnail created');
+    } catch (error: any) {
+      toast.error(error?.message || 'AI thumbnail failed');
+    } finally {
+      setCreatingThumbnail(false);
     }
   };
 
@@ -670,6 +739,12 @@ export default function ContentUploadPage() {
                   >
                     Advanced Schema
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="images"
+                    className="ml-7 h-auto flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-slate-500 shadow-none transition data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none"
+                  >
+                    Images
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="source-details" className="mt-5">
@@ -770,6 +845,90 @@ export default function ContentUploadPage() {
                   <div className="mt-4 space-y-2">
                     <Label htmlFor="advanced-body">Body text</Label>
                     <Textarea id="advanced-body" value={draft.bodyText} readOnly className="max-h-[260px] min-h-36 resize-y overflow-y-auto border-slate-200 bg-slate-50 text-sm leading-6 shadow-sm [scrollbar-color:#0f766e_#e2e8f0] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-teal-700 [&::-webkit-scrollbar-track]:bg-slate-200 [&::-webkit-scrollbar]:w-2" />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="images" className="mt-5">
+                  <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                      <div className="aspect-video w-full bg-slate-100">
+                        {draft.thumbnailUrl ? (
+                          <div
+                            className="h-full w-full bg-cover bg-center"
+                            style={{ backgroundImage: `url("${draft.thumbnailUrl.replace(/"/g, '\\"')}")` }}
+                            role="img"
+                            aria-label="Content thumbnail preview"
+                          />
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-500">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-md bg-white text-slate-500 shadow-sm">
+                              <ImageIcon className="h-6 w-6" />
+                            </span>
+                            <div className="text-sm font-semibold">No thumbnail selected</div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-t border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">{draft.thumbnailUrl ? 'Thumbnail ready' : 'Thumbnail preview'}</div>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Thumbnails are stored as 1200x675 WebP files and saved with the source content metadata.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-md border border-slate-200 bg-white p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                            <UploadCloud className="h-5 w-5" />
+                          </span>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">Upload thumbnail</div>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">PNG, JPG, JPEG, or WebP. Maximum 5 MB.</p>
+                          </div>
+                        </div>
+                        <Label className="mt-4 inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+                          {uploadingThumbnail ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                          {uploadingThumbnail ? 'Uploading...' : 'Choose image'}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            className="sr-only"
+                            disabled={uploadingThumbnail}
+                            onChange={(event) => {
+                              void uploadThumbnail(event.target.files?.[0]);
+                              event.currentTarget.value = '';
+                            }}
+                          />
+                        </Label>
+                      </div>
+
+                      <div className="rounded-md border border-violet-200 bg-violet-50/60 p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                            <Sparkles className="h-5 w-5" />
+                          </span>
+                          <div>
+                            <div className="text-sm font-bold text-slate-900">Create AI Thumbnail</div>
+                            <p className="mt-1 text-xs leading-5 text-slate-600">Generates a 16:9 editorial image from the title, summary, tags, and source text.</p>
+                          </div>
+                        </div>
+                        <Button type="button" onClick={createAiThumbnail} disabled={creatingThumbnail || !draft.title.trim()} className="mt-4 h-10 gap-2 bg-violet-600 font-semibold hover:bg-violet-700">
+                          {creatingThumbnail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                          {creatingThumbnail ? 'Creating...' : 'Create AI Thumbnail'}
+                        </Button>
+                      </div>
+
+                      {draft.thumbnailUrl ? (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm">
+                          <div className="flex items-center gap-2 font-semibold text-emerald-800">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Thumbnail attached
+                          </div>
+                          <div className="mt-2 break-all text-xs leading-5 text-emerald-700">{draft.thumbnailUrl}</div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
