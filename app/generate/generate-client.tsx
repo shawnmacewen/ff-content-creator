@@ -1476,7 +1476,7 @@ export default function GeneratePage() {
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source Selection</span>
                     {activeWorkflowStep === 3 ? (
                       <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Editing</span>
                     ) : null}
@@ -1625,7 +1625,8 @@ export default function GeneratePage() {
                   <BadgeCheck className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="text-xl font-semibold leading-tight text-slate-950">Generated Output</h2>
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Generated Output</div>
+                  <h2 className="mt-1 text-xl font-semibold leading-tight text-slate-950">Preview Content</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Review the campaign as a connected set of channel-ready assets.</p>
                 </div>
               </div>
