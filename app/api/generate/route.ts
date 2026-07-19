@@ -224,7 +224,7 @@ export async function POST(req: Request) {
     const generatedImageCount = Object.keys(images).length;
     if (generatedImageCount > 0) {
       await recordGenerationEvent({
-        tool: 'image-generation',
+        tool: 'generate-content',
         contentType: 'instagram-image',
         category: 'image',
         assetCount: generatedImageCount,
@@ -285,7 +285,7 @@ export async function POST(req: Request) {
 
   if (Object.keys(images).length > 0) {
     await recordGenerationEvent({
-      tool: 'image-generation',
+      tool: 'generate-content',
       contentType: 'instagram-image',
       category: 'image',
       assetCount: Object.keys(images).length,

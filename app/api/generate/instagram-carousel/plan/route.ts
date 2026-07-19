@@ -240,7 +240,7 @@ export async function POST(req: Request) {
   }
 
   await recordGenerationEvent({
-    tool: 'carousel-plan',
+    tool: 'generate-content',
     contentType: 'instagram-carousel-plan',
     category: 'content',
     assetCount: 1,
@@ -257,7 +257,7 @@ export async function POST(req: Request) {
 
   if (masterPlate) {
     await recordGenerationEvent({
-      tool: 'carousel-image',
+      tool: 'generate-content',
       contentType: 'instagram-carousel-master-plate',
       category: 'image',
       assetCount: 1,

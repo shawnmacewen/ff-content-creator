@@ -200,7 +200,7 @@ export async function POST(req: Request) {
   const successfulImages = images.filter((image) => Boolean(image.imageUrl)).length;
   if (successfulImages > 0) {
     await recordGenerationEvent({
-      tool: 'carousel-image',
+      tool: 'generate-content',
       contentType: 'instagram-carousel-slide',
       category: 'image',
       assetCount: successfulImages,

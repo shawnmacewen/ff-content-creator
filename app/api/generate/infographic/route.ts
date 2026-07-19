@@ -40,7 +40,7 @@ async function generateInfographicImage(apiKey: string, prompt: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2',
       prompt,
       size: '1536x1024',
     }),
@@ -81,11 +81,11 @@ export async function POST(req: Request) {
     }
 
     await recordGenerationEvent({
-      tool: 'image-generation',
+      tool: 'generate-content',
       contentType: 'infographic',
       category: 'image',
       assetCount: 1,
-      model: 'gpt-image-1',
+      model: 'gpt-image-2',
       generationGroupId,
       meta: {
         source: 'generate-content-kit',

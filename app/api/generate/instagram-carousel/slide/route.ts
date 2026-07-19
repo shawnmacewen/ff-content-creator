@@ -95,7 +95,7 @@ export async function POST(req: Request) {
 
     if (motifUrl) {
       await recordGenerationEvent({
-        tool: 'carousel-image',
+        tool: 'generate-content',
         contentType: 'instagram-carousel-motif',
         category: 'image',
         assetCount: 1,
@@ -257,7 +257,7 @@ export async function POST(req: Request) {
 
   if (img.imageUrl) {
     await recordGenerationEvent({
-      tool: 'carousel-image',
+      tool: 'generate-content',
       contentType: 'instagram-carousel-slide',
       category: 'image',
       assetCount: 1,

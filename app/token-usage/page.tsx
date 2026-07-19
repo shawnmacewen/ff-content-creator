@@ -67,6 +67,15 @@ function formatNumber(value: number) {
 }
 
 function formatTool(value: string) {
+  const aliases: Record<string, string> = {
+    'image-generation': 'Generate Content',
+    'image-test': 'Generate Content',
+    'carousel-image': 'Generate Content',
+    'carousel-plan': 'Generate Content',
+    'instagram-carousel-image-test': 'Instagram Carousel Image',
+  };
+  if (aliases[value]) return aliases[value];
+
   return value
     .split('-')
     .filter(Boolean)

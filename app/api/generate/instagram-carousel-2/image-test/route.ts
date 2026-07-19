@@ -127,8 +127,8 @@ export async function POST(req: Request) {
 
   if (out.imageUrl) {
     await recordGenerationEvent({
-      tool: 'image-test',
-      contentType: 'instagram-carousel-image-test',
+      tool: 'generate-content',
+      contentType: 'instagram-carousel-image',
       category: 'image',
       assetCount: 1,
       model,
