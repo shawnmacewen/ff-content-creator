@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
     const filename = asCleanString(body?.filename, 'custom-content.txt');
     const publishedAt = asCleanString(body?.publishedAt) || new Date().toISOString();
     const recommendedAudience = asCleanString(body?.recommendedAudience) || null;
+    const sourceUrl = asCleanString(body?.sourceUrl) || null;
 
     if (!title) return NextResponse.json({ error: 'Title is required.' }, { status: 400 });
     if (bodyText.length < 40) return NextResponse.json({ error: 'Body text must be at least 40 characters.' }, { status: 400 });
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       published_at: parsedPublishedAt.toISOString(),
       metadata: {
         excerpt: summary || bodyText.slice(0, 220),
+        url: sourceUrl,
         uploadSource: 'paste',
         originalFilename: filename,
         contentDesignation,

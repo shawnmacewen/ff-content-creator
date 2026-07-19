@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const rawText = normalizeText(body?.text);
+    const sourceUrl = String(body?.sourceUrl || '').trim();
 
     if (rawText.length < 40) {
       return NextResponse.json({ error: 'Paste at least 40 characters before scanning.' }, { status: 400 });
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
         filename: `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) || 'custom-content'}.txt`,
         publishedAt: new Date().toISOString().slice(0, 10),
         recommendedAudience: '',
+        sourceUrl,
       },
       filters,
     });
