@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  FileSearch,
   FileText,
   Grid2X2,
   Instagram,
@@ -34,6 +35,7 @@ import {
   Mail,
   Monitor,
   MoreHorizontal,
+  NotebookText,
   Save,
   Sparkles,
   Smartphone,
@@ -1290,7 +1292,7 @@ export default function GeneratePage() {
               <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
-                    <CheckCircle2 className="h-6 w-6" />
+                    <NotebookText className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
                     <div className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</div>
@@ -1409,7 +1411,7 @@ export default function GeneratePage() {
             <div className="grid min-h-[132px] items-start gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px]">
               <div className="flex min-h-[72px] min-w-0 items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
-                  <FileText className="h-6 w-6" />
+                  <FileSearch className="h-6 w-6" />
                 </span>
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source</div>
