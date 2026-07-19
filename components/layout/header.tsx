@@ -26,6 +26,7 @@ const routeLabels: Record<string, string> = {
   '/audit': 'Content Scan',
   '/settings': 'Workspace',
   '/product-lab': 'Product Lab',
+  '/content-upload': 'Content Upload',
   '/ce-course-creator': 'CE Course Creator',
   '/canadianizer': 'Canadianizer',
 };

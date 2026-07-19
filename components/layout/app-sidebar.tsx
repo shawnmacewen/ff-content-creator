@@ -16,6 +16,7 @@ import {
   Leaf,
   PanelTop,
   Gauge,
+  UploadCloud,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -81,6 +82,11 @@ const contentTypeItems = [
     title: 'Token Usage',
     href: '/token-usage',
     icon: Gauge,
+  },
+  {
+    title: 'Content Upload',
+    href: '/content-upload',
+    icon: UploadCloud,
   },
 ];
 
@@ -186,7 +192,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50">
-            Insights
+            Beta Features
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
