@@ -34,6 +34,7 @@ import { getSourceContentDesignation } from '@/lib/source-content/designation';
 import {
   AlertCircle,
   BadgeCheck,
+  ChartColumn,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -41,9 +42,9 @@ import {
   FileText,
   Grid2X2,
   HelpCircle,
-  Image,
   Instagram,
   Linkedin,
+  ListOrdered,
   Loader2,
   Mail,
   Mails,
@@ -90,10 +91,10 @@ const iconByContentType: Partial<Record<ContentType, ComponentType<{ className?:
   'email-marketing': Mail,
   'email-sequence': Mails,
   newsletter: Newspaper,
-  infographic: Image,
-  'infographic-copy': Image,
+  infographic: ChartColumn,
+  'infographic-copy': ChartColumn,
   article: FileText,
-  faq: BadgeCheck,
+  faq: ListOrdered,
   'video-script': Monitor,
 };
 
