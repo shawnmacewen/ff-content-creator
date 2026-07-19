@@ -1068,15 +1068,90 @@ export default function GeneratePage() {
       </div>
 
       {hasGeneratedOutput ? (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-md"
-            onClick={() => setSetupCollapsed((value) => !value)}
-          >
-            {isSetupCollapsed ? 'Show setup controls' : 'Hide setup controls'}
-          </Button>
+        <div className={cn(
+          'grid gap-3',
+          isSetupCollapsed ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]' : 'justify-items-end'
+        )}>
+          {isSetupCollapsed ? (
+            <>
+              <button
+                type="button"
+                onClick={() => openWorkflowStep(1)}
+                className="flex min-h-[96px] min-w-0 items-center gap-4 rounded-lg border border-violet-100 bg-white/95 p-4 text-left shadow-sm transition hover:border-violet-300 hover:bg-violet-50/30"
+              >
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                  <Sparkles className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Generation Type</span>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold leading-tight text-slate-950">Campaign Kit</h2>
+                    <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-0.5 text-xs font-bold text-violet-700">
+                      {activeTypes.length} selected
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openWorkflowStep(2)}
+                className="flex min-h-[96px] min-w-0 items-center gap-4 rounded-lg border border-cyan-100 bg-white/95 p-4 text-left shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50/30"
+              >
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
+                  <NotebookText className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</span>
+                  <h2 className="mt-1 text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
+                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openWorkflowStep(3)}
+                className="flex min-h-[96px] min-w-0 items-center gap-4 rounded-lg border border-blue-100 bg-white/95 p-4 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-50/30"
+              >
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700">
+                  <FileText className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Source Selection</span>
+                  <h2 className={cn('mt-1 line-clamp-1 text-lg font-semibold leading-tight', selectedArticleTitle ? 'text-slate-950' : 'text-amber-700')}>
+                    {selectedArticleTitle || 'Choose a source article'}
+                  </h2>
+                  {selectedArticleFilename || selectedArticleContentType ? (
+                    <div className="mt-1 flex max-w-full items-center gap-2 overflow-hidden">
+                      {selectedArticleFilename ? (
+                        <span className="min-w-0 truncate text-xs leading-5 text-slate-500">
+                          File: {decodeEntitiesLite(String(selectedArticleFilename))}
+                        </span>
+                      ) : null}
+                      {selectedArticleContentType ? (
+                        <span className={cn('shrink-0 truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5', designationLabelClass(selectedArticleContentType))}>
+                          {selectedArticleContentType}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Select the trusted article to transform into your campaign.</p>
+                  )}
+                </div>
+              </button>
+            </>
+          ) : null}
+          <div className={cn('flex items-start justify-end', isSetupCollapsed && 'lg:min-w-[178px]')}>
+            <Button
+              type="button"
+              variant="outline"
+              className={cn('rounded-md bg-white', isSetupCollapsed && 'h-full min-h-[96px] px-5')}
+              onClick={() => setSetupCollapsed((value) => !value)}
+            >
+              {isSetupCollapsed ? 'Show setup controls' : 'Hide setup controls'}
+            </Button>
+          </div>
         </div>
       ) : null}
 
