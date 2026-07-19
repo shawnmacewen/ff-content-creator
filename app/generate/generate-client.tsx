@@ -904,9 +904,6 @@ export default function GeneratePage() {
     ? Boolean(kitOutputs || hasRenderedKitOutputs || pendingKitCarouselGenerate || isGeneratingKitCarouselImages || isGeneratingKitInfographic)
     : Boolean(generatedContent.trim() || Object.keys(generatedImages).length);
   const activeTypes = mode === 'kit' ? kitTypes : selectedContentTypes;
-  const selectedSourceLabel = selectedSourceIds.length
-    ? `${selectedSourceIds.length} article${selectedSourceIds.length === 1 ? '' : 's'} selected`
-    : 'Choose your article';
   const selectedArticleTitle = detailContent?.title ? decodeEntitiesLite(detailContent.title) : '';
   const selectedArticleSummary = decodeEntitiesLite(
     String(detailContent?.excerpt || normalizedBodyPreview.split(/\n{2,}/)[0] || '')
@@ -1059,9 +1056,9 @@ export default function GeneratePage() {
                 activeWorkflowStep === 1 ? 'border-violet-300 bg-violet-50/20' : 'border-violet-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px_24px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-700 text-white">
                     <Sparkles className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
@@ -1106,23 +1103,25 @@ export default function GeneratePage() {
                     </>
                   ) : null}
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800 lg:justify-self-end"
-                  onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
-                >
-                  <PencilSparklesIcon />
-                  {activeWorkflowStep === 1 ? 'Save' : 'Edit'}
-                </Button>
-                <span className="flex h-6 w-6 items-center justify-center justify-self-start lg:justify-self-end" title={activeTypes.length ? 'Campaign kit ready' : 'Select at least one output'}>
-                  {activeTypes.length ? (
-                    <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 fill-amber-100 text-amber-600" />
-                  )}
-                </span>
+                <div className="flex items-center justify-start gap-3 self-center lg:justify-self-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-[104px] justify-center gap-2 rounded-md border-violet-200 bg-violet-50 font-semibold text-violet-700 hover:bg-violet-100 hover:text-violet-800"
+                    onClick={() => setActiveWorkflowStep(activeWorkflowStep === 1 ? null : 1)}
+                  >
+                    <PencilSparklesIcon />
+                    {activeWorkflowStep === 1 ? 'Save' : 'Edit'}
+                  </Button>
+                  <span className="flex h-6 w-6 items-center justify-center" title={activeTypes.length ? 'Campaign kit ready' : 'Select at least one output'}>
+                    {activeTypes.length ? (
+                      <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 fill-amber-100 text-amber-600" />
+                    )}
+                  </span>
+                </div>
               </div>
               <WorkflowStepBody open={activeWorkflowStep === 1} maxHeightClass="max-h-[1900px]">
                 <div className="p-5">
@@ -1167,7 +1166,7 @@ export default function GeneratePage() {
                   <CardContent className="space-y-4 p-4">
                     <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)] lg:items-center">
                       <div className="flex min-w-0 items-center gap-4">
-                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-700 text-white">
                           <Instagram className="h-6 w-6" />
                         </span>
                         <div className="min-w-0">
@@ -1298,9 +1297,9 @@ export default function GeneratePage() {
                 activeWorkflowStep === 2 ? 'border-cyan-300 bg-cyan-50/20' : 'border-cyan-100'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px_24px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-700 text-white">
                     <NotebookText className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
@@ -1322,19 +1321,21 @@ export default function GeneratePage() {
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Additional options</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800 lg:justify-self-end"
-                  onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
-                >
-                  <PencilSparklesIcon />
-                  {activeWorkflowStep === 2 ? 'Save' : 'Edit'}
-                </Button>
-                <span className="flex h-6 w-6 items-center justify-center justify-self-start lg:justify-self-end" title="Writing guidance ready">
-                  <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
-                </span>
+                <div className="flex items-center justify-start gap-3 self-center lg:justify-self-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-[104px] justify-center gap-2 rounded-md border-cyan-200 bg-cyan-50 font-semibold text-cyan-700 hover:bg-cyan-100 hover:text-cyan-800"
+                    onClick={() => setActiveWorkflowStep(activeWorkflowStep === 2 ? null : 2)}
+                  >
+                    <PencilSparklesIcon />
+                    {activeWorkflowStep === 2 ? 'Save' : 'Edit'}
+                  </Button>
+                  <span className="flex h-6 w-6 items-center justify-center" title="Writing guidance ready">
+                    <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
+                  </span>
+                </div>
               </div>
               <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[720px]">
                 <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)_minmax(280px,1.15fr)]">
@@ -1420,9 +1421,9 @@ export default function GeneratePage() {
               activeWorkflowStep === 3 ? 'border-blue-300 bg-blue-50/20' : 'border-blue-100'
             )}
           >
-            <div className="grid min-h-[132px] items-start gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_104px_24px]">
-              <div className="flex min-h-[72px] min-w-0 items-center gap-4">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700">
+            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-700 text-white">
                   <FileText className="h-6 w-6" />
                 </span>
                 <div className="min-w-0">
@@ -1450,19 +1451,17 @@ export default function GeneratePage() {
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Summary</div>
-                <div className="mt-2 min-h-[64px] space-y-1">
+                <div className="mt-2 space-y-1">
                   {selectedArticleTitle ? (
-                    <p className="line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
+                    <p className="line-clamp-2 text-xs leading-5 text-slate-600">
                       {selectedArticleSummary || 'Summary unavailable for this selected article.'}
                     </p>
-                  ) : (
-                    <p className="min-h-[60px] text-sm font-semibold leading-5 text-amber-700">{selectedSourceLabel}</p>
-                  )}
+                  ) : null}
                   </div>
               </div>
               <div className="min-w-0 border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Article details</div>
-                <div className="mt-2 min-h-[64px] space-y-1 text-sm font-semibold leading-5 text-slate-800">
+                <div className="mt-2 space-y-1 text-sm font-semibold leading-5 text-slate-800">
                   {selectedArticleTitle ? (
                     <>
                       <div>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</div>
@@ -1475,23 +1474,25 @@ export default function GeneratePage() {
                   ) : null}
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-[104px] self-start justify-center gap-2 justify-self-start rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 lg:justify-self-end"
-                onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
-                >
-                  <PencilSparklesIcon />
-                  {activeWorkflowStep === 3 ? 'Save' : 'Edit'}
-                </Button>
-                <span className="flex h-6 w-6 items-center justify-center justify-self-start lg:justify-self-end" title={selectedSourceIds.length ? 'Source article selected' : 'Select a source article'}>
-                  {selectedSourceIds.length ? (
-                    <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 fill-amber-100 text-amber-600" />
-                  )}
-                </span>
+              <div className="flex items-center justify-start gap-3 self-center lg:justify-self-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-[104px] justify-center gap-2 rounded-md border-blue-200 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                  onClick={() => setActiveWorkflowStep(activeWorkflowStep === 3 ? null : 3)}
+                  >
+                    <PencilSparklesIcon />
+                    {activeWorkflowStep === 3 ? 'Save' : 'Edit'}
+                  </Button>
+                  <span className="flex h-6 w-6 items-center justify-center" title={selectedSourceIds.length ? 'Source article selected' : 'Select a source article'}>
+                    {selectedSourceIds.length ? (
+                      <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 fill-amber-100 text-amber-600" />
+                    )}
+                  </span>
+              </div>
             </div>
             <WorkflowStepBody open={activeWorkflowStep === 3} maxHeightClass="max-h-[1050px]">
               <div className="p-3">
@@ -1554,9 +1555,9 @@ export default function GeneratePage() {
           </div>
 
           <div className="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-emerald-200 p-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex flex-col gap-4 border-b border-emerald-200 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white">
                   <BadgeCheck className="h-5 w-5" />
                 </span>
                 <div>
