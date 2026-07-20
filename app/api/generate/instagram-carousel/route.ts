@@ -5,6 +5,7 @@ import { getServerEnv } from '@/lib/env';
 import { mergeGenerationUsages, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
+import { findMissingSourceContentIds, missingSourceContentMessage, normalizeSourceContentIds } from '@/lib/source-content/missing';
 
 function buildSlideImagePrompt(args: {
   theme: {
@@ -77,6 +78,7 @@ async function generateSlideImage(apiKey: string, prompt: string) {
 export async function POST(req: Request) {
   const body = await req.json();
   const { sourceContentIds, slideCount = 6, generationGroupId } = body as { sourceContentIds: string[]; slideCount?: number; generationGroupId?: string };
+  const requestedSourceContentIds = normalizeSourceContentIds(sourceContentIds);
 
   const env = getServerEnv();
   if (!env.OPENAI_API_KEY) {
@@ -84,21 +86,31 @@ export async function POST(req: Request) {
   }
   const supabase = getSupabaseServerClient();
   let sourceText = '';
+  let missingSourceContentCount = 0;
 
-  if (sourceContentIds?.length) {
+  if (requestedSourceContentIds.length) {
     const { data, error } = await supabase
       .from('source_content')
       .select('id,title,author,body_text,body')
-      .in('id', sourceContentIds);
+      .in('id', requestedSourceContentIds);
 
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    const missingSourceContentIds = findMissingSourceContentIds(requestedSourceContentIds, data);
+    missingSourceContentCount = missingSourceContentIds.length;
+    if (missingSourceContentIds.length === requestedSourceContentIds.length) {
+      return new Response(JSON.stringify({
+        error: missingSourceContentMessage(missingSourceContentIds.length, requestedSourceContentIds.length),
+        missingSourceContent: true,
+        missingSourceContentIds,
+      }), { status: 409, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    }
     if (data?.length) {
       sourceText = data.map((c) => `Title: ${c.title}\nAuthor: ${c.author || 'Unknown'}\n\n${getCanonicalBody(c)}`).join('\n\n---\n\n');
     }
   }
 
   if (!sourceText) {
-    return new Response(JSON.stringify({ error: 'No source content selected' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'No available source content selected', missingSourceContent: requestedSourceContentIds.length > 0 }), { status: 400 });
   }
 
   const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
@@ -191,7 +203,9 @@ export async function POST(req: Request) {
     generationGroupId,
     meta: {
       slideCount: slides.length,
-      sourceContentCount: sourceContentIds?.length || 0,
+      sourceContentCount: requestedSourceContentIds.length - missingSourceContentCount,
+      requestedSourceContentCount: requestedSourceContentIds.length,
+      missingSourceContentCount,
       route: 'legacy-carousel',
       ...mergeGenerationUsages([result.usage, themeRes.usage]),
     },

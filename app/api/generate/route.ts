@@ -6,6 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerEnv } from '@/lib/env';
 import type { ContentType, ToneType } from '@/lib/types/content';
 import { getCanonicalBody } from '@/lib/source-content/body';
+import { findMissingSourceContentIds, missingSourceContentMessage, normalizeSourceContentIds } from '@/lib/source-content/missing';
 import { normalizeContentSignals, summarizeSignalsForPrompt } from '@/lib/source-content/signals';
 
 function assessCompliance(text: string) {
@@ -121,14 +122,30 @@ export async function POST(req: Request) {
   const supabase = getSupabaseServerClient();
   let sourceText = 'No source material provided. Create original content based on the user instructions.';
 
-  if (sourceContentIds?.length) {
+  const requestedSourceContentIds = normalizeSourceContentIds(sourceContentIds);
+  let missingSourceContentIds: string[] = [];
+  const sourceWarnings: string[] = [];
+
+  if (requestedSourceContentIds.length) {
     const { data, error } = await supabase
       .from('source_content')
       .select('id,title,author,body_text,body,metadata')
-      .in('id', sourceContentIds);
+      .in('id', requestedSourceContentIds);
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
+
+    missingSourceContentIds = findMissingSourceContentIds(requestedSourceContentIds, data);
+    if (missingSourceContentIds.length === requestedSourceContentIds.length) {
+      return new Response(JSON.stringify({
+        error: missingSourceContentMessage(missingSourceContentIds.length, requestedSourceContentIds.length),
+        missingSourceContent: true,
+        missingSourceContentIds,
+      }), { status: 409, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    }
+    if (missingSourceContentIds.length) {
+      sourceWarnings.push(missingSourceContentMessage(missingSourceContentIds.length, requestedSourceContentIds.length));
     }
 
     if (data?.length) {
@@ -216,7 +233,9 @@ export async function POST(req: Request) {
         mode,
         selectedTypes: assets.map((asset) => asset.type),
         tone,
-        sourceContentCount: sourceContentIds?.length || 0,
+        sourceContentCount: requestedSourceContentIds.length - missingSourceContentIds.length,
+        requestedSourceContentCount: requestedSourceContentIds.length,
+        missingSourceContentCount: missingSourceContentIds.length,
         ...mergeGenerationUsages(generatedAssets.map((asset) => asset.usage)),
       },
     });
@@ -238,7 +257,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ outputs, images, compliance: { ...overall, sectionScores } }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    return new Response(JSON.stringify({ outputs, images, compliance: { ...overall, sectionScores }, warnings: sourceWarnings }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   }
 
   const systemPrompt = buildSystemPrompt(type, tone);
@@ -278,7 +297,9 @@ export async function POST(req: Request) {
     meta: {
       mode,
       tone,
-      sourceContentCount: sourceContentIds?.length || 0,
+      sourceContentCount: requestedSourceContentIds.length - missingSourceContentIds.length,
+      requestedSourceContentCount: requestedSourceContentIds.length,
+      missingSourceContentCount: missingSourceContentIds.length,
       ...normalizeGenerationUsage(result.usage),
     },
   });
@@ -299,5 +320,5 @@ export async function POST(req: Request) {
     });
   }
 
-  return new Response(JSON.stringify({ content: outputText, images, compliance }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  return new Response(JSON.stringify({ content: outputText, images, compliance, warnings: sourceWarnings }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }

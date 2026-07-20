@@ -33,7 +33,12 @@ export async function GET(
     const fallback = MOCK_SOURCE_CONTENT.find((content) => content.id === id);
     if (fallback) return NextResponse.json(fallback);
 
-    return NextResponse.json({ error: 'Source content not found' }, { status: 404 });
+    return NextResponse.json({
+      error: 'Source content not found',
+      missingSourceContent: true,
+      id,
+      message: 'This source content is no longer available. It may have been deleted.',
+    }, { status: 404 });
   }
 
   const canonicalBody = getCanonicalBody(data);

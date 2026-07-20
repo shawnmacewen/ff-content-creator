@@ -5,6 +5,7 @@ import { getServerEnv } from '@/lib/env';
 import { normalizeGenerationUsage, recordGenerationEvent } from '@/lib/generation-events';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { getCanonicalBody } from '@/lib/source-content/body';
+import { findMissingSourceContentIds, missingSourceContentMessage, normalizeSourceContentIds } from '@/lib/source-content/missing';
 
 const ChoiceSchema = z.object({
   label: z.enum(['A', 'B', 'C', 'D']),
@@ -144,9 +145,7 @@ function normalizePackage(input: z.infer<typeof CoursePackageSchema>, sources: R
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const sourceContentIds = Array.isArray(body?.sourceContentIds)
-      ? body.sourceContentIds.map((id: unknown) => String(id)).filter(Boolean)
-      : [];
+    const sourceContentIds = normalizeSourceContentIds(body?.sourceContentIds);
 
     if (sourceContentIds.length < 1 || sourceContentIds.length > MAX_CE_SOURCES) {
       return Response.json({ error: `Select between 1 and ${MAX_CE_SOURCES} source content items.` }, { status: 400 });
@@ -161,6 +160,14 @@ export async function POST(req: Request) {
       .in('id', sourceContentIds);
 
     if (error) return Response.json({ error: error.message }, { status: 500 });
+    const missingSourceContentIds = findMissingSourceContentIds(sourceContentIds, data);
+    if (missingSourceContentIds.length === sourceContentIds.length) {
+      return Response.json({
+        error: missingSourceContentMessage(missingSourceContentIds.length, sourceContentIds.length),
+        missingSourceContent: true,
+        missingSourceContentIds,
+      }, { status: 409 });
+    }
     if (!data?.length) return Response.json({ error: 'Selected source content was not found.' }, { status: 404 });
 
     const sources = data.map(mapSource).filter((source) => source.body.trim().length > 0);
@@ -220,6 +227,8 @@ export async function POST(req: Request) {
       model: env.OPENAI_MODEL,
       meta: {
         sourceContentCount: sources.length,
+        requestedSourceContentCount: sourceContentIds.length,
+        missingSourceContentCount: missingSourceContentIds.length,
         questionCount: coursePackage.questions.length,
         ...normalizeGenerationUsage(result.usage),
       },

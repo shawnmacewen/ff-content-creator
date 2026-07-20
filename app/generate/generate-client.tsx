@@ -301,7 +301,8 @@ export default function GeneratePage() {
     selectedSourceId ? `/api/source-content/${selectedSourceId}` : null,
     fetcher
   );
-  const detailContent = selectedSource?.data ?? selectedSource ?? null;
+  const selectedSourceMissing = Boolean(selectedSourceId && selectedSource?.missingSourceContent);
+  const detailContent = selectedSourceMissing ? null : (selectedSource?.data ?? selectedSource ?? null);
 
   const normalizedBodyPreview = (() => {
     const raw = String(detailContent?.body || detailContent?.bodyText || '');
@@ -339,16 +340,24 @@ export default function GeneratePage() {
   }, []);
 
   const handleOpenSelectedDetails = useCallback(() => {
+    if (selectedSourceMissing) {
+      toast.error('That source content is no longer available.');
+      return;
+    }
     if (!detailContent) {
       toast.error('Select an article first');
       return;
     }
     setDetailOpen(true);
-  }, [detailContent]);
+  }, [detailContent, selectedSourceMissing]);
 
   const handleGenerateSourceTakeaways = useCallback(async () => {
     if (!selectedSourceId) {
       toast.error('Select an article first');
+      return;
+    }
+    if (selectedSourceMissing) {
+      toast.error('That source content is no longer available.');
       return;
     }
 
@@ -374,7 +383,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingSourceTakeaways(false);
     }
-  }, [mutateSelectedSource, selectedSourceId]);
+  }, [mutateSelectedSource, selectedSourceId, selectedSourceMissing]);
 
   const [mode] = useState<GenerationMode>('kit');
 
@@ -888,9 +897,10 @@ export default function GeneratePage() {
   const guidanceContextSummary = visibleGuidanceOptions.length
     ? `${visibleGuidanceOptions.join(', ')}${extraGuidanceOptionCount ? `, +${extraGuidanceOptionCount} more` : ''}`
     : 'No extra preferences';
+  const onlySelectedSourceIsMissing = selectedSourceMissing && selectedSourceIds.length === 1;
   const generateDisabled = mode === 'kit'
-    ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length
-    : isGenerating || !selectedContentTypes.length || !selectedSourceIds.length;
+    ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length || onlySelectedSourceIsMissing
+    : isGenerating || !selectedContentTypes.length || !selectedSourceIds.length || onlySelectedSourceIsMissing;
   const shouldConfirmCampaignRegenerate = mode === 'kit' && hasGeneratedOutput;
   const campaignGenerateLabel = shouldConfirmCampaignRegenerate ? 'Regenerate Campaign' : 'Generate Campaign';
   const campaignGenerateButtonClassName = cn(

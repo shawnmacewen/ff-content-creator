@@ -403,7 +403,11 @@ export default function EchoWritePage() {
 
   const openSourceDetail = async (id: string) => {
     const res = await fetch(`/api/source-content/${id}`);
-    const json = await res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json?.missingSourceContent || json?.error) {
+      toast.error(json?.message || 'That source content is no longer available.');
+      return;
+    }
     // /api/source-content/[id] returns the content object directly (not wrapped).
     setDetailContent(json || null);
 
