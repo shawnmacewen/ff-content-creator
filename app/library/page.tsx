@@ -10,13 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LibraryGrid, LibraryList } from '@/components/library/library-grid';
+import { LibraryColumns, LibraryGrid, LibraryList } from '@/components/library/library-grid';
 import { ContentEditor } from '@/components/library/content-editor';
 import useSWR from 'swr';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
-import { LayoutGrid, List, Search, X } from 'lucide-react';
+import { Columns3, LayoutGrid, List, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/page-header';
 
@@ -27,7 +27,7 @@ export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'columns'>('grid');
   
   // Editor state
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
@@ -208,6 +208,16 @@ export default function LibraryPage() {
               <List className="h-4 w-4" />
               List
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={`h-9 rounded-none gap-2 border-l border-slate-200 px-3 ${viewMode === 'columns' ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' : 'text-slate-600'}`}
+              onClick={() => setViewMode('columns')}
+            >
+              <Columns3 className="h-4 w-4" />
+              Columns
+            </Button>
           </div>
         </div>
       </div>
@@ -226,8 +236,16 @@ export default function LibraryPage() {
           onDelete={handleDelete}
           onCopy={handleCopy}
         />
-      ) : (
+      ) : viewMode === 'list' ? (
         <LibraryList
+          items={filteredContent}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+        />
+      ) : (
+        <LibraryColumns
           items={filteredContent}
           onView={handleView}
           onEdit={handleEdit}
