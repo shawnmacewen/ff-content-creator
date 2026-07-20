@@ -895,7 +895,7 @@ export default function GeneratePage() {
   const shouldConfirmCampaignRegenerate = mode === 'kit' && hasGeneratedOutput;
   const campaignGenerateLabel = shouldConfirmCampaignRegenerate ? 'Regenerate Campaign' : 'Generate Campaign';
   const campaignGenerateButtonClassName = cn(
-    'rounded-md',
+    'rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900',
     shouldConfirmCampaignRegenerate && 'border border-amber-300 bg-amber-500 text-white hover:bg-amber-600'
   );
   const handleCampaignGenerateRequest = () => {
@@ -1113,10 +1113,10 @@ export default function GeneratePage() {
               id="generate-step-1"
               className={cn(
                 'scroll-mt-24 overflow-hidden rounded-lg border bg-card shadow-sm transition-colors',
-                activeWorkflowStep === 1 ? 'border-violet-300 bg-violet-50/20' : 'border-violet-200'
+                activeWorkflowStep === 1 ? 'border-slate-200 bg-violet-50/20' : 'border-slate-200'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-violet-200 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-slate-200 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                     <Sparkles className="h-6 w-6" />
@@ -1137,7 +1137,7 @@ export default function GeneratePage() {
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Create coordinated assets from one trusted article.</p>
                   </div>
                 </div>
-                <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Outputs</div>
                   <div className="mt-2 flex min-h-9 flex-wrap items-center gap-2 overflow-hidden">
                     {visibleOutputTypes.map((type) => {
@@ -1154,7 +1154,7 @@ export default function GeneratePage() {
                     ) : null}
                   </div>
                 </div>
-                <div className="min-w-0 self-start border-t border-violet-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   {hasCampaignContextSettings ? (
                     <>
                       <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Settings</div>
@@ -1224,7 +1224,7 @@ export default function GeneratePage() {
                   />
             
                   {kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel' && includeInstagramCarouselImages ? (
-                <Card className="mt-6 overflow-hidden rounded-lg border-violet-200 bg-white shadow-sm">
+                <Card className="mt-6 overflow-hidden rounded-lg border-slate-200 bg-white shadow-sm">
                   <CardContent className="space-y-4 p-4">
                     <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)] lg:items-center">
                       <div className="flex min-w-0 items-center gap-4">
@@ -1356,10 +1356,10 @@ export default function GeneratePage() {
               id="generate-step-2"
               className={cn(
                 'scroll-mt-24 overflow-hidden rounded-lg border bg-card shadow-sm transition-colors',
-                activeWorkflowStep === 2 ? 'border-cyan-300 bg-cyan-50/20' : 'border-cyan-100'
+                activeWorkflowStep === 2 ? 'border-slate-200 bg-cyan-50/20' : 'border-slate-200'
               )}
             >
-              <div className="grid min-h-[94px] items-center gap-4 border-b border-cyan-100 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
+              <div className="grid min-h-[94px] items-center gap-4 border-b border-slate-200 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-700">
                     <NotebookText className="h-6 w-6" />
@@ -1377,11 +1377,11 @@ export default function GeneratePage() {
                     <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
                   </div>
                 </div>
-                <div className="min-w-0 self-start border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Audience</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{audience}</p>
                 </div>
-                <div className="min-w-0 self-start border-t border-cyan-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
@@ -1432,7 +1432,7 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                  <div className="space-y-3 border-t border-slate-200 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <div>
                       <div className="text-sm font-semibold text-slate-950">Audience</div>
                     </div>
@@ -1448,7 +1448,7 @@ export default function GeneratePage() {
                     </select>
                   </div>
 
-                  <div className="space-y-3 border-t border-cyan-100 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                  <div className="space-y-3 border-t border-slate-200 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                     <div>
                       <div className="text-sm font-semibold text-slate-950">Details</div>
                     </div>
@@ -1491,10 +1491,10 @@ export default function GeneratePage() {
             id="generate-step-3"
             className={cn(
               'scroll-mt-24 overflow-hidden rounded-lg border bg-card shadow-sm transition-colors',
-              activeWorkflowStep === 3 ? 'border-blue-300 bg-blue-50/20' : 'border-blue-200'
+              activeWorkflowStep === 3 ? 'border-slate-200 bg-blue-50/20' : 'border-slate-200'
             )}
           >
-            <div className="grid min-h-[94px] items-center gap-4 border-b border-blue-200 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
+            <div className="grid min-h-[94px] items-center gap-4 border-b border-slate-200 bg-white/95 p-4 lg:grid-cols-[minmax(250px,1.1fr)_minmax(280px,1.3fr)_minmax(220px,0.8fr)_136px]">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700">
                   <FileText className="h-6 w-6" />
@@ -1522,7 +1522,7 @@ export default function GeneratePage() {
                   )}
                 </div>
               </div>
-              <div className="min-w-0 self-start border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+              <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Summary</div>
                 <div className="mt-2 space-y-1">
                   {selectedArticleTitle ? (
@@ -1532,7 +1532,7 @@ export default function GeneratePage() {
                   ) : null}
                   </div>
               </div>
-              <div className="min-w-0 self-start border-t border-blue-100 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+              <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
                 <div className="mt-2 space-y-1 text-sm font-semibold leading-5 text-slate-800">
                   {selectedArticleTitle ? (
@@ -1627,8 +1627,8 @@ export default function GeneratePage() {
 
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-emerald-100 bg-[#EFF8FA] shadow-sm transition-colors">
-            <div className="flex flex-col gap-4 border-b border-emerald-100 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-[#EFF8FA] shadow-sm transition-colors">
+            <div className="flex flex-col gap-4 border-b border-slate-200 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
                   <BadgeCheck className="h-6 w-6" />
