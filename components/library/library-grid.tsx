@@ -270,14 +270,14 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.9fr)]">
-      <Card className="overflow-hidden border-border bg-card shadow-sm">
-        <CardHeader className="border-b border-border p-3">
+      <Card className="gap-0 overflow-hidden border-border bg-card py-0 shadow-sm">
+        <CardHeader className="border-b border-border px-3 py-1.5 !pb-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <CardTitle className="text-base">{items.length} saved package{items.length === 1 ? '' : 's'}</CardTitle>
+              <CardTitle className="text-sm">{items.length} saved package{items.length === 1 ? '' : 's'}</CardTitle>
             </div>
-            <Button type="button" variant="outline" size="sm" className="h-8 gap-2 rounded-md border-slate-200 bg-white">
-              <Columns3 className="h-4 w-4" />
+            <Button type="button" variant="outline" size="sm" className="h-7 gap-2 rounded-md border-slate-200 bg-white px-2.5 text-xs">
+              <Columns3 className="h-3.5 w-3.5" />
               Columns
             </Button>
           </div>
@@ -358,17 +358,17 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
         </CardContent>
       </Card>
 
-      <Card className="border-border bg-card shadow-sm">
-        <CardHeader className="border-b border-border p-3">
+      <Card className="gap-0 border-border bg-card py-0 shadow-sm">
+        <CardHeader className="border-b border-border px-3 py-1.5 !pb-1.5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-base">Package preview</CardTitle>
+              <CardTitle className="text-sm">Package preview</CardTitle>
             </div>
             {selectedItem ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
