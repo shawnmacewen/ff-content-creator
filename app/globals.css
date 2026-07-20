@@ -171,6 +171,46 @@
   }
 }
 
+.app-main-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--primary) 70%, var(--muted-foreground)) var(--muted);
+}
+
+.app-main-scrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.app-main-scrollbar::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-left: 1px solid var(--border);
+}
+
+.app-main-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  border: 3px solid var(--muted);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--primary) 72%, white 28%),
+      color-mix(in oklch, var(--primary) 84%, var(--foreground) 16%)
+    );
+}
+
+.app-main-scrollbar::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--primary) 84%, white 16%),
+      color-mix(in oklch, var(--primary) 92%, var(--foreground) 8%)
+    );
+}
+
+.app-main-scrollbar::-webkit-scrollbar-corner {
+  background: var(--muted);
+}
+
 @keyframes sidebar-slogan-pulse {
   0%,
   100% {

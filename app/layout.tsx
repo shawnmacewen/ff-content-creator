@@ -37,7 +37,7 @@ export default function RootLayout({
             <AppSidebar />
             <SidebarInset className="min-h-0 overflow-hidden bg-background">
               <Header />
-              <main className="min-h-0 flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
+              <main className="app-main-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-scroll px-4 py-5 sm:px-6 lg:px-8">
                 {children}
               </main>
             </SidebarInset>
