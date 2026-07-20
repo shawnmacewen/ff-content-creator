@@ -31,6 +31,7 @@ import {
   Package,
   NotebookPen,
   Clock3,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -298,7 +299,9 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   )}
                 >
                   <span className="hidden xl:flex">
-                    <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')} />
+                    <span className={cn('flex h-4 w-4 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')}>
+                      {selected ? <Check className="h-3 w-3 stroke-[3]" /> : null}
+                    </span>
                   </span>
                   <span className="flex min-w-0 items-start gap-3">
                     <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${meta.iconClassName}`}>
