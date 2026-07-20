@@ -436,7 +436,6 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   </Badge>
                 </div>
                 <h3 className="mt-3 text-lg font-bold leading-tight text-slate-950">{selectedItem.title}</h3>
-                <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{selectedItem.content}</p>
                 <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
                   <Layers3 className="h-4 w-4" />
                   {assetCountLabel}

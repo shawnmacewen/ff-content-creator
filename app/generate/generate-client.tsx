@@ -959,7 +959,7 @@ export default function GeneratePage() {
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const selectedArticleContentType = selectedArticleTitle ? decodeEntitiesLite(getSourceContentDesignation(detailContent)) : '';
   const packageSourceForPreview = generatedPackageSource ?? buildPackageSourceSnapshot(detailContent);
-  const packagePreviewTitle = campaignPackageTitle || packageSourceForPreview?.title || 'Generated content package';
+  const packagePreviewTitle = campaignGeneratedAt ? (campaignPackageTitle || packageSourceForPreview?.title || 'Generated content package') : '--';
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
   const hasCampaignContextSettings = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel';
@@ -1046,11 +1046,6 @@ export default function GeneratePage() {
     : 0;
   const activeCampaignStatus = activeCampaignNode?.status || 'idle';
   const activeCampaignPrefersPhone = activeCampaignNode?.id === 'carousel' || activeCampaignNode?.id === 'social-instagram';
-  const packagePreviewSnippet = (
-    kitOutputs?.find((output) => output.content?.trim())?.content ||
-    selectedArticleSummary ||
-    'Generated package details will appear here after the campaign is created.'
-  ).trim();
   const packageAssetCountLabel = `${campaignOutputNodes.length || 0} Assets`;
   const goToCampaignNode = (nodeId: string) => {
     setKitOutputTab(nodeId as ContentType | 'carousel');
@@ -2084,19 +2079,8 @@ export default function GeneratePage() {
                   'overflow-hidden rounded-lg border border-slate-200 bg-white transition-all duration-300 ease-in-out',
                   isReviewPanelOpen ? 'p-4 opacity-100' : 'hidden'
                 )}>
-	                  <div className="mb-3 flex justify-end">
-	                    <Button
-	                      type="button"
-	                      variant="outline"
-	                      size="icon"
-	                      className="h-8 w-8 rounded-md"
-	                      onClick={() => setIsReviewPanelOpen(false)}
-	                    >
-	                      <ChevronRight className="h-4 w-4" />
-	                    </Button>
-	                  </div>
-	                  <div className={cn(
-	                    'transition-[opacity,transform] duration-300 ease-in-out',
+		                  <div className={cn(
+		                    'transition-[opacity,transform] duration-300 ease-in-out',
 	                    isReviewPanelOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-6 opacity-0'
 	                  )}>
 	                  <div className="mb-4 grid grid-cols-2 gap-1 border-b border-slate-200 text-sm font-semibold">
@@ -2176,8 +2160,7 @@ export default function GeneratePage() {
 			                              <RefreshCw className={cn('h-4 w-4', isGeneratingPackageTitle && 'animate-spin')} />
 			                            </Button>
 			                          </div>
-			                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
-		                          <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+			                          <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
 		                            <Layers3 className="h-4 w-4" />
 		                            {packageAssetCountLabel}
 		                          </div>
