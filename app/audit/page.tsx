@@ -661,32 +661,20 @@ export default function AuditPage() {
                   <div>{scanRunningDetail}</div>
                 </div>
               ) : !result ? (
-                <div className="grid min-h-[240px] items-center gap-8 rounded-lg border border-dashed border-blue-200 bg-white p-8 lg:grid-cols-[minmax(220px,0.35fr)_minmax(280px,0.45fr)_minmax(320px,0.75fr)]">
-                  <div className="flex justify-center lg:justify-end">
-                    <div className="relative flex h-28 w-28 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                      <FileSearch className="h-16 w-16" />
-                      <Sparkles className="absolute -right-2 top-8 h-4 w-4 text-blue-300" />
-                      <Sparkles className="absolute -left-3 bottom-6 h-4 w-4 text-blue-300" />
-                    </div>
+                <div className="flex min-h-[360px] flex-col items-center justify-center gap-5 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                    <FileSearch className="h-14 w-14" />
                   </div>
-                  <div className="text-center lg:text-left">
+                  <div>
                     <div className="text-lg font-semibold text-slate-950">Run a search to review coverage</div>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">Matching content, coverage signals, and update opportunities will appear here.</p>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Matching content, coverage signals, and update opportunities will appear here.</p>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
-                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm font-semibold text-blue-700">
-                      <Search className="h-5 w-5" />
-                      Exact matches
-                    </span>
-                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-center text-sm font-semibold text-cyan-700">
-                      <FileSearch className="h-5 w-5" />
-                      Coverage signals
-                    </span>
-                    <span className="flex min-h-14 items-center justify-center gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700">
-                      <CheckCircle2 className="h-5 w-5" />
-                      Update opportunities
-                    </span>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <span className="rounded-md border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700">Exact matches</span>
+                    <span className="rounded-md border border-cyan-200 bg-cyan-50 px-5 py-3 text-sm font-semibold text-cyan-700">Coverage signals</span>
+                    <span className="rounded-md border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">Update opportunities</span>
                   </div>
+                  <p className="text-sm text-slate-500">Results will appear here without leaving this page.</p>
                 </div>
               ) : null}
 
@@ -784,9 +772,6 @@ export default function AuditPage() {
                 </div>
               ))}
 
-              {!loading && !result ? (
-                <p className="text-center text-sm text-slate-500">Results update here without leaving the page.</p>
-              ) : null}
             </div>
             </section>
           </div>
