@@ -159,8 +159,8 @@ export function LibraryGrid({ items, onView, onEdit, onDelete, onCopy }: Library
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${savedMeta.iconClassName}`}>
-                    <ToolIcon className="h-4 w-4" />
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${savedMeta.iconClassName}`}>
+                    <ToolIcon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-sm font-medium leading-tight line-clamp-2">
@@ -301,8 +301,8 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                     <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')} />
                   </span>
                   <span className="flex min-w-0 items-start gap-3">
-                    <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
-                      <ToolIcon className="h-7 w-7" />
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${meta.iconClassName}`}>
+                      <ToolIcon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-slate-950">{item.title}</span>
