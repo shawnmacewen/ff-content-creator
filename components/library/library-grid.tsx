@@ -271,20 +271,28 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.9fr)]">
       <Card className="gap-0 overflow-hidden border-border bg-card py-0 shadow-sm">
-        <CardHeader className="border-b border-border px-3 py-1.5 !pb-1.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <CardHeader className="border-b border-border px-4 py-2.5 !pb-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-sm">{items.length} saved package{items.length === 1 ? '' : 's'}</CardTitle>
+              <CardTitle className="text-sm font-bold">{items.length} package{items.length === 1 ? '' : 's'}</CardTitle>
             </div>
-            <Button type="button" variant="outline" size="sm" className="h-7 gap-2 rounded-md border-slate-200 bg-white px-2.5 text-xs">
-              <Columns3 className="h-3.5 w-3.5" />
-              Columns
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" className="h-8 gap-2 rounded-md border-slate-200 bg-white px-3 text-xs font-semibold">
+                <Clock3 className="h-3.5 w-3.5" />
+                Sort: Newest
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="h-8 gap-2 rounded-md border-slate-200 bg-white px-3 text-xs font-semibold">
+                <Columns3 className="h-3.5 w-3.5" />
+                Columns
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="grid grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] border-b border-border bg-slate-50/80 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 max-xl:hidden">
-            <span />
+            <span className="flex items-center">
+              <span className="h-4 w-4 rounded border border-slate-300 bg-white" />
+            </span>
             <span>Package</span>
             <span>Created by</span>
             <span>Package type</span>
@@ -307,8 +315,8 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   onClick={() => setSelectedId(item.id)}
                   onDoubleClick={() => onView(item)}
                   className={cn(
-                    'grid w-full grid-cols-1 gap-2 px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
-                    selected && 'bg-blue-50/70 hover:bg-blue-50'
+                    'grid w-full grid-cols-1 gap-2 border-l-2 border-transparent px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
+                    selected && 'border-blue-600 bg-blue-50/70 hover:bg-blue-50'
                   )}
                 >
                   <span className="hidden xl:flex">
@@ -359,10 +367,10 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
       </Card>
 
       <Card className="gap-0 border-border bg-card py-0 shadow-sm">
-        <CardHeader className="border-b border-border px-3 py-1.5 !pb-1.5">
+        <CardHeader className="px-5 pb-0 pt-5 !pb-0">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-sm">Package preview</CardTitle>
+              <CardTitle className="text-sm font-bold">Package preview</CardTitle>
             </div>
             {selectedItem ? (
               <DropdownMenu>
@@ -391,20 +399,23 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
           </div>
         </CardHeader>
         {selectedItem && selectedMeta ? (
-          <CardContent className="space-y-5 p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={selectedMeta.badgeClassName}>
-                <SelectedToolIcon className="h-3.5 w-3.5" />
-                {selectedMeta.tool}
-              </Badge>
-              <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
-                {selectedMeta.assetScope}
-              </Badge>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-bold leading-tight text-slate-950">{selectedItem.title}</h3>
-              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{selectedItem.content}</p>
+          <CardContent className="space-y-5 p-5 pt-4">
+            <div className="flex items-start gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${selectedMeta.iconClassName}`}>
+                <SelectedToolIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className={selectedMeta.badgeClassName}>
+                    {selectedMeta.tool}
+                  </Badge>
+                  <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                    {selectedMeta.assetScope}
+                  </Badge>
+                </div>
+                <h3 className="mt-3 text-lg font-bold leading-tight text-slate-950">{selectedItem.title}</h3>
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{selectedItem.content}</p>
+              </div>
             </div>
 
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
