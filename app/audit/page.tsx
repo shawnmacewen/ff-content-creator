@@ -186,10 +186,6 @@ export default function AuditPage() {
       />
 
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-950">Choose how to scan</h2>
-          <p className="mt-1 text-sm text-slate-500">Use exact matching or let AI analyze meaning and coverage.</p>
-        </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <button
             type="button"
