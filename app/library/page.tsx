@@ -16,7 +16,7 @@ import useSWR from 'swr';
 import { mapGeneratedContentRows } from '@/lib/mappers/generated-content';
 import { CONTENT_TYPES } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
-import { Columns3, LayoutGrid, List, Search, X } from 'lucide-react';
+import { Box, Folder, Globe2, Columns3, LayoutGrid, List, Search, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/page-header';
 
@@ -52,6 +52,22 @@ export default function LibraryPage() {
 
   const content = mapGeneratedContentRows(data?.data || []);
   const filteredContent = content;
+  const savedMetrics = useMemo(() => {
+    const combinedText = (item: GeneratedContent) => {
+      const versionNotes = item.versions.map((version) => version.note || '').join(' ');
+      return `${item.title} ${item.type} ${item.prompt} ${versionNotes}`.toLowerCase();
+    };
+    const campaignKits = content.filter((item) => /\b(campaign|kit)\b/i.test(combinedText(item))).length;
+    const bilingualPairs = content.filter((item) => combinedText(item).includes('canadianizer')).length;
+    const singleAssets = Math.max(0, content.length - campaignKits - bilingualPairs);
+
+    return [
+      { label: 'saved packages', value: content.length, icon: Folder, className: 'bg-blue-50 text-blue-700 border-blue-100' },
+      { label: 'campaign kits', value: campaignKits, icon: Sparkles, className: 'bg-violet-50 text-violet-700 border-violet-100' },
+      { label: 'single assets', value: singleAssets, icon: Box, className: 'bg-cyan-50 text-cyan-700 border-cyan-100' },
+      { label: 'bilingual pairs', value: bilingualPairs, icon: Globe2, className: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+    ];
+  }, [content]);
 
   const handleView = useCallback((item: GeneratedContent) => {
     setSelectedContent(item);
@@ -149,7 +165,7 @@ export default function LibraryPage() {
           />
         </div>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[160px] bg-muted/50">
               <SelectValue placeholder="All types" />
@@ -169,6 +185,23 @@ export default function LibraryPage() {
               <X className="h-4 w-4" />
             </Button>
           )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {savedMetrics.map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 shadow-sm">
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${metric.className}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="leading-none">
+                    <span className="block text-sm font-bold text-slate-950">{metric.value}</span>
+                    <span className="block text-[10px] font-medium leading-3 text-slate-500">{metric.label}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
 
           <div className="ml-auto inline-flex overflow-hidden rounded-md border border-slate-200 bg-white">
             <Button
