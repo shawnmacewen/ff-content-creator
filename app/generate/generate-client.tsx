@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, type ComponentType, type ReactNode } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, type ComponentType, type ReactNode } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -874,13 +874,11 @@ export default function GeneratePage() {
   const selectedArticleTags = Array.isArray(detailContent?.tags)
     ? (detailContent.tags as unknown[]).map((tag: unknown) => decodeEntitiesLite(String(tag))).filter(Boolean)
     : [];
+  const visibleSelectedArticleTags = selectedArticleTags.slice(0, 3);
+  const overflowSelectedArticleTagCount = Math.max(0, selectedArticleTags.length - visibleSelectedArticleTags.length);
   const selectedArticleFilename = getSourceFilename(detailContent);
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const selectedArticleContentType = selectedArticleTitle ? decodeEntitiesLite(getSourceContentDesignation(detailContent)) : '';
-  const selectedArticleDetailParts = [
-    selectedArticleContentType,
-    ...selectedArticleTags,
-  ].filter(Boolean);
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
   const hasCampaignContextSettings = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel';
@@ -1545,14 +1543,33 @@ export default function GeneratePage() {
                 <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
                 <div className="mt-2 space-y-1 text-sm font-semibold leading-5 text-slate-800">
                   {selectedArticleTitle ? (
-                    <>
-                      <div>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</div>
-                      {selectedArticleDetailParts.length ? (
-                        <div className="line-clamp-2 pt-1 text-xs font-medium leading-5 text-slate-600">
-                          {selectedArticleDetailParts.join(' · ')}
+                    <div className="min-w-0 space-y-1.5">
+                      <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-5 text-slate-800">
+                        <span>{selectedArticlePublishedAt ? formatSourceDate(selectedArticlePublishedAt) : 'Date unavailable'}</span>
+                        {selectedArticleContentType ? (
+                          <>
+                            <span className="text-slate-400">·</span>
+                            <span className="min-w-0 truncate">{selectedArticleContentType}</span>
+                          </>
+                        ) : null}
+                      </div>
+                      {visibleSelectedArticleTags.length ? (
+                        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs font-medium leading-5 text-slate-600">
+                          {visibleSelectedArticleTags.map((tag, index) => (
+                            <Fragment key={`${tag}-${index}`}>
+                              {index ? <span className="shrink-0 text-slate-400">·</span> : null}
+                              <span className="min-w-0 truncate">{tag}</span>
+                            </Fragment>
+                          ))}
+                          {overflowSelectedArticleTagCount ? (
+                            <>
+                              <span className="shrink-0 text-slate-400">·</span>
+                              <span className="shrink-0 text-slate-500">+{overflowSelectedArticleTagCount}</span>
+                            </>
+                          ) : null}
                         </div>
                       ) : null}
-                    </>
+                    </div>
                   ) : null}
                 </div>
               </div>

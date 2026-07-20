@@ -227,8 +227,9 @@ export function SelectedArticlePreview({
   const takeawayStatus = detailContent?.takeawayStatus || article.takeawayStatus || null;
   const paragraphs = getBodyParagraphs(article, bodyPreview);
   const tags = Array.isArray(detailContent?.tags || article.tags) ? (detailContent?.tags || article.tags) : [];
-  const visibleTags: string[] = tags.map((tag: unknown) => decodeEntities(String(tag))).filter(Boolean).slice(0, 4);
-  const overflowTagCount = Math.max(0, tags.length - visibleTags.length);
+  const decodedTags: string[] = tags.map((tag: unknown) => decodeEntities(String(tag))).filter(Boolean);
+  const visibleTags = decodedTags.slice(0, 3);
+  const overflowTagCount = Math.max(0, decodedTags.length - visibleTags.length);
   const contentSignals = normalizeSignals(detailContent?.contentSignals || article.contentSignals);
   const cleanBodyLength = cleanText(bodyPreview || String(article?.bodyText || article?.body || '')).length;
   const takeawaysUnavailable = !takeaways.length && (takeawayStatus?.status === 'skipped_short_body' || cleanBodyLength < 100);
@@ -499,19 +500,19 @@ export function SelectedArticlePreview({
         </div>
 
         <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-slate-200 pb-3 text-sm text-slate-600">
+          <div className="flex items-center gap-x-4 overflow-hidden whitespace-nowrap border-b border-slate-200 pb-3 text-sm text-slate-600">
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-primary" />
               {formatDate(publishedAt)}
             </span>
-            {filename ? <span className="break-all text-slate-500">File: {filename}</span> : null}
+            {filename ? <span className="min-w-0 truncate text-slate-500">File: {filename}</span> : null}
             {visibleTags.map((tag) => (
-              <Badge key={tag} variant="outline" className={cn('rounded-full text-xs font-normal', tagLabelClass(tag))}>
+              <Badge key={tag} variant="outline" className={cn('shrink-0 rounded-full text-xs font-normal', tagLabelClass(tag))}>
                 {tag}
               </Badge>
             ))}
             {overflowTagCount ? (
-              <Badge variant="outline" className={cn('rounded-full text-xs font-normal', overflowLabelClass())}>
+              <Badge variant="outline" className={cn('shrink-0 rounded-full text-xs font-normal', overflowLabelClass())}>
                 +{overflowTagCount}
               </Badge>
             ) : null}
