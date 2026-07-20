@@ -52,6 +52,7 @@ import {
   Monitor,
   Newspaper,
   NotebookText,
+  RefreshCw,
   Save,
   Sparkles,
   Smartphone,
@@ -139,6 +140,24 @@ function getSourceFilename(article: any) {
   const meta = parseSourceMetadata(article);
   const extra = meta?.extraProperties || meta?.raw?.extraProperties || {};
   return extra?.BasContentFilename || extra?.basContentFilename || article?.externalId || null;
+}
+
+type GeneratedPackageSourceSnapshot = {
+  title: string;
+  summary: string;
+  filename: string;
+  designation: string;
+};
+
+function buildPackageSourceSnapshot(article: any): GeneratedPackageSourceSnapshot | null {
+  if (!article?.title) return null;
+
+  return {
+    title: decodeEntitiesLite(String(article.title || '')),
+    summary: decodeEntitiesLite(String(article.excerpt || article.summary || '')).slice(0, 500),
+    filename: getSourceFilename(article) ? decodeEntitiesLite(String(getSourceFilename(article))) : '',
+    designation: decodeEntitiesLite(getSourceContentDesignation(article)),
+  };
 }
 
 function formatSourceDate(value: unknown) {
@@ -443,6 +462,9 @@ export default function GeneratePage() {
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
   const [reviewPanelTab, setReviewPanelTab] = useState<'review' | 'package'>('review');
   const [campaignGeneratedAt, setCampaignGeneratedAt] = useState<string | null>(null);
+  const [generatedPackageSource, setGeneratedPackageSource] = useState<GeneratedPackageSourceSnapshot | null>(null);
+  const [campaignPackageTitle, setCampaignPackageTitle] = useState('');
+  const [isGeneratingPackageTitle, setIsGeneratingPackageTitle] = useState(false);
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
   const [kitOutputStatusOverrides, setKitOutputStatusOverrides] = useState<Partial<Record<ContentType, KitOutputStatus>>>({});
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
@@ -561,14 +583,50 @@ export default function GeneratePage() {
     }
   }, [kitTypes, instagramKitVariant, includeInstagramCarouselImages]);
 
+  const generateCampaignPackageTitle = useCallback(async (sourceOverride?: GeneratedPackageSourceSnapshot | null) => {
+    const source = sourceOverride ?? generatedPackageSource ?? buildPackageSourceSnapshot(detailContent);
+    setIsGeneratingPackageTitle(true);
+
+    try {
+      const response = await fetch('/api/generate/package-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceTitle: source?.title || '',
+          sourceSummary: source?.summary || '',
+          audience,
+          tone,
+          organization: 'Financial services organization',
+          assetTypes: kitTypes.map((type) => CONTENT_TYPE_MAP[type]?.label ?? type),
+          customPrompt,
+          additionalContext,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Package title generation failed');
+
+      const title = String(payload?.title || '').trim();
+      if (title) setCampaignPackageTitle(title);
+    } catch (error: any) {
+      toast.error(error?.message || 'Package title generation failed');
+    } finally {
+      setIsGeneratingPackageTitle(false);
+    }
+  }, [additionalContext, audience, customPrompt, detailContent, generatedPackageSource, kitTypes, tone]);
+
   const handleGenerateKit = useCallback(async () => {
     if (!kitTypes.length) {
       toast.error('Select at least one content type for the kit');
       return;
     }
 
+    const sourceSnapshot = buildPackageSourceSnapshot(detailContent);
+    setGeneratedPackageSource(sourceSnapshot);
+    setCampaignPackageTitle(sourceSnapshot?.title || 'Generated content package');
     setIsGeneratingKit(true);
     setCampaignGeneratedAt(new Date().toISOString());
+    void generateCampaignPackageTitle(sourceSnapshot);
     setKitOutputs(null);
     setKitCarouselProgress(null);
     setIsOutputStoryboardOpen(true);
@@ -761,7 +819,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress, setIsOutputStoryboardOpen]);
+  }, [kitTypes, detailContent, generateCampaignPackageTitle, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress, setIsOutputStoryboardOpen]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -900,6 +958,8 @@ export default function GeneratePage() {
   const selectedArticleFilename = getSourceFilename(detailContent);
   const selectedArticlePublishedAt = detailContent?.publishedAt || detailContent?.published_at;
   const selectedArticleContentType = selectedArticleTitle ? decodeEntitiesLite(getSourceContentDesignation(detailContent)) : '';
+  const packageSourceForPreview = generatedPackageSource ?? buildPackageSourceSnapshot(detailContent);
+  const packagePreviewTitle = campaignPackageTitle || packageSourceForPreview?.title || 'Generated content package';
   const visibleOutputTypes = activeTypes.slice(0, 3);
   const extraOutputCount = Math.max(activeTypes.length - visibleOutputTypes.length, 0);
   const hasCampaignContextSettings = kitTypes.includes('social-instagram') && instagramKitVariant === 'carousel';
@@ -2099,11 +2159,24 @@ export default function GeneratePage() {
 		                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
 		                          <NotebookText className="h-5 w-5" />
 		                        </span>
-		                        <div className="min-w-0">
-		                          <h4 className="text-lg font-bold leading-tight text-slate-950">
-		                            {selectedArticleTitle || 'Generated content package'}
-		                          </h4>
-		                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
+			                        <div className="min-w-0">
+			                          <div className="flex items-start gap-2">
+			                            <h4 className="min-w-0 flex-1 text-lg font-bold leading-tight text-slate-950">
+			                              {packagePreviewTitle}
+			                            </h4>
+			                            <Button
+			                              type="button"
+			                              variant="outline"
+			                              size="icon"
+			                              className="h-8 w-8 shrink-0 rounded-md border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+			                              onClick={() => void generateCampaignPackageTitle(packageSourceForPreview)}
+			                              disabled={isGeneratingPackageTitle}
+			                              title="Generate another package name"
+			                            >
+			                              <RefreshCw className={cn('h-4 w-4', isGeneratingPackageTitle && 'animate-spin')} />
+			                            </Button>
+			                          </div>
+			                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
 		                          <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
 		                            <Layers3 className="h-4 w-4" />
 		                            {packageAssetCountLabel}
@@ -2140,11 +2213,11 @@ export default function GeneratePage() {
 		                          <div className="min-w-0">
 		                            <div className="text-xs font-semibold text-slate-500">Source</div>
 		                            <div className="line-clamp-1 text-sm font-semibold text-blue-700">
-		                              {selectedArticleTitle || 'Selected source article'}
-		                            </div>
-		                            <div className="mt-0.5 line-clamp-1 text-xs text-slate-600">
-		                              {selectedArticleFilename ? decodeEntitiesLite(String(selectedArticleFilename)) : selectedArticleContentType || 'Source details unavailable'}
-		                            </div>
+			                              {packageSourceForPreview?.title || 'Selected source article'}
+			                            </div>
+			                            <div className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+			                              {packageSourceForPreview?.filename || packageSourceForPreview?.designation || 'Source details unavailable'}
+			                            </div>
 		                          </div>
 		                        </div>
 		                      </div>
