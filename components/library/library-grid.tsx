@@ -54,6 +54,45 @@ function contentNotes(item: GeneratedContent) {
   return item.versions.map((version) => version.note || '').filter(Boolean).join(' ');
 }
 
+function categoryForAssetLabel(label: string) {
+  const normalized = label.toLowerCase();
+  if (normalized.includes('linkedin') || normalized.includes('instagram') || normalized === 'x post') return 'Social';
+  if (normalized.includes('newsletter') || normalized.includes('email')) return 'Email';
+  if (normalized.includes('video') || normalized.includes('faq') || normalized.includes('infographic')) return 'Visual';
+  if (normalized.includes('article') || normalized.includes('blog')) return 'Long-form';
+  return 'Content';
+}
+
+function iconForAssetLabel(label: string) {
+  const normalized = label.toLowerCase();
+  if (normalized.includes('linkedin') || normalized.includes('instagram') || normalized === 'x post') return Share2;
+  if (normalized.includes('newsletter') || normalized.includes('email')) return Mail;
+  if (normalized.includes('infographic')) return BarChart;
+  return FileText;
+}
+
+function includedAssetsForItem(item: GeneratedContent, fallbackDetail: string) {
+  const headings = Array.from(item.content.matchAll(/^##\s+(.+)$/gm))
+    .map((match) => String(match[1] || '').trim())
+    .filter(Boolean);
+  const uniqueHeadings = headings.filter((heading, index, array) => (
+    array.findIndex((candidate) => candidate.toLowerCase() === heading.toLowerCase()) === index
+  ));
+  const labels = uniqueHeadings.length ? uniqueHeadings : [CONTENT_TYPE_MAP[item.type]?.label || item.type];
+
+  return labels.map((label) => ({
+    label,
+    detail: uniqueHeadings.length ? categoryForAssetLabel(label) : fallbackDetail,
+    Icon: iconForAssetLabel(label),
+  }));
+}
+
+function firstSourceLabel(item: GeneratedContent) {
+  const firstSourceId = item.sourceContentIds[0];
+  if (!firstSourceId) return 'No linked source';
+  return firstSourceId;
+}
+
 function inferSavedContentMeta(item: GeneratedContent) {
   const notes = contentNotes(item);
   const combined = `${item.title} ${item.type} ${item.prompt} ${notes}`.toLowerCase();
@@ -263,7 +302,6 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
 
   const selectedMeta = selectedItem ? inferSavedContentMeta(selectedItem) : null;
   const SelectedToolIcon = selectedMeta?.Icon || FileText;
-  const selectedTypeInfo = selectedItem ? CONTENT_TYPE_MAP[selectedItem.type] : null;
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.9fr)]">
@@ -351,6 +389,13 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
       <Card className="gap-0 border-border bg-card py-0 shadow-sm">
         {selectedItem && selectedMeta ? (
           <CardContent className="space-y-5 p-5">
+            {(() => {
+              const includedAssets = includedAssetsForItem(selectedItem, selectedMeta.assetDetail);
+              const assetCountLabel = `${includedAssets.length || 0} Asset${includedAssets.length === 1 ? '' : 's'}`;
+              const firstSource = firstSourceLabel(selectedItem);
+
+              return (
+                <>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-sm font-bold">Package preview</CardTitle>
               <DropdownMenu>
@@ -392,23 +437,52 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                 </div>
                 <h3 className="mt-3 text-lg font-bold leading-tight text-slate-950">{selectedItem.title}</h3>
                 <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{selectedItem.content}</p>
+                <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+                  <Layers3 className="h-4 w-4" />
+                  {assetCountLabel}
+                </div>
               </div>
             </div>
 
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Included content</div>
-              <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
-                  {selectedTypeInfo ? <FileText className="h-4 w-4" /> : <SelectedToolIcon className="h-4 w-4" />}
+              <div className="space-y-2">
+                {includedAssets.map((asset) => {
+                  const AssetIcon = asset.Icon;
+                  return (
+                    <div key={asset.label} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                        <AssetIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-950">{asset.label}</div>
+                        <div className="mt-0.5 text-xs text-slate-500">{asset.detail}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-blue-200 bg-blue-50/70 p-3">
+              <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Created from</div>
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+                  <FileText className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-950">{selectedTypeInfo?.label || selectedItem.type}</div>
-                  <div className="mt-0.5 text-xs text-slate-500">{selectedMeta.assetDetail}</div>
+                  <div className="text-xs font-semibold text-slate-500">Source</div>
+                  <div className="line-clamp-1 text-sm font-semibold text-blue-700">
+                    {firstSource}
+                  </div>
+                  <div className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+                    {selectedItem.sourceContentIds.length ? `${selectedItem.sourceContentIds.length} linked source${selectedItem.sourceContentIds.length === 1 ? '' : 's'}` : 'Source details unavailable'}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="grid gap-3 border-t border-slate-200 pt-4 text-sm sm:grid-cols-2">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</div>
                 <div className="mt-1 inline-flex items-center gap-1.5 text-slate-700">
@@ -419,10 +493,6 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
                 <div className="mt-1 text-slate-700">{selectedItem.sourceContentIds.length || 0} linked</div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Versions</div>
-                <div className="mt-1 text-slate-700">{selectedItem.versions.length || 1}</div>
               </div>
             </div>
 
@@ -436,6 +506,9 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                 Reuse
               </Button>
             </div>
+                </>
+              );
+            })()}
           </CardContent>
         ) : null}
       </Card>
