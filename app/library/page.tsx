@@ -19,6 +19,7 @@ import type { GeneratedContent } from '@/lib/types/content';
 import { Box, Folder, Globe2, Columns3, LayoutGrid, List, Search, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/page-header';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function LibraryPage() {
   const [mounted, setMounted] = useState(false);
@@ -62,10 +63,34 @@ export default function LibraryPage() {
     const singleAssets = Math.max(0, content.length - campaignKits - bilingualPairs);
 
     return [
-      { label: 'saved packages', value: content.length, icon: Folder, className: 'bg-blue-50 text-blue-700 border-blue-100' },
-      { label: 'campaign kits', value: campaignKits, icon: Sparkles, className: 'bg-violet-50 text-violet-700 border-violet-100' },
-      { label: 'single assets', value: singleAssets, icon: Box, className: 'bg-cyan-50 text-cyan-700 border-cyan-100' },
-      { label: 'bilingual pairs', value: bilingualPairs, icon: Globe2, className: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+      {
+        label: 'saved packages',
+        value: content.length,
+        icon: Folder,
+        className: 'bg-blue-50 text-blue-700 border-blue-100',
+        tooltip: 'Saved packages are every item currently stored in Saved Content. Use this count to confirm the full library size.',
+      },
+      {
+        label: 'campaign kits',
+        value: campaignKits,
+        icon: Sparkles,
+        className: 'bg-violet-50 text-violet-700 border-violet-100',
+        tooltip: 'Campaign kits are saved items that look like multi-asset campaign work. Use this count to track reusable campaign packages.',
+      },
+      {
+        label: 'single assets',
+        value: singleAssets,
+        icon: Box,
+        className: 'bg-cyan-50 text-cyan-700 border-cyan-100',
+        tooltip: 'Single assets are saved items that are not counted as campaign kits or bilingual pairs. Use this count for standalone drafts and assets.',
+      },
+      {
+        label: 'bilingual pairs',
+        value: bilingualPairs,
+        icon: Globe2,
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        tooltip: 'Bilingual pairs are saved Canadianizer-related items. Use this count to find content with English/French or Canadianized variants.',
+      },
     ];
   }, [content]);
 
@@ -190,15 +215,24 @@ export default function LibraryPage() {
             {savedMetrics.map((metric) => {
               const Icon = metric.icon;
               return (
-                <div key={metric.label} className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 shadow-sm">
-                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${metric.className}`}>
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="leading-none">
-                    <span className="block text-sm font-bold text-slate-950">{metric.value}</span>
-                    <span className="block text-[10px] font-medium leading-3 text-slate-500">{metric.label}</span>
-                  </span>
-                </div>
+                <Tooltip key={metric.label}>
+                  <TooltipTrigger asChild>
+                    <div
+                      tabIndex={0}
+                      aria-label={`${metric.value} ${metric.label}`}
+                      className="flex h-9 cursor-help items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 shadow-sm outline-none transition-colors hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${metric.className}`}>
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-4 text-sm font-bold leading-none text-slate-950">{metric.value}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="center" className="max-w-[280px] text-left leading-5">
+                    <div className="font-semibold capitalize">{metric.label}</div>
+                    <div className="mt-1 text-background/80">{metric.tooltip}</div>
+                  </TooltipContent>
+                </Tooltip>
               );
             })}
           </div>

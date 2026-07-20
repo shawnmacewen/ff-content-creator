@@ -621,15 +621,10 @@ export default function AuditPage() {
             </div>
           </section>
 
-          <div className="space-y-4">
-            {error ? (
-              <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
-            ) : null}
-
-            <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cyan-100 bg-cyan-50 text-cyan-700">
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
                   <FileSearch className="h-5 w-5" />
                 </span>
                 <h2 className="text-lg font-semibold text-slate-950">Scan results</h2>
@@ -646,16 +641,19 @@ export default function AuditPage() {
                 <Button variant="outline" onClick={markNeedsUpdate} disabled={!selectedIds.size}>Mark needs update</Button>
               </div>
             </div>
-            <div className="px-5">
+            <div className="px-5 pt-4">
               <div className="inline-grid grid-cols-3 overflow-hidden rounded-md border border-slate-200 text-sm font-semibold">
-                <button type="button" className="bg-cyan-50 px-8 py-3 text-cyan-700">Matches</button>
-                <button type="button" className="border-l border-slate-200 px-8 py-3 text-slate-600">Coverage insights</button>
-                <button type="button" className="border-l border-slate-200 px-8 py-3 text-slate-600">Update opportunities</button>
+                <button type="button" className="bg-cyan-50 px-6 py-3 text-cyan-700">Matches</button>
+                <button type="button" className="border-l border-slate-200 px-6 py-3 text-slate-600">Coverage insights</button>
+                <button type="button" className="border-l border-slate-200 px-6 py-3 text-slate-600">Update opportunities</button>
               </div>
             </div>
             <div className="space-y-3 p-5">
+              {error ? (
+                <div className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 p-3">{error}</div>
+              ) : null}
               {loading ? (
-                <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-blue-200 text-center text-sm text-slate-500">
+                <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 text-center text-sm text-slate-500">
                   <Loader2 className="h-9 w-9 animate-spin text-blue-700" />
                   <div className="font-semibold text-slate-950">{scanModeLabel} in progress</div>
                   <div>{scanRunningDetail}</div>
@@ -773,7 +771,6 @@ export default function AuditPage() {
               ))}
 
             </div>
-            </section>
           </div>
         </section>
       ) : null}
