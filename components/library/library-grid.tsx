@@ -29,7 +29,7 @@ import {
   Sparkles,
   Globe2,
   Package,
-  ArrowRight,
+  NotebookPen,
   Clock3,
   Columns3,
 } from 'lucide-react';
@@ -289,7 +289,7 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] border-b border-border bg-slate-50/80 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 max-xl:hidden">
+          <div className="grid grid-cols-[44px_minmax(260px,1.6fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(150px,0.8fr)_94px] border-b border-border bg-slate-50/80 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 max-xl:hidden">
             <span className="flex items-center">
               <span className="h-4 w-4 rounded border border-slate-300 bg-white" />
             </span>
@@ -297,7 +297,6 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
             <span>Created by</span>
             <span>Package type</span>
             <span>Contents</span>
-            <span>Status</span>
             <span className="text-right">Action</span>
           </div>
           <div className="divide-y divide-border">
@@ -315,7 +314,7 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   onClick={() => setSelectedId(item.id)}
                   onDoubleClick={() => onView(item)}
                   className={cn(
-                    'grid w-full grid-cols-1 gap-2 border-l-2 border-transparent px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
+                    'grid w-full grid-cols-1 gap-2 border-l-2 border-transparent px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(260px,1.6fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(150px,0.8fr)_94px] xl:items-center',
                     selected && 'border-blue-600 bg-blue-50/70 hover:bg-blue-50'
                   )}
                 >
@@ -323,8 +322,8 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                     <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')} />
                   </span>
                   <span className="flex min-w-0 items-start gap-3">
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
-                      <ToolIcon className="h-4 w-4" />
+                    <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
+                      <ToolIcon className="h-7 w-7" />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-slate-950">{item.title}</span>
@@ -349,14 +348,15 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                     </span>
                     <span>{item.sourceContentIds.length || 0} source{item.sourceContentIds.length === 1 ? '' : 's'}</span>
                   </span>
-                  <span>
-                    <Badge variant="secondary" className={STATUS_COLORS[item.status]}>
-                      {item.status}
-                    </Badge>
-                  </span>
                   <span className="flex items-center justify-end gap-2">
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={(event) => { event.stopPropagation(); onView(item); }}>
-                      <ArrowRight className="h-4 w-4" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-md border-slate-200 bg-white text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                      onClick={(event) => { event.stopPropagation(); onView(item); }}
+                    >
+                      <NotebookPen className="h-4 w-4" />
                     </Button>
                   </span>
                 </button>
