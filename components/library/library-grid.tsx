@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CONTENT_TYPE_MAP, STATUS_COLORS } from '@/lib/content-config';
+import { CONTENT_TYPE_MAP } from '@/lib/content-config';
 import type { GeneratedContent } from '@/lib/types/content';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -216,10 +216,7 @@ export function LibraryGrid({ items, onView, onEdit, onDelete, onCopy }: Library
                   </Badge>
                 ) : null}
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-border">
-                <Badge variant="secondary" className={STATUS_COLORS[item.status]}>
-                  {item.status}
-                </Badge>
+              <div className="flex items-center justify-end pt-2 border-t border-border">
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                 </span>
@@ -417,12 +414,6 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                 </div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
-                <Badge variant="secondary" className={STATUS_COLORS[selectedItem.status]}>
-                  {selectedItem.status}
-                </Badge>
-              </div>
-              <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
                 <div className="mt-1 text-slate-700">{selectedItem.sourceContentIds.length || 0} linked</div>
               </div>
@@ -490,9 +481,6 @@ export function LibraryColumns({ items, onView, onEdit, onDelete, onCopy }: Libr
                     <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
                       <Layers3 className="h-3.5 w-3.5" />
                       {savedMeta.assetScope}
-                    </Badge>
-                    <Badge variant="secondary" className={STATUS_COLORS[item.status]}>
-                      {item.status}
                     </Badge>
                   </div>
 

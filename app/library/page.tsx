@@ -26,8 +26,7 @@ export default function LibraryPage() {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'columns'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'columns'>('list');
   
   // Editor state
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
@@ -42,9 +41,8 @@ export default function LibraryPage() {
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (typeFilter !== 'all') params.set('type', typeFilter);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
     return params.toString();
-  }, [searchQuery, typeFilter, statusFilter]);
+  }, [searchQuery, typeFilter]);
 
   const fetcher = (url: string) => fetch(url).then((r) => r.json());
   const { data, mutate } = useSWR<{ data: GeneratedContent[] }>(
@@ -89,7 +87,6 @@ export default function LibraryPage() {
       body: JSON.stringify({
         title: updatedContent.title,
         content: updatedContent.content,
-        status: updatedContent.status,
         tone: updatedContent.tone,
         prompt: updatedContent.prompt,
         sourceContentIds: updatedContent.sourceContentIds,
@@ -109,10 +106,9 @@ export default function LibraryPage() {
   const handleClearFilters = () => {
     setSearchQuery('');
     setTypeFilter('all');
-    setStatusFilter('all');
   };
 
-  const hasActiveFilters = searchQuery || typeFilter !== 'all' || statusFilter !== 'all';
+  const hasActiveFilters = searchQuery || typeFilter !== 'all';
 
   if (!mounted) {
     return (
@@ -165,19 +161,6 @@ export default function LibraryPage() {
                   {type.label}
                 </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[130px] bg-muted/50">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="review">Review</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
             </SelectContent>
           </Select>
 

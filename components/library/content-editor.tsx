@@ -13,18 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { CONTENT_TYPE_MAP, STATUS_COLORS } from '@/lib/content-config';
-import type { GeneratedContent, ContentStatus } from '@/lib/types/content';
+import { CONTENT_TYPE_MAP } from '@/lib/content-config';
+import type { GeneratedContent } from '@/lib/types/content';
 import { format } from 'date-fns';
 import { History } from 'lucide-react';
 import { generateId } from '@/lib/storage/local-storage';
@@ -46,14 +38,12 @@ export function ContentEditor({
 }: ContentEditorProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [status, setStatus] = useState<ContentStatus>('draft');
   const [showVersions, setShowVersions] = useState(false);
 
   useEffect(() => {
     if (content) {
       setTitle(content.title);
       setBody(content.content);
-      setStatus(content.status);
     }
   }, [content]);
 
@@ -69,7 +59,6 @@ export function ContentEditor({
       ...content,
       title,
       content: body,
-      status,
       updatedAt: new Date().toISOString(),
       versions: hasContentChanged
         ? [
@@ -92,17 +81,12 @@ export function ContentEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <DialogTitle>{isEditing ? 'Edit Content' : 'View Content'}</DialogTitle>
-              <DialogDescription>
-                {typeInfo?.label || content.type} - Created{' '}
-                {format(new Date(content.createdAt), 'MMM d, yyyy')}
-              </DialogDescription>
-            </div>
-            <Badge variant="secondary" className={STATUS_COLORS[content.status]}>
-              {content.status}
-            </Badge>
+          <div className="space-y-1">
+            <DialogTitle>{isEditing ? 'Edit Content' : 'View Content'}</DialogTitle>
+            <DialogDescription>
+              {typeInfo?.label || content.type} - Created{' '}
+              {format(new Date(content.createdAt), 'MMM d, yyyy')}
+            </DialogDescription>
           </div>
         </DialogHeader>
 
@@ -138,23 +122,6 @@ export function ContentEditor({
               )}
             </div>
           </div>
-
-          {isEditing && (
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as ContentStatus)}>
-                <SelectTrigger className="bg-muted/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           <Separator />
 
