@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MomentumChart } from '@/components/dashboard/momentum-chart';
+import { PageBannerHelp } from '@/components/layout/page-banner-help';
 import { getDashboardMetrics } from '@/lib/dashboard/metrics';
 
 export const dynamic = 'force-dynamic';
@@ -170,7 +171,8 @@ function DashboardHero() {
         style={{ background: 'linear-gradient(108deg, #10233e 0%, #143a7b 50%, #0f6f8f 100%)' }}
       >
         <DashboardHeroDecoration />
-        <div className="relative z-10 max-w-3xl">
+        <PageBannerHelp title="Dashboard" />
+        <div className="relative z-10 max-w-3xl pr-11">
           <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Dashboard</h1>
           <p className="mt-2 text-sm leading-6 text-white/84">Track source readiness, content production, and editorial workflow momentum.</p>
         </div>

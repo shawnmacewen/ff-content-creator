@@ -25,6 +25,7 @@ import type { GenerationMode } from '@/components/generator/generation-mode-togg
 import { KitGeneratedOutput, type KitOutputStatus } from '@/components/generator/kit-generated-output';
 import { SelectedArticlePreview } from '@/components/generator/selected-article-preview';
 import { ContentDetail } from '@/components/source-content/content-detail';
+import { PageBannerHelp } from '@/components/layout/page-banner-help';
 
 import { KitContentTypeSelector } from '@/components/generator/kit-content-type-selector';
 import { generateId } from '@/lib/storage/local-storage';
@@ -1080,8 +1081,9 @@ export default function GeneratePage() {
         }}
       >
         <GenerateHeaderDecoration />
+        <PageBannerHelp title="Generate Content" />
         <div className="relative z-10 flex w-full flex-col justify-center gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl pr-11">
             <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">Generate Content</h1>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/85">Turn one trusted article into a coordinated marketing campaign.</p>
           </div>

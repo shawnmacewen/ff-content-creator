@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { PageBannerHelp, type PageBannerHelpContent } from '@/components/layout/page-banner-help';
 
 type HeaderMetric = {
   id?: string;
@@ -19,6 +20,7 @@ type PageHeaderProps = {
   actions?: ReactNode;
   className?: string;
   variant?: 'teal' | 'pink' | 'yellow' | 'violet' | 'emerald' | 'red' | 'azure';
+  help?: PageBannerHelpContent | false;
 };
 
 const headerVariants = {
@@ -172,6 +174,7 @@ export function PageHeader({
   actions,
   className,
   variant = 'teal',
+  help,
 }: PageHeaderProps) {
   const colors = headerVariants[variant];
 
@@ -183,7 +186,8 @@ export function PageHeader({
           style={{ background: colors.background }}
         >
           <PageHeaderDecoration variant={variant} />
-          <div className="relative z-10 flex w-full flex-col justify-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <PageBannerHelp title={title} help={help} />
+          <div className="relative z-10 flex w-full flex-col justify-center gap-4 pr-11 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-3xl">
               <h1 className="text-3xl font-semibold leading-tight tracking-normal text-white">{title}</h1>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/84">{description}</p>

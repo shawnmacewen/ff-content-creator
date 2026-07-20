@@ -22,6 +22,7 @@ import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { PageBannerHelp } from '@/components/layout/page-banner-help';
 
 type EchoWriteSource = {
   id: string;
@@ -204,6 +205,7 @@ function EchoWriteAccentHeader({
   return (
     <header className={`ew-accent-header ew-accent-header--${placement}`}>
       <EchoWriteDecoration template={template} />
+      {placement === 'page' ? <PageBannerHelp title="EchoWrite" /> : null}
       <div className="ew-accent-header__content">{children}</div>
     </header>
   );
@@ -423,7 +425,7 @@ export default function EchoWritePage() {
   return (
     <main className="echowrite-page" data-echowrite-template={ECHOWRITE_TEMPLATE}>
       <EchoWriteAccentHeader placement="page" template={ECHOWRITE_TEMPLATE}>
-        <div>
+        <div className="pr-11">
           <h1>EchoWrite</h1>
           <p>Create accurate, source-backed content.</p>
         </div>
