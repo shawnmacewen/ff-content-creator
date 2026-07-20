@@ -4,7 +4,6 @@ import { Fragment, useState, useEffect, useCallback, useRef, type ComponentType,
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -976,7 +975,7 @@ export default function GeneratePage() {
     selectedArticleSummary ||
     'Generated package details will appear here after the campaign is created.'
   ).trim();
-  const packageAssetScope = campaignOutputNodes.length === 1 ? 'Single asset' : `${campaignOutputNodes.length} assets`;
+  const packageAssetCountLabel = `${campaignOutputNodes.length || 0} Assets`;
   const goToCampaignNode = (nodeId: string) => {
     setKitOutputTab(nodeId as ContentType | 'carousel');
   };
@@ -2108,24 +2107,21 @@ export default function GeneratePage() {
 	                    </>
 	                  ) : (
 	                    <div className="space-y-5">
-	                      <div className="flex items-start gap-3">
-	                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
-	                          <NotebookText className="h-5 w-5" />
-	                        </span>
-	                        <div className="min-w-0">
-	                          <div className="flex flex-wrap items-center gap-2">
-	                            <Badge variant="outline" className="border-cyan-200 bg-cyan-50 text-cyan-700">Generate Content</Badge>
-	                            <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
-	                              <Layers3 className="h-3.5 w-3.5" />
-	                              {packageAssetScope}
-	                            </Badge>
-	                          </div>
-	                          <h4 className="mt-3 text-lg font-bold leading-tight text-slate-950">
-	                            {selectedArticleTitle || 'Generated content package'}
-	                          </h4>
-	                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
-	                        </div>
-	                      </div>
+		                      <div className="flex items-start gap-3">
+		                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+		                          <NotebookText className="h-5 w-5" />
+		                        </span>
+		                        <div className="min-w-0">
+		                          <h4 className="text-lg font-bold leading-tight text-slate-950">
+		                            {selectedArticleTitle || 'Generated content package'}
+		                          </h4>
+		                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
+		                          <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+		                            <Layers3 className="h-4 w-4" />
+		                            {packageAssetCountLabel}
+		                          </div>
+		                        </div>
+		                      </div>
 
 	                      <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
 	                        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Included content</div>
@@ -2141,39 +2137,47 @@ export default function GeneratePage() {
 	                                  <div className="truncate text-sm font-semibold text-slate-950">{node.label}</div>
 	                                  <div className="mt-0.5 text-xs text-slate-500">{node.category}</div>
 	                                </div>
-	                                <Badge variant="outline" className={cn(
-	                                  'ml-auto shrink-0 text-[11px]',
-	                                  node.status === 'complete' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : node.status === 'generating' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-white text-slate-500'
-	                                )}>
-	                                  {node.status === 'complete' ? 'Ready' : node.status === 'generating' ? 'Generating' : 'Pending'}
-	                                </Badge>
-	                              </div>
-	                            );
-	                          })}
-	                        </div>
-	                      </div>
+		                              </div>
+		                            );
+		                          })}
+		                        </div>
+		                      </div>
 
-	                      <div className="grid gap-3 text-sm sm:grid-cols-2">
-	                        <div>
-	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</div>
-	                          <div className="mt-1 inline-flex items-center gap-1.5 text-slate-700">
-	                            <Clock3 className="h-3.5 w-3.5" />
-	                            Current session
-	                          </div>
-	                        </div>
-	                        <div>
-	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
-	                          <div className="mt-1 text-slate-700">{selectedSourceIds.length || 0} linked</div>
-	                        </div>
-	                        <div>
-	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Versions</div>
-	                          <div className="mt-1 text-slate-700">1</div>
-	                        </div>
-	                        <div>
-	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Approved</div>
-	                          <div className="mt-1 text-slate-700">{approvedCampaignCount} of {campaignOutputNodes.length || 0}</div>
-	                        </div>
-	                      </div>
+		                      <div className="rounded-md border border-blue-200 bg-blue-50/70 p-3">
+		                        <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Created from</div>
+		                        <div className="flex items-start gap-3">
+		                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+		                            <FileText className="h-4 w-4" />
+		                          </span>
+		                          <div className="min-w-0">
+		                            <div className="text-xs font-semibold text-slate-500">Source</div>
+		                            <div className="line-clamp-1 text-sm font-semibold text-blue-700">
+		                              {selectedArticleTitle || 'Selected source article'}
+		                            </div>
+		                            <div className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+		                              {selectedArticleFilename ? decodeEntitiesLite(String(selectedArticleFilename)) : selectedArticleContentType || 'Source details unavailable'}
+		                            </div>
+		                          </div>
+		                        </div>
+		                      </div>
+
+		                      <div className="grid gap-3 border-t border-slate-200 pt-4 text-sm sm:grid-cols-3">
+		                        <div>
+		                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</div>
+		                          <div className="mt-1 inline-flex items-center gap-1.5 text-slate-700">
+		                            <Clock3 className="h-3.5 w-3.5" />
+		                            Current session
+		                          </div>
+		                        </div>
+		                        <div>
+		                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
+		                          <div className="mt-1 text-slate-700">{selectedSourceIds.length || 0} linked</div>
+		                        </div>
+		                        <div>
+		                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assets</div>
+		                          <div className="mt-1 text-slate-700">{campaignOutputNodes.length || 0}</div>
+		                        </div>
+		                      </div>
 	                    </div>
 	                  )}
 	                  </div>
