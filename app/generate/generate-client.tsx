@@ -917,6 +917,7 @@ export default function GeneratePage() {
     void handleGenerateKit();
   };
   const hasStartedCampaignRun = mode === 'kit' && (hasGeneratedOutput || isGeneratingKit);
+  const isGeneratedOutputDormant = !hasStartedCampaignRun && generateDisabled;
   const isSetupCollapsed = setupCollapsed && hasStartedCampaignRun;
   const setupTrayClassName = cn(
     'space-y-6 overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out',
@@ -1662,31 +1663,46 @@ export default function GeneratePage() {
 
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-[#EFF8FA] shadow-sm transition-colors">
-            <div className="flex flex-col gap-4 border-b border-slate-200 bg-white/95 p-5 xl:flex-row xl:items-start xl:justify-between">
-              <div className="flex items-start gap-3">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
-                  <BadgeCheck className="h-6 w-6" />
-                </span>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Generated Output</div>
-                  <h2 className="mt-1 text-xl font-semibold leading-tight text-slate-950">Preview Content</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Review the campaign as a connected set of channel-ready assets.</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="text-sm font-semibold text-slate-800">
-                  {generatedCampaignCount} of {campaignOutputNodes.length || 0} generated
-                </div>
-                <div className="h-2 w-36 overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${campaignProgress}%` }} />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-md"
-                  onClick={() => setIsOutputStoryboardOpen((value) => !value)}
-                >
+	          <div
+	            className={cn(
+	              'overflow-hidden rounded-lg border shadow-sm transition-colors',
+	              isGeneratedOutputDormant
+	                ? 'border-slate-200 bg-slate-100/80'
+	                : 'border-slate-200 bg-[#EFF8FA]'
+	            )}
+	            aria-disabled={isGeneratedOutputDormant}
+	          >
+	            <div className={cn(
+	              'flex flex-col gap-4 border-b border-slate-200 p-5 transition-colors xl:flex-row xl:items-start xl:justify-between',
+	              isGeneratedOutputDormant ? 'bg-slate-50/95' : 'bg-white/95'
+	            )}>
+	              <div className="flex items-start gap-3">
+	                <span className={cn(
+	                  'flex h-14 w-14 shrink-0 items-center justify-center rounded-md transition-colors',
+	                  isGeneratedOutputDormant ? 'bg-slate-200 text-slate-400' : 'bg-emerald-100 text-emerald-700'
+	                )}>
+	                  <BadgeCheck className="h-6 w-6" />
+	                </span>
+	                <div>
+	                  <div className={cn('text-[11px] font-bold uppercase tracking-wide', isGeneratedOutputDormant ? 'text-slate-400' : 'text-emerald-700')}>Generated Output</div>
+	                  <h2 className={cn('mt-1 text-xl font-semibold leading-tight', isGeneratedOutputDormant ? 'text-slate-500' : 'text-slate-950')}>Preview Content</h2>
+	                  <p className={cn('mt-1 text-sm', isGeneratedOutputDormant ? 'text-slate-400' : 'text-muted-foreground')}>Review the campaign as a connected set of channel-ready assets.</p>
+	                </div>
+	              </div>
+	              <div className="flex flex-wrap items-center gap-4">
+	                <div className={cn('text-sm font-semibold', isGeneratedOutputDormant ? 'text-slate-400' : 'text-slate-800')}>
+	                  {generatedCampaignCount} of {campaignOutputNodes.length || 0} generated
+	                </div>
+	                <div className={cn('h-2 w-36 overflow-hidden rounded-full', isGeneratedOutputDormant ? 'bg-slate-200' : 'bg-slate-100')}>
+	                  <div className={cn('h-full rounded-full transition-all', isGeneratedOutputDormant ? 'bg-slate-300' : 'bg-emerald-500')} style={{ width: `${campaignProgress}%` }} />
+	                </div>
+	                <Button
+	                  type="button"
+	                  variant="outline"
+	                  className="rounded-md"
+	                  onClick={() => setIsOutputStoryboardOpen((value) => !value)}
+	                  disabled={isGeneratedOutputDormant}
+	                >
                   {isOutputStoryboardOpen ? 'Hide output' : 'Show output'}
                   <ChevronRight className={cn('h-4 w-4 transition-transform', isOutputStoryboardOpen && 'rotate-90')} />
                 </Button>
