@@ -271,13 +271,12 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(360px,0.9fr)]">
       <Card className="overflow-hidden border-border bg-card shadow-sm">
-        <CardHeader className="border-b border-border p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <CardHeader className="border-b border-border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <CardTitle className="text-base">{items.length} saved package{items.length === 1 ? '' : 's'}</CardTitle>
-              <CardDescription className="mt-1 text-xs">Compact list of saved generated work.</CardDescription>
             </div>
-            <Button type="button" variant="outline" size="sm" className="h-9 gap-2 rounded-md border-slate-200 bg-white">
+            <Button type="button" variant="outline" size="sm" className="h-8 gap-2 rounded-md border-slate-200 bg-white">
               <Columns3 className="h-4 w-4" />
               Columns
             </Button>
@@ -308,7 +307,7 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   onClick={() => setSelectedId(item.id)}
                   onDoubleClick={() => onView(item)}
                   className={cn(
-                    'grid w-full grid-cols-1 gap-3 px-4 py-3 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
+                    'grid w-full grid-cols-1 gap-2 px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(220px,1.4fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(130px,0.7fr)_minmax(110px,0.55fr)_86px] xl:items-center',
                     selected && 'bg-blue-50/70 hover:bg-blue-50'
                   )}
                 >
@@ -316,12 +315,11 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                     <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border', selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white')} />
                   </span>
                   <span className="flex min-w-0 items-start gap-3">
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${meta.iconClassName}`}>
                       <ToolIcon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-slate-950">{item.title}</span>
-                      <span className="mt-1 block line-clamp-1 text-xs text-slate-500">{item.content}</span>
                     </span>
                   </span>
                   <span>
@@ -361,11 +359,10 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
       </Card>
 
       <Card className="border-border bg-card shadow-sm">
-        <CardHeader className="border-b border-border p-5">
-          <div className="flex items-start justify-between gap-3">
+        <CardHeader className="border-b border-border p-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <CardTitle className="text-base">Package preview</CardTitle>
-              <CardDescription className="mt-1 text-xs">Selected saved content details.</CardDescription>
             </div>
             {selectedItem ? (
               <DropdownMenu>
