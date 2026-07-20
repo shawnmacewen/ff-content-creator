@@ -4,6 +4,7 @@ import { Fragment, useState, useEffect, useCallback, useRef, type ComponentType,
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -39,10 +40,12 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   FileText,
   Grid2X2,
   HelpCircle,
   Instagram,
+  Layers3,
   Linkedin,
   Loader2,
   Mail,
@@ -423,6 +426,7 @@ export default function GeneratePage() {
   const [approvedKitOutputIds, setApprovedKitOutputIds] = useState<string[]>([]);
   const [isOutputStoryboardOpen, setIsOutputStoryboardOpen] = useState(false);
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false);
+  const [reviewPanelTab, setReviewPanelTab] = useState<'review' | 'package'>('review');
   const [isGeneratingKitInfographic, setIsGeneratingKitInfographic] = useState(false);
   const [kitOutputStatusOverrides, setKitOutputStatusOverrides] = useState<Partial<Record<ContentType, KitOutputStatus>>>({});
   const hasRenderedKitOutputs = Boolean(kitOutputs?.some((output) => output.content?.trim()));
@@ -967,6 +971,12 @@ export default function GeneratePage() {
   const activeCampaignStatus = activeCampaignNode?.status || 'idle';
   const activeCampaignApproved = activeCampaignNode ? approvedKitOutputIds.includes(String(activeCampaignNode.id)) : false;
   const activeCampaignPrefersPhone = activeCampaignNode?.id === 'carousel' || activeCampaignNode?.id === 'social-instagram';
+  const packagePreviewSnippet = (
+    kitOutputs?.find((output) => output.content?.trim())?.content ||
+    selectedArticleSummary ||
+    'Generated package details will appear here after the campaign is created.'
+  ).trim();
+  const packageAssetScope = campaignOutputNodes.length === 1 ? 'Single asset' : `${campaignOutputNodes.length} assets`;
   const goToCampaignNode = (nodeId: string) => {
     setKitOutputTab(nodeId as ContentType | 'carousel');
   };
@@ -2009,73 +2019,165 @@ export default function GeneratePage() {
                           </Button>
                         </div>
                   </div>
-                  <div className={cn(
-                    'transition-[opacity,transform] duration-300 ease-in-out',
-                    isReviewPanelOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-6 opacity-0'
-                  )}>
-                  <div className="mb-4 grid grid-cols-3 gap-2">
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">All {campaignOutputNodes.length}</button>
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Needs review {needsReviewCount}</button>
-                    <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Approved {approvedCampaignCount}</button>
-                  </div>
-                  <div className="mb-4 grid grid-cols-3 gap-1 border-b border-slate-200 text-sm font-semibold">
-                    <button type="button" className="border-b-2 border-blue-600 px-2 py-2 text-blue-700">Checks</button>
-                    <button type="button" className="px-2 py-2 text-muted-foreground">Comments</button>
-                    <button type="button" className="px-2 py-2 text-muted-foreground">Details</button>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'Channel fit', detail: `Optimized for ${activeCampaignNode?.shortLabel || 'selected asset'}.`, score: activeCampaignStatus === 'complete' || activeCampaignApproved ? '92' : 'Pending' },
-                      { label: 'Copy length', detail: 'Within recommended range.', score: activeCampaignStatus === 'complete' ? 'Good' : 'Waiting' },
-                      { label: 'Required disclosures', detail: 'Review required language before publishing.', score: activeCampaignApproved ? 'Done' : 'Review' },
-                      { label: 'Campaign consistency', detail: 'Aligned with tone and selected source.', score: activeCampaignStatus === 'generating' ? 'Running' : 'Ready' },
-                    ].map((check) => (
-                      <div key={check.label} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{check.label}</div>
-                          <div className="text-xs text-muted-foreground">{check.detail}</div>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
-                          {check.score}
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <div className="mb-2 flex items-center gap-1 text-sm font-semibold text-slate-900">
-                      Reviewer note
-                      <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <textarea
-                      className="min-h-[86px] w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
-                      placeholder="Add internal notes for your team..."
-                      maxLength={500}
-                    />
-                  </div>
-                  <Button type="button" variant="outline" className="mt-3 w-full justify-between rounded-md">
-                    Compare with source
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-md"
-                      onClick={() => {
-                        if (!activeCampaignNode) return;
-                        setApprovedKitOutputIds((current) => current.filter((id) => id !== String(activeCampaignNode.id)));
-                      }}
-                    >
-                      Request changes
-                    </Button>
-                    <Button type="button" className="rounded-md bg-emerald-600 hover:bg-emerald-700" onClick={approveActiveCampaignNode}>
-                      <Check className="h-4 w-4" />
-                      Approve & next
-                    </Button>
-                  </div>
-                  </div>
-                </div>
+	                  <div className={cn(
+	                    'transition-[opacity,transform] duration-300 ease-in-out',
+	                    isReviewPanelOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-6 opacity-0'
+	                  )}>
+	                  <div className="mb-4 grid grid-cols-2 gap-1 border-b border-slate-200 text-sm font-semibold">
+	                    {([
+	                      ['review', 'Review'],
+	                      ['package', 'Package'],
+	                    ] as const).map(([value, label]) => (
+	                      <button
+	                        key={value}
+	                        type="button"
+	                        onClick={() => setReviewPanelTab(value)}
+	                        className={cn(
+	                          'px-2 py-2 transition-colors',
+	                          reviewPanelTab === value ? 'border-b-2 border-blue-600 text-blue-700' : 'text-muted-foreground hover:text-slate-700'
+	                        )}
+	                      >
+	                        {label}
+	                      </button>
+	                    ))}
+	                  </div>
+
+	                  {reviewPanelTab === 'review' ? (
+	                    <>
+	                      <div className="mb-4 grid grid-cols-3 gap-2">
+	                        <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">All {campaignOutputNodes.length}</button>
+	                        <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Needs review {needsReviewCount}</button>
+	                        <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">Approved {approvedCampaignCount}</button>
+	                      </div>
+	                      <div className="mb-4 grid grid-cols-3 gap-1 border-b border-slate-200 text-sm font-semibold">
+	                        <button type="button" className="border-b-2 border-blue-600 px-2 py-2 text-blue-700">Checks</button>
+	                        <button type="button" className="px-2 py-2 text-muted-foreground">Comments</button>
+	                        <button type="button" className="px-2 py-2 text-muted-foreground">Details</button>
+	                      </div>
+	                      <div className="space-y-3">
+	                        {[
+	                          { label: 'Channel fit', detail: `Optimized for ${activeCampaignNode?.shortLabel || 'selected asset'}.`, score: activeCampaignStatus === 'complete' || activeCampaignApproved ? '92' : 'Pending' },
+	                          { label: 'Copy length', detail: 'Within recommended range.', score: activeCampaignStatus === 'complete' ? 'Good' : 'Waiting' },
+	                          { label: 'Required disclosures', detail: 'Review required language before publishing.', score: activeCampaignApproved ? 'Done' : 'Review' },
+	                          { label: 'Campaign consistency', detail: 'Aligned with tone and selected source.', score: activeCampaignStatus === 'generating' ? 'Running' : 'Ready' },
+	                        ].map((check) => (
+	                          <div key={check.label} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
+	                            <div>
+	                              <div className="text-sm font-semibold text-slate-900">{check.label}</div>
+	                              <div className="text-xs text-muted-foreground">{check.detail}</div>
+	                            </div>
+	                            <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
+	                              {check.score}
+	                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+	                            </div>
+	                          </div>
+	                        ))}
+	                      </div>
+	                      <div className="mt-4">
+	                        <div className="mb-2 flex items-center gap-1 text-sm font-semibold text-slate-900">
+	                          Reviewer note
+	                          <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+	                        </div>
+	                        <textarea
+	                          className="min-h-[86px] w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400"
+	                          placeholder="Add internal notes for your team..."
+	                          maxLength={500}
+	                        />
+	                      </div>
+	                      <Button type="button" variant="outline" className="mt-3 w-full justify-between rounded-md">
+	                        Compare with source
+	                        <ChevronRight className="h-4 w-4" />
+	                      </Button>
+	                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+	                        <Button
+	                          type="button"
+	                          variant="outline"
+	                          className="rounded-md"
+	                          onClick={() => {
+	                            if (!activeCampaignNode) return;
+	                            setApprovedKitOutputIds((current) => current.filter((id) => id !== String(activeCampaignNode.id)));
+	                          }}
+	                        >
+	                          Request changes
+	                        </Button>
+	                        <Button type="button" className="rounded-md bg-emerald-600 hover:bg-emerald-700" onClick={approveActiveCampaignNode}>
+	                          <Check className="h-4 w-4" />
+	                          Approve & next
+	                        </Button>
+	                      </div>
+	                    </>
+	                  ) : (
+	                    <div className="space-y-5">
+	                      <div className="flex items-start gap-3">
+	                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+	                          <NotebookText className="h-5 w-5" />
+	                        </span>
+	                        <div className="min-w-0">
+	                          <div className="flex flex-wrap items-center gap-2">
+	                            <Badge variant="outline" className="border-cyan-200 bg-cyan-50 text-cyan-700">Generate Content</Badge>
+	                            <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+	                              <Layers3 className="h-3.5 w-3.5" />
+	                              {packageAssetScope}
+	                            </Badge>
+	                          </div>
+	                          <h4 className="mt-3 text-lg font-bold leading-tight text-slate-950">
+	                            {selectedArticleTitle || 'Generated content package'}
+	                          </h4>
+	                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{packagePreviewSnippet}</p>
+	                        </div>
+	                      </div>
+
+	                      <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+	                        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Included content</div>
+	                        <div className="space-y-2">
+	                          {campaignOutputNodes.map((node) => {
+	                            const NodeIcon = node.icon;
+	                            return (
+	                              <div key={String(node.id)} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
+	                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+	                                  <NodeIcon className="h-4 w-4" />
+	                                </span>
+	                                <div className="min-w-0">
+	                                  <div className="truncate text-sm font-semibold text-slate-950">{node.label}</div>
+	                                  <div className="mt-0.5 text-xs text-slate-500">{node.category}</div>
+	                                </div>
+	                                <Badge variant="outline" className={cn(
+	                                  'ml-auto shrink-0 text-[11px]',
+	                                  node.status === 'complete' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : node.status === 'generating' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-white text-slate-500'
+	                                )}>
+	                                  {node.status === 'complete' ? 'Ready' : node.status === 'generating' ? 'Generating' : 'Pending'}
+	                                </Badge>
+	                              </div>
+	                            );
+	                          })}
+	                        </div>
+	                      </div>
+
+	                      <div className="grid gap-3 text-sm sm:grid-cols-2">
+	                        <div>
+	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Created</div>
+	                          <div className="mt-1 inline-flex items-center gap-1.5 text-slate-700">
+	                            <Clock3 className="h-3.5 w-3.5" />
+	                            Current session
+	                          </div>
+	                        </div>
+	                        <div>
+	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sources</div>
+	                          <div className="mt-1 text-slate-700">{selectedSourceIds.length || 0} linked</div>
+	                        </div>
+	                        <div>
+	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Versions</div>
+	                          <div className="mt-1 text-slate-700">1</div>
+	                        </div>
+	                        <div>
+	                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Approved</div>
+	                          <div className="mt-1 text-slate-700">{approvedCampaignCount} of {campaignOutputNodes.length || 0}</div>
+	                        </div>
+	                      </div>
+	                    </div>
+	                  )}
+	                  </div>
+	                </div>
               </div>
             </div>
               </div>
