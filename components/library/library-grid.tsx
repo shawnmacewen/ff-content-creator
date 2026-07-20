@@ -293,7 +293,7 @@ export function LibraryList({ items, onView, onEdit, onDelete, onCopy }: Library
                   onClick={() => setSelectedId(item.id)}
                   onDoubleClick={() => onView(item)}
                   className={cn(
-                    'grid w-full grid-cols-1 gap-2 border-l-2 border-transparent px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(260px,1.6fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(150px,0.8fr)_94px] xl:items-center',
+                    'grid w-full grid-cols-1 gap-2 border-y-2 border-l-2 border-r-2 border-transparent px-4 py-2 text-left transition hover:bg-slate-50 xl:grid-cols-[44px_minmax(260px,1.6fr)_minmax(150px,0.75fr)_minmax(140px,0.75fr)_minmax(150px,0.8fr)_94px] xl:items-center',
                     selected && 'border-blue-600 bg-blue-50/70 hover:bg-blue-50'
                   )}
                 >
