@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const prompt = buildThumbnailPrompt(body);
     const env = getServerEnv();
-    const model = 'gpt-image-1';
+    const model = 'gpt-image-2';
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
