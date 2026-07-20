@@ -287,7 +287,7 @@ export default function GeneratePage() {
   const [setupCollapsed, setSetupCollapsed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [confirmRegenerateOpen, setConfirmRegenerateOpen] = useState(false);
-  const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep | null>(3);
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState<WorkflowStep | null>(null);
   const [usePlainLanguage, setUsePlainLanguage] = useState(true);
   const [includeCallToAction, setIncludeCallToAction] = useState(true);
   const [audience, setAudience] = useState('Clients and prospects');
@@ -405,8 +405,7 @@ export default function GeneratePage() {
   const [includeInstagramCarouselImages, setIncludeInstagramCarouselImages] = useState(true);
 
   // KIT state
-  // Default kit: Campaign (Instagram only) first.
-  const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-instagram']);
+  const [kitTypes, setKitTypes] = useState<ContentType[]>(['social-linkedin', 'newsletter', 'video-script', 'faq']);
   const [kitOutputs, setKitOutputs] = useState<Array<{ type: ContentType; label?: string; content: string }> | null>(null);
   const [isGeneratingKit, setIsGeneratingKit] = useState(false);
   const [pendingKitCarouselGenerate, setPendingKitCarouselGenerate] = useState(false);
