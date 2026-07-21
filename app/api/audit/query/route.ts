@@ -6,6 +6,10 @@ import { getCanonicalBody } from '@/lib/source-content/body';
 
 type SearchScope = 'all' | 'title' | 'filename' | 'body' | 'metadata';
 
+const SOURCE_SEARCH_COLUMNS = 'id,title,body_text,body,publisher,source_system,published_at,external_id,type,metadata,tags,bas_content_id,bas_content_filename,key_takeaways,recommended_audience,categories,sub_categories';
+const SOURCE_SEARCH_LIMIT = 5000;
+const SOURCE_SEARCH_BATCH_SIZE = 1000;
+
 function safeArray(value: any) {
   return Array.isArray(value) ? value : [];
 }
@@ -77,6 +81,30 @@ function matchContexts(fields: Record<SearchScope, string>, fieldsMatched: Searc
   })).filter((item) => item.snippet);
 }
 
+async function fetchSourceRows(supabase: ReturnType<typeof getSupabaseServerClient>, publisher?: string) {
+  const rows: any[] = [];
+
+  for (let from = 0; from < SOURCE_SEARCH_LIMIT; from += SOURCE_SEARCH_BATCH_SIZE) {
+    const to = Math.min(from + SOURCE_SEARCH_BATCH_SIZE - 1, SOURCE_SEARCH_LIMIT - 1);
+    let query = supabase
+      .from('source_content')
+      .select(SOURCE_SEARCH_COLUMNS)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .range(from, to);
+
+    if (publisher) query = query.eq('publisher', publisher);
+
+    const { data, error } = await query;
+    if (error) return { rows, error };
+
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < SOURCE_SEARCH_BATCH_SIZE) break;
+  }
+
+  return { rows, error: null };
+}
+
 export async function POST(req: Request) {
   try {
     const { prompt, publisher, mode, mustInclude, mustExclude, searchScope = 'all' } = (await req.json()) as {
@@ -105,19 +133,12 @@ export async function POST(req: Request) {
       mustExclude: excludeList,
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
-      limit: 5000,
+      limit: SOURCE_SEARCH_LIMIT,
       searchScope: ['all', 'title', 'filename', 'body', 'metadata'].includes(searchScope) ? searchScope : 'all',
     };
 
     const supabase = getSupabaseServerClient();
-    let q = supabase
-      .from('source_content')
-      .select('id,title,body_text,body,publisher,source_system,published_at,external_id,type,metadata,tags,bas_content_id,bas_content_filename,key_takeaways,recommended_audience,categories,sub_categories')
-      .order('published_at', { ascending: false, nullsFirst: false });
-
-    if (structured.publisher) q = q.eq('publisher', structured.publisher);
-
-    const { data, error } = await q.limit(structured.limit);
+    const { rows, error } = await fetchSourceRows(supabase, structured.publisher);
     if (error) {
       return NextResponse.json({ ok: false, error: error.message, stage: 'query' }, { status: 500 });
     }
@@ -125,7 +146,7 @@ export async function POST(req: Request) {
     const includeTerms = structured.mustInclude || [];
     const excludeTerms = structured.mustExclude || [];
 
-    const matches = (data || [])
+    const matches = rows
       .map((row: any) => {
         const cleanBody = normalizeSourceText(getCanonicalBody(row));
         const filenameText = normalizeSourceText(searchableFilename(row));
@@ -193,8 +214,8 @@ export async function POST(req: Request) {
           : [structured.searchScope],
       },
       total: matches.length,
-      scanned: (data || []).length,
-      capped: (data || []).length >= structured.limit,
+      scanned: rows.length,
+      capped: rows.length >= structured.limit,
       contentLoadMode: 'server-api',
       matches,
     });
