@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 type Match = {
   id: string;
   externalId?: string | null;
+  basContentId?: string | null;
+  basContentFilename?: string | null;
   title: string;
   publisher: string | null;
   sourceSystem: string | null;
@@ -27,9 +29,20 @@ type Match = {
   score: number;
   matchedTerms?: string[];
   excludedTerms?: string[];
+  matchedFields?: string[];
   reason?: string;
   evidence?: string;
   confidence?: number;
+};
+
+type SearchScope = 'all' | 'title' | 'filename' | 'body' | 'metadata';
+
+const SEARCH_SCOPE_LABELS: Record<SearchScope, string> = {
+  all: 'All content fields',
+  title: 'Title only',
+  filename: 'Filename only',
+  body: 'Body text only',
+  metadata: 'Metadata and tags',
 };
 
 export default function AuditPage() {
@@ -41,7 +54,10 @@ export default function AuditPage() {
   const [result, setResult] = useState<any>(null);
   const [method, setMethod] = useState<'search' | 'analyze'>('search');
   const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
+  const [searchScope, setSearchScope] = useState<SearchScope>('all');
   const [analyzeDepth, setAnalyzeDepth] = useState<'quick' | 'deep'>('quick');
+  const [showSearchTips, setShowSearchTips] = useState(false);
+  const [searchProgress, setSearchProgress] = useState(0);
   const [aiFocus, setAiFocus] = useState({
     relevant: true,
     gaps: true,
@@ -72,6 +88,7 @@ export default function AuditPage() {
           publisher,
           limit: method === 'search' ? 5000 : analyzeDepth === 'deep' ? 5000 : 3000,
           mode: matchMode,
+          searchScope,
           depth: analyzeDepth,
           mustInclude: includeTerms,
           mustExclude: excludeTerms,
@@ -92,10 +109,27 @@ export default function AuditPage() {
     }
   };
 
+  useEffect(() => {
+    if (!loading) {
+      setSearchProgress(0);
+      return;
+    }
+
+    setSearchProgress(8);
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const target = method === 'search' ? 88 : analyzeDepth === 'deep' ? 78 : 84;
+      setSearchProgress(Math.min(target, 8 + Math.round(elapsed / 180)));
+    }, 300);
+
+    return () => window.clearInterval(timer);
+  }, [analyzeDepth, loading, method]);
+
   const csv = useMemo(() => {
     const rows: Match[] = result?.matches || [];
-    const head = ['id','title','publisher','sourceSystem','publishedAt','snippet'];
-    const lines = rows.map((r) => [r.id,r.title,r.publisher||'',r.sourceSystem||'',r.publishedAt||'',(r.snippet||'').replace(/"/g,'""')].map((v)=>`"${String(v)}"`).join(','));
+    const head = ['id','title','filename','contentId','publisher','sourceSystem','publishedAt','matchedFields','snippet'];
+    const lines = rows.map((r) => [r.id,r.title,r.basContentFilename||'',r.basContentId||'',r.publisher||'',r.sourceSystem||'',r.publishedAt||'',(r.matchedFields||[]).join('|'),(r.snippet||'').replace(/"/g,'""')].map((v)=>`"${String(v)}"`).join(','));
     return [head.join(','), ...lines].join('\n');
   }, [result]);
 
@@ -127,6 +161,12 @@ export default function AuditPage() {
       publishedAt: m.publishedAt || '',
       tags: Array.isArray(m.tags) ? m.tags : [],
       url: m.url || undefined,
+      metadata: {
+        extraPropertiesSelected: {
+          BasContentFilename: m.basContentFilename || null,
+          BasContentId: m.basContentId || null,
+        },
+      },
     };
     setSelectedContent(content);
     setDetailOpen(true);
@@ -166,6 +206,7 @@ export default function AuditPage() {
     setExcludeTerms('');
     setPublisher('all');
     setMatchMode('all');
+    setSearchScope('all');
     setAnalyzeDepth('quick');
     setAiFocus({ relevant: true, gaps: true, outdated: false, duplicates: false });
     setAiDateRange('12m');
@@ -174,6 +215,9 @@ export default function AuditPage() {
     setSelectedIds(new Set());
     setError('');
   };
+  const searchedFieldLabel = method === 'search'
+    ? SEARCH_SCOPE_LABELS[searchScope]
+    : 'AI candidate fields';
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
@@ -443,6 +487,9 @@ export default function AuditPage() {
                   <Loader2 className="h-9 w-9 animate-spin text-violet-700" />
                   <div className="font-semibold text-slate-950">{scanModeLabel} in progress</div>
                   <div>{scanRunningDetail}</div>
+                  <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-violet-600 transition-all duration-300" style={{ width: `${searchProgress}%` }} />
+                  </div>
                 </div>
               ) : !result ? (
                 <div className="flex min-h-[360px] flex-col items-center justify-center gap-5 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -500,7 +547,7 @@ export default function AuditPage() {
                   <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Precise matching</Badge>
                 </div>
               </div>
-              <button type="button" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+              <button type="button" onClick={() => setShowSearchTips((value) => !value)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
                 <HelpCircle className="h-4 w-4" />
                 Search tips
               </button>
@@ -508,8 +555,36 @@ export default function AuditPage() {
 
             <div className="mb-5 flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm text-slate-600">
               <HelpCircle className="h-4 w-4 shrink-0 text-blue-700" />
-              <span>Use quotation marks for exact phrases. Exclude terms to remove unwanted matches.</span>
+              <span>Use quotation marks for exact phrases. Standard Search runs through the API against the source database and returns only matching records to this page.</span>
             </div>
+
+            {showSearchTips ? (
+              <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                <div className="font-semibold text-slate-950">Standard Search technical details</div>
+                <div className="mt-2 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <div className="font-semibold text-slate-800">How it searches</div>
+                    <p>Search is submitted to <code className="rounded bg-white px-1 font-mono text-xs text-slate-800">/api/audit/query</code>, which queries <code className="rounded bg-white px-1 font-mono text-xs text-slate-800">source_content</code> on the server. The browser does not load the full content library to search locally.</p>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Default fields</div>
+                    <p>All fields checks title, filename/BAS id, external id, excerpt, audience, takeaways, tags, categories, subcategories, and normalized article body text.</p>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Scope options</div>
+                    <p>Title only, Filename only, Body text only, and Metadata/tags narrow the actual backend match field, not just the display.</p>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Active filters</div>
+                    <p>Publisher, match logic, and Search in are active today. Date and additional filters are shown as planned controls until backend filtering is added.</p>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Current cap</div>
+                    <p>Each run scans up to 5,000 newest source rows after publisher filtering, then returns deterministic matches with matched term and field diagnostics.</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <div className="grid gap-5">
               <div className="space-y-2">
@@ -570,21 +645,25 @@ export default function AuditPage() {
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
                   Search in
-                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" defaultValue="all">
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={searchScope} onChange={(e) => setSearchScope(e.target.value as SearchScope)}>
                     <option value="all">All content fields</option>
+                    <option value="title">Title only</option>
+                    <option value="filename">Filename only</option>
+                    <option value="body">Body text only</option>
+                    <option value="metadata">Metadata and tags</option>
                   </select>
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
                   Date
-                  <Button type="button" variant="outline" className="h-10 w-full justify-start gap-2 text-sm font-normal">
+                  <Button type="button" variant="outline" disabled title="Date filtering is planned but not active for Standard Search yet." className="h-10 w-full justify-start gap-2 text-sm font-normal">
                     <Calendar className="h-4 w-4" />
-                    Any date
+                    Any date (not filtered)
                   </Button>
                 </label>
                 <div className="flex items-end">
-                  <Button type="button" variant="outline" className="h-10 w-full justify-start gap-2">
+                  <Button type="button" variant="outline" disabled title="Additional filters are planned but not active for Standard Search yet." className="h-10 w-full justify-start gap-2">
                     <SlidersHorizontal className="h-4 w-4" />
-                    More filters
+                    More filters planned
                   </Button>
                 </div>
               </div>
@@ -602,6 +681,8 @@ export default function AuditPage() {
                     <span>Excluding: {excludeTerms}</span>
                   </>
                 ) : null}
+                <span className="text-slate-400">|</span>
+                <span>Search in: {SEARCH_SCOPE_LABELS[searchScope]}</span>
               </div>
               <div className="text-sm text-slate-500">
                 {includeCount} include term{includeCount === 1 ? '' : 's'} · {excludeCount} exclusion{excludeCount === 1 ? '' : 's'}
@@ -653,6 +734,10 @@ export default function AuditPage() {
                   <Loader2 className="h-9 w-9 animate-spin text-blue-700" />
                   <div className="font-semibold text-slate-950">{scanModeLabel} in progress</div>
                   <div>{scanRunningDetail}</div>
+                  <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-blue-700 transition-all duration-300" style={{ width: `${searchProgress}%` }} />
+                  </div>
+                  <div className="text-xs text-slate-500">Server-side API search · {searchedFieldLabel} · up to 5,000 source rows</div>
                 </div>
               ) : !result ? (
                 <div className="flex min-h-[360px] flex-col items-center justify-center gap-5 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -693,7 +778,7 @@ export default function AuditPage() {
                     </span>
                     <div>
                       <p className="text-sm font-semibold">{scanModeLabel}</p>
-                      <p className="text-xs text-slate-500">{result?.parserUsed === 'fallback' ? 'Fallback parser' : 'Deterministic parser'}</p>
+                      <p className="text-xs text-slate-500">{result?.parserUsed === 'fallback' ? 'Fallback parser' : `Deterministic parser · ${result?.contentLoadMode === 'server-api' ? 'server API' : 'local'}`}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -703,7 +788,7 @@ export default function AuditPage() {
                     <div>
                       <p className="text-sm font-semibold">Criteria parsed</p>
                       <p className="text-xs text-slate-500">
-                        {(result?.structured?.mustInclude || []).length} include / {(result?.structured?.mustExclude || []).length} exclude
+                        {SEARCH_SCOPE_LABELS[result?.structured?.searchScope as SearchScope] || SEARCH_SCOPE_LABELS.all}
                       </p>
                     </div>
                   </div>
@@ -723,6 +808,11 @@ export default function AuditPage() {
                     </Badge>
                   ))}
                   {result?.summary ? <span className="basis-full pt-1">{result.summary}</span> : null}
+                  {result?.capped ? (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                      scan cap reached: {Number(result?.scanned || 0).toLocaleString()} rows reviewed
+                    </Badge>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -734,6 +824,10 @@ export default function AuditPage() {
                       <div className="font-medium">{m.title}</div>
                       <div className="text-xs text-muted-foreground">
                         {m.externalId ? `External Article ID: ${m.externalId}` : 'External Article ID unavailable'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {m.basContentFilename ? `Filename: ${m.basContentFilename}` : 'Filename unavailable'}
+                        {m.basContentId ? ` · Content ID: ${m.basContentId}` : ''}
                       </div>
                     </div>
                     <span className={`text-xs font-medium ${publisherClass(m.publisher, m.sourceSystem)}`}>
@@ -747,6 +841,11 @@ export default function AuditPage() {
                     <span>{m.publishedAt ? new Date(m.publishedAt).toLocaleDateString() : 'Published date unavailable'}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
+                    {(m.matchedFields || []).map((field) => (
+                      <Badge key={`${m.id}-field-${field}`} variant="outline" className="bg-blue-50 text-blue-700">
+                        matched in {field}
+                      </Badge>
+                    ))}
                     {(m.matchedTerms || []).map((term) => (
                       <Badge key={`${m.id}-match-${term}`} variant="outline" className="bg-emerald-50 text-emerald-700">
                         <CheckCircle2 className="h-3 w-3" />

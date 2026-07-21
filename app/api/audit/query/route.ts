@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
-import { makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
+import { findMatchedTerms, makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
 import { getCanonicalBody } from '@/lib/source-content/body';
+
+type SearchScope = 'all' | 'title' | 'filename' | 'body' | 'metadata';
 
 function safeArray(value: any) {
   return Array.isArray(value) ? value : [];
 }
 
-function searchableMeta(row: any) {
-  const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+function safeMeta(row: any) {
+  return row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+}
+
+function searchableFilename(row: any) {
+  const metadata = safeMeta(row);
   const extra = metadata.extraPropertiesSelected || metadata.extraProperties || {};
   return [
     row.bas_content_filename,
@@ -17,6 +23,12 @@ function searchableMeta(row: any) {
     row.external_id,
     extra.BasContentFilename,
     extra.BasContentId,
+  ].filter(Boolean).join('\n');
+}
+
+function searchableMeta(row: any) {
+  const metadata = safeMeta(row);
+  return [
     metadata.excerpt,
     row.recommended_audience,
     ...safeArray(row.key_takeaways),
@@ -26,15 +38,38 @@ function searchableMeta(row: any) {
   ].filter(Boolean).join('\n');
 }
 
+function scopeFields(scope: SearchScope, fields: Record<SearchScope, string>) {
+  if (scope === 'all') {
+    return {
+      haystack: [fields.title, fields.filename, fields.metadata, fields.body].filter(Boolean).join('\n'),
+    };
+  }
+
+  return {
+    haystack: fields[scope] || '',
+  };
+}
+
+function matchedFields(fields: Record<SearchScope, string>, includeTerms: string[], searchScope: SearchScope) {
+  const entries: Array<[SearchScope, string]> = searchScope === 'all'
+    ? [['title', fields.title], ['filename', fields.filename], ['metadata', fields.metadata], ['body', fields.body]]
+    : [[searchScope, fields[searchScope]]];
+
+  return entries
+    .filter(([, value]) => findMatchedTerms(value, includeTerms).length > 0)
+    .map(([field]) => field);
+}
+
 export async function POST(req: Request) {
   try {
-    const { prompt, publisher, limit, mode, mustInclude, mustExclude } = (await req.json()) as {
+    const { prompt, publisher, limit, mode, mustInclude, mustExclude, searchScope = 'all' } = (await req.json()) as {
       prompt: string;
       publisher?: string;
       limit?: number;
       mode?: 'all' | 'any';
       mustInclude?: string;
       mustExclude?: string;
+      searchScope?: SearchScope;
     };
 
     if (!prompt?.trim()) {
@@ -55,6 +90,7 @@ export async function POST(req: Request) {
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
       limit: Math.min(5000, Math.max(1, Number(limit) || 5000)),
+      searchScope: ['all', 'title', 'filename', 'body', 'metadata'].includes(searchScope) ? searchScope : 'all',
     };
 
     const supabase = getSupabaseServerClient();
@@ -76,22 +112,41 @@ export async function POST(req: Request) {
     const matches = (data || [])
       .map((row: any) => {
         const cleanBody = normalizeSourceText(getCanonicalBody(row));
-        const extraText = normalizeSourceText(searchableMeta(row));
-        const hay = `${row.title || ''}\n${extraText}\n${cleanBody}`;
+        const filenameText = normalizeSourceText(searchableFilename(row));
+        const metadataText = normalizeSourceText(searchableMeta(row));
+        const fields = {
+          all: '',
+          title: normalizeSourceText(row.title || ''),
+          filename: filenameText,
+          body: cleanBody,
+          metadata: metadataText,
+        };
+        const scoped = scopeFields(structured.searchScope, fields);
         const scored = scoreTextMatch({
-          text: hay,
+          text: scoped.haystack,
           includeTerms,
           excludeTerms,
           mode: structured.mode,
         });
 
-        return { row, cleanBody, ...scored };
+        const fieldsMatched = matchedFields(fields, scored.matchedTerms, structured.searchScope);
+        const snippetSource = fieldsMatched.includes('body')
+          ? cleanBody
+          : fieldsMatched.includes('filename')
+            ? filenameText
+            : fieldsMatched.includes('metadata')
+              ? metadataText
+              : fields.title || cleanBody;
+
+        return { row, cleanBody, filenameText, fieldsMatched, snippetSource, ...scored };
       })
       .filter((row) => row.includeOk && row.excludeOk)
       .sort((a, b) => b.score - a.score)
-      .map(({ row, cleanBody, matchedTerms, excludedTerms, score }) => ({
+      .map(({ row, cleanBody, filenameText, fieldsMatched, snippetSource, matchedTerms, excludedTerms, score }) => ({
         id: row.id,
         externalId: row.external_id || null,
+        basContentId: row.bas_content_id || null,
+        basContentFilename: row.bas_content_filename || filenameText || null,
         title: row.title,
         publisher: row.publisher || null,
         sourceSystem: row.source_system || null,
@@ -100,14 +155,29 @@ export async function POST(req: Request) {
         url: row.metadata?.url || null,
         tags: Array.isArray(row.tags) ? row.tags : [],
         body: cleanBody,
-        excerpt: makeSnippet(cleanBody, matchedTerms.length ? matchedTerms : includeTerms),
-        snippet: makeSnippet(cleanBody, matchedTerms.length ? matchedTerms : includeTerms),
+        excerpt: makeSnippet(snippetSource, matchedTerms.length ? matchedTerms : includeTerms),
+        snippet: makeSnippet(snippetSource, matchedTerms.length ? matchedTerms : includeTerms),
         matchedTerms,
         excludedTerms,
+        matchedFields: fieldsMatched,
         score,
       }));
 
-    return NextResponse.json({ ok: true, parserUsed: 'deterministic', structured, total: matches.length, scanned: (data || []).length, matches });
+    return NextResponse.json({
+      ok: true,
+      parserUsed: 'deterministic',
+      structured: {
+        ...structured,
+        searchedFields: structured.searchScope === 'all'
+          ? ['title', 'filename', 'metadata', 'body']
+          : [structured.searchScope],
+      },
+      total: matches.length,
+      scanned: (data || []).length,
+      capped: (data || []).length >= structured.limit,
+      contentLoadMode: 'server-api',
+      matches,
+    });
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error?.message || 'Unexpected search failure', stage: 'unknown' }, { status: 500 });
   }
