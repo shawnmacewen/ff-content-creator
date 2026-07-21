@@ -35,7 +35,7 @@ export function splitTerms(input?: string | string[]): string[] {
 
   const unquoted = text
     .replace(/"[^"]+"/g, ' ')
-    .split(/,|\n|;/g)
+    .split(/,|\n|;|\s+/g)
     .map((term) => term.trim())
     .filter(Boolean);
 

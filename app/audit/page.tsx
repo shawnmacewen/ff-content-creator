@@ -59,10 +59,20 @@ function matchFieldLabel(field: string) {
 }
 
 function splitSearchTermsInput(input: string) {
-  return String(input || '')
-    .split(/,|\n|;/g)
+  const text = String(input || '').trim();
+  if (!text) return [];
+
+  const quoted = Array.from(text.matchAll(/"([^"]+)"/g))
+    .map((match) => match[1]?.trim())
+    .filter(Boolean) as string[];
+
+  const unquoted = text
+    .replace(/"[^"]+"/g, ' ')
+    .split(/,|\n|;|\s+/g)
     .map((term) => term.trim())
     .filter(Boolean);
+
+  return Array.from(new Set([...quoted, ...unquoted]));
 }
 
 function mergeSearchTerms(savedTerms: string[], draft: string) {
@@ -79,7 +89,7 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [method, setMethod] = useState<'search' | 'analyze'>('search');
-  const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
+  const [matchMode, setMatchMode] = useState<'all' | 'any'>('any');
   const [searchScope, setSearchScope] = useState<SearchScope>('all');
   const [analyzeDepth, setAnalyzeDepth] = useState<'quick' | 'deep'>('quick');
   const [showSearchTips, setShowSearchTips] = useState(false);
@@ -247,7 +257,7 @@ export default function AuditPage() {
     setSavedIncludeTerms([]);
     setSavedExcludeTerms([]);
     setPublisher('all');
-    setMatchMode('all');
+    setMatchMode('any');
     setSearchScope('all');
     setAnalyzeDepth('quick');
     setAiFocus({ relevant: true, gaps: true, outdated: false, duplicates: false });
@@ -613,7 +623,7 @@ export default function AuditPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-slate-800">Multiple terms</div>
-                    <p>Type a term or exact phrase, then click Add term or press Enter. Saved include terms follow the selected match logic; saved exclude terms remove matching records.</p>
+                    <p>Type unquoted words to add separate terms, or wrap words in quotes for an exact phrase. Saved include terms match any term by default; switch Match logic to all when every term must appear.</p>
                   </div>
                   <div>
                     <div className="font-semibold text-slate-800">Scope options</div>
@@ -634,7 +644,7 @@ export default function AuditPage() {
             <div className="grid gap-5">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-950">Include terms</label>
-                <p className="text-xs text-slate-500">Words or exact phrases the content must contain</p>
+                <p className="text-xs text-slate-500">Words or quoted exact phrases to find</p>
                 <div className="flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-2 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
                   <Input
                     value={includeTerms}
@@ -728,8 +738,8 @@ export default function AuditPage() {
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
                   Match logic
                   <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={matchMode} onChange={(e) => setMatchMode(e.target.value as 'all' | 'any')}>
-                    <option value="all">Match all include terms</option>
                     <option value="any">Match any include terms</option>
+                    <option value="all">Match all include terms</option>
                   </select>
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
@@ -772,6 +782,8 @@ export default function AuditPage() {
                 ) : null}
                 <span className="text-slate-400">|</span>
                 <span>Search in: {SEARCH_SCOPE_LABELS[searchScope]}</span>
+                <span className="text-slate-400">|</span>
+                <span>{matchMode === 'any' ? 'Matching any include term' : 'Matching all include terms'}</span>
               </div>
               <div className="text-sm text-slate-500">
                 {includeCount} include term{includeCount === 1 ? '' : 's'} · {excludeCount} exclusion{excludeCount === 1 ? '' : 's'}
