@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/page-header';
-import { Calendar, CheckCircle2, FileSearch, HelpCircle, Loader2, Search, SlidersHorizontal, Sparkles, User, X, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, FileSearch, HelpCircle, Loader2, Plus, Search, SlidersHorizontal, Sparkles, User, X, XCircle } from 'lucide-react';
 import { ContentDetail } from '@/components/source-content/content-detail';
 import type { SourceContent } from '@/lib/types/content';
 import { toast } from 'sonner';
@@ -58,10 +58,23 @@ function matchFieldLabel(field: string) {
   return field;
 }
 
+function splitSearchTermsInput(input: string) {
+  return String(input || '')
+    .split(/,|\n|;/g)
+    .map((term) => term.trim())
+    .filter(Boolean);
+}
+
+function mergeSearchTerms(savedTerms: string[], draft: string) {
+  return Array.from(new Set([...savedTerms, ...splitSearchTermsInput(draft)])).join('\n');
+}
+
 export default function AuditPage() {
   const [prompt, setPrompt] = useState('');
   const [includeTerms, setIncludeTerms] = useState('');
   const [excludeTerms, setExcludeTerms] = useState('');
+  const [savedIncludeTerms, setSavedIncludeTerms] = useState<string[]>([]);
+  const [savedExcludeTerms, setSavedExcludeTerms] = useState<string[]>([]);
   const [publisher, setPublisher] = useState('all');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -83,6 +96,8 @@ export default function AuditPage() {
   const [error, setError] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<SourceContent | null>(null);
+  const effectiveIncludeTerms = useMemo(() => mergeSearchTerms(savedIncludeTerms, includeTerms), [includeTerms, savedIncludeTerms]);
+  const effectiveExcludeTerms = useMemo(() => mergeSearchTerms(savedExcludeTerms, excludeTerms), [excludeTerms, savedExcludeTerms]);
 
   const run = async () => {
     setLoading(true);
@@ -91,7 +106,7 @@ export default function AuditPage() {
     try {
       const endpoint = method === 'analyze' ? '/api/audit/analyze' : '/api/audit/query';
       const searchPrompt = method === 'search'
-        ? `include ${includeTerms || prompt}${excludeTerms ? ` but not ${excludeTerms}` : ''}`
+        ? `include ${effectiveIncludeTerms || prompt}${effectiveExcludeTerms ? ` but not ${effectiveExcludeTerms}` : ''}`
         : prompt;
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -103,8 +118,8 @@ export default function AuditPage() {
           mode: matchMode,
           searchScope,
           depth: analyzeDepth,
-          mustInclude: includeTerms,
-          mustExclude: excludeTerms,
+          mustInclude: effectiveIncludeTerms,
+          mustExclude: effectiveExcludeTerms,
         }),
       });
       const body = await res.json();
@@ -188,7 +203,7 @@ export default function AuditPage() {
   const markNeedsUpdate = async () => {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    const response = await fetch('/api/audit/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, note: prompt || includeTerms }) });
+    const response = await fetch('/api/audit/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, note: prompt || effectiveIncludeTerms }) });
     if (!response.ok) {
       toast.error('Failed to mark selected content');
       return;
@@ -211,12 +226,26 @@ export default function AuditPage() {
     : analyzeDepth === 'deep'
       ? 'Scanning up to 5,000 source items, ranking candidates, then applying deeper AI classification in smaller batches.'
       : 'Scanning up to 3,000 source items, ranking candidates, then applying focused AI classification to the strongest matches.';
-  const includeCount = includeTerms.trim() ? 1 : 0;
-  const excludeCount = excludeTerms.trim() ? 1 : 0;
+  const includeCount = splitSearchTermsInput(effectiveIncludeTerms).length;
+  const excludeCount = splitSearchTermsInput(effectiveExcludeTerms).length;
+  const addIncludeTerm = () => {
+    const additions = splitSearchTermsInput(includeTerms);
+    if (!additions.length) return;
+    setSavedIncludeTerms((terms) => Array.from(new Set([...terms, ...additions])));
+    setIncludeTerms('');
+  };
+  const addExcludeTerm = () => {
+    const additions = splitSearchTermsInput(excludeTerms);
+    if (!additions.length) return;
+    setSavedExcludeTerms((terms) => Array.from(new Set([...terms, ...additions])));
+    setExcludeTerms('');
+  };
   const clearCriteria = () => {
     setPrompt('');
     setIncludeTerms('');
     setExcludeTerms('');
+    setSavedIncludeTerms([]);
+    setSavedExcludeTerms([]);
     setPublisher('all');
     setMatchMode('all');
     setSearchScope('all');
@@ -557,7 +586,6 @@ export default function AuditPage() {
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-lg font-semibold text-slate-950">Standard Search criteria</h2>
-                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Precise matching</Badge>
                 </div>
               </div>
               <button type="button" onClick={() => setShowSearchTips((value) => !value)} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
@@ -584,6 +612,10 @@ export default function AuditPage() {
                     <p>All fields checks title, filename/BAS id, external id, excerpt, audience, takeaways, tags, categories, subcategories, and normalized article body text.</p>
                   </div>
                   <div>
+                    <div className="font-semibold text-slate-800">Multiple terms</div>
+                    <p>Type a term or exact phrase, then click Add term or press Enter. Saved include terms follow the selected match logic; saved exclude terms remove matching records.</p>
+                  </div>
+                  <div>
                     <div className="font-semibold text-slate-800">Scope options</div>
                     <p>Title only, Filename only, Body text only, and Metadata/tags narrow the actual backend match field, not just the display.</p>
                   </div>
@@ -607,15 +639,37 @@ export default function AuditPage() {
                   <Input
                     value={includeTerms}
                     onChange={(e) => setIncludeTerms(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addIncludeTerm();
+                      }
+                    }}
                     className="h-9 min-w-[180px] flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
                     placeholder='"2025 mileage rate"'
                   />
+                  <Button type="button" variant="outline" size="sm" onClick={addIncludeTerm} disabled={!includeTerms.trim()} className="h-8 shrink-0 gap-1 border-blue-200 px-2 text-blue-700 hover:bg-blue-50">
+                    <Plus className="h-3.5 w-3.5" />
+                    Add term
+                  </Button>
                   {includeTerms ? (
                     <button type="button" onClick={() => setIncludeTerms('')} aria-label="Clear include terms" className="shrink-0 text-slate-500 hover:text-slate-800">
                       <X className="h-4 w-4" />
                     </button>
                   ) : null}
                 </div>
+                {savedIncludeTerms.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedIncludeTerms.map((term) => (
+                      <Badge key={`saved-include-${term}`} variant="outline" className="gap-1 bg-emerald-50 text-emerald-700">
+                        include: {term}
+                        <button type="button" onClick={() => setSavedIncludeTerms((terms) => terms.filter((item) => item !== term))} aria-label={`Remove include term ${term}`} className="ml-1 rounded-sm text-emerald-700 hover:text-emerald-900">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-2">
@@ -625,15 +679,37 @@ export default function AuditPage() {
                   <Input
                     value={excludeTerms}
                     onChange={(e) => setExcludeTerms(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addExcludeTerm();
+                      }
+                    }}
                     className="h-9 min-w-[180px] flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
                     placeholder='"2026 mileage rate"'
                   />
+                  <Button type="button" variant="outline" size="sm" onClick={addExcludeTerm} disabled={!excludeTerms.trim()} className="h-8 shrink-0 gap-1 border-red-200 px-2 text-red-700 hover:bg-red-50">
+                    <Plus className="h-3.5 w-3.5" />
+                    Add term
+                  </Button>
                   {excludeTerms ? (
                     <button type="button" onClick={() => setExcludeTerms('')} aria-label="Clear exclude terms" className="shrink-0 text-slate-500 hover:text-slate-800">
                       <X className="h-4 w-4" />
                     </button>
                   ) : null}
                 </div>
+                {savedExcludeTerms.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedExcludeTerms.map((term) => (
+                      <Badge key={`saved-exclude-${term}`} variant="outline" className="gap-1 bg-red-50 text-red-700">
+                        exclude: {term}
+                        <button type="button" onClick={() => setSavedExcludeTerms((terms) => terms.filter((item) => item !== term))} aria-label={`Remove exclude term ${term}`} className="ml-1 rounded-sm text-red-700 hover:text-red-900">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -686,12 +762,12 @@ export default function AuditPage() {
               <div className="flex min-w-0 flex-wrap items-center gap-4 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-2 font-medium text-blue-700">
                   <Search className="h-4 w-4" />
-                  {includeTerms ? `Exact phrase: ${includeTerms}` : 'Add include terms to search'}
+                  {effectiveIncludeTerms ? `Include: ${splitSearchTermsInput(effectiveIncludeTerms).join(', ')}` : 'Add include terms to search'}
                 </span>
-                {excludeTerms ? (
+                {effectiveExcludeTerms ? (
                   <>
                     <span className="text-slate-400">|</span>
-                    <span>Excluding: {excludeTerms}</span>
+                    <span>Excluding: {splitSearchTermsInput(effectiveExcludeTerms).join(', ')}</span>
                   </>
                 ) : null}
                 <span className="text-slate-400">|</span>
@@ -704,7 +780,7 @@ export default function AuditPage() {
 
             <div className="mt-4 flex flex-wrap justify-end gap-3">
               <Button type="button" variant="ghost" onClick={clearCriteria} className="text-blue-700 hover:bg-blue-50 hover:text-blue-800">Clear</Button>
-              <Button onClick={run} disabled={loading || !includeTerms.trim()} className="h-11 gap-2 bg-blue-700 px-6 font-semibold hover:bg-blue-800">
+              <Button onClick={run} disabled={loading || !effectiveIncludeTerms.trim()} className="h-11 gap-2 bg-blue-700 px-6 font-semibold hover:bg-blue-800">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 {loading ? 'Running search...' : 'Run standard search'}
               </Button>
