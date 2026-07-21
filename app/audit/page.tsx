@@ -30,6 +30,11 @@ type Match = {
   matchedTerms?: string[];
   excludedTerms?: string[];
   matchedFields?: string[];
+  matchContexts?: Array<{
+    field: string;
+    label: string;
+    snippet: string;
+  }>;
   reason?: string;
   evidence?: string;
   confidence?: number;
@@ -44,6 +49,14 @@ const SEARCH_SCOPE_LABELS: Record<SearchScope, string> = {
   body: 'Body text only',
   metadata: 'Metadata and tags',
 };
+
+function matchFieldLabel(field: string) {
+  if (field === 'filename') return 'BAS filename';
+  if (field === 'metadata') return 'metadata/tags';
+  if (field === 'body') return 'body';
+  if (field === 'title') return 'title';
+  return field;
+}
 
 export default function AuditPage() {
   const [prompt, setPrompt] = useState('');
@@ -194,7 +207,7 @@ export default function AuditPage() {
       ? 'AI Deep Scan'
       : 'AI Quick Scan';
   const scanRunningDetail = method === 'search'
-    ? 'Scanning filenames, titles, summaries, tags, and normalized body text across the source inventory.'
+    ? 'Scanning the 5,000 most recent source items through the server API across the selected fields.'
     : analyzeDepth === 'deep'
       ? 'Scanning up to 5,000 source items, ranking candidates, then applying deeper AI classification in smaller batches.'
       : 'Scanning up to 3,000 source items, ranking candidates, then applying focused AI classification to the strongest matches.';
@@ -769,7 +782,7 @@ export default function AuditPage() {
                     </span>
                     <div>
                       <p className="text-sm font-semibold">{resultTotal} matches</p>
-                      <p className="text-xs text-slate-500">{scanned} source items scanned</p>
+                      <p className="text-xs text-slate-500">{Number(scanned || 0).toLocaleString()} recent source items scanned</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -823,10 +836,7 @@ export default function AuditPage() {
                     <div className="flex-1 space-y-1">
                       <div className="font-medium">{m.title}</div>
                       <div className="text-xs text-muted-foreground">
-                        {m.externalId ? `External Article ID: ${m.externalId}` : 'External Article ID unavailable'}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {m.basContentFilename ? `Filename: ${m.basContentFilename}` : 'Filename unavailable'}
+                        {m.basContentFilename ? `BAS Filename: ${m.basContentFilename}` : 'BAS Filename unavailable'}
                         {m.basContentId ? ` · Content ID: ${m.basContentId}` : ''}
                       </div>
                     </div>
@@ -843,7 +853,7 @@ export default function AuditPage() {
                   <div className="flex flex-wrap gap-1.5">
                     {(m.matchedFields || []).map((field) => (
                       <Badge key={`${m.id}-field-${field}`} variant="outline" className="bg-blue-50 text-blue-700">
-                        matched in {field}
+                        matched in {matchFieldLabel(field)}
                       </Badge>
                     ))}
                     {(m.matchedTerms || []).map((term) => (
@@ -859,8 +869,19 @@ export default function AuditPage() {
                       </Badge>
                     ))}
                   </div>
+                  {(m.matchContexts || []).length ? (
+                    <div className="space-y-2">
+                      {(m.matchContexts || []).map((context) => (
+                        <p key={`${m.id}-context-${context.field}`} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <span className="font-semibold text-slate-950">{context.label}:</span> {context.snippet}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
                   {m.evidence ? <p className="rounded-md bg-primary/5 px-3 py-2 text-sm text-foreground/90">{m.evidence}</p> : null}
-                  <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
+                  {!(m.matchContexts || []).length ? (
+                    <p className="text-sm text-muted-foreground">{m.snippet || 'No snippet available.'}</p>
+                  ) : null}
                   <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openDetails(m)}>View Details</Button>
                 </div>
               ))}

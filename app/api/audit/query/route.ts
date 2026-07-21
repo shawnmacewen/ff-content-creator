@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { parseSearchPrompt } from '@/lib/audit/search-parser';
-import { findMatchedTerms, makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
+import { decodeHtmlEntities, findMatchedTerms, makeSnippet, normalizeSourceText, scoreTextMatch, splitTerms } from '@/lib/audit/text';
 import { getCanonicalBody } from '@/lib/source-content/body';
 
 type SearchScope = 'all' | 'title' | 'filename' | 'body' | 'metadata';
@@ -60,12 +60,28 @@ function matchedFields(fields: Record<SearchScope, string>, includeTerms: string
     .map(([field]) => field);
 }
 
+function fieldLabel(field: SearchScope) {
+  if (field === 'title') return 'Title';
+  if (field === 'filename') return 'BAS filename';
+  if (field === 'metadata') return 'Metadata/tags';
+  if (field === 'body') return 'Body';
+  return 'Content';
+}
+
+function matchContexts(fields: Record<SearchScope, string>, fieldsMatched: SearchScope[], terms: string[], fallbackTerms: string[]) {
+  const matchTerms = terms.length ? terms : fallbackTerms;
+  return fieldsMatched.map((field) => ({
+    field,
+    label: fieldLabel(field),
+    snippet: makeSnippet(fields[field] || '', matchTerms, 220),
+  })).filter((item) => item.snippet);
+}
+
 export async function POST(req: Request) {
   try {
-    const { prompt, publisher, limit, mode, mustInclude, mustExclude, searchScope = 'all' } = (await req.json()) as {
+    const { prompt, publisher, mode, mustInclude, mustExclude, searchScope = 'all' } = (await req.json()) as {
       prompt: string;
       publisher?: string;
-      limit?: number;
       mode?: 'all' | 'any';
       mustInclude?: string;
       mustExclude?: string;
@@ -89,7 +105,7 @@ export async function POST(req: Request) {
       mustExclude: excludeList,
       mode: mode || parsed.mode || 'all',
       publisher: publisher && publisher !== 'all' ? publisher : undefined,
-      limit: Math.min(5000, Math.max(1, Number(limit) || 5000)),
+      limit: 5000,
       searchScope: ['all', 'title', 'filename', 'body', 'metadata'].includes(searchScope) ? searchScope : 'all',
     };
 
@@ -114,9 +130,10 @@ export async function POST(req: Request) {
         const cleanBody = normalizeSourceText(getCanonicalBody(row));
         const filenameText = normalizeSourceText(searchableFilename(row));
         const metadataText = normalizeSourceText(searchableMeta(row));
+        const cleanTitle = normalizeSourceText(decodeHtmlEntities(row.title || ''));
         const fields = {
           all: '',
-          title: normalizeSourceText(row.title || ''),
+          title: cleanTitle,
           filename: filenameText,
           body: cleanBody,
           metadata: metadataText,
@@ -138,16 +155,18 @@ export async function POST(req: Request) {
               ? metadataText
               : fields.title || cleanBody;
 
-        return { row, cleanBody, filenameText, fieldsMatched, snippetSource, ...scored };
+        const contexts = matchContexts(fields, fieldsMatched, scored.matchedTerms, includeTerms);
+
+        return { row, cleanBody, cleanTitle, filenameText, fieldsMatched, contexts, snippetSource, ...scored };
       })
       .filter((row) => row.includeOk && row.excludeOk)
       .sort((a, b) => b.score - a.score)
-      .map(({ row, cleanBody, filenameText, fieldsMatched, snippetSource, matchedTerms, excludedTerms, score }) => ({
+      .map(({ row, cleanBody, cleanTitle, filenameText, fieldsMatched, contexts, snippetSource, matchedTerms, excludedTerms, score }) => ({
         id: row.id,
         externalId: row.external_id || null,
         basContentId: row.bas_content_id || null,
-        basContentFilename: row.bas_content_filename || filenameText || null,
-        title: row.title,
+        basContentFilename: normalizeSourceText(row.bas_content_filename || filenameText || '') || null,
+        title: cleanTitle,
         publisher: row.publisher || null,
         sourceSystem: row.source_system || null,
         type: row.type || 'article',
@@ -160,6 +179,7 @@ export async function POST(req: Request) {
         matchedTerms,
         excludedTerms,
         matchedFields: fieldsMatched,
+        matchContexts: contexts,
         score,
       }));
 
