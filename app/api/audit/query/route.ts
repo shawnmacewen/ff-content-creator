@@ -92,7 +92,11 @@ async function fetchSourceRows(supabase: ReturnType<typeof getSupabaseServerClie
       .order('published_at', { ascending: false, nullsFirst: false })
       .range(from, to);
 
-    if (publisher) query = query.eq('publisher', publisher);
+    if (publisher) {
+      query = query.eq('publisher', publisher);
+    } else {
+      query = query.neq('publisher', 'sample');
+    }
 
     const { data, error } = await query;
     if (error) return { rows, error };

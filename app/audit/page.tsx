@@ -172,9 +172,6 @@ export default function AuditPage() {
   }, [result]);
 
   const publisherDisplay = (publisher: string | null) => {
-    if (publisher === 'broadridge-forefield') return 'Broadridge Forefield';
-    if (publisher === 'publisher-content') return 'Publisher Content';
-    if (publisher === 'sample') return 'Sample';
     return publisher || 'Unavailable';
   };
 
@@ -455,9 +452,9 @@ export default function AuditPage() {
                     Publisher
                     <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
                       <option value="all">All publishers</option>
-                      <option value="broadridge-forefield">Broadridge Forefield</option>
-                      <option value="publisher-content">Publisher Content</option>
-                      <option value="sample">Sample</option>
+                      <option value="broadridge-forefield">broadridge-forefield</option>
+                      <option value="publisher-content">publisher-content</option>
+                      <option value="custom-content">custom-content</option>
                     </select>
                   </label>
                   <label className="space-y-1 text-xs font-medium text-slate-500">
@@ -730,9 +727,9 @@ export default function AuditPage() {
                   Publisher
                   <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-900" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
                     <option value="all">All publishers</option>
-                    <option value="broadridge-forefield">Broadridge Forefield</option>
-                    <option value="publisher-content">Publisher Content</option>
-                    <option value="sample">Sample</option>
+                    <option value="broadridge-forefield">broadridge-forefield</option>
+                    <option value="publisher-content">publisher-content</option>
+                    <option value="custom-content">custom-content</option>
                   </select>
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-slate-600">
@@ -1091,9 +1088,9 @@ export default function AuditPage() {
             <label className="text-sm font-semibold text-slate-950">Publisher</label>
             <select className="h-10 min-w-[240px] rounded-md border border-slate-200 bg-white px-3 text-sm" value={publisher} onChange={(e) => setPublisher(e.target.value)}>
               <option value="all">All publishers</option>
-              <option value="broadridge-forefield">Broadridge Forefield</option>
-              <option value="publisher-content">Publisher Content</option>
-              <option value="sample">Sample</option>
+              <option value="broadridge-forefield">broadridge-forefield</option>
+              <option value="publisher-content">publisher-content</option>
+              <option value="custom-content">custom-content</option>
             </select>
           </div>
           {method === 'search' ? (
