@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -14,6 +14,7 @@ import {
   Phone,
   Search,
   UserRound,
+  type LucideIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ const defaultProfile: AdvisorProfile = {
   website: 'www.broadridgeadvisor.com',
   linkedin: 'linkedin.com/in/james-walsh',
   ctaLabel: 'Schedule a review',
-  ctaUrl: 'www.broadridgeadvisor.com/contact',
+  ctaUrl: 'calendly.com/james-walsh/intro-call',
   disclosure:
     'This newsletter is provided for informational purposes only and should not be considered investment, legal, or tax advice. Please consult a qualified professional about your specific situation.',
 };
@@ -88,6 +89,26 @@ function fieldLabel(content: SourceContent | null, label: string) {
   return content ? label : `${label} will update after selecting content`;
 }
 
+function toWebHref(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function toEmailHref(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  return trimmed.startsWith('mailto:') ? trimmed : `mailto:${trimmed}`;
+}
+
+function toPhoneHref(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const normalized = trimmed.replace(/[^\d+]/g, '');
+  return normalized ? `tel:${normalized}` : '';
+}
+
 export default function PersonalizedPdfRenderer() {
   const [profile, setProfile] = useState<AdvisorProfile>(defaultProfile);
   const [headshotUrl, setHeadshotUrl] = useState('');
@@ -104,6 +125,7 @@ export default function PersonalizedPdfRenderer() {
   }, [headshotUrl]);
 
   const articleText = useMemo(() => getArticleText(selectedContent), [selectedContent]);
+  const ctaHref = toWebHref(profile.ctaUrl || profile.website);
   const articleParagraphs = useMemo(() => {
     if (!articleText) {
       return [
@@ -284,9 +306,15 @@ export default function PersonalizedPdfRenderer() {
                 <div className="mt-4 space-y-0.5 text-[11px] leading-4 text-[#0f6f8f]">
                   <p className="font-semibold text-slate-900">{[profile.advisorName, profile.credentials].filter(Boolean).join(', ')}</p>
                   {profile.address.split('\n').filter(Boolean).map((line) => <p key={line}>{line}</p>)}
-                  <p>{profile.phone}</p>
-                  <p>{profile.email}</p>
-                  <p>{profile.website}</p>
+                  <p>
+                    <PdfLink href={toPhoneHref(profile.phone)}>{profile.phone}</PdfLink>
+                  </p>
+                  <p>
+                    <PdfLink href={toEmailHref(profile.email)}>{profile.email}</PdfLink>
+                  </p>
+                  <p>
+                    <PdfLink href={toWebHref(profile.website)}>{profile.website}</PdfLink>
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col items-end justify-between text-right">
@@ -343,9 +371,9 @@ export default function PersonalizedPdfRenderer() {
                     <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Connect</div>
                     <div className="mt-3 space-y-2 text-[11px] leading-4 text-slate-700">
                       <ContactLine icon={BriefcaseBusiness} value={profile.firmName} />
-                      <ContactLine icon={Phone} value={profile.phone} />
-                      <ContactLine icon={Mail} value={profile.email} />
-                      <ContactLine icon={LinkIcon} value={profile.website} />
+                      <ContactLine icon={Phone} value={profile.phone} href={toPhoneHref(profile.phone)} />
+                      <ContactLine icon={Mail} value={profile.email} href={toEmailHref(profile.email)} />
+                      <ContactLine icon={LinkIcon} value={profile.website} href={toWebHref(profile.website)} />
                       <ContactLine icon={MapPin} value={profile.address.split('\n')[0]} />
                     </div>
                   </div>
@@ -356,10 +384,24 @@ export default function PersonalizedPdfRenderer() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-[11px] font-bold uppercase tracking-wide text-[#0f6f8f]">Next Step</div>
-                    <p className="mt-1 text-[13px] font-semibold text-slate-900">{profile.ctaLabel || 'Schedule a review'}</p>
-                    <p className="mt-1 text-[11px] text-slate-600">{profile.ctaUrl || profile.website}</p>
+                    <p className="mt-1 text-[13px] font-semibold text-slate-900">
+                      <PdfLink href={ctaHref} className="text-slate-900">
+                        {profile.ctaLabel || 'Schedule a review'}
+                      </PdfLink>
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-600">
+                      <PdfLink href={ctaHref} className="text-slate-600">
+                        {profile.ctaUrl || profile.website}
+                      </PdfLink>
+                    </p>
                   </div>
-                  <CalendarDays className="h-8 w-8 shrink-0 text-[#0f6f8f]" />
+                  <PdfLink
+                    href={ctaHref}
+                    aria-label={profile.ctaLabel || 'Open scheduling link'}
+                    className="shrink-0 text-[#0f6f8f]"
+                  >
+                    <CalendarDays className="h-8 w-8" />
+                  </PdfLink>
                 </div>
               </section>
             </main>
@@ -367,8 +409,19 @@ export default function PersonalizedPdfRenderer() {
             <footer className="mt-auto border-t border-slate-200 px-9 py-5 text-[9px] leading-4 text-slate-500">
               <p>{profile.disclosure}</p>
               <p className="mt-2">
-                Source: {selectedContent?.publisher || 'Editorial source content'} {selectedContent?.externalId ? `| ${selectedContent.externalId}` : ''}
-                {profile.linkedin ? ` | ${profile.linkedin}` : ''}
+                Source:{' '}
+                <PdfLink href={toWebHref(selectedContent?.url || '')} className="text-slate-500">
+                  {selectedContent?.publisher || 'Editorial source content'}
+                </PdfLink>
+                {selectedContent?.externalId ? ` | ${selectedContent.externalId}` : ''}
+                {profile.linkedin ? (
+                  <>
+                    {' | '}
+                    <PdfLink href={toWebHref(profile.linkedin)} className="text-slate-500">
+                      {profile.linkedin}
+                    </PdfLink>
+                  </>
+                ) : null}
               </p>
             </footer>
           </article>
@@ -416,12 +469,28 @@ function TextAreaField({
   );
 }
 
-function ContactLine({ icon: Icon, value }: { icon: typeof Phone; value: string }) {
+function PdfLink({
+  href,
+  children,
+  className,
+  ...props
+}: ComponentProps<'a'> & {
+  href: string;
+}) {
+  if (!href) return <>{children}</>;
+  return (
+    <a className={cn('break-words text-[#0f6f8f] underline-offset-2 hover:underline', className)} href={href} rel="noreferrer" target="_blank" {...props}>
+      {children}
+    </a>
+  );
+}
+
+function ContactLine({ icon: Icon, value, href }: { icon: LucideIcon; value: string; href?: string }) {
   if (!value) return null;
   return (
     <div className="flex gap-2">
       <Icon className="mt-0.5 h-3 w-3 shrink-0 text-[#0f6f8f]" />
-      <span className="break-words">{value}</span>
+      <PdfLink href={href || ''}>{value}</PdfLink>
     </div>
   );
 }
