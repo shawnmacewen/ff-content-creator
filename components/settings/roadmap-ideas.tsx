@@ -343,6 +343,30 @@ const roadmapIdeas: RoadmapIdea[] = [
     accent: 'from-blue-300 via-fuchsia-300 to-orange-200',
   },
   {
+    title: 'Personalized PDF Renderer',
+    status: 'Next',
+    theme: 'Newsletter PDF Output',
+    summary: 'Prototype a newsletter-style PDF renderer that uses API/feed content and moves the output closer to the Advisor Portal examples.',
+    details: [
+      'Continue the dedicated /personalized-pdf-renderer experimental page that takes selected API/feed content and assembles a personalized newsletter PDF preview.',
+      'Use the attached Advisor Portal screenshots as the visual target, with a specific comparison against the AdvisorStream example customers like less.',
+      'Start with source title, summary, body excerpt, key takeaways, publisher/date, advisor/customer personalization fields, and compliance/disclaimer space.',
+      'Keep the first pass as a Product Lab prototype so layout, density, typography, and section hierarchy can be judged before wiring it into Generate or Library exports.',
+      'Define a reusable render contract that can later support per-advisor branding, selected articles, saved PDF packages, and downstream export/API delivery.',
+    ],
+    promptData: [
+      'Selected source content IDs, article title, canonical body, summary, key takeaways, tags, publisher, publish date, and source URL or BAS filename.',
+      'Advisor/customer personalization fields such as advisor name, firm, logo, recipient segment, contact details, introduction copy, and disclosure text.',
+      'Reference layout notes from the two preferred Advisor Portal screenshots and the less-preferred AdvisorStream screenshot.',
+      'PDF output settings such as page size, margins, article count, section order, image handling, footer, disclaimer block, and download/save target.',
+    ],
+    icon: FileText,
+    impact: 8,
+    effort: 6,
+    matrix: { x: 48, y: 41 },
+    accent: 'from-teal-300 via-sky-200 to-amber-200',
+  },
+  {
     title: 'Roadmap Views',
     status: 'Later',
     theme: 'Planning Workspace',
@@ -444,7 +468,7 @@ export default function RoadmapIdeas() {
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              <RoadmapStat icon={Sparkles} value="10" label="seed ideas" tone="dark" />
+              <RoadmapStat icon={Sparkles} value="11" label="seed ideas" tone="dark" />
               <RoadmapStat icon={Flag} value="2" label="planning views" tone="dark" />
               <RoadmapStat icon={Clock3} value="Later" label="customization pass" tone="dark" />
             </div>

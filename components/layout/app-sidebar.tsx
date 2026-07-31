@@ -13,6 +13,7 @@ import {
   SearchCheck,
   PenSquare,
   FlaskConical,
+  FileText,
   Leaf,
   PanelTop,
   Gauge,
@@ -87,6 +88,11 @@ const contentTypeItems = [
     title: 'Content Upload',
     href: '/content-upload',
     icon: UploadCloud,
+  },
+  {
+    title: 'PDF Renderer',
+    href: '/personalized-pdf-renderer',
+    icon: FileText,
   },
 ];
 

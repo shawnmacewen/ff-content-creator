@@ -11,6 +11,12 @@
 
 ## Next Up (in progress)
 
+- Track Personalized PDF Rendering / newsletter PDF output as a Product Lab prototype:
+  - Continue the dedicated `/personalized-pdf-renderer` experimental page that turns selected API/feed content into a personalized newsletter-style PDF preview.
+  - Use the two preferred Advisor Portal screenshots as the visual target and compare against the AdvisorStream example customers like less.
+  - Capture source content fields, advisor/customer personalization fields, compliance/disclaimer space, layout density, typography, and PDF export requirements before implementing production wiring.
+  - Keep the first pass separate from Generate/Library until the team can visually judge the renderer against the screenshots.
+
 - Evaluate "template-rendered text" vs "AI-rendered text in image" for enterprise use:
   - Template-rendered text (our current SlideCard HTML overlays) is better for compliance/control (easy review, predictable layout, can enforce disclaimers).
   - AI-rendered text directly in images can look more varied/organic, but is harder to QA and risks compliance (hallucinated claims, unreadable text, accidental logos).

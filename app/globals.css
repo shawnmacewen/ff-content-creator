@@ -229,3 +229,37 @@
     animation: sidebar-slogan-pulse 4.3s ease-in-out infinite;
   }
 }
+
+@media print {
+  body.printing-newsletter {
+    background: white !important;
+  }
+
+  body.printing-newsletter * {
+    visibility: hidden !important;
+  }
+
+  body.printing-newsletter .newsletter-print-area,
+  body.printing-newsletter .newsletter-print-area * {
+    visibility: visible !important;
+  }
+
+  body.printing-newsletter .newsletter-no-print {
+    display: none !important;
+  }
+
+  body.printing-newsletter .newsletter-print-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 8.5in !important;
+    min-height: 11in !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    size: letter;
+    margin: 0;
+  }
+}

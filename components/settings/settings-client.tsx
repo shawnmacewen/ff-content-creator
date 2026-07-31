@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { BookOpenCheck, Bot, Building2, Compass, Database, Flag, Info, Megaphone, Palette, RefreshCw, Tags, Workflow } from 'lucide-react';
+import { BookOpenCheck, Bot, Building2, Compass, Database, FileText, Flag, Info, Megaphone, Palette, RefreshCw, Tags, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 import ContentApiExplorer from '@/components/settings/content-api-explorer';
 import KnowledgeBase from '@/components/settings/knowledge-base';
+import PersonalizedPdfRenderer from '@/components/settings/personalized-pdf-renderer';
 import ProductUpdates from '@/components/settings/product-updates';
 import PhilosophyLab from '@/components/settings/philosophy-lab';
 import PriorityWorkflow from '@/components/settings/priority-workflow';
@@ -25,6 +26,7 @@ type SettingsTab =
   | 'tag-explorer'
   | 'priority-workflow'
   | 'product-updates'
+  | 'personalized-pdf-renderer'
   | 'roadmap-ideas'
   | 'knowledge-base'
   | 'template-design-system'
@@ -42,6 +44,7 @@ const workspaceTabs: SettingsTab[] = [
 const productLabTabs: SettingsTab[] = [
   'priority-workflow',
   'product-updates',
+  'personalized-pdf-renderer',
   'roadmap-ideas',
   'knowledge-base',
   'template-design-system',
@@ -78,6 +81,11 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     label: 'Product Updates',
     detail: 'Review release notes and visual product stories.',
     icon: Megaphone,
+  },
+  'personalized-pdf-renderer': {
+    label: 'PDF Renderer',
+    detail: 'Prototype advisor-branded newsletter PDF output from source content.',
+    icon: FileText,
   },
   'roadmap-ideas': {
     label: 'Roadmap Ideas',
@@ -713,6 +721,8 @@ export default function SettingsClient({ section }: { section: SettingsSection }
         <PriorityWorkflow />
       ) : tab === 'product-updates' ? (
         <ProductUpdates />
+      ) : tab === 'personalized-pdf-renderer' ? (
+        <PersonalizedPdfRenderer />
       ) : tab === 'roadmap-ideas' ? (
         <RoadmapIdeas />
       ) : tab === 'knowledge-base' ? (
