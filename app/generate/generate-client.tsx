@@ -2019,6 +2019,7 @@ export default function GeneratePage() {
                           hideSourcePicker
                           hideSettingsControls
                           defaultTab="carousel"
+                          activeTab="carousel"
                           generateLabel="Generate Images"
                           generationGroupId={kitGenerationGroupId || undefined}
                           onLoadingChange={setIsGeneratingKitCarouselImages}
@@ -2040,6 +2041,12 @@ export default function GeneratePage() {
                           topic={kitCarouselPrompt}
                           onTopicChange={setKitCarouselPrompt}
                         />
+                      </div>
+                    ) : null}
+
+                    {kitOutputTab === 'carousel' && selectedSourceIds.length !== 1 ? (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Instagram carousel images need exactly one selected source article. Select one source, then generate the carousel again.
                       </div>
                     ) : null}
 
