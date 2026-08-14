@@ -2007,7 +2007,12 @@ export default function GeneratePage() {
                     ) : null}
 
                     {selectedSourceIds.length === 1 ? (
-                      <div className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
+                      <div
+                        className={cn(
+                          kitOutputTab !== 'carousel' && 'pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0'
+                        )}
+                        aria-hidden={kitOutputTab !== 'carousel' ? 'true' : undefined}
+                      >
                         <InstagramCarousel2Client
                           ref={kitCarousel2Ref}
                           selectedSourceId={selectedSourceIds[0] || null}
