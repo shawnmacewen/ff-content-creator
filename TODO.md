@@ -9,6 +9,12 @@
   - The flow should feel more like a checkout/cart experience: users select desired content items, each item is added to a generation list, then users configure those items before generating.
   - Preserve this as a future UX/product task, not an immediate implementation request.
 
+- Roadmap: apply Brand Profiles to template-rendered email outputs:
+  - After generation, render email outputs through a small set of HTML-ready email templates that can use Brand Profile colors, typography guidance, logo settings, and style defaults.
+  - Show the branded email preview in the output review area and provide downloadable/copyable HTML that can be rebuilt in common email clients.
+  - Explore applying the same post-generation templating approach to other generated content formats where templates are safer than changing the core prompt.
+  - Do not make major prompt changes for this work without explicit review; keep the current generation prompt stable unless Rolly approves a focused prompt update.
+
 ## Next Up (in progress)
 
 - Track Personalized PDF Rendering / newsletter PDF output as a Product Lab prototype:

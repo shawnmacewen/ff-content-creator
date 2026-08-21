@@ -11,6 +11,7 @@ import {
   deleteBrandProfile,
   emptyBrandProfileDraft,
   formatBrandProfileForPrompt,
+  hasBrandProfileContent,
   loadBrandProfiles,
   saveBrandProfile,
   type BrandProfile,
@@ -107,6 +108,7 @@ export function CreativeDirectionControls({
   const [savedProfiles, setSavedProfiles] = React.useState<BrandProfile[]>([]);
   const [draft, setDraft] = React.useState<BrandProfileDraft>(() => draftFromProfile(brandProfile));
   const [selectedProfileId, setSelectedProfileId] = React.useState<string>(brandProfile?.id || '');
+  const [profileMode, setProfileMode] = React.useState<'none' | 'saved' | 'new'>(brandProfile ? 'new' : 'none');
   const [brandNotes, setBrandNotes] = React.useState('');
   const [files, setFiles] = React.useState<File[]>([]);
   const [isScanning, setIsScanning] = React.useState(false);
@@ -117,7 +119,10 @@ export function CreativeDirectionControls({
 
   React.useEffect(() => {
     setDraft(draftFromProfile(brandProfile));
-    setSelectedProfileId(brandProfile?.id === 'active-brand-profile' ? '' : brandProfile?.id || '');
+    const savedId = brandProfile?.id === 'active-brand-profile' ? '' : brandProfile?.id || '';
+    setSelectedProfileId(savedId);
+    if (savedId) setProfileMode('saved');
+    else if (hasBrandProfileContent(brandProfile)) setProfileMode('new');
   }, [brandProfile]);
 
   const updateDraft = (patch: Partial<BrandProfileDraft>) => {
@@ -152,13 +157,30 @@ export function CreativeDirectionControls({
     if (!id) {
       onBrandProfileChange(null);
       setDraft(emptyBrandProfileDraft());
+      setProfileMode('none');
       return;
     }
 
     const found = savedProfiles.find((profile) => profile.id === id);
     if (found) {
+      setProfileMode('saved');
       onBrandProfileChange(found);
       applyWritingDefaults(found);
+    }
+  };
+
+  const handleModeChange = (mode: 'none' | 'saved' | 'new') => {
+    setProfileMode(mode);
+    if (mode === 'none') {
+      setSelectedProfileId('');
+      setDraft(emptyBrandProfileDraft());
+      onBrandProfileChange(null);
+      return;
+    }
+    if (mode === 'new') {
+      setSelectedProfileId('');
+      setDraft(emptyBrandProfileDraft());
+      onBrandProfileChange(null);
     }
   };
 
@@ -225,6 +247,14 @@ export function CreativeDirectionControls({
   };
 
   const promptPreview = formatBrandProfileForPrompt(draft);
+  const activeProfileName = brandProfile?.name?.trim() || draft.name.trim();
+  const activeProfileStatus = profileMode === 'none'
+    ? 'No Brand Profile'
+    : activeProfileName
+      ? activeProfileName
+      : profileMode === 'saved'
+        ? 'Choose a saved profile'
+        : 'New unsaved profile';
 
   return (
     <div className="grid gap-4 p-5 xl:grid-cols-2 2xl:grid-cols-3">
@@ -312,9 +342,43 @@ export function CreativeDirectionControls({
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="text-[11px] font-bold uppercase tracking-wide text-orange-700">Brand Profile</div>
-        <h3 className="mt-1 text-base font-semibold text-slate-950">Partner profile</h3>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wide text-orange-700">Brand Profile</div>
+            <h3 className="mt-1 text-base font-semibold text-slate-950">Partner profile</h3>
+          </div>
+          <span className={cn(
+            'rounded-md px-2 py-1 text-xs font-bold',
+            profileMode === 'none' ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-700'
+          )}>
+            {activeProfileStatus}
+          </span>
+        </div>
         <div className="mt-4 space-y-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {([
+              ['none', 'No profile', 'Use current defaults only'],
+              ['saved', 'Saved profile', 'Reuse partner settings'],
+              ['new', 'New profile', 'Create or scan one'],
+            ] as const).map(([mode, label, detail]) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => handleModeChange(mode)}
+                className={cn(
+                  'min-h-[72px] rounded-md border px-3 py-2 text-left transition-colors',
+                  profileMode === mode
+                    ? 'border-orange-300 bg-orange-50 text-orange-900 ring-1 ring-orange-100'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                )}
+              >
+                <span className="block text-sm font-semibold">{label}</span>
+                <span className="mt-1 block text-xs leading-4 text-slate-500">{detail}</span>
+              </button>
+            ))}
+          </div>
+
+          {profileMode === 'saved' ? (
           <label className="block space-y-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Saved profiles</span>
             <select
@@ -328,6 +392,9 @@ export function CreativeDirectionControls({
               ))}
             </select>
           </label>
+          ) : null}
+          {profileMode !== 'none' ? (
+          <>
           <label className="block space-y-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Profile name</span>
             <input
@@ -352,13 +419,19 @@ export function CreativeDirectionControls({
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" className="rounded-md gap-2" onClick={handleSaveProfile}>
               <Save className="h-4 w-4" />
-              Save profile
+              {selectedProfileId ? 'Update profile' : 'Save profile'}
             </Button>
             <Button type="button" size="sm" variant="outline" className="rounded-md gap-2" onClick={handleDeleteProfile} disabled={!selectedProfileId}>
               <Trash2 className="h-4 w-4" />
               Delete
             </Button>
           </div>
+          </>
+          ) : (
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-5 text-slate-600">
+              Brand Profile is off for this generation. Tone, audience, and notes above still apply.
+            </div>
+          )}
         </div>
       </section>
 
