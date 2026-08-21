@@ -15,6 +15,13 @@ export type BrandProfileLogoAsset = {
   dataUrl: string;
 };
 
+export type BrandProfileLogoCandidate = BrandProfileLogoAsset & {
+  id: string;
+  sourceFile: string;
+  confidence: 'high' | 'medium' | 'low';
+  reason: string;
+};
+
 export type BrandProfile = {
   id: string;
   name: string;

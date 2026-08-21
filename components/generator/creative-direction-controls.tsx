@@ -16,6 +16,7 @@ import {
   saveBrandProfile,
   type BrandProfile,
   type BrandProfileDraft,
+  type BrandProfileLogoCandidate,
   type BrandProfileStrictness,
 } from '@/lib/brand-profile';
 
@@ -133,6 +134,7 @@ export function CreativeDirectionControls({
   const [profileMode, setProfileMode] = React.useState<'none' | 'saved' | 'new'>(brandProfile ? 'new' : 'none');
   const [brandNotes, setBrandNotes] = React.useState('');
   const [files, setFiles] = React.useState<File[]>([]);
+  const [logoCandidates, setLogoCandidates] = React.useState<BrandProfileLogoCandidate[]>([]);
   const [isScanning, setIsScanning] = React.useState(false);
 
   React.useEffect(() => {
@@ -193,12 +195,14 @@ export function CreativeDirectionControls({
     if (mode === 'none') {
       setSelectedProfileId('');
       setDraft(emptyBrandProfileDraft());
+      setLogoCandidates([]);
       onBrandProfileChange(null);
       return;
     }
     if (mode === 'new') {
       setSelectedProfileId('');
       setDraft(emptyBrandProfileDraft());
+      setLogoCandidates([]);
       onBrandProfileChange(null);
     }
   };
@@ -226,6 +230,7 @@ export function CreativeDirectionControls({
     setSavedProfiles(next);
     setSelectedProfileId('');
     setDraft(emptyBrandProfileDraft());
+    setLogoCandidates([]);
     onBrandProfileChange(null);
     toast.success('Brand Profile removed');
   };
@@ -246,6 +251,9 @@ export function CreativeDirectionControls({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'Brand Profile generation failed');
+      const nextLogoCandidates = Array.isArray(payload?.logoCandidates)
+        ? payload.logoCandidates.filter((candidate: BrandProfileLogoCandidate) => candidate?.dataUrl).slice(0, 8)
+        : [];
 
       const profile = brandProfileFromDraft({
         ...emptyBrandProfileDraft(),
@@ -256,8 +264,11 @@ export function CreativeDirectionControls({
       setSavedProfiles(next);
       setSelectedProfileId(profile.id);
       setDraft(draftFromProfile(profile));
+      setLogoCandidates(nextLogoCandidates);
       onBrandProfileChange(profile);
-      toast.success('Brand Profile generated and saved');
+      toast.success(nextLogoCandidates.length
+        ? `Brand Profile generated with ${nextLogoCandidates.length} suggested logo${nextLogoCandidates.length === 1 ? '' : 's'}`
+        : 'Brand Profile generated and saved');
     } catch (error: any) {
       toast.error(error?.message || 'Brand Profile generation failed');
     } finally {
@@ -290,6 +301,18 @@ export function CreativeDirectionControls({
     } catch (error: any) {
       toast.error(error?.message || 'Logo upload failed');
     }
+  };
+
+  const handleUseLogoCandidate = (candidate: BrandProfileLogoCandidate) => {
+    updateDraft({
+      logoAsset: {
+        name: candidate.name,
+        type: candidate.type,
+        size: candidate.size,
+        dataUrl: candidate.dataUrl,
+      },
+    });
+    toast.success('Suggested logo added to Brand Profile');
   };
 
   const promptPreview = formatBrandProfileForPrompt(draft);
@@ -510,7 +533,10 @@ export function CreativeDirectionControls({
               multiple
               accept=".pdf,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.webp,application/pdf,image/*,text/*"
               className="sr-only"
-              onChange={(event) => setFiles(Array.from(event.target.files || []).slice(0, 6))}
+              onChange={(event) => {
+                setFiles(Array.from(event.target.files || []).slice(0, 6));
+                setLogoCandidates([]);
+              }}
             />
           </label>
           {files.length ? (
@@ -606,6 +632,45 @@ export function CreativeDirectionControls({
                 )}
               </div>
             </div>
+            {logoCandidates.length ? (
+              <div className="space-y-2 rounded-md border border-orange-100 bg-orange-50/50 p-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-orange-700">Suggested logos from guidelines</div>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">Choose one only if it is the right partner mark. Manual upload stays available.</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {logoCandidates.map((candidate) => (
+                    <div key={candidate.id} className="rounded-md border border-orange-100 bg-white p-2">
+                      <div className="flex h-20 items-center justify-center rounded border border-slate-100 bg-slate-50 p-2">
+                        <div
+                          className="h-full w-full bg-contain bg-center bg-no-repeat"
+                          style={{ backgroundImage: `url(${candidate.dataUrl})` }}
+                          aria-label={`${candidate.name} suggested logo`}
+                          role="img"
+                        />
+                      </div>
+                      <div className="mt-2 min-w-0">
+                        <div className="truncate text-xs font-bold text-slate-800">{candidate.name}</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{candidate.confidence}</span>
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{candidate.sourceFile}</span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">{candidate.reason}</p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 h-8 w-full rounded-md text-xs"
+                          onClick={() => handleUseLogoCandidate(candidate)}
+                        >
+                          Use suggested logo
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
