@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CheckCircle2, FileUp, Loader2, Save, Sparkles, Trash2 } from 'lucide-react';
+import { CheckCircle2, FileUp, ImageIcon, Loader2, Palette, Save, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -99,6 +99,18 @@ function fileToDataUrl(file: File) {
     reader.onerror = () => reject(reader.error || new Error('Logo upload failed'));
     reader.readAsDataURL(file);
   });
+}
+
+function brandInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return 'BP';
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join('');
+}
+
+function strictnessLabel(strictness: BrandProfileStrictness) {
+  if (strictness === 'strict') return 'Follow closely';
+  if (strictness === 'light') return 'Light influence';
+  return 'Balanced';
 }
 
 export function CreativeDirectionControls({
@@ -289,6 +301,22 @@ export function CreativeDirectionControls({
       : profileMode === 'saved'
         ? 'Choose a saved profile'
         : 'New unsaved profile';
+  const previewName = activeProfileName || 'Unsaved Brand Profile';
+  const brandColors = ([
+    ['Primary', draft.primaryColor],
+    ['Secondary', draft.secondaryColor],
+    ['Accent', draft.accentColor],
+    ['Neutral', draft.neutralColor],
+  ] as const).filter(([, value]) => value.trim());
+  const previewNotes = [
+    ['Typography', draft.typography],
+    ['Imagery', draft.imageryStyle],
+    ['Layout', draft.layoutStyle],
+    ['Voice', draft.voiceNotes],
+    ['Compliance', draft.complianceNotes],
+  ].filter(([, value]) => value.trim()).slice(0, 4);
+  const forbiddenPreview = draft.forbiddenTreatments.filter(Boolean).slice(0, 3);
+  const appliedTargets = ['Copy tone', 'Carousel style', 'Single image', 'Infographic', 'Email templates later'];
 
   return (
     <div className="grid gap-4 p-5 xl:grid-cols-2 2xl:grid-cols-3">
@@ -586,6 +614,114 @@ export function CreativeDirectionControls({
         <div className="text-[11px] font-bold uppercase tracking-wide text-orange-700">Prompt profile</div>
         <h3 className="mt-1 text-base font-semibold text-slate-950">Rules and direction</h3>
         <div className="mt-4 space-y-3">
+          <div className="rounded-md border border-orange-100 bg-gradient-to-br from-orange-50 to-cyan-50 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/80 bg-white shadow-sm">
+                  {draft.logoAsset?.dataUrl ? (
+                    <div
+                      className="h-full w-full bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url(${draft.logoAsset.dataUrl})` }}
+                      aria-label={`${draft.logoAsset.name} logo preview`}
+                      role="img"
+                    />
+                  ) : (
+                    <span className="text-sm font-black text-orange-700">{brandInitials(previewName)}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="truncate text-sm font-bold text-slate-950">{previewName}</h4>
+                    <span className={cn(
+                      'rounded-md px-2 py-1 text-[11px] font-bold',
+                      profileMode === 'none' ? 'bg-white/80 text-slate-500' : 'bg-orange-100 text-orange-800'
+                    )}>
+                      {profileMode === 'none' ? 'Not applied' : strictnessLabel(draft.strictness)}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                    {draft.promptSummary || draft.sourceSummary || 'Add guideline notes or scan brand materials to build the profile summary.'}
+                  </p>
+                </div>
+              </div>
+              <Palette className="mt-1 h-4 w-4 shrink-0 text-orange-700" />
+            </div>
+
+            <div className="mt-3 grid gap-3">
+              <div>
+                <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">Colors</div>
+                {brandColors.length ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {brandColors.map(([label, value]) => (
+                      <div key={label} className="flex min-w-0 items-center gap-2 rounded-md bg-white/80 px-2 py-2">
+                        <span
+                          className="h-6 w-6 shrink-0 rounded border border-slate-200"
+                          style={{ backgroundColor: value }}
+                          aria-label={`${label} color ${value}`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
+                          <span className="block truncate text-xs font-semibold text-slate-800">{value}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md bg-white/80 px-3 py-2 text-xs font-medium text-slate-500">No colors set yet</div>
+                )}
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-md bg-white/80 px-3 py-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Writing defaults</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700">{toneLabel(draft.defaultTone || tone)}</span>
+                    <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700">{draft.defaultAudience || audience}</span>
+                    {draft.defaultUsePlainLanguage ?? usePlainLanguage ? (
+                      <span className="rounded bg-cyan-100 px-2 py-1 text-[11px] font-bold text-cyan-800">Plain language</span>
+                    ) : null}
+                    {draft.defaultIncludeCallToAction ?? includeCallToAction ? (
+                      <span className="rounded bg-cyan-100 px-2 py-1 text-[11px] font-bold text-cyan-800">CTA</span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="rounded-md bg-white/80 px-3 py-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Applied to</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {appliedTargets.map((target) => (
+                      <span key={target} className="rounded bg-orange-100 px-2 py-1 text-[11px] font-bold text-orange-800">{target}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {previewNotes.length || forbiddenPreview.length || draft.logoNotes ? (
+                <div className="rounded-md bg-white/80 px-3 py-2">
+                  <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Profile details
+                  </div>
+                  <div className="space-y-2">
+                    {previewNotes.map(([label, value]) => (
+                      <p key={label} className="text-xs leading-5 text-slate-600">
+                        <span className="font-bold text-slate-800">{label}:</span> {value}
+                      </p>
+                    ))}
+                    {draft.logoNotes ? (
+                      <p className="text-xs leading-5 text-slate-600">
+                        <span className="font-bold text-slate-800">Logo:</span> {draft.logoNotes}
+                      </p>
+                    ) : null}
+                    {forbiddenPreview.length ? (
+                      <p className="text-xs leading-5 text-slate-600">
+                        <span className="font-bold text-slate-800">Avoid:</span> {forbiddenPreview.join(', ')}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
           <textarea className="min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="Typography direction" value={draft.typography} onChange={(event) => updateDraft({ typography: event.target.value })} />
           <textarea className="min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="Imagery style" value={draft.imageryStyle} onChange={(event) => updateDraft({ imageryStyle: event.target.value })} />
           <textarea className="min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="Layout style" value={draft.layoutStyle} onChange={(event) => updateDraft({ layoutStyle: event.target.value })} />
@@ -597,6 +733,7 @@ export function CreativeDirectionControls({
           <textarea className="min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="Prompt-ready brand summary" value={draft.promptSummary} onChange={(event) => updateDraft({ promptSummary: event.target.value })} />
           {promptPreview ? (
             <div className="max-h-32 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+              <div className="mb-1 font-bold uppercase tracking-wide text-slate-500">Prompt preview</div>
               {promptPreview}
             </div>
           ) : null}
