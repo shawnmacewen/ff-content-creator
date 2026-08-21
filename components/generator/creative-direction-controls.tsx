@@ -136,13 +136,10 @@ export function CreativeDirectionControls({
   }, [brandProfile]);
 
   const updateDraft = (patch: Partial<BrandProfileDraft>) => {
-    setDraft((current) => {
-      const next = { ...current, ...patch };
-      const activeId = brandProfile?.id || selectedProfileId || 'active-brand-profile';
-      const nextProfile = brandProfileFromDraft(next, activeId);
-      onBrandProfileChange(nextProfile);
-      return next;
-    });
+    const next = { ...draft, ...patch };
+    const activeId = brandProfile?.id || selectedProfileId || 'active-brand-profile';
+    setDraft(next);
+    onBrandProfileChange(brandProfileFromDraft(next, activeId));
   };
 
   const draftWithWritingDefaults = (base: BrandProfileDraft = draft): BrandProfileDraft => ({

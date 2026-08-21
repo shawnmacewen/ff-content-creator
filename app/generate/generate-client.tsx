@@ -54,6 +54,7 @@ import {
   Monitor,
   Newspaper,
   NotebookText,
+  Palette,
   RefreshCw,
   Save,
   Sparkles,
@@ -970,6 +971,15 @@ export default function GeneratePage() {
   const guidanceContextSummary = visibleGuidanceOptions.length
     ? `${visibleGuidanceOptions.join(', ')}${extraGuidanceOptionCount ? `, +${extraGuidanceOptionCount} more` : ''}`
     : 'No extra preferences';
+  const hasAppliedBrandProfile = hasBrandProfileContent(brandProfile);
+  const appliedBrandProfileName = brandProfile?.name?.trim() || (hasAppliedBrandProfile ? 'Unsaved Brand Profile' : '');
+  const appliedBrandProfileSummary = hasAppliedBrandProfile
+    ? [
+        appliedBrandProfileName,
+        brandProfile?.primaryColor || brandProfile?.secondaryColor || brandProfile?.accentColor ? 'colors set' : null,
+        brandProfile?.logoAsset ? 'logo added' : null,
+      ].filter(Boolean).join(' - ')
+    : '';
   const onlySelectedSourceIsMissing = selectedSourceMissing && selectedSourceIds.length === 1;
   const generateDisabled = mode === 'kit'
     ? isGeneratingKit || isGeneratingKitCarouselImages || isGeneratingKitInfographic || !kitTypes.length || !selectedSourceIds.length || onlySelectedSourceIsMissing
@@ -1677,6 +1687,17 @@ export default function GeneratePage() {
 	                  <div className={cn('text-[11px] font-bold uppercase tracking-wide', isGeneratedOutputDormant ? 'text-slate-400' : 'text-emerald-700')}>Generated Output</div>
 	                  <h2 className={cn('mt-1 text-xl font-semibold leading-tight', isGeneratedOutputDormant ? 'text-slate-500' : 'text-slate-950')}>Preview Content</h2>
 	                  <p className={cn('mt-1 text-sm', isGeneratedOutputDormant ? 'text-slate-400' : 'text-muted-foreground')}>Review the campaign as a connected set of channel-ready assets.</p>
+                    {hasAppliedBrandProfile ? (
+                      <div className={cn(
+                        'mt-3 inline-flex max-w-full items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold',
+                        isGeneratedOutputDormant
+                          ? 'border-slate-200 bg-slate-100 text-slate-400'
+                          : 'border-orange-200 bg-orange-50 text-orange-800'
+                      )}>
+                        <Palette className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">Brand Profile applied: {appliedBrandProfileSummary}</span>
+                      </div>
+                    ) : null}
 	                </div>
 	              </div>
 	              <div className="flex flex-wrap items-center gap-4">
@@ -2326,6 +2347,20 @@ export default function GeneratePage() {
                 <AlertCircle className="h-4 w-4 fill-amber-100 text-amber-600" />
               )}
             </button>
+            {hasAppliedBrandProfile ? (
+              <>
+                <span className="text-slate-300">-</span>
+                <button
+                  type="button"
+                  onClick={() => openWorkflowStep(2)}
+                  className="inline-flex min-w-0 max-w-[240px] items-center gap-2 rounded-md px-1 py-1 text-left transition hover:bg-slate-100 hover:text-primary"
+                >
+                  <Palette className="h-4 w-4 shrink-0 text-orange-600" />
+                  <span className="truncate">{appliedBrandProfileName}</span>
+                  <CheckCircle2 className="h-4 w-4 shrink-0 fill-emerald-600 text-white" />
+                </button>
+              </>
+            ) : null}
             <span className="text-slate-300">-</span>
             <button
               type="button"

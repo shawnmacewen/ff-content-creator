@@ -15,6 +15,12 @@
   - Explore applying the same post-generation templating approach to other generated content formats where templates are safer than changing the core prompt.
   - Do not make major prompt changes for this work without explicit review; keep the current generation prompt stable unless Rolly approves a focused prompt update.
 
+- Roadmap: save default Campaign Kit presets:
+  - Let users save common Campaign Kit selections as reusable presets, such as a partner-preferred 1, 2, or 3 output package.
+  - Allow one preset to be marked as the default Campaign Kit so users do not need to reselect the same outputs each time.
+  - Consider partner-specific presets inside Brand Profiles so selecting a partner can restore both Creative Direction defaults and preferred campaign output combinations.
+  - Keep manual output selection available for one-off campaigns.
+
 ## Next Up (in progress)
 
 - Track Personalized PDF Rendering / newsletter PDF output as a Product Lab prototype:
