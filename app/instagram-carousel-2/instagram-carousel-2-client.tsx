@@ -124,6 +124,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   onShowAdvancedPromptInputChange?: (v: boolean) => void;
   topic?: string;
   onTopicChange?: (t: string) => void;
+  creativeDirection?: string;
 
   /** Hide the settings controls UI (used when controls are rendered by parent). */
   hideSettingsControls?: boolean;
@@ -394,6 +395,7 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         visualStyle === 'bright-editorial'
           ? 'Keep the Bright Editorial style: high-key lighting, clean lines, bright confident mood, generous whitespace, crisp shapes, and reduced synthetic texture.'
           : '',
+        props.creativeDirection ? `Campaign creative direction: ${props.creativeDirection}` : '',
         `User requested edit: ${editPrompt.trim()}`,
       ].filter(Boolean).join(' ');
 
@@ -699,7 +701,10 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
         ].join(' ')
       : '';
 
-    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, styleSpec, layoutSpec]
+    const creativeDirectionSpec = props.creativeDirection
+      ? `CAMPAIGN CREATIVE DIRECTION: ${props.creativeDirection}`
+      : '';
+    const promptToSend = [userPrompt, slideRangeLine, unusedPanelsRule, contentUniquenessRule, outroLine, continuationLine, creativeDirectionSpec, styleSpec, layoutSpec]
       .filter(Boolean)
       .join('\n\n')
       .trim();

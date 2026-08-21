@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { ContentTypeSelector } from '@/components/generator/content-type-selector';
 import { SourceArticlePicker } from '@/components/generator/source-article-picker';
 import { ToneControls } from '@/components/generator/tone-controls';
+import { CreativeDirectionControls } from '@/components/generator/creative-direction-controls';
 import { GenerationPreview } from '@/components/generator/generation-preview';
 import { GeneratingOutputState } from '@/components/generator/generating-dots';
 import type { GenerationMode } from '@/components/generator/generation-mode-toggle';
@@ -72,6 +73,7 @@ import InstagramCarousel2Client, {
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollText } from 'lucide-react';
 import { XLogoIcon } from '@/components/generator/x-logo-icon';
+import { formatBrandProfileForPrompt, hasBrandProfileContent, type BrandProfile } from '@/lib/brand-profile';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -249,21 +251,6 @@ function PencilSparklesIcon({ className }: { className?: string }) {
   );
 }
 
-function GuidanceTooltip({ children }: { children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button type="button" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700">
-          <HelpCircle className="h-3.5 w-3.5" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6} className="max-w-[240px] text-left leading-5">
-        {children}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
 function GenerateHeaderDecoration() {
   return (
     <svg
@@ -433,6 +420,7 @@ export default function GeneratePage() {
   const [tone, setTone] = useState<ToneType>('professional');
   const [customPrompt, setCustomPrompt] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
+  const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedContent, setGeneratedContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [compliance, setCompliance] = useState<any>(null);
@@ -655,12 +643,14 @@ export default function GeneratePage() {
       });
       return next;
     });
+    const brandProfileGuidance = formatBrandProfileForPrompt(brandProfile);
     const guidanceContext = [
       additionalContext,
       usePlainLanguage ? 'Use plain language.' : '',
       includeCallToAction ? 'Include a clear call to action.' : '',
       shouldGenerateInfographic ? 'If Infographic is selected, make Infographic Copy concise, structured, and ready to become a single website infographic image.' : '',
       audienceGuidance(audience),
+      brandProfileGuidance,
     ].filter(Boolean).join('\n');
 
     try {
@@ -820,7 +810,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, detailContent, generateCampaignPackageTitle, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setKitCarouselProgress, setIsOutputStoryboardOpen]);
+  }, [kitTypes, detailContent, generateCampaignPackageTitle, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, brandProfile, setKitCarouselProgress, setIsOutputStoryboardOpen]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -836,11 +826,13 @@ export default function GeneratePage() {
     const shouldGenerateInlineInstagramImage = primaryType === 'social-instagram' &&
       includeInstagramImage &&
       instagramImageMode === 'single';
+    const brandProfileGuidance = formatBrandProfileForPrompt(brandProfile);
     const guidanceContext = [
       additionalContext,
       usePlainLanguage ? 'Use plain language.' : '',
       includeCallToAction ? 'Include a clear call to action.' : '',
       audienceGuidance(audience),
+      brandProfileGuidance,
     ].filter(Boolean).join('\n');
     setImageStatus(shouldGenerateInlineInstagramImage ? 'Generating Instagram single image...' : null);
 
@@ -887,7 +879,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, setGeneratedContent, setGeneratedImages, setImageStatus]);
+  }, [selectedContentTypes, includeInstagramImage, instagramImageMode, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, brandProfile, setGeneratedContent, setGeneratedImages, setImageStatus]);
 
   const handleSave = async (status: ContentStatus) => {
     const primaryType = selectedContentTypes[0];
@@ -971,6 +963,7 @@ export default function GeneratePage() {
     usePlainLanguage ? 'Plain language' : null,
     includeCallToAction ? 'Call to action' : null,
     customPrompt.trim() ? 'Custom context' : null,
+    hasBrandProfileContent(brandProfile) ? 'Brand Profile' : null,
   ].filter(Boolean) as string[];
   const visibleGuidanceOptions = guidanceOptions.slice(0, 2);
   const extraGuidanceOptionCount = Math.max(guidanceOptions.length - visibleGuidanceOptions.length, 0);
@@ -1126,9 +1119,9 @@ export default function GeneratePage() {
                   <NotebookText className="h-6 w-6" />
                 </span>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Creative Direction</span>
                   <h2 className="mt-1 text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
-                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
+                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{brandProfile?.name || toneDescription(tone)}</p>
                 </div>
               </button>
 
@@ -1446,15 +1439,15 @@ export default function GeneratePage() {
                   </span>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Writing guidance</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Creative Direction</span>
                       {activeWorkflowStep === 2 ? (
                         <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-xs font-bold text-cyan-700">Editing</span>
                       ) : null}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold leading-tight text-slate-950">{toneLabel(tone)}</h2>
+                      <h2 className="text-lg font-semibold leading-tight text-slate-950">{brandProfile?.name || toneLabel(tone)}</h2>
                     </div>
-                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{toneDescription(tone)}</p>
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">Writing, audience, CTA, and partner style.</p>
                   </div>
                 </div>
                 <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
@@ -1462,7 +1455,7 @@ export default function GeneratePage() {
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{audience}</p>
                 </div>
                 <div className="min-w-0 self-start border-t border-slate-200 pt-3 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Details</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Direction</div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">{guidanceContextSummary}</p>
                 </div>
                 <div className="flex items-center justify-start gap-3 self-center lg:justify-self-end">
@@ -1476,92 +1469,26 @@ export default function GeneratePage() {
                     <PencilSparklesIcon />
                     {activeWorkflowStep === 2 ? 'Save' : 'Edit'}
                   </Button>
-                  <span className="flex h-6 w-6 items-center justify-center" title="Writing guidance ready">
+                  <span className="flex h-6 w-6 items-center justify-center" title="Creative direction ready">
                     <CheckCircle2 className="h-5 w-5 fill-emerald-600 text-white" />
                   </span>
                 </div>
               </div>
-              <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[720px]">
-                <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)_minmax(280px,1.15fr)]">
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-950">Tone</div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-                      {(['professional', 'casual', 'friendly', 'authoritative', 'conversational', 'urgent'] as ToneType[]).map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setTone(option)}
-                          className={cn(
-                            'relative flex h-[92px] flex-col items-start justify-start rounded-md border bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50/50',
-                            tone === option ? 'border-cyan-400 bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200' : 'border-slate-200'
-                          )}
-                        >
-                          {tone === option ? (
-                            <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-600 text-white">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            </span>
-                          ) : null}
-                          <span className="block pr-6">{toneLabel(option)}</span>
-                          <span className={cn('mt-1 line-clamp-2 block max-w-[170px] text-xs font-medium leading-5', tone === option ? 'text-cyan-700' : 'text-slate-500')}>
-                            {toneDescription(option)}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 border-t border-slate-200 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-950">Audience</div>
-                    </div>
-                    <select
-                      value={audience}
-                      onChange={(event) => setAudience(event.target.value)}
-                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700"
-                    >
-                      <option>Clients and prospects</option>
-                      <option>Existing clients</option>
-                      <option>Prospective clients</option>
-                      <option>Advisors</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-3 border-t border-slate-200 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-950">Details</div>
-                    </div>
-                    <label className="block space-y-2">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Additional instructions
-                        <GuidanceTooltip>Add specific audience notes, key messages, compliance language, or campaign goals for this generation.</GuidanceTooltip>
-                      </span>
-                      <textarea
-                        className="min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                        placeholder="Add audience, key message, compliance notes, or calls to action..."
-                        value={customPrompt}
-                        onChange={(event) => setCustomPrompt(event.target.value)}
-                      />
-                    </label>
-                    <div className="grid gap-2">
-                      <div className="inline-flex items-center gap-1.5 text-sm text-slate-700">
-                        <label className="inline-flex items-center gap-2">
-                          <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => setUsePlainLanguage(event.target.checked)} />
-                          Use plain language
-                        </label>
-                        <GuidanceTooltip>Simplifies wording, reduces jargon, and makes the copy easier for clients to scan and understand.</GuidanceTooltip>
-                      </div>
-                      <div className="inline-flex items-center gap-1.5 text-sm text-slate-700">
-                        <label className="inline-flex items-center gap-2">
-                          <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => setIncludeCallToAction(event.target.checked)} />
-                          Include a call to action
-                        </label>
-                        <GuidanceTooltip>Adds a clear next step, such as scheduling a review, replying, or contacting the advisor.</GuidanceTooltip>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <WorkflowStepBody open={activeWorkflowStep === 2} maxHeightClass="max-h-[2200px]">
+                <CreativeDirectionControls
+                  tone={tone}
+                  onToneChange={setTone}
+                  audience={audience}
+                  onAudienceChange={setAudience}
+                  customPrompt={customPrompt}
+                  onCustomPromptChange={setCustomPrompt}
+                  usePlainLanguage={usePlainLanguage}
+                  onUsePlainLanguageChange={setUsePlainLanguage}
+                  includeCallToAction={includeCallToAction}
+                  onIncludeCallToActionChange={setIncludeCallToAction}
+                  brandProfile={brandProfile}
+                  onBrandProfileChange={setBrandProfile}
+                />
               </WorkflowStepBody>
 
             </div>
@@ -2040,6 +1967,7 @@ export default function GeneratePage() {
                           onShowAdvancedPromptInputChange={setKitCarouselAdvanced}
                           topic={kitCarouselPrompt}
                           onTopicChange={setKitCarouselPrompt}
+                          creativeDirection={formatBrandProfileForPrompt(brandProfile)}
                         />
                       </div>
                     ) : null}
@@ -2346,6 +2274,7 @@ export default function GeneratePage() {
                   hideSourcePicker
                   defaultTab="carousel"
                   generateLabel="Generate Images"
+                  creativeDirection={formatBrandProfileForPrompt(brandProfile)}
                 />
               )}
             </div>

@@ -54,7 +54,7 @@ function pickVariantSeed(text: string): number {
   return hash;
 }
 
-function buildInstagramImagePrompt(caption: string) {
+function buildInstagramImagePrompt(caption: string, creativeDirection?: string) {
   const seed = pickVariantSeed(caption);
   const style = INSTAGRAM_FINANCE_STYLES[seed % INSTAGRAM_FINANCE_STYLES.length];
   const scene = INSTAGRAM_FINANCE_SCENES[(seed >> 3) % INSTAGRAM_FINANCE_SCENES.length];
@@ -68,8 +68,9 @@ function buildInstagramImagePrompt(caption: string) {
     'Keep tone positive, trustworthy, and educational (no fearmongering, no unrealistic promises).',
     'Do not include logos, watermarks, UI screenshots, or text overlays.',
     'Financial context should be visually clear with subtle props (phone dashboards, notes, charts, calculators).',
+    creativeDirection ? `Creative direction and partner style guidance: ${creativeDirection.slice(0, 1800)}` : '',
     `Caption intent to match: ${caption.slice(0, 900)}`,
-  ].join(' ');
+  ].filter(Boolean).join(' ');
 }
 
 async function generateInstagramImage(apiKey: string, prompt: string): Promise<{ imageUrl: string | null; error?: string; usage?: Record<string, any> }> {
@@ -199,7 +200,7 @@ export async function POST(req: Request) {
 
       let sectionText = result.text.trim();
       if (includeInstagramImage && asset.type === 'social-instagram') {
-        const imagePrompt = buildInstagramImagePrompt(sectionText);
+        const imagePrompt = buildInstagramImagePrompt(sectionText, additionalContext);
         const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
         if (image.imageUrl) {
           images.instagram = image.imageUrl;
@@ -274,7 +275,7 @@ export async function POST(req: Request) {
   const images: Record<string, string> = {};
   let imageUsage: Record<string, any> | undefined;
   if (includeInstagramImage && type === 'social-instagram') {
-    const imagePrompt = buildInstagramImagePrompt(outputText);
+    const imagePrompt = buildInstagramImagePrompt(outputText, additionalContext);
     const image = await generateInstagramImage(env.OPENAI_API_KEY, imagePrompt);
     if (image.imageUrl) {
       images.instagram = image.imageUrl;
