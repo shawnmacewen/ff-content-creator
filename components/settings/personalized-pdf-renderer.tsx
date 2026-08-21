@@ -195,7 +195,7 @@ export default function PersonalizedPdfRenderer() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <Badge variant="outline">Product Lab prototype</Badge>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight">Personalized PDF Renderer</h1>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight">Newsletter PDF</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Pick source content, fill an advisor profile, and render a printable newsletter preview tuned for browser PDF output.
             </p>

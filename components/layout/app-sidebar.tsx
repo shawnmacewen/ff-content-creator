@@ -90,7 +90,7 @@ const contentTypeItems = [
     icon: UploadCloud,
   },
   {
-    title: 'PDF Renderer',
+    title: 'Newsletter PDF',
     href: '/personalized-pdf-renderer',
     icon: FileText,
   },

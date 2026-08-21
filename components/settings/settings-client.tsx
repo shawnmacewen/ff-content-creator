@@ -83,7 +83,7 @@ const tabMeta: Record<SettingsTab, { label: string; detail: string; icon: typeof
     icon: Megaphone,
   },
   'personalized-pdf-renderer': {
-    label: 'PDF Renderer',
+    label: 'Newsletter PDF',
     detail: 'Prototype advisor-branded newsletter PDF output from source content.',
     icon: FileText,
   },
