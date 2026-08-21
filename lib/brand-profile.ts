@@ -8,6 +8,13 @@ export type BrandProfileSourceFile = {
   size: number;
 };
 
+export type BrandProfileLogoAsset = {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+};
+
 export type BrandProfile = {
   id: string;
   name: string;
@@ -27,6 +34,7 @@ export type BrandProfile = {
   imageryStyle: string;
   layoutStyle: string;
   logoNotes: string;
+  logoAsset: BrandProfileLogoAsset | null;
   voiceNotes: string;
   complianceNotes: string;
   forbiddenTreatments: string[];
@@ -58,6 +66,7 @@ export function emptyBrandProfileDraft(): BrandProfileDraft {
     imageryStyle: '',
     layoutStyle: '',
     logoNotes: '',
+    logoAsset: null,
     voiceNotes: '',
     complianceNotes: '',
     forbiddenTreatments: [],
@@ -129,6 +138,7 @@ export function hasBrandProfileContent(profile: BrandProfileDraft | BrandProfile
     profile.imageryStyle?.trim() ||
     profile.layoutStyle?.trim() ||
     profile.logoNotes?.trim() ||
+    profile.logoAsset?.dataUrl ||
     profile.voiceNotes?.trim() ||
     profile.complianceNotes?.trim() ||
     profile.forbiddenTreatments?.length

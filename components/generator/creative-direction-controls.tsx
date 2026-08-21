@@ -84,11 +84,21 @@ function draftFromProfile(profile: BrandProfile | null): BrandProfileDraft {
     imageryStyle: profile.imageryStyle,
     layoutStyle: profile.layoutStyle,
     logoNotes: profile.logoNotes,
+    logoAsset: profile.logoAsset || null,
     voiceNotes: profile.voiceNotes,
     complianceNotes: profile.complianceNotes,
     forbiddenTreatments: profile.forbiddenTreatments,
     promptSummary: profile.promptSummary,
   };
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Logo upload failed'));
+    reader.readAsDataURL(file);
+  });
 }
 
 export function CreativeDirectionControls({
@@ -243,6 +253,33 @@ export function CreativeDirectionControls({
       toast.error(error?.message || 'Brand Profile generation failed');
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleLogoUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Upload an image file for the logo');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast.error('Logo preview upload is limited to 1 MB for this MVP');
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      updateDraft({
+        logoAsset: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          dataUrl,
+        },
+      });
+      toast.success('Logo added to Brand Profile');
+    } catch (error: any) {
+      toast.error(error?.message || 'Logo upload failed');
     }
   };
 
@@ -500,6 +537,51 @@ export function CreativeDirectionControls({
               onChange={(event) => updateDraft({ logoNotes: event.target.value })}
             />
           </label>
+          <div className="space-y-2 sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Logo upload</span>
+            <div className="grid gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
+              <div className="flex h-24 items-center justify-center rounded-md border border-slate-200 bg-slate-50 p-3">
+                {draft.logoAsset?.dataUrl ? (
+                  <div
+                    className="h-full w-full rounded bg-contain bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url(${draft.logoAsset.dataUrl})` }}
+                    aria-label={`${draft.logoAsset.name} logo preview`}
+                    role="img"
+                  />
+                ) : (
+                  <span className="text-center text-xs font-semibold text-slate-400">No logo</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-dashed border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50/40">
+                  Upload logo image
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="sr-only"
+                    onChange={(event) => {
+                      void handleLogoUpload(event.target.files?.[0]);
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+                {draft.logoAsset ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    <span className="min-w-0 truncate rounded-md bg-slate-50 px-2 py-1">{draft.logoAsset.name}</span>
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-200 px-2 py-1 font-semibold text-slate-600 hover:bg-slate-50"
+                      onClick={() => updateDraft({ logoAsset: null })}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs leading-5 text-slate-500">Stored with the saved Brand Profile for preview and later template use. MVP limit: 1 MB.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
