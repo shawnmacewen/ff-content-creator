@@ -9,11 +9,6 @@
   - The flow should feel more like a checkout/cart experience: users select desired content items, each item is added to a generation list, then users configure those items before generating.
   - Preserve this as a future UX/product task, not an immediate implementation request.
 
-- Roadmap: save default writing options as part of reusable Brand Profiles:
-  - Include tone, audience, plain-language preference, call-to-action preference, and any default generation notes in the Brand Profile data model.
-  - When a user selects a saved Brand Profile, Creative Direction should restore those writing defaults along with visual/style guidance.
-  - This should make partner profiles feel like complete generation defaults, not only color/logo/style rules.
-
 ## Next Up (in progress)
 
 - Track Personalized PDF Rendering / newsletter PDF output as a Product Lab prototype:

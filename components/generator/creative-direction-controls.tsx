@@ -70,6 +70,11 @@ function draftFromProfile(profile: BrandProfile | null): BrandProfileDraft {
     strictness: profile.strictness,
     sourceSummary: profile.sourceSummary,
     sourceFiles: profile.sourceFiles,
+    defaultTone: profile.defaultTone,
+    defaultAudience: profile.defaultAudience,
+    defaultUsePlainLanguage: profile.defaultUsePlainLanguage,
+    defaultIncludeCallToAction: profile.defaultIncludeCallToAction,
+    defaultGenerationNotes: profile.defaultGenerationNotes,
     primaryColor: profile.primaryColor,
     secondaryColor: profile.secondaryColor,
     accentColor: profile.accentColor,
@@ -125,6 +130,23 @@ export function CreativeDirectionControls({
     });
   };
 
+  const draftWithWritingDefaults = (base: BrandProfileDraft = draft): BrandProfileDraft => ({
+    ...base,
+    defaultTone: tone,
+    defaultAudience: audience,
+    defaultUsePlainLanguage: usePlainLanguage,
+    defaultIncludeCallToAction: includeCallToAction,
+    defaultGenerationNotes: customPrompt,
+  });
+
+  const applyWritingDefaults = (profile: BrandProfile) => {
+    if (profile.defaultTone) onToneChange(profile.defaultTone);
+    if (profile.defaultAudience) onAudienceChange(profile.defaultAudience);
+    if (typeof profile.defaultUsePlainLanguage === 'boolean') onUsePlainLanguageChange(profile.defaultUsePlainLanguage);
+    if (typeof profile.defaultIncludeCallToAction === 'boolean') onIncludeCallToActionChange(profile.defaultIncludeCallToAction);
+    if (profile.defaultGenerationNotes) onCustomPromptChange(profile.defaultGenerationNotes);
+  };
+
   const handleSelectProfile = (id: string) => {
     setSelectedProfileId(id);
     if (!id) {
@@ -134,7 +156,10 @@ export function CreativeDirectionControls({
     }
 
     const found = savedProfiles.find((profile) => profile.id === id);
-    if (found) onBrandProfileChange(found);
+    if (found) {
+      onBrandProfileChange(found);
+      applyWritingDefaults(found);
+    }
   };
 
   const handleSaveProfile = () => {
@@ -146,7 +171,7 @@ export function CreativeDirectionControls({
     const existingId = brandProfile?.id && brandProfile.id !== 'active-brand-profile'
       ? brandProfile.id
       : selectedProfileId || undefined;
-    const profile = brandProfileFromDraft(draft, existingId);
+    const profile = brandProfileFromDraft(draftWithWritingDefaults(), existingId);
     const next = saveBrandProfile(profile);
     setSavedProfiles(next);
     setSelectedProfileId(profile.id);
@@ -166,9 +191,10 @@ export function CreativeDirectionControls({
 
   const handleGenerateProfile = async () => {
     const form = new FormData();
-    form.set('name', draft.name);
-    form.set('strictness', draft.strictness);
-    form.set('notes', brandNotes || draft.promptSummary || customPrompt);
+    const currentDraft = draftWithWritingDefaults();
+    form.set('name', currentDraft.name);
+    form.set('strictness', currentDraft.strictness);
+    form.set('notes', brandNotes || currentDraft.promptSummary || customPrompt);
     files.forEach((file) => form.append('files', file));
 
     setIsScanning(true);
@@ -182,6 +208,7 @@ export function CreativeDirectionControls({
 
       const profile = brandProfileFromDraft({
         ...emptyBrandProfileDraft(),
+        ...currentDraft,
         ...payload.profile,
       });
       const next = saveBrandProfile(profile);
@@ -214,7 +241,10 @@ export function CreativeDirectionControls({
             <button
               key={option}
               type="button"
-              onClick={() => onToneChange(option)}
+              onClick={() => {
+                onToneChange(option);
+                updateDraft({ defaultTone: option });
+              }}
               className={cn(
                 'relative flex min-h-[86px] flex-col items-start rounded-md border bg-white px-3 py-3 text-left text-sm font-semibold shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50/50',
                 tone === option ? 'border-cyan-400 bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200' : 'border-slate-200 text-slate-700'
@@ -238,7 +268,10 @@ export function CreativeDirectionControls({
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Audience</span>
             <select
               value={audience}
-              onChange={(event) => onAudienceChange(event.target.value)}
+              onChange={(event) => {
+                onAudienceChange(event.target.value);
+                updateDraft({ defaultAudience: event.target.value });
+              }}
               className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700"
             >
               <option>Clients and prospects</option>
@@ -253,16 +286,25 @@ export function CreativeDirectionControls({
               className="min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               placeholder="Add key message, compliance language, campaign goal, or specific CTA..."
               value={customPrompt}
-              onChange={(event) => onCustomPromptChange(event.target.value)}
+              onChange={(event) => {
+                onCustomPromptChange(event.target.value);
+                updateDraft({ defaultGenerationNotes: event.target.value });
+              }}
             />
           </label>
           <div className="grid gap-2 text-sm text-slate-700">
             <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => onUsePlainLanguageChange(event.target.checked)} />
+              <input type="checkbox" className="h-4 w-4 accent-primary" checked={usePlainLanguage} onChange={(event) => {
+                onUsePlainLanguageChange(event.target.checked);
+                updateDraft({ defaultUsePlainLanguage: event.target.checked });
+              }} />
               Use plain language
             </label>
             <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => onIncludeCallToActionChange(event.target.checked)} />
+              <input type="checkbox" className="h-4 w-4 accent-primary" checked={includeCallToAction} onChange={(event) => {
+                onIncludeCallToActionChange(event.target.checked);
+                updateDraft({ defaultIncludeCallToAction: event.target.checked });
+              }} />
               Include a call to action
             </label>
           </div>

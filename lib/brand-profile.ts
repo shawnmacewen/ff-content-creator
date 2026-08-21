@@ -1,3 +1,5 @@
+import type { ToneType } from './types/content';
+
 export type BrandProfileStrictness = 'light' | 'balanced' | 'strict';
 
 export type BrandProfileSourceFile = {
@@ -12,6 +14,11 @@ export type BrandProfile = {
   strictness: BrandProfileStrictness;
   sourceSummary: string;
   sourceFiles: BrandProfileSourceFile[];
+  defaultTone: ToneType | '';
+  defaultAudience: string;
+  defaultUsePlainLanguage: boolean | null;
+  defaultIncludeCallToAction: boolean | null;
+  defaultGenerationNotes: string;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -38,6 +45,11 @@ export function emptyBrandProfileDraft(): BrandProfileDraft {
     strictness: 'balanced',
     sourceSummary: '',
     sourceFiles: [],
+    defaultTone: '',
+    defaultAudience: '',
+    defaultUsePlainLanguage: null,
+    defaultIncludeCallToAction: null,
+    defaultGenerationNotes: '',
     primaryColor: '',
     secondaryColor: '',
     accentColor: '',
@@ -106,6 +118,9 @@ export function hasBrandProfileContent(profile: BrandProfileDraft | BrandProfile
   if (!profile) return false;
   return Boolean(
     profile.name?.trim() ||
+    profile.defaultTone?.trim() ||
+    profile.defaultAudience?.trim() ||
+    profile.defaultGenerationNotes?.trim() ||
     profile.promptSummary?.trim() ||
     profile.primaryColor?.trim() ||
     profile.secondaryColor?.trim() ||
@@ -134,6 +149,11 @@ export function formatBrandProfileForPrompt(profile: BrandProfileDraft | BrandPr
     'BRAND PROFILE / PARTNER STYLE DIRECTION:',
     profile?.name ? `Partner/profile name: ${profile.name}` : '',
     profile?.strictness ? `Brand strictness: ${profile.strictness}` : '',
+    profile?.defaultTone ? `Default tone: ${profile.defaultTone}` : '',
+    profile?.defaultAudience ? `Default audience: ${profile.defaultAudience}` : '',
+    typeof profile?.defaultUsePlainLanguage === 'boolean' ? `Plain language default: ${profile.defaultUsePlainLanguage ? 'yes' : 'no'}` : '',
+    typeof profile?.defaultIncludeCallToAction === 'boolean' ? `Call to action default: ${profile.defaultIncludeCallToAction ? 'yes' : 'no'}` : '',
+    profile?.defaultGenerationNotes ? `Default generation notes: ${profile.defaultGenerationNotes}` : '',
     colors ? `Colors: ${colors}` : '',
     profile?.typography ? `Typography: ${profile.typography}` : '',
     profile?.imageryStyle ? `Imagery style: ${profile.imageryStyle}` : '',
