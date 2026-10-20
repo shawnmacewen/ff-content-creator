@@ -41,6 +41,10 @@ interface ApiResponse {
   };
 }
 
+interface SyncLogResponse {
+  lastSyncedAt?: string | null;
+}
+
 interface FilterResponse {
   availableTags: string[];
   availableTypes: string[];
@@ -75,6 +79,18 @@ const fetcher = async (url: string) => {
 };
 
 const SOURCE_CONTENT_PAGE_SIZE = 50;
+
+function formatLastSyncedAt(value?: string | null) {
+  if (!value) return 'Never';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown';
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
 
 const SOURCE_SYNC_LOADING_PHRASES = [
   'Checking the provider window...',
@@ -210,6 +226,11 @@ export default function SourceContentPage() {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
   });
+  const { data: syncLogData, mutate: mutateSyncLogs } = useSWR<SyncLogResponse>('/api/source-content/sync/logs', fetcher, {
+    refreshInterval: 60_000,
+    revalidateOnFocus: true,
+    shouldRetryOnError: false,
+  });
 
   const contentItems = useMemo(() => {
     const seen = new Set<string>();
@@ -260,6 +281,7 @@ export default function SourceContentPage() {
   const syncProgressPercent = syncProgress
     ? Math.max(4, Math.min(100, Math.round((syncProgress.currentBatch / syncProgress.maxBatches) * 100)))
     : 0;
+  const lastSyncedAt = syncLogData?.lastSyncedAt || null;
 
   const refreshSourceStatsCache = async () => {
     const response = await fetch('/api/source-content/stats', { method: 'POST' });
@@ -329,7 +351,7 @@ export default function SourceContentPage() {
       };
 
       await refreshSourceStatsCache();
-      await mutateSourceContent();
+      await Promise.all([mutateSourceContent(), mutateSyncLogs()]);
 
       toast.success(
         `Broadridge content sync complete: ${result.totals.processed} processed (${result.totals.inserted} inserted, ${result.totals.updated} updated) across ${result.batchesRun} batch(es).`
@@ -467,6 +489,9 @@ export default function SourceContentPage() {
                 </div>
                 <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-foreground ring-1 ring-slate-200">
                   {(latestPage?.meta?.finraReviewedCount ?? 0).toLocaleString()} FINRA reviewed
+                </span>
+                <span className="rounded-md border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-foreground" title={lastSyncedAt || 'No successful provider sync has been recorded yet.'}>
+                  <span className="text-primary">Last synced:</span> {formatLastSyncedAt(lastSyncedAt)}
                 </span>
                 {hasActiveFilters ? (
                   <span className="text-xs font-medium text-muted-foreground">
