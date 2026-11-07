@@ -82,7 +82,7 @@ async function generateInstagramImage(apiKey: string, prompt: string): Promise<{
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'gpt-image-2.6-flare',
         prompt,
         size: '1024x1024',
       }),
@@ -248,7 +248,7 @@ export async function POST(req: Request) {
         contentType: 'instagram-image',
         category: 'image',
         assetCount: generatedImageCount,
-        model: 'gpt-image-1',
+        model: 'gpt-image-2.6-flare',
         generationGroupId,
         meta: {
           source: 'generate-content-kit',
@@ -311,7 +311,7 @@ export async function POST(req: Request) {
       contentType: 'instagram-image',
       category: 'image',
       assetCount: Object.keys(images).length,
-      model: 'gpt-image-1',
+      model: 'gpt-image-2.6-flare',
       generationGroupId,
       meta: {
         source: 'generate-content-single',

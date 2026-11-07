@@ -32,7 +32,7 @@ function buildInfographicPrompt(args: {
   ].filter(Boolean).join('\n');
 }
 
-async function generateInfographicImage(apiKey: string, prompt: string) {
+async function generateInfographicImage(apiKey: string, prompt: string, model: string) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -40,7 +40,7 @@ async function generateInfographicImage(apiKey: string, prompt: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-2',
+      model,
       prompt,
       size: '1536x1024',
     }),
@@ -64,6 +64,9 @@ export async function POST(req: Request) {
     const sourceContentIds = Array.isArray(body?.sourceContentIds) ? body.sourceContentIds.map(String).filter(Boolean) : [];
     const guidance = String(body?.guidance || '').trim();
     const generationGroupId = String(body?.generationGroupId || '').trim() || undefined;
+    const model = ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst', 'gpt-image-2', 'gpt-image-1'].includes(String(body?.model))
+      ? String(body.model)
+      : 'gpt-image-2.6-sunburst';
 
     if (!infographicCopy) {
       return new Response(JSON.stringify({ error: 'Infographic Copy is required before generating an infographic image.' }), { status: 400 });
@@ -75,7 +78,7 @@ export async function POST(req: Request) {
     }
 
     const prompt = buildInfographicPrompt({ infographicCopy, guidance });
-    const image = await generateInfographicImage(env.OPENAI_API_KEY, prompt);
+    const image = await generateInfographicImage(env.OPENAI_API_KEY, prompt, model);
     if (!image.imageUrl) {
       return new Response(JSON.stringify({ error: image.error || 'Infographic image generation failed' }), { status: 500 });
     }
@@ -85,7 +88,7 @@ export async function POST(req: Request) {
       contentType: 'infographic',
       category: 'image',
       assetCount: 1,
-      model: 'gpt-image-2',
+      model,
       generationGroupId,
       meta: {
         source: 'generate-content-kit',
@@ -95,7 +98,7 @@ export async function POST(req: Request) {
     });
 
     return new Response(
-      JSON.stringify({ imageUrl: image.imageUrl, prompt }),
+      JSON.stringify({ imageUrl: image.imageUrl, prompt, modelUsed: model }),
       { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
     );
   } catch (error: any) {

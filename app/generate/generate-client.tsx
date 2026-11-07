@@ -461,7 +461,8 @@ export default function GeneratePage() {
 
   // Carousel 2.0 settings (KIT multipost)
   const [kitCarouselSlideCount, setKitCarouselSlideCount] = useState<number>(3);
-  const [kitCarouselModel, setKitCarouselModel] = useState<'gpt-image-2' | 'gpt-image-1'>('gpt-image-2');
+  const [kitCarouselModel, setKitCarouselModel] = useState<'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1'>('gpt-image-2.6-flare');
+  const [kitInfographicModel, setKitInfographicModel] = useState<'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1'>('gpt-image-2.6-sunburst');
   const [kitCarouselCohesionMethod, setKitCarouselCohesionMethod] = useState<'prompt' | 'image-ref'>('image-ref');
   const [kitCarouselImageRefMode, setKitCarouselImageRefMode] = useState<'previous' | 'first'>('previous');
   const [kitCarouselMoreSeamlessBackground, setKitCarouselMoreSeamlessBackground] = useState<boolean>(true);
@@ -732,6 +733,7 @@ export default function GeneratePage() {
               sourceContentIds: selectedSourceIds,
               guidance: guidanceContext,
               generationGroupId,
+              model: kitInfographicModel,
             }),
           })
             .then(async (imageResponse) => {
@@ -811,7 +813,7 @@ export default function GeneratePage() {
     } finally {
       setIsGeneratingKit(false);
     }
-  }, [kitTypes, detailContent, generateCampaignPackageTitle, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, brandProfile, setKitCarouselProgress, setIsOutputStoryboardOpen]);
+  }, [kitTypes, detailContent, generateCampaignPackageTitle, includeInstagramSingleImages, instagramKitVariant, includeInstagramCarouselImages, kitCarousel2Ref, selectedSourceIds, customPrompt, tone, additionalContext, usePlainLanguage, includeCallToAction, audience, brandProfile, setKitCarouselProgress, setIsOutputStoryboardOpen, kitInfographicModel]);
 
   const handleGenerate = useCallback(async () => {
     const primaryType = selectedContentTypes[0];
@@ -1380,6 +1382,22 @@ export default function GeneratePage() {
                               value={kitCarouselModel}
                               onChange={(e) => setKitCarouselModel(e.target.value as any)}
                             >
+                              <option value="gpt-image-2.6-flare">GPT Image 2.6 Flare (default)</option>
+                              <option value="gpt-image-2.6-sunburst">GPT Image 2.6 Sunburst (detailed)</option>
+                              <option value="gpt-image-2">gpt-image-2</option>
+                              <option value="gpt-image-1">gpt-image-1</option>
+                            </select>
+                          </label>
+
+                          <label className="text-sm">
+                            <div className="text-xs text-muted-foreground mb-1">Infographic model</div>
+                            <select
+                              className="w-full rounded-md border bg-background px-3 py-2"
+                              value={kitInfographicModel}
+                              onChange={(e) => setKitInfographicModel(e.target.value as any)}
+                            >
+                              <option value="gpt-image-2.6-sunburst">GPT Image 2.6 Sunburst (default)</option>
+                              <option value="gpt-image-2.6-flare">GPT Image 2.6 Flare (fast)</option>
                               <option value="gpt-image-2">gpt-image-2</option>
                               <option value="gpt-image-1">gpt-image-1</option>
                             </select>

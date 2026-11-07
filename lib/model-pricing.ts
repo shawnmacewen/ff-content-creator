@@ -41,6 +41,24 @@ export const MODEL_PRICING_RULES: Record<string, ModelPricingRule> = {
   'gpt-4o': { model: 'gpt-4o', inputPerMillion: 2.5, cachedInputPerMillion: 1.25, outputPerMillion: 10, source: 'OpenAI API legacy pricing' },
   'gpt-4o-mini': { model: 'gpt-4o-mini', inputPerMillion: 0.15, cachedInputPerMillion: 0.075, outputPerMillion: 0.6, source: 'OpenAI API legacy pricing' },
 
+  'gpt-image-2.6-flare': {
+    model: 'gpt-image-2.6-flare',
+    textInputPerMillion: 5,
+    cachedTextInputPerMillion: 1.25,
+    imageInputPerMillion: 8,
+    cachedImageInputPerMillion: 2,
+    imageOutputPerMillion: 30,
+    source: 'OpenAI API pricing, checked 2026-11-06',
+  },
+  'gpt-image-2.6-sunburst': {
+    model: 'gpt-image-2.6-sunburst',
+    textInputPerMillion: 5,
+    cachedTextInputPerMillion: 1.25,
+    imageInputPerMillion: 8,
+    cachedImageInputPerMillion: 2,
+    imageOutputPerMillion: 30,
+    source: 'OpenAI API pricing, checked 2026-11-06',
+  },
   'gpt-image-2': {
     model: 'gpt-image-2',
     textInputPerMillion: 5,

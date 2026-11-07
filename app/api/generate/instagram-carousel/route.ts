@@ -58,7 +58,7 @@ async function generateSlideImage(apiKey: string, prompt: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2.6-flare',
       prompt,
       size: '1024x1536',
     }),
@@ -218,7 +218,7 @@ export async function POST(req: Request) {
       contentType: 'instagram-carousel-slide',
       category: 'image',
       assetCount: successfulImages,
-      model: 'gpt-image-1',
+      model: 'gpt-image-2.6-flare',
       generationGroupId,
       meta: {
         slideCount: slides.length,

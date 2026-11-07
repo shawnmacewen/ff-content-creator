@@ -11,7 +11,7 @@ const BodySchema = z.object({
   prompt: z.string().min(1),
   // NOTE: OpenAI Images sizes must be divisible by 16.
   size: z.enum(['1024x1024', '1024x1536', '1536x1024', '1536x512', '1024x512', '512x512']).optional(),
-  model: z.enum(['gpt-image-2', 'gpt-image-1']).optional(),
+  model: z.enum(['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst', 'gpt-image-2', 'gpt-image-1']).optional(),
   generationGroupId: z.string().trim().min(1).max(120).optional(),
   // Optional reference image to drive cohesion across masterplates.
   // Accepts either a data: URL (data:image/png;base64,...) or an http(s) URL.
@@ -37,7 +37,7 @@ async function generateImage(
   args: {
     prompt: string;
     size: '1024x1536' | '1536x1024' | '1024x1024' | '1536x512' | '1024x512' | '512x512';
-    model: 'gpt-image-2' | 'gpt-image-1';
+    model: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1';
     referenceImageUrl?: string;
   }
 ) {
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
   }
 
   const size = parsed.data.size || '1024x1536';
-  const model = parsed.data.model || 'gpt-image-2';
+  const model = parsed.data.model || 'gpt-image-2.6-flare';
   const out = await generateImage(env.OPENAI_API_KEY, {
     prompt: parsed.data.prompt,
     size,

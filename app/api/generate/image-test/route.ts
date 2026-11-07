@@ -16,7 +16,7 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'gpt-image-2.6-flare',
         prompt,
         size: '1024x1024',
       }),
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         contentType: 'image-test',
         category: 'image',
         assetCount: 1,
-        model: 'gpt-image-1',
+        model: 'gpt-image-2.6-flare',
         meta: {
           route: 'generate-image-test',
           ...normalizeGenerationUsage(data?.usage),

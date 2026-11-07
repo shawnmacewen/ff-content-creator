@@ -27,7 +27,7 @@ async function generateImage(apiKey: string, prompt: string, size: '1024x1536' |
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-2',
+      model: 'gpt-image-2.6-flare',
       prompt,
       size,
     }),
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
         contentType: 'instagram-carousel-motif',
         category: 'image',
         assetCount: 1,
-        model: 'gpt-image-2',
+        model: 'gpt-image-2.6-flare',
         meta: {
           slideId,
           index,
@@ -261,7 +261,7 @@ export async function POST(req: Request) {
       contentType: 'instagram-carousel-slide',
       category: 'image',
       assetCount: 1,
-      model: 'gpt-image-2',
+      model: 'gpt-image-2.6-flare',
       meta: {
         slideId,
         index,

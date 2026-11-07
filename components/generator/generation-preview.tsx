@@ -145,7 +145,7 @@ export function GenerationPreview({
             'Avoid logos, watermarks, fake UI text, distorted hands/faces, and obvious AI artifacts.',
             `User requested edit: ${prompt}`,
           ].join(' '),
-          model: 'gpt-image-1',
+          model: 'gpt-image-2.6-flare',
           size: '1024x1024',
           referenceImageUrl: imageUrl,
         }),

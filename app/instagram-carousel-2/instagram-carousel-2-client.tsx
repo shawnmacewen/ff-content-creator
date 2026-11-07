@@ -110,8 +110,8 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
   // Controlled settings (used when embedding in Generate page)
   slideCount?: number;
   onSlideCountChange?: (n: number) => void;
-  model?: 'gpt-image-2' | 'gpt-image-1';
-  onModelChange?: (m: 'gpt-image-2' | 'gpt-image-1') => void;
+  model?: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1';
+  onModelChange?: (m: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1') => void;
   cohesionMethod?: 'prompt' | 'image-ref';
   onCohesionMethodChange?: (m: 'prompt' | 'image-ref') => void;
   imageRefMode?: 'previous' | 'first';
@@ -143,9 +143,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
     setSlideCountLocal(n);
   }, [props, setSlideCountLocal]);
 
-  const [modelLocal, setModelLocal] = useControlledState<'gpt-image-2' | 'gpt-image-1'>(props.model, 'gpt-image-2');
+  const [modelLocal, setModelLocal] = useControlledState<'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1'>(props.model, 'gpt-image-2.6-flare');
   const model = props.model ?? modelLocal;
-  const setModel = React.useCallback((m: 'gpt-image-2' | 'gpt-image-1') => {
+  const setModel = React.useCallback((m: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2' | 'gpt-image-1') => {
     props.onModelChange?.(m);
     setModelLocal(m);
   }, [props, setModelLocal]);
@@ -952,7 +952,9 @@ const InstagramCarousel2Client = React.forwardRef<InstagramCarousel2ClientHandle
             onChange={(e) => setModel(e.target.value as any)}
             disabled={isLoading}
           >
-            <option value="gpt-image-2">gpt-image-2 (default)</option>
+            <option value="gpt-image-2.6-flare">GPT Image 2.6 Flare (default)</option>
+            <option value="gpt-image-2.6-sunburst">GPT Image 2.6 Sunburst (detailed)</option>
+            <option value="gpt-image-2">gpt-image-2</option>
             <option value="gpt-image-1">gpt-image-1</option>
           </select>
         </label>

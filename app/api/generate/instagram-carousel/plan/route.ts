@@ -232,7 +232,7 @@ export async function POST(req: Request) {
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-image-2',
+          model: 'gpt-image-2.6-flare',
           prompt: masterPrompt,
           size: '1536x1024',
         }),
@@ -275,7 +275,7 @@ export async function POST(req: Request) {
       contentType: 'instagram-carousel-master-plate',
       category: 'image',
       assetCount: 1,
-      model: 'gpt-image-2',
+      model: 'gpt-image-2.6-flare',
       meta: {
         generationMode,
         style,
